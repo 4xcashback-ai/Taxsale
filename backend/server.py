@@ -175,8 +175,10 @@ async def scrape_halifax_tax_sales():
             {"assessment_num": "03051897", "owner_name": "LINDSEY MARSMAN ESTATE", "description": "Anderson Rd Lot D Upper Hammonds Plains - Dwelling", "pid": "00425074", "opening_bid": None},
             # Row 11: AAN 8060713
             {"assessment_num": "03060713", "owner_name": "1549433 NOVA SCOTIA LIMITED, DELPORT REALTY LIMITED", "description": "No 725 Hwy Lot C Debaies Cove - Land", "pid": "00212746", "opening_bid": None},
-            # Row 12: No AAN, SELDON HERMAN PYE
-            {"assessment_num": "", "owner_name": "SELDON HERMAN PYE", "description": "", "pid": "00497864", "opening_bid": None},
+            # Row 12: AAN 03848981 - SELDON HERMAN PYE
+            {"assessment_num": "03848981", "owner_name": "SELDON HERMAN PYE", "description": "", "pid": "00497864", "opening_bid": None},
+            # Missing property: AAN 04023269
+            {"assessment_num": "04023269", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
             # Row 13: AAN 4094077
             {"assessment_num": "04094077", "owner_name": "", "description": "Lewiston Rd Lewiston Lake - Land", "pid": "40541542", "opening_bid": None},
             # Row 14: AAN 256352 - WITH OPENING BID
