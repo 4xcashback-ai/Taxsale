@@ -573,6 +573,13 @@ async def scrape_halifax_tax_sales():
             
             logger.info(f"Successfully parsed PDF - extracted {len(halifax_properties)} properties")
             
+            # Update property statuses before processing new data
+            await update_property_statuses()
+            
+            # Get current assessment numbers for inactive marking
+            current_assessment_numbers = [prop["assessment_num"] for prop in halifax_properties]
+            await mark_missing_properties_inactive(current_assessment_numbers, "Halifax Regional Municipality")
+            
             # If no properties were extracted, fall back to the sample data
             if not halifax_properties:
                 logger.warning("No properties extracted from PDF, using fallback sample data")
