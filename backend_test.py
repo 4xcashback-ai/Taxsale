@@ -147,6 +147,118 @@ def test_tax_sales_endpoint():
         print(f"❌ Tax sales endpoint error: {e}")
         return False, None
 
+def test_property_descriptions_bug():
+    """Test for the specific property description bug reported by user"""
+    print("\n🔍 Testing Property Description Bug (Assessment #00079006)...")
+    try:
+        # Get all Halifax properties to analyze descriptions
+        response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax", timeout=30)
+        if response.status_code == 200:
+            properties = response.json()
+            print(f"✅ Retrieved {len(properties)} Halifax properties for description analysis")
+            
+            # Look specifically for assessment #00079006
+            target_property = None
+            for prop in properties:
+                if prop.get("assessment_number") == "00079006":
+                    target_property = prop
+                    break
+            
+            # Analyze property descriptions
+            good_descriptions = []
+            bad_descriptions = []
+            placeholder_pattern = r"Property at assessment #\d{8}"
+            
+            for prop in properties:
+                assessment = prop.get("assessment_number", "N/A")
+                address = prop.get("property_address", "")
+                description = prop.get("property_description", "")
+                
+                # Check if description is a placeholder
+                if "Property at assessment #" in address or "Property at assessment #" in description:
+                    bad_descriptions.append({
+                        "assessment": assessment,
+                        "address": address,
+                        "description": description,
+                        "owner": prop.get("owner_name", "N/A")
+                    })
+                else:
+                    # Check if it has meaningful address/description content
+                    if (len(address) > 20 and any(word in address.lower() for word in 
+                        ["rd", "st", "ave", "drive", "road", "street", "avenue", "lane", "court", "place", "way"])):
+                        good_descriptions.append({
+                            "assessment": assessment,
+                            "address": address,
+                            "description": description,
+                            "owner": prop.get("owner_name", "N/A")
+                        })
+            
+            print(f"\n📊 Description Analysis Results:")
+            print(f"   ✅ Properties with good descriptions: {len(good_descriptions)}")
+            print(f"   ❌ Properties with placeholder descriptions: {len(bad_descriptions)}")
+            
+            # Show examples of good descriptions
+            if good_descriptions:
+                print(f"\n✅ Examples of GOOD property descriptions:")
+                for i, prop in enumerate(good_descriptions[:3]):
+                    print(f"   {i+1}. Assessment #{prop['assessment']}")
+                    print(f"      Address: {prop['address']}")
+                    print(f"      Owner: {prop['owner']}")
+            
+            # Show examples of bad descriptions
+            if bad_descriptions:
+                print(f"\n❌ Examples of BAD property descriptions (placeholders):")
+                for i, prop in enumerate(bad_descriptions[:5]):
+                    print(f"   {i+1}. Assessment #{prop['assessment']}")
+                    print(f"      Address: {prop['address']}")
+                    print(f"      Description: {prop['description']}")
+                    print(f"      Owner: {prop['owner']}")
+            
+            # Check specifically for assessment #00079006
+            if target_property:
+                print(f"\n🎯 SPECIFIC TARGET PROPERTY (Assessment #00079006):")
+                print(f"   Address: {target_property.get('property_address', 'N/A')}")
+                print(f"   Description: {target_property.get('property_description', 'N/A')}")
+                print(f"   Owner: {target_property.get('owner_name', 'N/A')}")
+                
+                # Check if this property has the bug
+                address = target_property.get('property_address', '')
+                if "Property at assessment #00079006" in address:
+                    print(f"   ❌ BUG CONFIRMED: Property #00079006 has placeholder description")
+                    return False, {"target_found": True, "has_bug": True, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
+                else:
+                    print(f"   ✅ Property #00079006 has proper description")
+                    return True, {"target_found": True, "has_bug": False, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
+            else:
+                print(f"\n⚠️ Target property (Assessment #00079006) not found in current data")
+                
+            # Overall assessment
+            total_properties = len(properties)
+            if total_properties > 0:
+                bad_percentage = (len(bad_descriptions) / total_properties) * 100
+                print(f"\n📈 Overall Description Quality:")
+                print(f"   Total properties: {total_properties}")
+                print(f"   Bad descriptions: {len(bad_descriptions)} ({bad_percentage:.1f}%)")
+                print(f"   Good descriptions: {len(good_descriptions)} ({100-bad_percentage:.1f}%)")
+                
+                # Consider it a failure if more than 10% have bad descriptions
+                if bad_percentage > 10:
+                    print(f"   ❌ DESCRIPTION BUG DETECTED: {bad_percentage:.1f}% of properties have placeholder descriptions")
+                    return False, {"target_found": False, "has_bug": True, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
+                else:
+                    print(f"   ✅ Description quality acceptable: Only {bad_percentage:.1f}% have placeholders")
+                    return True, {"target_found": False, "has_bug": False, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
+            else:
+                print(f"   ⚠️ No properties found to analyze")
+                return False, {"target_found": False, "has_bug": True, "bad_count": 0, "good_count": 0}
+                
+        else:
+            print(f"❌ Failed to retrieve Halifax properties: {response.status_code}")
+            return False, None
+    except Exception as e:
+        print(f"❌ Property description test error: {e}")
+        return False, None
+
 def test_stats_endpoint():
     """Test statistics endpoint"""
     print("\n📊 Testing Statistics Endpoint...")
