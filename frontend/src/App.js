@@ -608,11 +608,11 @@ function App() {
                                     )}
                                     {property.pid && (
                                       <a
-                                        href={`https://viewpoint.ca/map?pid=${property.pid}`}
+                                        href={`https://www.viewpoint.ca/map#pid=${property.pid}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-green-600 hover:underline"
-                                        title="View on map"
+                                        title="View property location on Viewpoint.ca"
                                       >
                                         📍 View Location
                                       </a>
