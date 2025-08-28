@@ -107,11 +107,11 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
 backend:
   - task: "Halifax Tax Sale PDF Parsing"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "main"
@@ -134,6 +134,9 @@ backend:
       - working: true
         agent: "main"
         comment: "BUG FIXED! Assessment #00079006 now displays correct description '00079006 OWEN ST. CLAIR ANDERSON 42' instead of placeholder text. Enhanced PDF parsing logic with better description extraction. Frontend verified - search shows proper property information. Only 3 edge cases (4.8%) remain with placeholder descriptions, 95.2% success rate."
+      - working: false
+        agent: "main"
+        comment: "BUG STILL EXISTS: User correctly identified that current 'description' is just AAN + owner name, not actual Parcel Description from PDF. Need to extract proper property description with address/location details from the Parcel Description field in PDF, not concatenate AAN and owner name."
 
   - task: "Halifax Scraper API Endpoint"
     implemented: true
