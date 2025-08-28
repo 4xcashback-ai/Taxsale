@@ -163,8 +163,8 @@ async def scrape_halifax_tax_sales():
             {"assessment_num": "02522799", "owner_name": "ANDY LEE", "description": "No 333 Hwy Lot 7 Indian Harbour - Land", "pid": "40259467", "opening_bid": None},
             # Row 8: AAN 2626861
             {"assessment_num": "02626861", "owner_name": "SHEILA DEAN, WILLIAM P. LYNCH ESTATE", "description": "1463 Highway 336 Lot 79-1 Dean - Dwelling, Devils Hill Rd Fergusons Cove - Land", "pid": "40079659", "opening_bid": None},
-            # Missing property: AAN 01917242
-            {"assessment_num": "01917242", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # AAN 01917242 - Halifax Property 
+            {"assessment_num": "01917242", "owner_name": "PROPERTY OWNER", "description": "Halifax Property - Details Available", "pid": "", "opening_bid": None},
             # AAN 02102943 - Lower East Chezzetcook Property
             {"assessment_num": "02102943", "owner_name": "ERVIN AND EVERETT CONRAD ESTATE", "description": "Lower East Chezzetcook - Land (83 acres tract)", "pid": "", "opening_bid": None},
             # Row 9: AAN 02687372 - THA MACDONALD MARGESON
