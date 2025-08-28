@@ -128,6 +128,9 @@ backend:
       - working: false
         agent: "main"
         comment: "Bug found: Property descriptions not extracting correctly. Assessment #00079006 shows 'Property at assessment #00079006' instead of actual property description. Need to fix PDF parsing logic for property descriptions."
+      - working: false
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Halifax PDF parsing is working but has a partial bug with property descriptions. Successfully extracts 62 properties from PDF. Assessment #00079006 now has proper description ('00079006 OWEN ST. CLAIR ANDERSON 42'), but 3 out of 62 properties (4.8%) still show placeholder descriptions: #01999184, #07737947, and #09192891. These properties have owner names extracted correctly but fall back to 'Property at assessment #XXXXXXXX' for descriptions. The PDF parsing logic needs enhancement to extract property descriptions for these edge cases. 95.2% of properties have proper descriptions extracted."
 
   - task: "Halifax Scraper API Endpoint"
     implemented: true
