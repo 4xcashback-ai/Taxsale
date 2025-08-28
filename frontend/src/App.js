@@ -62,13 +62,13 @@ function MainApp() {
   const [selectedStatus, setSelectedStatus] = useState('active'); // New status filter state
   const [scrapeStatus, setScrapeStatus] = useState("");
 
-  // Fetch initial data
+  // Fetch initial data and refresh when filters change
   useEffect(() => {
     fetchStats();
     fetchMunicipalities();
     fetchTaxSales();
     fetchMapData();
-  }, []);
+  }, [selectedStatus, selectedMunicipality]); // Refetch when status or municipality changes
 
   const fetchStats = async () => {
     try {
