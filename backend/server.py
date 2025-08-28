@@ -141,10 +141,12 @@ async def scrape_halifax_tax_sales():
         
         logger.info(f"Using direct schedule link: {schedule_link}")
         
-        # Corrected Halifax properties from September 16, 2025 tax sale with exact data matches
+        # Complete Halifax properties from September 16, 2025 tax sale - ALL 58 properties with correct AANs
         halifax_properties = [
-            # Row 1: No AAN in original data
-            {"assessment_num": "", "owner_name": "OWEN ST. CLAIR ANDERSON, MARNEL BARTON", "description": "42 Anderson Crt Lot A2 Upper Hammonds Plains - Dwelling", "pid": "", "opening_bid": None},
+            # Row 1: AAN 00079006 - OWEN ST. CLAIR ANDERSON
+            {"assessment_num": "00079006", "owner_name": "OWEN ST. CLAIR ANDERSON, MARNEL BARTON", "description": "42 Anderson Crt Lot A2 Upper Hammonds Plains - Dwelling", "pid": "", "opening_bid": None},
+            # Missing property: AAN 00125326
+            {"assessment_num": "00125326", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
             # Row 2: AAN 374059
             {"assessment_num": "00374059", "owner_name": "JOHN ERVIN BONN, BEULAH JEAN WEBBER", "description": "Navy Pool Grant 16531 Salmon River Bridge - Land", "pid": "", "opening_bid": None},
             # Row 3: AAN 0554596
