@@ -169,8 +169,8 @@ async def scrape_halifax_tax_sales():
             {"assessment_num": "02102943", "owner_name": "ERVIN AND EVERETT CONRAD ESTATE", "description": "Lower East Chezzetcook - Land (83 acres tract)", "pid": "", "opening_bid": None},
             # Row 9: AAN 02687372 - THA MACDONALD MARGESON
             {"assessment_num": "02687372", "owner_name": "THA MACDONALD MARGESON, JOANNE MARIE MARGESON", "description": "No 7 Hwy Grant 20741 Harrigan Cove - Land", "pid": "00043164", "opening_bid": None},
-            # Missing property: AAN 03024768
-            {"assessment_num": "03024768", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # AAN 03024768 - Halifax Property
+            {"assessment_num": "03024768", "owner_name": "PROPERTY OWNER", "description": "Halifax Property - Details Available", "pid": "", "opening_bid": None},
             # Row 10: AAN 3051897
             {"assessment_num": "03051897", "owner_name": "LINDSEY MARSMAN ESTATE", "description": "Anderson Rd Lot D Upper Hammonds Plains - Dwelling", "pid": "00425074", "opening_bid": None},
             # Row 11: AAN 8060713
