@@ -316,6 +316,7 @@ async def scrape_halifax_tax_sales():
                                         parts = line.split()
                                         assessment_num = None
                                         owner_name = None
+                                        pid = None
                                         
                                         # Find 8-digit numbers
                                         for part in parts:
