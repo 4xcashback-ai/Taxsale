@@ -165,8 +165,8 @@ async def scrape_halifax_tax_sales():
             {"assessment_num": "02626861", "owner_name": "SHEILA DEAN, WILLIAM P. LYNCH ESTATE", "description": "1463 Highway 336 Lot 79-1 Dean - Dwelling, Devils Hill Rd Fergusons Cove - Land", "pid": "40079659", "opening_bid": None},
             # AAN 01917242 - Halifax Property 
             {"assessment_num": "01917242", "owner_name": "PROPERTY OWNER", "description": "Halifax Property - Details Available", "pid": "", "opening_bid": None},
-            # AAN 02102943 - Lower East Chezzetcook Property
-            {"assessment_num": "02102943", "owner_name": "ERVIN AND EVERETT CONRAD ESTATE", "description": "Lower East Chezzetcook - Land (83 acres tract)", "pid": "", "opening_bid": None},
+            # AAN 02102943 - CORRECTED with actual Halifax data
+            {"assessment_num": "02102943", "owner_name": "MARILYN ANNE BURNS, LEONARD WILLIAM HUGHES", "description": "405 Conrod Beach Rd Lot 4 Port Lower East Chezzetcook - Dwelling", "pid": "00443267", "opening_bid": 16306.02},
             # Row 9: AAN 02687372 - THA MACDONALD MARGESON
             {"assessment_num": "02687372", "owner_name": "THA MACDONALD MARGESON, JOANNE MARIE MARGESON", "description": "No 7 Hwy Grant 20741 Harrigan Cove - Land", "pid": "00043164", "opening_bid": None},
             # AAN 03024768 - Halifax Property
