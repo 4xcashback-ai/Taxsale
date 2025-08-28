@@ -534,9 +534,9 @@ async def scrape_halifax_tax_sales():
                 # Parse property type from description
                 property_type = "Dwelling" if "Dwelling" in description else "Land" if "Land" in description else "Property"
                 
-                # Determine redeemable status based on property type and Halifax rules
-                redeemable_status = "Subject to redemption period (Contact HRM for details)"
-                hst_status = "HST applicable on commercial properties and vacant land if no HST registration"
+                # Use extracted redeemable and HST status from PDF, not generic defaults
+                redeemable_status = prop.get("redeemable_status", "Contact HRM for redemption details")
+                hst_status = prop.get("hst_status", "Contact HRM for HST details")
                 
                 # Create property record
                 property_data = {
