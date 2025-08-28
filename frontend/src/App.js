@@ -333,9 +333,15 @@ function App() {
                                 <span>{property.municipality_name}</span>
                               </div>
                               {property.assessment_number && (
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-xs text-slate-500">AAN: {property.assessment_number}</span>
-                                </div>
+                                <a
+                                  href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                                  title="View full property assessment on PVSC"
+                                >
+                                  <span className="text-xs font-medium">📋 AAN: {property.assessment_number}</span>
+                                </a>
                               )}
                             </CardDescription>
                           </div>
