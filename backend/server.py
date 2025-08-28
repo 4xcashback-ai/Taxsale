@@ -436,6 +436,42 @@ async def scrape_halifax_tax_sales():
                                             
                                             # Use the more structured extraction
                                             if assessment_num and owner_name:
+                                                # Extract redeemable status and HST status from the original line
+                                                redeemable_status = "Contact HRM for redemption status"  # Default
+                                                hst_status = "Contact HRM for HST details"  # Default
+                                                
+                                                # Look for redeemable indicators in the line
+                                                line_lower = line.lower()
+                                                if "redeemable" in line_lower:
+                                                    if "not redeemable" in line_lower or "non-redeemable" in line_lower:
+                                                        redeemable_status = "No"
+                                                    else:
+                                                        redeemable_status = "Yes"
+                                                elif "redeem" in line_lower and "subject" in line_lower:
+                                                    redeemable_status = "Subject to redemption"
+                                                elif "exempt" in line_lower and "redeem" in line_lower:
+                                                    redeemable_status = "No"
+                                                
+                                                # Look for HST indicators in the line  
+                                                if "hst" in line_lower:
+                                                    if "no hst" in line_lower or "hst no" in line_lower or "hst: no" in line_lower:
+                                                        hst_status = "No"
+                                                    elif "hst yes" in line_lower or "hst: yes" in line_lower or "hst applicable" in line_lower:
+                                                        hst_status = "Yes"
+                                                elif "tax" in line_lower and ("exempt" in line_lower or "no" in line_lower):
+                                                    hst_status = "No"
+                                                
+                                                # Extract opening bid from line if present
+                                                opening_bid = 1000.0  # Default
+                                                bid_matches = re.findall(r'\$[\d,]+\.?\d*', line)
+                                                if bid_matches:
+                                                    try:
+                                                        # Take the largest dollar amount as likely opening bid
+                                                        amounts = [float(match.replace('$', '').replace(',', '')) for match in bid_matches]
+                                                        opening_bid = max(amounts)
+                                                    except:
+                                                        pass
+                                                
                                                 # If we don't have a good description, try to extract PID for fallback
                                                 pid = None
                                                 pid_match = re.search(r'\b(\d{8})\b', after_assessment)
@@ -453,13 +489,13 @@ async def scrape_halifax_tax_sales():
                                                     "owner_name": owner_name,
                                                     "description": description,
                                                     "pid": pid,
-                                                    "opening_bid": 1000.0,
-                                                    "hst_status": "Contact HRM for HST details",
-                                                    "redeemable_status": "Contact HRM for redemption status"
+                                                    "opening_bid": opening_bid,
+                                                    "hst_status": hst_status,
+                                                    "redeemable_status": redeemable_status
                                                 }
                                                 
                                                 halifax_properties.append(property_data)
-                                                logger.info(f"Enhanced text extraction: {assessment_num} - {owner_name} - {description}")
+                                                logger.info(f"Enhanced text extraction: {assessment_num} - {owner_name[:50]}... - {description[:30]}... - Redeemable: {redeemable_status}")
                                     
                                     except Exception as text_error:
                                         logger.warning(f"Error processing enhanced text line: {text_error}")
