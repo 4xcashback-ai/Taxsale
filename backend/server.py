@@ -13,6 +13,10 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import re
+import PyPDF2
+import io
+import pandas as pd
+from io import BytesIO
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
