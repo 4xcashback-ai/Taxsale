@@ -59,6 +59,7 @@ function MainApp() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState('active'); // New status filter state
   const [scrapeStatus, setScrapeStatus] = useState("");
 
   // Fetch initial data
