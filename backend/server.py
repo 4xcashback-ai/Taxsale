@@ -453,6 +453,13 @@ async def get_statistics():
     )
 
 
+# Database cleanup endpoint
+@api_router.post("/clear-tax-sales")
+async def clear_all_tax_sales():
+    """Clear all tax sale properties from database"""
+    result = await db.tax_sales.delete_many({})
+    return {"deleted_count": result.deleted_count, "message": "All tax sale properties cleared"}
+
 # Enhanced Scraping Endpoints
 @api_router.post("/scrape/halifax")
 async def scrape_halifax():
