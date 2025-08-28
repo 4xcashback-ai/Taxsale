@@ -125,6 +125,70 @@ class ScrapeStats(BaseModel):
     last_scrape: Optional[datetime] = None
 
 
+async def update_property_statuses():
+    """
+    Update property statuses based on sale dates and current listings
+    """
+    try:
+        current_time = datetime.now(timezone.utc)
+        
+        # Mark properties as inactive if sale date has passed
+        sale_date_filter = {
+            "sale_date": {"$lt": current_time},
+            "status": "active"
+        }
+        
+        result = await db.tax_sales.update_many(
+            sale_date_filter,
+            {
+                "$set": {
+                    "status": "inactive",
+                    "status_updated_at": current_time
+                }
+            }
+        )
+        
+        logger.info(f"Updated {result.modified_count} properties to inactive due to passed sale dates")
+        
+        return result.modified_count
+        
+    except Exception as e:
+        logger.error(f"Error updating property statuses: {e}")
+        return 0
+
+async def mark_missing_properties_inactive(current_assessment_numbers: list, municipality_name: str):
+    """
+    Mark properties as inactive if they're no longer in the current tax sale list
+    """
+    try:
+        current_time = datetime.now(timezone.utc)
+        
+        # Find active properties that are not in the current list
+        missing_properties_filter = {
+            "municipality_name": municipality_name,
+            "assessment_number": {"$nin": current_assessment_numbers},
+            "status": "active"
+        }
+        
+        result = await db.tax_sales.update_many(
+            missing_properties_filter,
+            {
+                "$set": {
+                    "status": "inactive",
+                    "status_updated_at": current_time
+                }
+            }
+        )
+        
+        logger.info(f"Marked {result.modified_count} properties as inactive - no longer in {municipality_name} tax sale list")
+        
+        return result.modified_count
+        
+    except Exception as e:
+        logger.error(f"Error marking missing properties inactive: {e}")
+        return 0
+
+
 # Halifax-specific scraper
 async def scrape_halifax_tax_sales():
     """Scrape Halifax Regional Municipality tax sales"""
