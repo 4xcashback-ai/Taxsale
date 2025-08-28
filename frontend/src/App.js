@@ -97,6 +97,9 @@ function MainApp() {
       if (municipality) {
         params.append("municipality", municipality);
       }
+      if (selectedStatus) {
+        params.append("status", selectedStatus);
+      }
       if (query) {
         url = `${API}/tax-sales/search`;
         params.append("q", query);
