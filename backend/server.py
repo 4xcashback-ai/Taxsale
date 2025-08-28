@@ -142,7 +142,10 @@ async def scrape_halifax_tax_sales():
         
         # Scrape main tax sale page to find the PDF link
         main_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
-        response = requests.get(main_url, timeout=30)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(main_url, headers=headers, timeout=30)
         soup = BeautifulSoup(response.content, 'html.parser')
         
         # Find the PDF schedule link dynamically
