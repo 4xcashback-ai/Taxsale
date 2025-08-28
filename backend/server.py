@@ -18,6 +18,8 @@ import pdfplumber
 import io
 import pandas as pd
 from io import BytesIO
+import re
+from urllib.parse import quote
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
