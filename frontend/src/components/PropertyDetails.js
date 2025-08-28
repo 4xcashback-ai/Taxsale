@@ -320,6 +320,24 @@ const PropertyDetails = () => {
             {/* Location Map */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Location on Map</h2>
+              
+              {/* Google Maps Link Button */}
+              {property.google_maps_link && (
+                <div className="mb-4">
+                  <a
+                    href={property.google_maps_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    🗺️ View on Google Maps
+                  </a>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Click to see the exact location with street view and directions
+                  </p>
+                </div>
+              )}
+              
               <div className="h-64 w-full rounded-lg overflow-hidden">
                 {property.latitude && property.longitude ? (
                   <MapContainer
@@ -334,7 +352,7 @@ const PropertyDetails = () => {
                     <Marker position={[property.latitude, property.longitude]}>
                       <Popup>
                         <div>
-                          <strong>{property.property_address}</strong><br/>
+                          <strong>{property.civic_address || property.property_address}</strong><br/>
                           AAN: {property.assessment_number}<br/>
                           Opening Bid: {formatCurrency(property.opening_bid)}
                         </div>
@@ -342,11 +360,25 @@ const PropertyDetails = () => {
                     </Marker>
                   </MapContainer>
                 ) : (
-                  <div className="bg-gray-100 h-full flex items-center justify-center">
-                    <p className="text-gray-500">Map location not available</p>
+                  <div className="bg-gray-100 h-full flex items-center justify-center flex-col">
+                    <p className="text-gray-500 mb-2">Interactive map coordinates not available</p>
+                    {property.google_maps_link && (
+                      <p className="text-sm text-gray-400">Use the Google Maps button above for location details</p>
+                    )}
                   </div>
                 )}
               </div>
+              
+              {property.civic_address && property.civic_address !== property.property_address && (
+                <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <strong>Official Civic Address:</strong> {property.civic_address}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    This is the official municipal address from PVSC records
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Description */}
