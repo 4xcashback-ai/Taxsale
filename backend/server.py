@@ -937,7 +937,7 @@ async def scrape_pvsc_details(assessment_number: str):
         return None
 
 # API endpoint to get enhanced property details with PVSC data
-@api_router.get("/api/property/{assessment_number}/enhanced")
+@app.get("/api/property/{assessment_number}/enhanced")
 async def get_enhanced_property_details(assessment_number: str):
     """Get property details enhanced with PVSC data"""
     try:
