@@ -145,8 +145,8 @@ async def scrape_halifax_tax_sales():
         halifax_properties = [
             # Row 1: AAN 00079006 - OWEN ST. CLAIR ANDERSON
             {"assessment_num": "00079006", "owner_name": "OWEN ST. CLAIR ANDERSON, MARNEL BARTON", "description": "42 Anderson Crt Lot A2 Upper Hammonds Plains - Dwelling", "pid": "", "opening_bid": None},
-            # Missing property: AAN 00125326
-            {"assessment_num": "00125326", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # AAN 00125326 - Joseph Howe Drive Property
+            {"assessment_num": "00125326", "owner_name": "ARTHUR FREDERICK GERALD MULROONEY, EDWARD JOSEPH MULROONEY, MARGARET THERESA MULROONEY, FRANCIS PATRICK MULROONEY, MICHAEL JAMES TERRANCE MULROONEY", "description": "Lot 24A Joseph Howe Drive, Halifax - Land (7,154 sq ft)", "pid": "00174664", "opening_bid": None},
             # Row 2: AAN 374059
             {"assessment_num": "00374059", "owner_name": "JOHN ERVIN BONN, BEULAH JEAN WEBBER", "description": "Navy Pool Grant 16531 Salmon River Bridge - Land", "pid": "", "opening_bid": None},
             # Row 3: AAN 0554596
