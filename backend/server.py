@@ -208,6 +208,12 @@ async def scrape_halifax_tax_sales():
                                 try:
                                     df = pd.DataFrame(table[1:], columns=table[0])  # First row as header
                                     logger.info(f"Table columns: {list(df.columns)}")
+                                    logger.info(f"Column details: {[(i, col) for i, col in enumerate(df.columns)]}")
+                                    
+                                    # Log a sample row for debugging
+                                    if not df.empty:
+                                        first_row = df.iloc[0]
+                                        logger.info(f"Sample row data: {dict(first_row)}")
                                     
                                     # Process each row to extract property information
                                     for index, row in df.iterrows():
