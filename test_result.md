@@ -189,9 +189,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Halifax Tax Sale PDF Parsing"
-  stuck_tasks:
-    - "Halifax Tax Sale PDF Parsing"
+    - "Property Display with External Links"
+    - "Interactive Map Display"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
