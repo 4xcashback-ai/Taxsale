@@ -101,3 +101,73 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale data, including finding, downloading, and correctly extracting all property details from the PDF. Address any remaining 'Property Details TBD' placeholders by properly scraping all property information from source documents."
+
+backend:
+  - task: "Halifax Tax Sale PDF Parsing"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Currently using hardcoded sample data instead of parsing PDF. Need to implement proper PDF parsing logic using PyPDF2 that's already imported."
+
+  - task: "Halifax Scraper API Endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Endpoint exists at /api/scrape/halifax and successfully processes 1 property with sample data."
+
+frontend:
+  - task: "Property Display with External Links"
+    implemented: true
+    working: true
+    file: "App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Frontend displays properties with external links to PVSC (AANs), Viewpoint.ca (PIDs), and municipality websites."
+
+  - task: "Interactive Map Display"
+    implemented: true
+    working: true
+    file: "App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "React-Leaflet map integration showing property markers with popups."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Halifax Tax Sale PDF Parsing"
+    - "Halifax Scraper API Endpoint"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Halifax scraper currently uses hardcoded sample data. Need to implement proper PDF parsing to extract all property data from the actual PDF document. PyPDF2 is already imported but parsing logic is not implemented."
