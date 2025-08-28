@@ -39,6 +39,19 @@ const commercialIcon = createCustomIcon('#f59e0b'); // Orange
 const landIcon = createCustomIcon('#10b981'); // Green
 
 function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          <Route path="/" element={<MainApp />} />
+          <Route path="/property/:assessmentNumber" element={<PropertyDetails />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+function MainApp() {
   const [taxSales, setTaxSales] = useState([]);
   const [municipalities, setMunicipalities] = useState([]);
   const [mapData, setMapData] = useState([]);
