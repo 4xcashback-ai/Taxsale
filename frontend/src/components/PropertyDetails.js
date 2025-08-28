@@ -480,15 +480,27 @@ const PropertyDetails = () => {
                   <dd className="mt-1 text-sm text-gray-900">{property.owner_name}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Property ID</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{property.id}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                  <dt className="text-sm font-medium text-gray-500">Property Classification</dt>
                   <dd className="mt-1 text-sm text-gray-900">
-                    {property.updated_at ? formatDate(property.updated_at) : 'Recently'}
+                    {property.property_details?.building_style ? 
+                      `${property.property_details.building_style} ${property.property_details.year_built ? `(Built ${property.property_details.year_built})` : ''}`.trim() :
+                      (property.property_description?.includes('Dwelling') ? 'Residential Property' : 
+                       property.property_description?.includes('Land') ? 'Vacant Land' : 'Property')
+                    }
                   </dd>
                 </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Tax Sale Municipality</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{property.municipality}</dd>
+                </div>
+                {property.updated_at && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Data Last Updated</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {formatDate(property.updated_at)}
+                    </dd>
+                  </div>
+                )}
               </dl>
             </div>
 
