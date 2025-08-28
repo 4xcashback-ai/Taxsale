@@ -169,7 +169,6 @@ metadata:
 test_plan:
   current_focus:
     - "Halifax Tax Sale PDF Parsing"
-    - "Halifax Scraper API Endpoint"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
