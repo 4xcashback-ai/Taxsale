@@ -615,7 +615,7 @@ async def scrape_halifax_tax_sales():
                 redeemable_status = prop.get("redeemable_status", "Contact HRM for redemption details")
                 hst_status = prop.get("hst_status", "Contact HRM for HST details")
                 
-                # Create property record
+                # Create property record with status tracking
                 property_data = {
                     "municipality_id": municipality_id,
                     "municipality_name": "Halifax Regional Municipality",
@@ -632,6 +632,8 @@ async def scrape_halifax_tax_sales():
                     "redeemable": redeemable_status,
                     "hst_applicable": hst_status,
                     "source_url": schedule_link,
+                    "status": "active",  # New properties default to active
+                    "status_updated_at": datetime.now(timezone.utc),
                     "raw_data": {
                         "assessment_number": assessment_num,
                         "owner_name": owner_name,
