@@ -341,6 +341,18 @@ function MainApp() {
                       ))}
                     </select>
                   </div>
+                  <div className="sm:w-40">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/80 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      title="Filter properties by status"
+                    >
+                      <option value="active">🟢 Active</option>
+                      <option value="inactive">🔴 Inactive</option>
+                      <option value="all">📋 All Properties</option>
+                    </select>
+                  </div>
                   <Button 
                     onClick={handleSearch}
                     disabled={loading}
