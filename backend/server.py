@@ -205,7 +205,7 @@ async def scrape_halifax_tax_sales():
                                             # Extract data based on table structure
                                             # Halifax PDFs typically have columns for Assessment Number, Owner, Description, PID, Opening Bid, etc.
                                             
-                                            # Look for assessment number (typically first column or named column)
+                                            # Initialize variables
                                             assessment_num = None
                                             owner_name = None
                                             description = None
