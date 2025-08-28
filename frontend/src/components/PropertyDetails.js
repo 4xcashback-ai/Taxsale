@@ -348,13 +348,13 @@ const PropertyDetails = () => {
               <div className="h-80 w-full rounded-lg overflow-hidden border">
                 {property.google_maps_link || property.civic_address || property.property_address ? (
                   <iframe
-                    src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWTgHz8EXzqRu&q=${encodeURIComponent(
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(
                       property.civic_address || 
                       property.property_address || 
                       (property.google_maps_link && property.google_maps_link.includes('?q=') ? 
                         decodeURIComponent(property.google_maps_link.split('?q=')[1]) : 
                         property.property_address)
-                    )}&zoom=16&maptype=satellite`}
+                    )}&output=embed&z=16`}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -366,7 +366,7 @@ const PropertyDetails = () => {
                 ) : property.latitude && property.longitude ? (
                   // Fallback to coordinates if available
                   <iframe
-                    src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWTgHz8EXzqRu&center=${property.latitude},${property.longitude}&zoom=16&maptype=satellite`}
+                    src={`https://www.google.com/maps?q=${property.latitude},${property.longitude}&output=embed&z=16`}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
