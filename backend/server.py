@@ -196,21 +196,9 @@ async def scrape_halifax_tax_sales():
                 for page_num, page in enumerate(pdf.pages):
                     logger.info(f"Processing page {page_num + 1}")
                     
-                    # Try to extract tables from the page with more aggressive settings
-                    tables = page.extract_tables(table_settings={
-                        "vertical_strategy": "lines_strict", 
-                        "horizontal_strategy": "lines_strict"
-                    })
-                    
-                    logger.info(f"Found {len(tables) if tables else 0} tables with strict settings")
-                    
-                    # If strict settings don't work, try more flexible settings
-                    if not tables:
-                        tables = page.extract_tables(table_settings={
-                            "vertical_strategy": "text", 
-                            "horizontal_strategy": "text"
-                        })
-                        logger.info(f"Found {len(tables) if tables else 0} tables with flexible settings")
+                    # TEMPORARY: Force text extraction to debug the issue
+                    tables = []  # Skip table extraction for debugging
+                    logger.info("DEBUG: Forcing text extraction path to test enhanced parsing logic")
                     
                     if tables:
                         for table_num, table in enumerate(tables):
