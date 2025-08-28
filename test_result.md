@@ -146,6 +146,9 @@ backend:
       - working: true
         agent: "main"
         comment: "BUG COMPLETELY FIXED! Enhanced PDF text parsing to properly separate AAN, owner name, and parcel description fields. Assessment #00079006 now shows proper address '42 Anderson Crt Lo' (42 Anderson Court). All target assessments now display actual property locations from PDF Parcel Description field instead of AAN+owner concatenations. Success rate 69.4% for clear addresses with remaining properties showing valid location descriptions."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL DATA TRUNCATION & REDEEMABLE STATUS BUGS CONFIRMED! Comprehensive testing of 62 Halifax properties reveals multiple critical issues exactly as reported by user: 1) OWNER NAME TRUNCATION: Assessment #00079006 shows 'OWEN ST. CLAI' (13 chars) instead of full 'OWEN ST. CLAIR ANDERSON A2' - confirming user's truncation report. 2) SYSTEMATIC TRUNCATION: 17 properties (27.4%) show suspicious truncation patterns with abnormally short owner names. 3) GENERIC REDEEMABLE STATUS: ALL properties show placeholder 'Contact HRM for redemption status' instead of actual PDF values (Yes/No/Subject to redemption). 4) GENERIC HST STATUS: ALL properties show placeholder 'Contact HRM for HST details' instead of actual PDF values. Raw data analysis confirms truncation occurs during PDF parsing - both processed and raw data contain same truncated values. The PDF parsing logic is cutting off owner names and not extracting actual redeemable/HST status from PDF. User's concerns are 100% validated."
 
   - task: "Halifax Scraper API Endpoint"
     implemented: true
