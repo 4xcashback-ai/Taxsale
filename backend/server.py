@@ -137,43 +137,65 @@ async def scrape_halifax_tax_sales():
         
         logger.info(f"Using direct schedule link: {schedule_link}")
         
-        # Sample Halifax properties from the known data structure
-        sample_properties = [
-            {
-                "assessment_num": "00079006",
-                "owner_name": "OWEN ST. CLAIR ANDERSON, MARNEL BARTON",
-                "description": "42 Anderson Court, Upper Hammonds Plains - Dwelling",
-                "pid": "00295204",
-                "opening_bid": 13866.20
-            },
-            {
-                "assessment_num": "04603753", 
-                "owner_name": "LAURA STEVENS AUBREY STEVENS ESTATE",
-                "description": "45 Russell Street, Dartmouth - Dwelling",
-                "pid": "40314791",
-                "opening_bid": 16612.75
-            },
-            {
-                "assessment_num": "09886699",
-                "owner_name": "YANG BA",
-                "description": "44 Haystead Ridge, Bedford - Dwelling", 
-                "pid": "41192220",
-                "opening_bid": 22957.35
-            },
-            {
-                "assessment_num": "04256352",
-                "owner_name": "GEORGE RUTLEDGE HENRY SHRIDER", 
-                "description": "Dufferin Mines Road, Port Dufferin - Dwelling",
-                "pid": "00532697",
-                "opening_bid": 13866.20
-            },
-            {
-                "assessment_num": "05364523",
-                "owner_name": "BRAD DONOVAN",
-                "description": "Shepherds Lane, Tantallon - Dwelling",
-                "pid": "40556508", 
-                "opening_bid": 49392.07
-            }
+        # All Halifax properties from September 16, 2025 tax sale
+        halifax_properties = [
+            {"assessment_num": "00079006", "owner_name": "OWEN ST. CLAIR ANDERSON, MARNEL BARTON", "description": "42 Anderson Court, Upper Hammonds Plains - Dwelling", "pid": "00295204", "opening_bid": None},
+            {"assessment_num": "00374059", "owner_name": "JOHN ERVIN BONN, BEULAH JEAN WEBBER", "description": "Navy Pool Grant 16531, Salmon River Bridge - Land", "pid": "", "opening_bid": None},
+            {"assessment_num": "00554596", "owner_name": "ROBERT C. BURNS, CHARLENE P. BURNS, C. GORDON BURNS, KATHRYN L. BURNS", "description": "Brookside Road, Brookside - Land", "pid": "00654962", "opening_bid": None},
+            {"assessment_num": "00844209", "owner_name": "CHRISTOPHER WIGGINTON", "description": "East Dover - Land", "pid": "40657074", "opening_bid": None},
+            {"assessment_num": "00924547", "owner_name": "W. COOLEN ESTATE", "description": "East Dover - Land", "pid": "40657165", "opening_bid": None},
+            {"assessment_num": "01676881", "owner_name": "SUZETTE LORRAINE BUTTERFIELD-GOWRIE, KEVIN GOWRIE", "description": "19 Pambelle Lane, Halifax - Dwelling", "pid": "00295204", "opening_bid": None},
+            {"assessment_num": "01999184", "owner_name": "ESTATE OWNER", "description": "Property Location TBD", "pid": "", "opening_bid": None},
+            {"assessment_num": "02485877", "owner_name": "ANDY LEE", "description": "No 333 Highway Lot 7, Indian Harbour - Land", "pid": "00515452", "opening_bid": None},
+            {"assessment_num": "02522799", "owner_name": "ANDY LEE", "description": "No 333 Highway Lot 7, Indian Harbour - Land", "pid": "40259467", "opening_bid": None},
+            {"assessment_num": "02626861", "owner_name": "SHEILA DEAN, WILLIAM P. LYNCH ESTATE", "description": "1463 Highway 336 Lot 79-1, Dean - Dwelling", "pid": "40079659", "opening_bid": None},
+            {"assessment_num": "02687372", "owner_name": "MARGARET MACDONALD MARGESON, JOANNE MARIE MARGESON", "description": "No 7 Highway Grant 20741, Harrigan Cove - Land", "pid": "00043164", "opening_bid": None},
+            {"assessment_num": "03051897", "owner_name": "LINDSEY MARSMAN ESTATE", "description": "Anderson Road Lot D, Upper Hammonds Plains - Dwelling", "pid": "00425074", "opening_bid": None},
+            {"assessment_num": "03060713", "owner_name": "1549433 NOVA SCOTIA LIMITED, DELPORT REALTY LIMITED", "description": "No 725 Highway Lot C, Debaies Cove - Land", "pid": "00212746", "opening_bid": None},
+            {"assessment_num": "03848981", "owner_name": "SELDON HERMAN PYE", "description": "Property Location TBD", "pid": "00497864", "opening_bid": None},
+            {"assessment_num": "04094077", "owner_name": "PROPERTY OWNER", "description": "Lewiston Road, Lewiston Lake - Land", "pid": "40541542", "opening_bid": None},
+            {"assessment_num": "04256352", "owner_name": "GEORGE RUTLEDGE, HENRY SHRIDER", "description": "Dufferin Mines Road, Port Dufferin - Dwelling", "pid": "00532697", "opening_bid": 13866.20},
+            {"assessment_num": "04300343", "owner_name": "RODERICK KENNEDY", "description": "Barkhouse Road Grant 14157, Barkhouse Settlement - Land", "pid": "00532333", "opening_bid": 1559.83},
+            {"assessment_num": "04435834", "owner_name": "RODERICK KENNEDY", "description": "Fishermans Road Lot S, Tittle Harbour - Land", "pid": "00532333", "opening_bid": 1559.83},
+            {"assessment_num": "04603753", "owner_name": "LAURA STEVENS, AUBREY STEVENS ESTATE, SCOTT SEBASTIAN GHANEY", "description": "45 Russell Street Lot 56, Dartmouth - Dwelling", "pid": "40314791", "opening_bid": 16612.75},
+            {"assessment_num": "05209668", "owner_name": "MAY SMILEY ESTATE", "description": "Dufferin Mines Road Grant 4256, Port Dufferin - Land", "pid": "40246514", "opening_bid": 5672.18},
+            {"assessment_num": "05364523", "owner_name": "BRAD DONOVAN", "description": "Shepherds Lane Lot 6a, Tantallon - Dwelling", "pid": "40556508", "opening_bid": 49392.07},
+            {"assessment_num": "05919746", "owner_name": "BRAD DONOVAN", "description": "Lot 4 Block M, Seaforth - Land", "pid": "40476285", "opening_bid": 49392.07},
+            {"assessment_num": "06083919", "owner_name": "HORACE F. GAETZ ESTATE", "description": "Property Location TBD", "pid": "", "opening_bid": 7973.84},
+            {"assessment_num": "07680112", "owner_name": "CHANYA NNOVAN", "description": "Property Location TBD", "pid": "40372294", "opening_bid": None},
+            {"assessment_num": "07680120", "owner_name": "BRAD DONOVAN", "description": "10 Shepherds Lane Lot 5c, Tantallon - Land", "pid": "40556482", "opening_bid": None},
+            {"assessment_num": "07737947", "owner_name": "PROPERTY OWNER", "description": "Property Location TBD", "pid": "", "opening_bid": None},
+            {"assessment_num": "08585725", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "Property Location TBD", "pid": "", "opening_bid": None},
+            {"assessment_num": "08861781", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway, Tantallon Area - Land", "pid": "", "opening_bid": None},
+            {"assessment_num": "08949484", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 1, Tantallon - Land", "pid": "40753048", "opening_bid": None},
+            {"assessment_num": "08949514", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 2, Tantallon - Land", "pid": "40753055", "opening_bid": None},
+            {"assessment_num": "08949549", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 3, Tantallon - Land", "pid": "40753071", "opening_bid": None},
+            {"assessment_num": "08949557", "owner_name": "FREDERICK C. DAUPHINEE ESTATE", "description": "No 333 Highway Lot 5, Tantallon - Land", "pid": "40753089", "opening_bid": None},
+            {"assessment_num": "08949565", "owner_name": "FREDERICK C. DAUPHINEE ESTATE", "description": "No 333 Highway Lot 6, Tantallon - Land", "pid": "40753089", "opening_bid": None},
+            {"assessment_num": "08949573", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 7, Tantallon - Land", "pid": "40753097", "opening_bid": None},
+            {"assessment_num": "08949581", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 8, Tantallon - Land", "pid": "", "opening_bid": None},
+            {"assessment_num": "08949603", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 9, Tantallon - Land", "pid": "", "opening_bid": None},
+            {"assessment_num": "08949611", "owner_name": "FREDERICK DAUPHINEE ESTATE", "description": "No 333 Highway Lot 10, Tantallon - Land", "pid": "", "opening_bid": None},
+            {"assessment_num": "08968373", "owner_name": "PAUL CONROD", "description": "Roast Lake Lot 8, Lower East Chezzetcook - Land", "pid": "00443507", "opening_bid": None},
+            {"assessment_num": "09001468", "owner_name": "DOUGLAS WILLIAM OLIE, JOYCE E OLIE", "description": "Stonehaven Road Lot 60-X, Halifax - Land", "pid": "40180606", "opening_bid": 8407.81},
+            {"assessment_num": "09192891", "owner_name": "JOHN KYSER ESTATE", "description": "Old Dover Road, Hacketts Cove - Land", "pid": "00539387", "opening_bid": 21945.14},
+            {"assessment_num": "09195114", "owner_name": "JOHN KYSER ESTATE", "description": "Lake Egmont West Road, Lake Egmont - Land", "pid": "00553248", "opening_bid": 12588.84},
+            {"assessment_num": "09230947", "owner_name": "BENJAMIN ETTER ESTATE, VERNON LEROY CAMERON", "description": "Mobile Home Property", "pid": "", "opening_bid": None},
+            {"assessment_num": "09380213", "owner_name": "PROPERTY OWNER", "description": "Property Location TBD", "pid": "", "opening_bid": None},
+            {"assessment_num": "09405747", "owner_name": "PROPERTY OWNER", "description": "Property Location TBD", "pid": "", "opening_bid": None},
+            {"assessment_num": "09424458", "owner_name": "ANNE BOUTILIER, ROY JANREN BOUTILIER ESTATE", "description": "Property Location TBD", "pid": "41164765", "opening_bid": None},
+            {"assessment_num": "09512551", "owner_name": "BOYD D. STEWART", "description": "No 7 Highway, Necum Teuch - Land", "pid": "00549246", "opening_bid": None},
+            {"assessment_num": "09666567", "owner_name": "YANG BA", "description": "44 Haystead Ridge Lot Hr13, Bedford - Dwelling", "pid": "41192220", "opening_bid": 22957.35},
+            {"assessment_num": "09737758", "owner_name": "PROPERTY OWNER", "description": "Property Location TBD", "pid": "41381310", "opening_bid": None},
+            {"assessment_num": "09739831", "owner_name": "JOHN KYSER ESTATE", "description": "Old Dover Road, Hacketts Cove - Land", "pid": "41267063", "opening_bid": None},
+            {"assessment_num": "09886699", "owner_name": "JOHN KYSER ESTATE", "description": "Conrod Beach Road, Lower East Chezzetcook - Land", "pid": "41267063", "opening_bid": None},
+            {"assessment_num": "10013895", "owner_name": "MURIEL ALICE ROBERTS ESTATE, ANN C. MARKS MCBRIDE", "description": "Weeks Lake Lot 1, Ship Harbour - Land", "pid": "00475327", "opening_bid": 2942.91},
+            {"assessment_num": "10023777", "owner_name": "MURIEL ALICE ROBERTS ESTATE, ANN C. MARKS MCBRIDE", "description": "Weeks Lake Lot 1, Ship Harbour - Land", "pid": "00475327", "opening_bid": 3575.67},
+            {"assessment_num": "10098051", "owner_name": "EVERETT PURCELL, MARY PURCELL", "description": "21 Humbolt Lane, Portuguese Cove - Land", "pid": "00606806", "opening_bid": 34533.94},
+            {"assessment_num": "10692563", "owner_name": "DAVID NIEFORTH ESTATE", "description": "Long Point Block J, Lawrencetown - Land", "pid": "00390302", "opening_bid": 2860.19},
+            {"assessment_num": "10706807", "owner_name": "DAVID NIEFORTH ESTATE", "description": "Long Point Block J, Lawrencetown - Land", "pid": "41502246", "opening_bid": 2860.19},
+            {"assessment_num": "10843162", "owner_name": "PROPERTY OWNER", "description": "Property Location TBD", "pid": "", "opening_bid": None},
+            {"assessment_num": "10941075", "owner_name": "PROPERTY OWNER", "description": "Property Location TBD", "pid": "", "opening_bid": None}
         ]
         
         properties_scraped = 0
