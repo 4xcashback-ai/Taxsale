@@ -707,6 +707,18 @@ function App() {
                         Manual scraping available anytime via the buttons above.
                       </p>
                     </div>
+
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <h4 className="font-semibold text-purple-800 mb-2">🔗 External Links Integration</h4>
+                      <p className="text-sm text-purple-700 mb-2">
+                        Property data includes clickable links for enhanced research:
+                      </p>
+                      <ul className="text-sm text-purple-700 space-y-1">
+                        <li><strong>📋 Assessment Numbers (AAN):</strong> Link to PVSC for full property assessment details</li>
+                        <li><strong>📍 PID Numbers:</strong> Link to Viewpoint.ca for property location mapping</li>
+                        <li><strong>🏛️ Municipality Links:</strong> Direct access to official municipal websites</li>
+                      </ul>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
