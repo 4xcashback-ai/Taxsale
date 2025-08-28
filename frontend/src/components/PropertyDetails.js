@@ -328,43 +328,62 @@ const PropertyDetails = () => {
                     href={property.google_maps_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors mr-2"
                   >
-                    🗺️ View on Google Maps
+                    🗺️ Open in Google Maps
                   </a>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Click to see the exact location with street view and directions
-                  </p>
+                  <button
+                    onClick={() => {
+                      const address = property.civic_address || property.property_address;
+                      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+                      window.open(directionsUrl, '_blank');
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    🧭 Get Directions
+                  </button>
                 </div>
               )}
               
-              <div className="h-64 w-full rounded-lg overflow-hidden">
-                {property.latitude && property.longitude ? (
-                  <MapContainer
-                    center={[property.latitude, property.longitude]}
-                    zoom={15}
-                    style={{ height: '100%', width: '100%' }}
-                  >
-                    <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    />
-                    <Marker position={[property.latitude, property.longitude]}>
-                      <Popup>
-                        <div>
-                          <strong>{property.civic_address || property.property_address}</strong><br/>
-                          AAN: {property.assessment_number}<br/>
-                          Opening Bid: {formatCurrency(property.opening_bid)}
-                        </div>
-                      </Popup>
-                    </Marker>
-                  </MapContainer>
+              <div className="h-80 w-full rounded-lg overflow-hidden border">
+                {property.google_maps_link || property.civic_address || property.property_address ? (
+                  <iframe
+                    src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWTgHz8EXzqRu&q=${encodeURIComponent(
+                      property.civic_address || 
+                      property.property_address || 
+                      (property.google_maps_link && property.google_maps_link.includes('?q=') ? 
+                        decodeURIComponent(property.google_maps_link.split('?q=')[1]) : 
+                        property.property_address)
+                    )}&zoom=16&maptype=satellite`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Property Location Map"
+                  ></iframe>
+                ) : property.latitude && property.longitude ? (
+                  // Fallback to coordinates if available
+                  <iframe
+                    src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWTgHz8EXzqRu&center=${property.latitude},${property.longitude}&zoom=16&maptype=satellite`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Property Location Map"
+                  ></iframe>
                 ) : (
                   <div className="bg-gray-100 h-full flex items-center justify-center flex-col">
-                    <p className="text-gray-500 mb-2">Interactive map coordinates not available</p>
-                    {property.google_maps_link && (
-                      <p className="text-sm text-gray-400">Use the Google Maps button above for location details</p>
-                    )}
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">🗺️</div>
+                      <p className="text-gray-500 mb-2">Map location not available</p>
+                      <p className="text-sm text-gray-400">
+                        Property address: {property.property_address}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -372,10 +391,18 @@ const PropertyDetails = () => {
               {property.civic_address && property.civic_address !== property.property_address && (
                 <div className="mt-4 p-3 bg-green-50 rounded-lg">
                   <p className="text-sm text-green-800">
-                    <strong>Official Civic Address:</strong> {property.civic_address}
+                    <strong>📍 Official Civic Address:</strong> {property.civic_address}
                   </p>
                   <p className="text-xs text-green-600 mt-1">
                     This is the official municipal address from PVSC records
+                  </p>
+                </div>
+              )}
+              
+              {property.property_details?.geocoded_address && (
+                <div className="mt-2 p-2 bg-blue-50 rounded">
+                  <p className="text-xs text-blue-600">
+                    📍 Geocoded Address: {property.property_details.geocoded_address}
                   </p>
                 </div>
               )}
