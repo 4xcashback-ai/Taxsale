@@ -76,6 +76,8 @@ class TaxSaleProperty(BaseModel):
     zoning: Optional[str] = None
     owner_name: Optional[str] = None
     pid_number: Optional[str] = None  # Property Identification Number
+    redeemable: Optional[str] = None  # Redeemable status from tax sale
+    hst_applicable: Optional[str] = None  # HST information
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     scraped_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
