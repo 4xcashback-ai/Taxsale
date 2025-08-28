@@ -27,6 +27,20 @@ const PropertyDetails = () => {
     try {
       setLoading(true);
       const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+      
+      // Try to get enhanced details first
+      try {
+        const enhancedResponse = await fetch(`${backendUrl}/api/property/${assessmentNumber}/enhanced`);
+        if (enhancedResponse.ok) {
+          const enhancedProperty = await enhancedResponse.json();
+          setProperty(enhancedProperty);
+          return;
+        }
+      } catch (enhancedError) {
+        console.warn('Enhanced data not available, falling back to basic data:', enhancedError);
+      }
+      
+      // Fallback to basic property list
       const response = await fetch(`${backendUrl}/api/tax-sales`);
       if (!response.ok) throw new Error('Failed to fetch properties');
       
