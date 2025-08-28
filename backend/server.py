@@ -281,14 +281,28 @@ async def scrape_halifax_tax_sales():
                                                         if value and str(value).strip():
                                                             value_str = str(value).strip()
                                                             # Look for values that seem like addresses or property descriptions
+                                                            # Exclude values that are clearly other fields
                                                             if (len(value_str) > 10 and 
-                                                                (any(word in value_str for word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Avenue", "Lane", "Court", "Place", "Way"]) or
+                                                                value_str != owner_name and 
+                                                                value_str != assessment_num and 
+                                                                value_str != pid and
+                                                                not re.match(r'^\$?[\d,]+\.?\d*$', value_str.replace(',', '')) and  # Not just a number/amount
+                                                                (any(word in value_str for word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Avenue", "Lane", "Court", "Place", "Way", "Lot", "Unit", "Grant", "Halifax", "Dartmouth", "Bedford"]) or
                                                                  re.search(r'\b\d+\s+\w+', value_str) or  # Street number pattern
-                                                                 " - " in value_str or  # Common separator in property descriptions
-                                                                 "Lot" in value_str or "Unit" in value_str or
-                                                                 value_str != owner_name and value_str != assessment_num and value_str != pid)):
-                                                                if not description or len(value_str) > len(description):
-                                                                    description = value_str
+                                                                 " - " in value_str)):  # Common separator in property descriptions
+                                                                
+                                                                # Clean up the description
+                                                                cleaned_desc = value_str
+                                                                # Remove assessment numbers and PIDs from the description
+                                                                cleaned_desc = re.sub(r'\b\d{8}\b', '', cleaned_desc)
+                                                                # Remove dollar amounts
+                                                                cleaned_desc = re.sub(r'\$[\d,]+\.?\d*', '', cleaned_desc)
+                                                                # Clean up extra spaces
+                                                                cleaned_desc = re.sub(r'\s+', ' ', cleaned_desc).strip()
+                                                                
+                                                                if len(cleaned_desc) > 5:
+                                                                    if not description or len(cleaned_desc) > len(description):
+                                                                        description = cleaned_desc
                                                 
                                                 # Use reasonable defaults if still missing
                                                 if not description and assessment_num:
