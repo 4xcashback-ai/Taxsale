@@ -368,6 +368,10 @@ async def scrape_halifax_tax_sales():
                         logger.info("No tables found, trying enhanced text extraction...")
                         text = page.extract_text()
                         if text:
+                            # Debug: Log first few lines of raw PDF text to understand structure
+                            text_lines = text.split('\n')[:10]
+                            logger.info(f"Raw PDF text sample: {text_lines}")
+                            
                             # Look for property data patterns in text - Halifax PDFs typically have structured lines
                             lines = text.split('\n')
                             for line in lines:
