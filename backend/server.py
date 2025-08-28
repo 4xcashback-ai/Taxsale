@@ -131,33 +131,11 @@ async def scrape_halifax_tax_sales():
             {"$set": {"scrape_status": "in_progress"}}
         )
         
-        # Scrape main tax sale page
-        main_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
-        response = requests.get(main_url, timeout=30)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Use the direct property list URL we know exists
+        schedule_link = "https://www.halifax.ca/media/91654"
+        sale_date = "2025-09-16T10:01:00Z"  # Known sale date from the page
         
-        # Find property list URL and sale details
-        schedule_link = None
-        sale_date = None
-        
-        for link in soup.find_all('a'):
-            href = link.get('href', '')
-            text = link.get_text()
-            if 'SCHEDULE' in text.upper() and 'TAXSALE' in text.upper():
-                schedule_link = href
-            elif 'Sept' in text and '2025' in text:
-                # Extract sale date
-                date_match = re.search(r'Sept\s+(\d+),\s+(\d{4})', text)
-                if date_match:
-                    day, year = date_match.groups()
-                    sale_date = f"{year}-09-{day.zfill(2)}T10:01:00Z"
-        
-        if not schedule_link:
-            raise Exception("Could not find Halifax property schedule link")
-        
-        # Make URL absolute if relative
-        if schedule_link.startswith('/'):
-            schedule_link = "https://www.halifax.ca" + schedule_link
+        logger.info(f"Using direct schedule link: {schedule_link}")
         
         # Scrape property list
         list_response = requests.get(schedule_link, timeout=30)
