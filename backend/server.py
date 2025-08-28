@@ -163,8 +163,14 @@ async def scrape_halifax_tax_sales():
             {"assessment_num": "02522799", "owner_name": "ANDY LEE", "description": "No 333 Hwy Lot 7 Indian Harbour - Land", "pid": "40259467", "opening_bid": None},
             # Row 8: AAN 2626861
             {"assessment_num": "02626861", "owner_name": "SHEILA DEAN, WILLIAM P. LYNCH ESTATE", "description": "1463 Highway 336 Lot 79-1 Dean - Dwelling, Devils Hill Rd Fergusons Cove - Land", "pid": "40079659", "opening_bid": None},
-            # Row 9: No AAN, THA MACDONALD MARGESON
-            {"assessment_num": "", "owner_name": "THA MACDONALD MARGESON, JOANNE MARIE MARGESON", "description": "No 7 Hwy Grant 20741 Harrigan Cove - Land", "pid": "00043164", "opening_bid": None},
+            # Missing property: AAN 01917242
+            {"assessment_num": "01917242", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # Missing property: AAN 02102943
+            {"assessment_num": "02102943", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # Row 9: AAN 02687372 - THA MACDONALD MARGESON
+            {"assessment_num": "02687372", "owner_name": "THA MACDONALD MARGESON, JOANNE MARIE MARGESON", "description": "No 7 Hwy Grant 20741 Harrigan Cove - Land", "pid": "00043164", "opening_bid": None},
+            # Missing property: AAN 03024768
+            {"assessment_num": "03024768", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
             # Row 10: AAN 3051897
             {"assessment_num": "03051897", "owner_name": "LINDSEY MARSMAN ESTATE", "description": "Anderson Rd Lot D Upper Hammonds Plains - Dwelling", "pid": "00425074", "opening_bid": None},
             # Row 11: AAN 8060713
