@@ -107,11 +107,11 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
 backend:
   - task: "Halifax Tax Sale PDF Parsing"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 3
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
