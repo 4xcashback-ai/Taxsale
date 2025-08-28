@@ -274,9 +274,25 @@ async def scrape_halifax_tax_sales():
                                             
                                             # Validate we have minimum required data
                                             if owner_name and (assessment_num or description):
-                                                # Use reasonable defaults or extract from description if missing
+                                                # Enhanced description extraction if not found yet
+                                                if not description:
+                                                    # Look for any column that might contain address/property info
+                                                    for col_name, value in row.items():
+                                                        if value and str(value).strip():
+                                                            value_str = str(value).strip()
+                                                            # Look for values that seem like addresses or property descriptions
+                                                            if (len(value_str) > 10 and 
+                                                                (any(word in value_str for word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Avenue", "Lane", "Court", "Place", "Way"]) or
+                                                                 re.search(r'\b\d+\s+\w+', value_str) or  # Street number pattern
+                                                                 " - " in value_str or  # Common separator in property descriptions
+                                                                 "Lot" in value_str or "Unit" in value_str or
+                                                                 value_str != owner_name and value_str != assessment_num and value_str != pid)):
+                                                                if not description or len(value_str) > len(description):
+                                                                    description = value_str
+                                                
+                                                # Use reasonable defaults if still missing
                                                 if not description and assessment_num:
-                                                    description = f"Property {assessment_num}"
+                                                    description = f"Property at assessment #{assessment_num}"
                                                 elif not assessment_num and description:
                                                     # Try to extract assessment number from description
                                                     assessment_match = re.search(r'\b\d{8}\b', description)
