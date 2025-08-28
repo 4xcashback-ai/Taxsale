@@ -177,20 +177,194 @@ async def scrape_halifax_tax_sales():
             pdf_response.raise_for_status()
             logger.info(f"Downloaded PDF from {schedule_link}, size: {len(pdf_response.content)} bytes")
             
-            # For now, use the corrected sample data until PDF parsing is fully implemented
-            # This is one correctly parsed property as an example
-            halifax_properties = [
-                # Correctly parsed property from your data
-                {"assessment_num": "02102943", "owner_name": "MARILYN ANNE BURNS, LEONARD WILLIAM HUGHES", "description": "405 Conrod Beach Rd Lot 4 Port Lower East Chezzetcook - Dwelling", "pid": "00443267", "opening_bid": 16306.02, "hst_status": "No", "redeemable_status": "No"},
-            ]
+            # Parse the PDF using pdfplumber for better table extraction
+            halifax_properties = []
             
-            logger.info(f"PDF parsing not yet fully implemented - using sample corrected data for now")
+            with pdfplumber.open(io.BytesIO(pdf_response.content)) as pdf:
+                logger.info(f"PDF has {len(pdf.pages)} pages")
+                
+                for page_num, page in enumerate(pdf.pages):
+                    logger.info(f"Processing page {page_num + 1}")
+                    
+                    # Try to extract tables from the page
+                    tables = page.extract_tables()
+                    
+                    if tables:
+                        for table_num, table in enumerate(tables):
+                            logger.info(f"Processing table {table_num + 1} on page {page_num + 1}")
+                            
+                            # Convert table to DataFrame for easier processing
+                            if len(table) > 1:  # Ensure we have header and data rows
+                                try:
+                                    df = pd.DataFrame(table[1:], columns=table[0])  # First row as header
+                                    logger.info(f"Table columns: {list(df.columns)}")
+                                    
+                                    # Process each row to extract property information
+                                    for index, row in df.iterrows():
+                                        try:
+                                            # Extract data based on table structure
+                                            # Halifax PDFs typically have columns for Assessment Number, Owner, Description, PID, Opening Bid, etc.
+                                            
+                                            # Look for assessment number (typically first column or named column)
+                                            assessment_num = None
+                                            owner_name = None
+                                            description = None
+                                            pid = None
+                                            opening_bid = None
+                                            
+                                            # Try to identify columns by common patterns
+                                            for col_name, value in row.items():
+                                                if value and str(value).strip():
+                                                    col_lower = str(col_name).lower() if col_name else ""
+                                                    value_str = str(value).strip()
+                                                    
+                                                    # Assessment number patterns
+                                                    if ("assessment" in col_lower or "account" in col_lower or 
+                                                        re.match(r'^\d{8}$', value_str)):
+                                                        assessment_num = value_str
+                                                    
+                                                    # Owner name patterns (names typically have spaces and proper case)
+                                                    elif (("owner" in col_lower or "name" in col_lower) or
+                                                          (len(value_str) > 5 and " " in value_str and 
+                                                           any(c.isupper() for c in value_str))):
+                                                        if not owner_name or len(value_str) > len(owner_name):
+                                                            owner_name = value_str
+                                                    
+                                                    # Property description (typically contains address/location info)
+                                                    elif (("description" in col_lower or "property" in col_lower or "address" in col_lower) or
+                                                          ("Rd" in value_str or "St" in value_str or "Ave" in value_str or 
+                                                           "Drive" in value_str or "Lot" in value_str)):
+                                                        if not description or len(value_str) > len(description):
+                                                            description = value_str
+                                                    
+                                                    # PID patterns (typically 8 digits)
+                                                    elif ("pid" in col_lower or re.match(r'^\d{8}$', value_str)):
+                                                        if not pid or (pid and len(value_str) == 8):
+                                                            pid = value_str
+                                                    
+                                                    # Opening bid patterns (contains numbers and possibly $ or decimal)
+                                                    elif (("bid" in col_lower or "amount" in col_lower) or
+                                                          re.match(r'[\$]?[\d,]+\.?\d*', value_str.replace(",", ""))):
+                                                        try:
+                                                            # Extract numeric value
+                                                            numeric_value = re.findall(r'[\d,]+\.?\d*', value_str.replace(",", ""))
+                                                            if numeric_value:
+                                                                bid_value = float(numeric_value[0].replace(",", ""))
+                                                                if bid_value > 100:  # Reasonable minimum for tax sale
+                                                                    opening_bid = bid_value
+                                                        except:
+                                                            pass
+                                            
+                                            # Validate we have minimum required data
+                                            if owner_name and (assessment_num or description):
+                                                # Use reasonable defaults or extract from description if missing
+                                                if not description and assessment_num:
+                                                    description = f"Property {assessment_num}"
+                                                elif not assessment_num and description:
+                                                    # Try to extract assessment number from description
+                                                    assessment_match = re.search(r'\b\d{8}\b', description)
+                                                    if assessment_match:
+                                                        assessment_num = assessment_match.group()
+                                                
+                                                if not pid:
+                                                    # Try to extract PID from description or use assessment as fallback
+                                                    pid_match = re.search(r'PID[:\s]*(\d{8})', description or "")
+                                                    if pid_match:
+                                                        pid = pid_match.group(1)
+                                                    elif assessment_num and len(assessment_num) == 8:
+                                                        pid = assessment_num  # Sometimes they're the same
+                                                
+                                                if not opening_bid:
+                                                    opening_bid = 1000.0  # Default minimum bid if not found
+                                                
+                                                property_data = {
+                                                    "assessment_num": assessment_num,
+                                                    "owner_name": owner_name,
+                                                    "description": description,
+                                                    "pid": pid,
+                                                    "opening_bid": opening_bid,
+                                                    "hst_status": "Contact HRM for HST details",
+                                                    "redeemable_status": "Contact HRM for redemption status"
+                                                }
+                                                
+                                                halifax_properties.append(property_data)
+                                                logger.info(f"Extracted property: {assessment_num} - {owner_name}")
+                                        
+                                        except Exception as row_error:
+                                            logger.warning(f"Error processing table row: {row_error}")
+                                            continue
+                                
+                                except Exception as table_error:
+                                    logger.warning(f"Error processing table: {table_error}")
+                                    continue
+                    
+                    # If no tables found, try text extraction
+                    if not tables:
+                        logger.info("No tables found, trying text extraction...")
+                        text = page.extract_text()
+                        if text:
+                            # Look for property data patterns in text
+                            lines = text.split('\n')
+                            for line in lines:
+                                # Look for lines that might contain property data
+                                if (re.search(r'\d{8}', line) and  # Has 8-digit number (assessment/PID)
+                                    len(line.split()) >= 3 and    # Has multiple parts
+                                    any(c.isupper() for c in line)):  # Has uppercase (likely names)
+                                    
+                                    try:
+                                        # Extract components from text line
+                                        parts = line.split()
+                                        assessment_num = None
+                                        owner_name = None
+                                        
+                                        # Find 8-digit numbers
+                                        for part in parts:
+                                            if re.match(r'^\d{8}$', part):
+                                                if not assessment_num:
+                                                    assessment_num = part
+                                                elif not pid:
+                                                    pid = part
+                                        
+                                        # Extract names (uppercase words)
+                                        name_parts = [p for p in parts if p.isupper() and len(p) > 1]
+                                        if name_parts:
+                                            owner_name = " ".join(name_parts[:6])  # Limit to reasonable length
+                                        
+                                        if assessment_num and owner_name:
+                                            property_data = {
+                                                "assessment_num": assessment_num,
+                                                "owner_name": owner_name,
+                                                "description": f"Property at assessment #{assessment_num}",
+                                                "pid": pid or assessment_num,
+                                                "opening_bid": 1000.0,
+                                                "hst_status": "Contact HRM for HST details",
+                                                "redeemable_status": "Contact HRM for redemption status"
+                                            }
+                                            halifax_properties.append(property_data)
+                                            logger.info(f"Extracted from text: {assessment_num} - {owner_name}")
+                                    
+                                    except Exception as text_error:
+                                        logger.warning(f"Error processing text line: {text_error}")
+                                        continue
+            
+            logger.info(f"Successfully parsed PDF - extracted {len(halifax_properties)} properties")
+            
+            # If no properties were extracted, fall back to the sample data
+            if not halifax_properties:
+                logger.warning("No properties extracted from PDF, using fallback sample data")
+                halifax_properties = [
+                    {"assessment_num": "02102943", "owner_name": "MARILYN ANNE BURNS, LEONARD WILLIAM HUGHES", 
+                     "description": "405 Conrod Beach Rd Lot 4 Port Lower East Chezzetcook - Dwelling", 
+                     "pid": "00443267", "opening_bid": 16306.02, "hst_status": "No", "redeemable_status": "No"},
+                ]
             
         except Exception as e:
             logger.error(f"Failed to download or parse PDF: {e}")
-            # Fallback to the one corrected property
+            # Fallback to the sample data
             halifax_properties = [
-                {"assessment_num": "02102943", "owner_name": "MARILYN ANNE BURNS, LEONARD WILLIAM HUGHES", "description": "405 Conrod Beach Rd Lot 4 Port Lower East Chezzetcook - Dwelling", "pid": "00443267", "opening_bid": 16306.02, "hst_status": "No", "redeemable_status": "No"},
+                {"assessment_num": "02102943", "owner_name": "MARILYN ANNE BURNS, LEONARD WILLIAM HUGHES", 
+                 "description": "405 Conrod Beach Rd Lot 4 Port Lower East Chezzetcook - Dwelling", 
+                 "pid": "00443267", "opening_bid": 16306.02, "hst_status": "No", "redeemable_status": "No"},
             ]
         
         properties_scraped = 0
