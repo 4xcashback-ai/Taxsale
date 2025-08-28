@@ -942,13 +942,12 @@ async def get_enhanced_property_details(assessment_number: str):
     """Get property details enhanced with PVSC data"""
     try:
         # Get basic property from database
-        tax_sales = db.tax_sales.find({"assessment_number": assessment_number})
-        properties = list(tax_sales)
+        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
         
-        if not properties:
+        if not property_data:
             raise HTTPException(status_code=404, detail="Property not found")
         
-        property_data = properties[0]
+        # Convert ObjectId to string
         property_data["_id"] = str(property_data["_id"])
         
         # Get enhanced PVSC data
