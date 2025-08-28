@@ -330,7 +330,7 @@ function App() {
                             <CardDescription className="flex items-center space-x-4 mt-1">
                               <div className="flex items-center space-x-2">
                                 <MapPin className="h-4 w-4 text-slate-500" />
-                                <span>{property.municipality_name}</span>
+                                {getMunicipalityLink(property.municipality_name)}
                               </div>
                               {property.assessment_number && (
                                 <a
