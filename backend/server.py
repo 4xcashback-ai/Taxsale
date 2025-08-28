@@ -200,7 +200,7 @@ async def scrape_halifax_tax_sales():
         
         properties_scraped = 0
         
-        for prop in sample_properties:
+        for prop in halifax_properties:
             try:
                 assessment_num = prop["assessment_num"]
                 owner_name = prop["owner_name"]
