@@ -916,6 +916,49 @@ async def scrape_all_municipalities():
     return {"results": results}
 
 
+# API endpoint to manually update property statuses
+@app.post("/api/update-property-statuses")
+async def update_statuses_endpoint():
+    """Manually trigger property status updates"""
+    try:
+        updated_count = await update_property_statuses()
+        return {
+            "message": "Property statuses updated successfully",
+            "updated_count": updated_count
+        }
+    except Exception as e:
+        logger.error(f"Error updating property statuses: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# API endpoint to get property statistics by status
+@app.get("/api/property-stats")
+async def get_property_statistics():
+    """Get statistics about properties by status"""
+    try:
+        # Count properties by status
+        active_count = await db.tax_sales.count_documents({"status": "active"})
+        inactive_count = await db.tax_sales.count_documents({"status": "inactive"})
+        total_count = await db.tax_sales.count_documents({})
+        
+        # Get recent status changes
+        recent_changes = await db.tax_sales.find(
+            {"status_updated_at": {"$exists": True}},
+            {"assessment_number": 1, "status": 1, "status_updated_at": 1}
+        ).sort("status_updated_at", -1).limit(10).to_list(length=10)
+        
+        for change in recent_changes:
+            change["_id"] = str(change["_id"])
+        
+        return {
+            "active_count": active_count,
+            "inactive_count": inactive_count,
+            "total_count": total_count,
+            "recent_changes": recent_changes
+        }
+    except Exception as e:
+        logger.error(f"Error getting property statistics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 async def scrape_pvsc_details(assessment_number: str):
     """
     Scrape additional property details from PVSC website
