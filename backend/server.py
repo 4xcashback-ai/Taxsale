@@ -438,21 +438,31 @@ async def scrape_halifax_tax_sales():
                                         redeemable_status = "Contact HRM for redemption details"  
                                         hst_status = "Contact HRM for HST details"
                                         
-                                        full_text_lower = full_property_text.lower()
-                                        # Look for actual redeemable indicators
-                                        if 'no' in full_text_lower and 'redeem' in full_text_lower:
-                                            redeemable_status = "No"
-                                        elif 'yes' in full_text_lower and 'redeem' in full_text_lower:
-                                            redeemable_status = "Yes"
-                                        elif 'subject' in full_text_lower and 'redeem' in full_text_lower:
-                                            redeemable_status = "Subject to redemption"
+                                        # Look for "No" and "Yes" patterns at the end of the property description
+                                        # Halifax PDFs often have "No Yes" or "Yes No" indicating redeemable and HST status
+                                        if description:
+                                            # Check for status patterns at the end of description
+                                            status_pattern = re.search(r'\b(No|Yes)\s+(No|Yes)\s*$', description)
+                                            if status_pattern:
+                                                # First value is typically redeemable, second is HST
+                                                redeemable_value = status_pattern.group(1)
+                                                hst_value = status_pattern.group(2)
+                                                
+                                                redeemable_status = redeemable_value  # "No" or "Yes"
+                                                hst_status = hst_value  # "No" or "Yes"
+                                                
+                                                # Clean these status values from the description
+                                                description = re.sub(r'\s+(No|Yes)\s+(No|Yes)\s*$', '', description).strip()
+                                                
+                                                logger.info(f"Extracted status for {assessment_num}: Redeemable={redeemable_status}, HST={hst_status}")
                                         
-                                        # Look for HST indicators
-                                        if 'hst' in full_text_lower:
-                                            if 'no' in full_text_lower:
-                                                hst_status = "No"
-                                            elif 'yes' in full_text_lower:
-                                                hst_status = "Yes"
+                                        # Additional pattern matching for other status indicators
+                                        full_text_lower = full_property_text.lower()
+                                        if 'redeemable' in full_text_lower or 'redeem' in full_text_lower:
+                                            if 'not redeemable' in full_text_lower or 'no' in full_text_lower:
+                                                redeemable_status = "No"
+                                            elif 'redeemable' in full_text_lower or 'yes' in full_text_lower:
+                                                redeemable_status = "Yes"
                                         
                                         # Extract opening bid
                                         opening_bid = 1000.0
