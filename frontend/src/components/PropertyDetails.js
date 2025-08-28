@@ -289,7 +289,7 @@ const PropertyDetails = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">External Resources</h2>
               <div className="space-y-3">
                 <a
-                  href={`https://www.viewpoint.ca/map#hn=&pid=${property.pid_number}`}
+                  href={`https://www.viewpoint.ca/map#pid=${property.pid_number}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
@@ -297,7 +297,7 @@ const PropertyDetails = () => {
                   View Property on Viewpoint.ca
                 </a>
                 <a
-                  href={`https://www.pvsc.ca/property-search?AAN=${property.assessment_number}`}
+                  href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
