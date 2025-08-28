@@ -389,9 +389,22 @@ function MainApp() {
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg text-slate-900 mb-2">
-                              {property.property_address}
-                            </CardTitle>
+                            <div className="flex items-center justify-between mb-2">
+                              <CardTitle className="text-lg text-slate-900">
+                                {property.property_address}
+                              </CardTitle>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                property.status === 'active' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : property.status === 'inactive'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {property.status === 'active' ? '🟢 Active' : 
+                                 property.status === 'inactive' ? '🔴 Inactive' : 
+                                 '⚪ Unknown'}
+                              </span>
+                            </div>
                             <CardDescription className="flex items-center space-x-4 mt-1">
                               <div className="flex items-center space-x-2">
                                 <MapPin className="h-4 w-4 text-slate-500" />
