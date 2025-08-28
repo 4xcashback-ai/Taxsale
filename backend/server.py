@@ -202,12 +202,15 @@ async def scrape_halifax_tax_sales():
                         "horizontal_strategy": "lines_strict"
                     })
                     
+                    logger.info(f"Found {len(tables) if tables else 0} tables with strict settings")
+                    
                     # If strict settings don't work, try more flexible settings
                     if not tables:
                         tables = page.extract_tables(table_settings={
                             "vertical_strategy": "text", 
                             "horizontal_strategy": "text"
                         })
+                        logger.info(f"Found {len(tables) if tables else 0} tables with flexible settings")
                     
                     if tables:
                         for table_num, table in enumerate(tables):
