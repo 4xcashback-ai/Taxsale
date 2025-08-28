@@ -365,17 +365,41 @@ async def scrape_halifax_tax_sales():
                                             owner_name = " ".join(name_parts[:6])  # Limit to reasonable length
                                         
                                         if assessment_num and owner_name:
+                                            # Try to find description in the same line or nearby
+                                            description = None
+                                            # Look for address-like patterns in the line
+                                            address_patterns = [
+                                                r'\d+\s+\w+\s+(Rd|St|Ave|Drive|Road|Street|Avenue|Lane|Court|Place|Way|Crescent|Circle|Close)',
+                                                r'Lot\s+\d+\s+\w+',
+                                                r'\w+\s+\w+\s+-\s+\w+'
+                                            ]
+                                            
+                                            for pattern in address_patterns:
+                                                match = re.search(pattern, line, re.IGNORECASE)
+                                                if match:
+                                                    # Extract surrounding context as description
+                                                    start = max(0, match.start() - 20)
+                                                    end = min(len(line), match.end() + 20)
+                                                    potential_desc = line[start:end].strip()
+                                                    if len(potential_desc) > 10:
+                                                        description = potential_desc
+                                                        break
+                                            
+                                            # If no address pattern found, use fallback
+                                            if not description:
+                                                description = f"Property at assessment #{assessment_num}"
+                                            
                                             property_data = {
                                                 "assessment_num": assessment_num,
                                                 "owner_name": owner_name,
-                                                "description": f"Property at assessment #{assessment_num}",
+                                                "description": description,
                                                 "pid": pid or assessment_num,
                                                 "opening_bid": 1000.0,
                                                 "hst_status": "Contact HRM for HST details",
                                                 "redeemable_status": "Contact HRM for redemption status"
                                             }
                                             halifax_properties.append(property_data)
-                                            logger.info(f"Extracted from text: {assessment_num} - {owner_name}")
+                                            logger.info(f"Extracted from text: {assessment_num} - {owner_name} - {description}")
                                     
                                     except Exception as text_error:
                                         logger.warning(f"Error processing text line: {text_error}")
