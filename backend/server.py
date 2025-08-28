@@ -444,25 +444,26 @@ async def scrape_halifax_tax_sales():
                                             # Check for status patterns at the end of description
                                             status_pattern = re.search(r'\b(No|Yes)\s+(No|Yes)\s*$', description)
                                             if status_pattern:
-                                                # First value is typically redeemable, second is HST
-                                                redeemable_value = status_pattern.group(1)
-                                                hst_value = status_pattern.group(2)
+                                                # Based on Halifax PDF structure: First value is HST, Second value is Redeemable
+                                                hst_value = status_pattern.group(1)  # First value = HST
+                                                redeemable_value = status_pattern.group(2)  # Second value = Redeemable
                                                 
-                                                redeemable_status = redeemable_value  # "No" or "Yes"
-                                                hst_status = hst_value  # "No" or "Yes"
+                                                # Format with proper labels
+                                                hst_status = "HST Applicable" if hst_value == "Yes" else "No HST"
+                                                redeemable_status = "Redeemable" if redeemable_value == "Yes" else "Not Redeemable"
                                                 
                                                 # Clean these status values from the description
                                                 description = re.sub(r'\s+(No|Yes)\s+(No|Yes)\s*$', '', description).strip()
                                                 
-                                                logger.info(f"Extracted status for {assessment_num}: Redeemable={redeemable_status}, HST={hst_status}")
+                                                logger.info(f"Extracted status for {assessment_num}: HST={hst_status}, Redeemable={redeemable_status}")
                                         
                                         # Additional pattern matching for other status indicators
                                         full_text_lower = full_property_text.lower()
                                         if 'redeemable' in full_text_lower or 'redeem' in full_text_lower:
                                             if 'not redeemable' in full_text_lower or 'no' in full_text_lower:
-                                                redeemable_status = "No"
+                                                redeemable_status = "Not Redeemable"
                                             elif 'redeemable' in full_text_lower or 'yes' in full_text_lower:
-                                                redeemable_status = "Yes"
+                                                redeemable_status = "Redeemable"
                                         
                                         # Extract opening bid
                                         opening_bid = 1000.0
