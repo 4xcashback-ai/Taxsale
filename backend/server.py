@@ -241,10 +241,17 @@ async def scrape_halifax_tax_sales():
                                                             owner_name = value_str
                                                     
                                                     # Property description (typically contains address/location info)
-                                                    elif (("description" in col_lower or "property" in col_lower or "address" in col_lower) or
+                                                    elif (("description" in col_lower or "property" in col_lower or "address" in col_lower or "location" in col_lower) or
                                                           ("Rd" in value_str or "St" in value_str or "Ave" in value_str or 
-                                                           "Drive" in value_str or "Lot" in value_str)):
-                                                        if not description or len(value_str) > len(description):
+                                                           "Drive" in value_str or "Lot" in value_str or "Road" in value_str or 
+                                                           "Street" in value_str or "Avenue" in value_str or "Lane" in value_str or
+                                                           "Court" in value_str or "Place" in value_str or "Way" in value_str or
+                                                           "Crescent" in value_str or "Circle" in value_str or "Close" in value_str or
+                                                           " - " in value_str or "Unit" in value_str or "Apt" in value_str)):
+                                                        # Prioritize longer, more descriptive entries
+                                                        if (not description or 
+                                                            len(value_str) > len(description) or
+                                                            any(addr_word in value_str for addr_word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Avenue"])):
                                                             description = value_str
                                                     
                                                     # PID patterns (typically 8 digits)
