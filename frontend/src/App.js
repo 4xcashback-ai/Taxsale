@@ -549,12 +549,39 @@ function App() {
                                 )}
 
                                 <div className="mt-2 pt-1 border-t">
-                                  <Badge 
-                                    variant="outline" 
-                                    className="text-xs"
-                                  >
-                                    {property.property_type || 'Property'}
-                                  </Badge>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs"
+                                    >
+                                      {property.property_type || 'Property'}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="flex flex-col gap-1 text-xs">
+                                    {property.assessment_number && (
+                                      <a
+                                        href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline"
+                                        title="View assessment details"
+                                      >
+                                        📋 View Assessment
+                                      </a>
+                                    )}
+                                    {property.pid && (
+                                      <a
+                                        href={`https://viewpoint.ca/map?pid=${property.pid}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-green-600 hover:underline"
+                                        title="View on map"
+                                      >
+                                        📍 View Location
+                                      </a>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
