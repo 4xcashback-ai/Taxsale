@@ -552,7 +552,9 @@ function App() {
                           <Popup className="custom-popup">
                             <div className="p-2 max-w-xs">
                               <h4 className="font-semibold text-sm mb-2">{property.address}</h4>
-                              <p className="text-xs text-slate-600 mb-2">{property.municipality}</p>
+                              <div className="text-xs text-slate-600 mb-2">
+                                {renderMunicipalityLink(property.municipality)}
+                              </div>
                               
                               <div className="space-y-1 text-xs">
                                 {property.opening_bid && (
