@@ -167,7 +167,7 @@ const PropertyDetails = () => {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Municipality</dt>
-              <dd className="mt-1 text-sm text-gray-900">{property.municipality}</dd>
+              <dd className="mt-1 text-sm text-gray-900">{property.municipality_name || property.municipality || 'Halifax Regional Municipality'}</dd>
             </div>
           </div>
         </div>
