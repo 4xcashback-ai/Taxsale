@@ -228,49 +228,51 @@ async def scrape_halifax_tax_sales():
                                                     col_lower = str(col_name).lower() if col_name else ""
                                                     value_str = str(value).strip()
                                                     
-                                                    # Assessment number patterns
+                                                    # Look for specific column names first
                                                     if ("assessment" in col_lower or "account" in col_lower or 
-                                                        re.match(r'^\d{8}$', value_str)):
-                                                        assessment_num = value_str
+                                                        col_lower == "aan" or re.match(r'^\d{8}$', value_str)):
+                                                        if not assessment_num:
+                                                            assessment_num = value_str
                                                     
-                                                    # Owner name patterns (names typically have spaces and proper case)
-                                                    elif (("owner" in col_lower or "name" in col_lower) or
-                                                          (len(value_str) > 5 and " " in value_str and 
-                                                           any(c.isupper() for c in value_str))):
-                                                        if not owner_name or len(value_str) > len(owner_name):
+                                                    # Look specifically for "Parcel Description" column
+                                                    elif ("parcel" in col_lower and "description" in col_lower) or col_lower == "parcel description":
+                                                        description = value_str
+                                                        logger.info(f"Found Parcel Description: {value_str}")
+                                                    
+                                                    # Owner name patterns
+                                                    elif ("owner" in col_lower or col_lower == "name"):
+                                                        if not owner_name:
                                                             owner_name = value_str
                                                     
-                                                    # Property description (typically contains address/location info)
-                                                    elif (("description" in col_lower or "property" in col_lower or "address" in col_lower or "location" in col_lower) or
-                                                          ("Rd" in value_str or "St" in value_str or "Ave" in value_str or 
-                                                           "Drive" in value_str or "Lot" in value_str or "Road" in value_str or 
-                                                           "Street" in value_str or "Avenue" in value_str or "Lane" in value_str or
-                                                           "Court" in value_str or "Place" in value_str or "Way" in value_str or
-                                                           "Crescent" in value_str or "Circle" in value_str or "Close" in value_str or
-                                                           " - " in value_str or "Unit" in value_str or "Apt" in value_str)):
-                                                        # Prioritize longer, more descriptive entries
-                                                        if (not description or 
-                                                            len(value_str) > len(description) or
-                                                            any(addr_word in value_str for addr_word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Avenue"])):
-                                                            description = value_str
-                                                    
-                                                    # PID patterns (typically 8 digits)
-                                                    elif ("pid" in col_lower or re.match(r'^\d{8}$', value_str)):
-                                                        if not pid or (pid and len(value_str) == 8):
+                                                    # PID column
+                                                    elif "pid" in col_lower and re.match(r'^\d{8}$', value_str):
+                                                        if not pid:
                                                             pid = value_str
                                                     
-                                                    # Opening bid patterns (contains numbers and possibly $ or decimal)
-                                                    elif (("bid" in col_lower or "amount" in col_lower) or
-                                                          re.match(r'[\$]?[\d,]+\.?\d*', value_str.replace(",", ""))):
+                                                    # Opening bid patterns
+                                                    elif ("bid" in col_lower or "amount" in col_lower):
                                                         try:
-                                                            # Extract numeric value
                                                             numeric_value = re.findall(r'[\d,]+\.?\d*', value_str.replace(",", ""))
                                                             if numeric_value:
                                                                 bid_value = float(numeric_value[0].replace(",", ""))
-                                                                if bid_value > 100:  # Reasonable minimum for tax sale
+                                                                if bid_value > 100:
                                                                     opening_bid = bid_value
                                                         except:
                                                             pass
+                                                    
+                                                    # Fallback patterns if columns don't have clear names
+                                                    elif not assessment_num and re.match(r'^\d{8}$', value_str):
+                                                        assessment_num = value_str
+                                                    elif not owner_name and len(value_str) > 5 and " " in value_str and any(c.isupper() for c in value_str):
+                                                        # Check if this looks like a name (has uppercase and spaces)
+                                                        if not any(addr_word in value_str for addr_word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Lot"]):
+                                                            owner_name = value_str
+                                                    elif not description and (
+                                                        any(addr_word in value_str for addr_word in ["Rd", "St", "Ave", "Drive", "Road", "Street", "Avenue", "Lane", "Court", "Place", "Way", "Crescent", "Circle", "Close", "Lot", "Unit", "Apt"]) or
+                                                        re.search(r'\d+\s+\w+', value_str) or  # Street number pattern
+                                                        " - " in value_str):  # Common separator
+                                                        description = value_str
+                                                        logger.info(f"Found address-like description: {value_str}")
                                             
                                             # Validate we have minimum required data
                                             if owner_name and (assessment_num or description):
