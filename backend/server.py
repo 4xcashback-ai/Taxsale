@@ -102,6 +102,8 @@ class TaxSalePropertyCreate(BaseModel):
     zoning: Optional[str] = None
     owner_name: Optional[str] = None
     pid_number: Optional[str] = None
+    redeemable: Optional[str] = None
+    hst_applicable: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     source_url: str
