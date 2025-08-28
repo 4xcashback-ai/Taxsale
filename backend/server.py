@@ -695,16 +695,28 @@ async def create_tax_sale_property(property_data: TaxSalePropertyCreate):
     await db.tax_sales.insert_one(property_obj.dict())
     return property_obj
 
+# API endpoint for getting tax sale properties with filtering
 @api_router.get("/tax-sales", response_model=List[TaxSaleProperty])
 async def get_tax_sale_properties(
     municipality: Optional[str] = Query(None, description="Filter by municipality name"),
     limit: int = Query(100, description="Number of results to return"),
-    skip: int = Query(0, description="Number of results to skip")
+    skip: int = Query(0, description="Number of results to skip"),
+    status: Optional[str] = Query(None, description="Filter by status: active, inactive, all")
 ):
+    # Build query filter
     query = {}
+    
     if municipality:
         query["municipality_name"] = {"$regex": municipality, "$options": "i"}
     
+    # Handle status filtering
+    if status and status != "all":
+        query["status"] = status
+    elif status != "all":
+        # Default to active only if no status specified
+        query["status"] = "active"
+    
+    # Get properties with filtering
     properties = await db.tax_sales.find(query).skip(skip).limit(limit).to_list(limit)
     return [TaxSaleProperty(**prop) for prop in properties]
 
