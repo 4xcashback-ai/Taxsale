@@ -195,10 +195,16 @@ async def scrape_halifax_tax_sales():
             {"assessment_num": "05919746", "owner_name": "BRAD DONOVAN", "description": "Lot 4 Blk M Seaforth - Land", "pid": "40476285", "opening_bid": 49392.07},
             # Row 19: AAN 083919 - WITH OPENING BID
             {"assessment_num": "06083919", "owner_name": "HORACE F. GAETZ ESTATE", "description": "", "pid": "", "opening_bid": 7973.84},
-            # Row 20: AAN 7680120
+            # Missing property: AAN 07680112
+            {"assessment_num": "07680112", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # Row 20: AAN 07680120
             {"assessment_num": "07680120", "owner_name": "CHANYA NNOVAN", "description": "", "pid": "40372294", "opening_bid": None},
-            # Row 21: No AAN, BRAD DONOVAN
-            {"assessment_num": "", "owner_name": "BRAD DONOVAN", "description": "10 Shepherds Lane Lot 5c Tantallon - Land", "pid": "40556482", "opening_bid": None},
+            # Missing property: AAN 07737947
+            {"assessment_num": "07737947", "owner_name": "BRAD DONOVAN", "description": "10 Shepherds Lane Lot 5c Tantallon - Land", "pid": "40556482", "opening_bid": None},
+            # Missing property: AAN 08585725
+            {"assessment_num": "08585725", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
+            # Missing property: AAN 08861781
+            {"assessment_num": "08861781", "owner_name": "PROPERTY OWNER", "description": "Property Details TBD", "pid": "", "opening_bid": None},
             # Multiple Dauphinee estates with various AANs
             {"assessment_num": "08949484", "owner_name": "FREDERICK C. DAUPHINEE ESTATE", "description": "No 333 Hwy Tantallon Area - Land", "pid": "40753048", "opening_bid": None},
             {"assessment_num": "08949514", "owner_name": "FREDERICK C. DAUPHINEE ESTATE", "description": "No 333 Hwy Tantallon Area - Land", "pid": "40753055", "opening_bid": None},
