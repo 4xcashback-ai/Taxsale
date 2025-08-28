@@ -393,23 +393,34 @@ async def scrape_halifax_tax_sales():
                                             after_assessment = line[assessment_pos + len(assessment_num):].strip()
                                             
                                             # The next part should be the owner name (uppercase names)
-                                            # Find where owner name ends and address begins
+                                            # Find where owner name ends and address begins - be more generous with extraction
                                             words = after_assessment.split()
                                             owner_parts = []
                                             address_parts = []
                                             
-                                            # Collect uppercase words as owner name
+                                            # Collect uppercase words as owner name - be more inclusive to avoid truncation
                                             collecting_owner = True
-                                            for word in words:
+                                            for i, word in enumerate(words):
                                                 # Check if this looks like an owner name (uppercase) or address (mixed case with address indicators)
                                                 if collecting_owner:
+                                                    # More generous owner name collection - include names, estates, middle initials
                                                     if (word.isupper() or 
+                                                        word in ["ESTATE", "LTD", "LIMITED", "INC", "CORP"] or
                                                         (len(word) > 1 and word[0].isupper() and 
-                                                         not any(addr_word in word.lower() for addr_word in ["rd", "st", "ave", "drive", "road", "street", "lot", "unit", "hwy"]))):
+                                                         not any(addr_word in word.lower() for addr_word in ["rd", "st", "ave", "drive", "road", "street", "lot", "unit", "hwy", "highway", "grant"]) and
+                                                         not re.match(r'^\d+$', word))):  # Not just a number
                                                         owner_parts.append(word)
                                                     else:
-                                                        collecting_owner = False
-                                                        address_parts.append(word)
+                                                        # Check if we're hitting an address or should continue with owner
+                                                        # Look ahead to see if next few words are also uppercase (continuing owner name)
+                                                        remaining_words = words[i:i+3]  # Look at next 3 words
+                                                        uppercase_count = sum(1 for w in remaining_words if w.isupper() and len(w) > 1)
+                                                        
+                                                        if uppercase_count >= 2:  # More uppercase words coming, continue owner
+                                                            owner_parts.append(word)
+                                                        else:  # Start collecting address
+                                                            collecting_owner = False
+                                                            address_parts.append(word)
                                                 else:
                                                     address_parts.append(word)
                                             
