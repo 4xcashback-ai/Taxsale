@@ -90,6 +90,8 @@ class TaxSaleProperty(BaseModel):
     scraped_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_url: str
     raw_data: Optional[dict] = None  # Store original scraped data
+    status: str = "active"  # active, inactive, sold
+    status_updated_at: Optional[datetime] = None
 
 class TaxSalePropertyCreate(BaseModel):
     municipality_id: str
