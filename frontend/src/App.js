@@ -483,11 +483,11 @@ function MainApp() {
                         <div className="mt-4 flex flex-wrap gap-2 text-xs">
                           {property.pid_number && (
                             <a
-                              href={`https://www.viewpoint.ca/map#pid=${property.pid_number}`}
+                              href={`https://www.viewpoint.ca/show/property/${property.pid_number}/1/${property.property_address.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').substring(0, 50)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors cursor-pointer"
-                              title="View property location on Viewpoint.ca"
+                              title="View property details on Viewpoint.ca"
                             >
                               📍 PID: {property.pid_number}
                             </a>
