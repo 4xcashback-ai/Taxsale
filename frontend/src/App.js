@@ -190,6 +190,40 @@ function App() {
     }
   };
 
+  const getMunicipalityTaxSaleUrl = (municipalityName) => {
+    const municipalityLinks = {
+      'Halifax Regional Municipality': 'https://www.halifax.ca/home-property/property-taxes/tax-sale',
+      'Cape Breton Regional Municipality': 'https://www.cbrm.ns.ca',
+      'Truro': 'https://www.truro.ca',
+      'New Glasgow': 'https://www.newglasgow.ca',
+      'Bridgewater': 'https://www.bridgewater.ca',
+      'Yarmouth': 'https://www.townofyarmouth.ca',
+      'Kentville': 'https://www.kentville.ca',
+      'Antigonish': 'https://www.townofantigonish.ca'
+    };
+    return municipalityLinks[municipalityName] || '#';
+  };
+
+  const renderMunicipalityLink = (municipalityName) => {
+    const url = getMunicipalityTaxSaleUrl(municipalityName);
+    
+    if (url === '#') {
+      return <span>{municipalityName}</span>;
+    }
+    
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer"
+        title={`View tax sales on ${municipalityName} website`}
+      >
+        🏛️ {municipalityName}
+      </a>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       {/* Header */}
