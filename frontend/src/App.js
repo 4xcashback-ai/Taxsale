@@ -751,9 +751,10 @@ function App() {
                       </p>
                       <ul className="text-sm text-purple-700 space-y-1">
                         <li><strong>📋 Assessment Numbers (AAN):</strong> Link to PVSC for full property assessment details</li>
-                        <li><strong>📍 PID Numbers:</strong> Link to Viewpoint.ca for property location mapping</li>
+                        <li><strong>📍 PID Numbers:</strong> Direct search on Viewpoint.ca for property location and mapping</li>
                         <li><strong>🏛️ Municipality Names:</strong> Link back to original tax sale pages on municipal websites</li>
                         <li><strong>🔄 Source Integration:</strong> Seamless navigation between aggregated data and official sources</li>
+                        <li><strong>🗺️ Enhanced Research:</strong> Complete property workflow from discovery to location analysis</li>
                       </ul>
                     </div>
                   </div>
