@@ -424,16 +424,35 @@ function App() {
                           </div>
                         )}
 
-                        {/* Additional Details */}
-                        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+                        {/* Additional Details with Links */}
+                        <div className="mt-4 flex flex-wrap gap-2 text-xs">
                           {property.pid_number && (
-                            <span className="bg-slate-100 px-2 py-1 rounded">PID: {property.pid_number}</span>
+                            <a
+                              href={`https://viewpoint.ca/map?pid=${property.pid_number}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors cursor-pointer"
+                              title="View property location on Viewpoint.ca"
+                            >
+                              📍 PID: {property.pid_number}
+                            </a>
+                          )}
+                          {property.assessment_number && (
+                            <a
+                              href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors cursor-pointer"
+                              title="View property assessment on PVSC"
+                            >
+                              📋 AAN: {property.assessment_number}
+                            </a>
                           )}
                           {property.sale_time && (
-                            <span className="bg-slate-100 px-2 py-1 rounded">Time: {property.sale_time}</span>
+                            <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">⏰ Time: {property.sale_time}</span>
                           )}
                           {property.sale_location && (
-                            <span className="bg-slate-100 px-2 py-1 rounded">Location: {property.sale_location}</span>
+                            <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">🏛️ Location: {property.sale_location}</span>
                           )}
                         </div>
                       </CardContent>
