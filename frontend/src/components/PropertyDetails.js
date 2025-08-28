@@ -289,7 +289,7 @@ const PropertyDetails = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">External Resources</h2>
               <div className="space-y-3">
                 <a
-                  href={`https://www.viewpoint.ca/map#pid=${property.pid_number}`}
+                  href={`https://www.viewpoint.ca/show/property/${property.pid_number}/1/${property.property_address.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').substring(0, 50)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
