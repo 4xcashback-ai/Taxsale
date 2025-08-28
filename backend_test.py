@@ -351,6 +351,7 @@ def run_comprehensive_test():
         "municipalities": False,
         "halifax_scraper": False,
         "tax_sales": False,
+        "property_descriptions": False,
         "stats": False,
         "map_data": False
     }
@@ -376,11 +377,15 @@ def run_comprehensive_test():
     tax_sales_success, halifax_properties = test_tax_sales_endpoint()
     test_results["tax_sales"] = tax_sales_success
     
-    # Test 5: Statistics endpoint
+    # Test 5: Property descriptions bug test (CRITICAL for this review)
+    descriptions_success, description_data = test_property_descriptions_bug()
+    test_results["property_descriptions"] = descriptions_success
+    
+    # Test 6: Statistics endpoint
     stats_success, stats_data = test_stats_endpoint()
     test_results["stats"] = stats_success
     
-    # Test 6: Map data endpoint
+    # Test 7: Map data endpoint
     map_success, map_data = test_map_data_endpoint()
     test_results["map_data"] = map_success
     
@@ -398,9 +403,14 @@ def run_comprehensive_test():
     
     print(f"\nOverall: {passed_tests}/{total_tests} tests passed")
     
+    # Special focus on property descriptions bug
+    if not test_results["property_descriptions"]:
+        print("\n🚨 CRITICAL BUG CONFIRMED: Property descriptions are not being extracted properly!")
+        print("   This matches the user's report about assessment #00079006 showing placeholder text.")
+    
     if passed_tests == total_tests:
         print("🎉 ALL TESTS PASSED - Halifax scraper is working correctly!")
-    elif passed_tests >= 4:  # Core functionality working
+    elif passed_tests >= 5:  # Core functionality working
         print("⚠️ MOSTLY WORKING - Core functionality operational with minor issues")
     else:
         print("❌ MAJOR ISSUES - Halifax scraper has significant problems")
