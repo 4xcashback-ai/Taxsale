@@ -234,6 +234,10 @@ async def scrape_halifax_tax_sales():
                 # Parse property type from description
                 property_type = "Dwelling" if "Dwelling" in description else "Land" if "Land" in description else "Property"
                 
+                # Determine redeemable status based on property type and Halifax rules
+                redeemable_status = "Subject to redemption period (Contact HRM for details)"
+                hst_status = "HST applicable on commercial properties and vacant land if no HST registration"
+                
                 # Create property record
                 property_data = {
                     "municipality_id": municipality_id,
@@ -248,13 +252,17 @@ async def scrape_halifax_tax_sales():
                     "property_type": property_type,
                     "owner_name": owner_name,
                     "pid_number": pid,
+                    "redeemable": redeemable_status,
+                    "hst_applicable": hst_status,
                     "source_url": schedule_link,
                     "raw_data": {
                         "assessment_number": assessment_num,
                         "owner_name": owner_name,
                         "parcel_description": description,
                         "pid": pid,
-                        "opening_bid": opening_bid
+                        "opening_bid": opening_bid,
+                        "redeemable": redeemable_status,
+                        "hst_applicable": hst_status
                     }
                 }
                 
