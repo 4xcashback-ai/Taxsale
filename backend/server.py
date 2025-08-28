@@ -499,7 +499,10 @@ async def scrape_halifax_tax_sales():
                                                 }
                                                 
                                                 halifax_properties.append(property_data)
-                                                logger.info(f"Enhanced text extraction: {assessment_num} - {owner_name[:50]}... - {description[:30]}... - Redeemable: {redeemable_status}")
+                                                logger.info(f"Enhanced extraction - Assessment: {assessment_num}")
+                                                logger.info(f"  Full owner: '{owner_name}' (len={len(owner_name) if owner_name else 0})")
+                                                logger.info(f"  Full address: '{description}' (len={len(description) if description else 0})")
+                                                logger.info(f"  Redeemable: {redeemable_status}, HST: {hst_status}")
                                     
                                     except Exception as text_error:
                                         logger.warning(f"Error processing enhanced text line: {text_error}")
