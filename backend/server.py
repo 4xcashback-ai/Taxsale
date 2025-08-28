@@ -139,11 +139,36 @@ async def scrape_halifax_tax_sales():
             {"$set": {"scrape_status": "in_progress"}}
         )
         
-        # Use the direct property list URL we know exists
-        schedule_link = "https://www.halifax.ca/media/91654"
-        sale_date = "2025-09-16T10:01:00Z"  # Known sale date from the page
+        # Scrape main tax sale page to find the PDF link
+        main_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
+        response = requests.get(main_url, timeout=30)
+        soup = BeautifulSoup(response.content, 'html.parser')
         
-        logger.info(f"Using direct schedule link: {schedule_link}")
+        # Find the PDF schedule link dynamically
+        schedule_link = None
+        sale_date = "2025-09-16T10:01:00Z"  # Known sale date
+        
+        # Look for the schedule PDF link
+        for link in soup.find_all('a'):
+            href = link.get('href', '')
+            text = link.get_text()
+            # Look for PDF links containing tax sale schedule info
+            if ('SCHEDULE' in text.upper() or 'newspaper' in text.lower()) and href.endswith('.pdf'):
+                schedule_link = href
+                break
+            elif 'Sept16.2025newspaper' in href or '91654' in href:
+                schedule_link = href
+                break
+        
+        # Fallback to known link if not found dynamically
+        if not schedule_link:
+            schedule_link = "https://www.halifax.ca/media/91654"
+            
+        # Make URL absolute if relative
+        if schedule_link.startswith('/'):
+            schedule_link = "https://www.halifax.ca" + schedule_link
+            
+        logger.info(f"Found Halifax schedule link: {schedule_link}")
         
         # Complete Halifax properties from September 16, 2025 tax sale - ALL 58 properties with correct AANs
         halifax_properties = [
