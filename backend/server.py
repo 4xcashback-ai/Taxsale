@@ -275,11 +275,20 @@ async def scrape_halifax_tax_sales():
                 property_data["latitude"] = lat_base + lat_offset
                 property_data["longitude"] = lng_base + lng_offset
                 
-                # Check if property already exists
-                existing = await db.tax_sales.find_one({
-                    "assessment_number": assessment_num,
-                    "municipality_name": "Halifax Regional Municipality"
-                })
+                # Check if property already exists using a unique combination
+                # Use assessment number if available, otherwise use owner name + description
+                if assessment_num:
+                    existing = await db.tax_sales.find_one({
+                        "assessment_number": assessment_num,
+                        "municipality_name": "Halifax Regional Municipality"
+                    })
+                else:
+                    # For properties without assessment numbers, use owner + description as unique identifier
+                    existing = await db.tax_sales.find_one({
+                        "owner_name": owner_name,
+                        "property_address": description,
+                        "municipality_name": "Halifax Regional Municipality"
+                    })
                 
                 if existing:
                     # Update existing property
