@@ -182,13 +182,16 @@ const PropertyDetails = () => {
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <dt className="text-sm font-medium text-gray-500">Address</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{property.property_address}</dd>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {property.civic_address || property.property_address}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-gray-500">Property Type</dt>
                   <dd className="mt-1 text-sm text-gray-900">
-                    {property.property_description?.includes('Dwelling') ? 'Dwelling' : 
-                     property.property_description?.includes('Land') ? 'Land' : 'Property'}
+                    {property.property_details?.building_style || 
+                     (property.property_description?.includes('Dwelling') ? 'Dwelling' : 
+                      property.property_description?.includes('Land') ? 'Land' : 'Property')}
                   </dd>
                 </div>
                 <div>
@@ -199,6 +202,38 @@ const PropertyDetails = () => {
                   <dt className="text-sm font-medium text-gray-500">PID</dt>
                   <dd className="mt-1 text-sm text-gray-900">{property.pid_number}</dd>
                 </div>
+                {property.property_details?.current_assessment && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Current Assessment</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {formatCurrency(property.property_details.current_assessment)}
+                    </dd>
+                  </div>
+                )}
+                {property.property_details?.land_size && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Land Size</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {property.property_details.land_size}
+                    </dd>
+                  </div>
+                )}
+                {property.property_details?.year_built && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Year Built</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {property.property_details.year_built}
+                    </dd>
+                  </div>
+                )}
+                {property.property_details?.living_area && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Living Area</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {property.property_details.living_area.toLocaleString()} sq ft
+                    </dd>
+                  </div>
+                )}
                 <div>
                   <dt className="text-sm font-medium text-gray-500">Redeemable</dt>
                   <dd className="mt-1 text-sm text-gray-900">
@@ -225,6 +260,54 @@ const PropertyDetails = () => {
                 </div>
               </dl>
             </div>
+
+            {/* Enhanced Property Information (if available from PVSC) */}
+            {property.property_details && (
+              <div className="bg-blue-50 rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-blue-900 mb-4">📊 Detailed Assessment Information</h2>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {property.property_details.bedrooms !== undefined && (
+                    <div>
+                      <dt className="text-sm font-medium text-blue-700">Bedrooms</dt>
+                      <dd className="mt-1 text-sm text-blue-900">
+                        {property.property_details.bedrooms}
+                      </dd>
+                    </div>
+                  )}
+                  {property.property_details.bathrooms !== undefined && (
+                    <div>
+                      <dt className="text-sm font-medium text-blue-700">Bathrooms</dt>
+                      <dd className="mt-1 text-sm text-blue-900">
+                        {property.property_details.bathrooms}
+                      </dd>
+                    </div>
+                  )}
+                  {property.property_details.taxable_assessment && (
+                    <div>
+                      <dt className="text-sm font-medium text-blue-700">Taxable Assessment</dt>
+                      <dd className="mt-1 text-sm text-blue-900">
+                        {formatCurrency(property.property_details.taxable_assessment)}
+                        <span className="text-xs text-blue-600 block">Used for tax calculation</span>
+                      </dd>
+                    </div>
+                  )}
+                  {property.property_details.building_style && (
+                    <div>
+                      <dt className="text-sm font-medium text-blue-700">Building Style</dt>
+                      <dd className="mt-1 text-sm text-blue-900">
+                        {property.property_details.building_style}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                  <p className="text-xs text-blue-800">
+                    ℹ️ This enhanced information is sourced from the Property Valuation Services Corporation (PVSC) 
+                    and provides official assessment details for this property.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Legal Description */}
             <div className="bg-white rounded-lg shadow-sm p-6">
