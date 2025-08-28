@@ -2,6 +2,7 @@
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
 Tests Halifax tax sale scraper functionality and related endpoints
+Focus on data truncation and redeemable status issues reported by user
 """
 
 import requests
@@ -147,116 +148,242 @@ def test_tax_sales_endpoint():
         print(f"❌ Tax sales endpoint error: {e}")
         return False, None
 
-def test_property_descriptions_bug():
-    """Test for the specific property description bug reported by user"""
-    print("\n🔍 Testing Property Description Bug (Assessment #00079006)...")
+def test_data_truncation_issues():
+    """Test for data truncation issues reported by user - Focus on assessment #00079006"""
+    print("\n🔍 Testing Data Truncation Issues (Assessment #00079006 & Others)...")
     try:
-        # Get all Halifax properties to analyze descriptions
+        # Get all Halifax properties to analyze truncation
         response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax", timeout=30)
         if response.status_code == 200:
             properties = response.json()
-            print(f"✅ Retrieved {len(properties)} Halifax properties for description analysis")
+            print(f"✅ Retrieved {len(properties)} Halifax properties for truncation analysis")
             
-            # Look specifically for assessment #00079006
-            target_property = None
-            for prop in properties:
-                if prop.get("assessment_number") == "00079006":
-                    target_property = prop
-                    break
+            # Target assessments mentioned in review request
+            target_assessments = ["00079006", "00125326", "00374059", "02102943"]
             
-            # Analyze property descriptions
-            good_descriptions = []
-            bad_descriptions = []
-            placeholder_pattern = r"Property at assessment #\d{8}"
+            truncation_issues = []
+            redeemable_issues = []
+            hst_issues = []
+            
+            print(f"\n🎯 ANALYZING TARGET ASSESSMENTS FROM REVIEW REQUEST:")
+            
+            for target_assessment in target_assessments:
+                target_property = None
+                for prop in properties:
+                    if prop.get("assessment_number") == target_assessment:
+                        target_property = prop
+                        break
+                
+                if target_property:
+                    print(f"\n📋 Assessment #{target_assessment}:")
+                    owner_name = target_property.get('owner_name', 'N/A')
+                    property_address = target_property.get('property_address', 'N/A')
+                    redeemable = target_property.get('redeemable', 'N/A')
+                    hst_status = target_property.get('hst_applicable', 'N/A')
+                    raw_data = target_property.get('raw_data', {})
+                    
+                    print(f"   👤 Owner Name: '{owner_name}' (length: {len(owner_name)})")
+                    print(f"   🏠 Property Address: '{property_address}' (length: {len(property_address)})")
+                    print(f"   🔄 Redeemable Status: '{redeemable}'")
+                    print(f"   💼 HST Status: '{hst_status}'")
+                    
+                    # Check for specific truncation issue mentioned in review
+                    if target_assessment == "00079006":
+                        expected_full_name = "OWEN ST. CLAIR ANDERSON A2"
+                        if owner_name and len(owner_name) < len(expected_full_name):
+                            if "OWEN ST. CLAI" in owner_name:
+                                print(f"   ❌ TRUNCATION CONFIRMED: Owner name truncated to '{owner_name}' instead of full '{expected_full_name}'")
+                                truncation_issues.append({
+                                    "assessment": target_assessment,
+                                    "field": "owner_name",
+                                    "actual": owner_name,
+                                    "expected": expected_full_name,
+                                    "issue": "Name truncated"
+                                })
+                            else:
+                                print(f"   ✅ Owner name appears complete: '{owner_name}'")
+                        else:
+                            print(f"   ✅ Owner name length acceptable: '{owner_name}'")
+                    
+                    # Check for generic redeemable status (should be actual values from PDF)
+                    generic_redeemable_phrases = [
+                        "Subject to redemption period",
+                        "Contact HRM for redemption status",
+                        "Contact HRM for redemption details"
+                    ]
+                    if any(phrase in redeemable for phrase in generic_redeemable_phrases):
+                        print(f"   ❌ GENERIC REDEEMABLE STATUS: '{redeemable}' (should be actual PDF value)")
+                        redeemable_issues.append({
+                            "assessment": target_assessment,
+                            "status": redeemable,
+                            "issue": "Generic placeholder instead of actual PDF value"
+                        })
+                    else:
+                        print(f"   ✅ Redeemable status appears specific: '{redeemable}'")
+                    
+                    # Check for generic HST status
+                    generic_hst_phrases = [
+                        "Contact HRM for HST details",
+                        "Contact HRM for HST information"
+                    ]
+                    if any(phrase in hst_status for phrase in generic_hst_phrases):
+                        print(f"   ❌ GENERIC HST STATUS: '{hst_status}' (should be actual PDF value)")
+                        hst_issues.append({
+                            "assessment": target_assessment,
+                            "status": hst_status,
+                            "issue": "Generic placeholder instead of actual PDF value"
+                        })
+                    else:
+                        print(f"   ✅ HST status appears specific: '{hst_status}'")
+                    
+                    # Check raw data for comparison
+                    if raw_data:
+                        print(f"   📊 Raw Data Available:")
+                        print(f"      - Raw Owner: '{raw_data.get('owner_name', 'N/A')}'")
+                        print(f"      - Raw Parcel Desc: '{raw_data.get('parcel_description', 'N/A')}'")
+                        print(f"      - Raw Redeemable: '{raw_data.get('redeemable', 'N/A')}'")
+                        print(f"      - Raw HST: '{raw_data.get('hst_applicable', 'N/A')}'")
+                else:
+                    print(f"\n⚠️ Assessment #{target_assessment} not found in current data")
+            
+            # Analyze all properties for systematic truncation issues
+            print(f"\n📊 SYSTEMATIC TRUNCATION ANALYSIS:")
+            
+            owner_name_lengths = []
+            address_lengths = []
+            suspicious_truncations = []
             
             for prop in properties:
                 assessment = prop.get("assessment_number", "N/A")
-                address = prop.get("property_address", "")
-                description = prop.get("property_description", "")
+                owner_name = prop.get('owner_name', '')
+                property_address = prop.get('property_address', '')
                 
-                # Check if description is a placeholder
-                if "Property at assessment #" in address or "Property at assessment #" in description:
-                    bad_descriptions.append({
-                        "assessment": assessment,
-                        "address": address,
-                        "description": description,
-                        "owner": prop.get("owner_name", "N/A")
-                    })
-                else:
-                    # Check if it has meaningful address/description content
-                    if (len(address) > 20 and any(word in address.lower() for word in 
-                        ["rd", "st", "ave", "drive", "road", "street", "avenue", "lane", "court", "place", "way"])):
-                        good_descriptions.append({
+                if owner_name:
+                    owner_name_lengths.append(len(owner_name))
+                    # Check for suspicious truncation patterns
+                    if (len(owner_name) < 15 and 
+                        not owner_name.endswith((' A', ' A2', ' B', ' C', ' JR', ' SR', ' III')) and
+                        owner_name.count(' ') >= 2):  # Multi-word names that seem cut off
+                        suspicious_truncations.append({
                             "assessment": assessment,
-                            "address": address,
-                            "description": description,
-                            "owner": prop.get("owner_name", "N/A")
+                            "owner": owner_name,
+                            "length": len(owner_name),
+                            "reason": "Suspiciously short multi-word name"
                         })
-            
-            print(f"\n📊 Description Analysis Results:")
-            print(f"   ✅ Properties with good descriptions: {len(good_descriptions)}")
-            print(f"   ❌ Properties with placeholder descriptions: {len(bad_descriptions)}")
-            
-            # Show examples of good descriptions
-            if good_descriptions:
-                print(f"\n✅ Examples of GOOD property descriptions:")
-                for i, prop in enumerate(good_descriptions[:3]):
-                    print(f"   {i+1}. Assessment #{prop['assessment']}")
-                    print(f"      Address: {prop['address']}")
-                    print(f"      Owner: {prop['owner']}")
-            
-            # Show examples of bad descriptions
-            if bad_descriptions:
-                print(f"\n❌ Examples of BAD property descriptions (placeholders):")
-                for i, prop in enumerate(bad_descriptions[:5]):
-                    print(f"   {i+1}. Assessment #{prop['assessment']}")
-                    print(f"      Address: {prop['address']}")
-                    print(f"      Description: {prop['description']}")
-                    print(f"      Owner: {prop['owner']}")
-            
-            # Check specifically for assessment #00079006
-            if target_property:
-                print(f"\n🎯 SPECIFIC TARGET PROPERTY (Assessment #00079006):")
-                print(f"   Address: {target_property.get('property_address', 'N/A')}")
-                print(f"   Description: {target_property.get('property_description', 'N/A')}")
-                print(f"   Owner: {target_property.get('owner_name', 'N/A')}")
                 
-                # Check if this property has the bug
-                address = target_property.get('property_address', '')
-                if "Property at assessment #00079006" in address:
-                    print(f"   ❌ BUG CONFIRMED: Property #00079006 has placeholder description")
-                    return False, {"target_found": True, "has_bug": True, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
-                else:
-                    print(f"   ✅ Property #00079006 has proper description")
-                    return True, {"target_found": True, "has_bug": False, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
+                if property_address:
+                    address_lengths.append(len(property_address))
+            
+            if owner_name_lengths:
+                avg_owner_length = sum(owner_name_lengths) / len(owner_name_lengths)
+                min_owner_length = min(owner_name_lengths)
+                max_owner_length = max(owner_name_lengths)
+                print(f"   Owner Name Lengths - Avg: {avg_owner_length:.1f}, Min: {min_owner_length}, Max: {max_owner_length}")
+            
+            if address_lengths:
+                avg_address_length = sum(address_lengths) / len(address_lengths)
+                min_address_length = min(address_lengths)
+                max_address_length = max(address_lengths)
+                print(f"   Address Lengths - Avg: {avg_address_length:.1f}, Min: {min_address_length}, Max: {max_address_length}")
+            
+            if suspicious_truncations:
+                print(f"\n⚠️ SUSPICIOUS TRUNCATIONS DETECTED ({len(suspicious_truncations)} properties):")
+                for i, trunc in enumerate(suspicious_truncations[:5]):  # Show first 5
+                    print(f"   {i+1}. Assessment #{trunc['assessment']}: '{trunc['owner']}' (len: {trunc['length']})")
+            
+            # Summary of issues found
+            print(f"\n📋 ISSUE SUMMARY:")
+            print(f"   🔤 Truncation Issues: {len(truncation_issues)}")
+            print(f"   🔄 Redeemable Status Issues: {len(redeemable_issues)}")
+            print(f"   💼 HST Status Issues: {len(hst_issues)}")
+            print(f"   ⚠️ Suspicious Truncations: {len(suspicious_truncations)}")
+            
+            # Determine overall result
+            total_issues = len(truncation_issues) + len(redeemable_issues) + len(hst_issues)
+            
+            if total_issues == 0:
+                print(f"   ✅ NO CRITICAL ISSUES FOUND")
+                return True, {
+                    "truncation_issues": truncation_issues,
+                    "redeemable_issues": redeemable_issues,
+                    "hst_issues": hst_issues,
+                    "suspicious_truncations": suspicious_truncations
+                }
             else:
-                print(f"\n⚠️ Target property (Assessment #00079006) not found in current data")
-                
-            # Overall assessment
-            total_properties = len(properties)
-            if total_properties > 0:
-                bad_percentage = (len(bad_descriptions) / total_properties) * 100
-                print(f"\n📈 Overall Description Quality:")
-                print(f"   Total properties: {total_properties}")
-                print(f"   Bad descriptions: {len(bad_descriptions)} ({bad_percentage:.1f}%)")
-                print(f"   Good descriptions: {len(good_descriptions)} ({100-bad_percentage:.1f}%)")
-                
-                # Consider it a failure if more than 10% have bad descriptions
-                if bad_percentage > 10:
-                    print(f"   ❌ DESCRIPTION BUG DETECTED: {bad_percentage:.1f}% of properties have placeholder descriptions")
-                    return False, {"target_found": False, "has_bug": True, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
-                else:
-                    print(f"   ✅ Description quality acceptable: Only {bad_percentage:.1f}% have placeholders")
-                    return True, {"target_found": False, "has_bug": False, "bad_count": len(bad_descriptions), "good_count": len(good_descriptions)}
-            else:
-                print(f"   ⚠️ No properties found to analyze")
-                return False, {"target_found": False, "has_bug": True, "bad_count": 0, "good_count": 0}
+                print(f"   ❌ {total_issues} CRITICAL ISSUES FOUND")
+                return False, {
+                    "truncation_issues": truncation_issues,
+                    "redeemable_issues": redeemable_issues,
+                    "hst_issues": hst_issues,
+                    "suspicious_truncations": suspicious_truncations
+                }
                 
         else:
             print(f"❌ Failed to retrieve Halifax properties: {response.status_code}")
             return False, None
     except Exception as e:
-        print(f"❌ Property description test error: {e}")
+        print(f"❌ Data truncation test error: {e}")
+        return False, None
+
+def test_raw_property_data_analysis():
+    """Analyze raw property data to understand where truncation is occurring"""
+    print("\n📊 Testing Raw Property Data Analysis...")
+    try:
+        response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax", timeout=30)
+        if response.status_code == 200:
+            properties = response.json()
+            print(f"✅ Retrieved {len(properties)} Halifax properties for raw data analysis")
+            
+            properties_with_raw_data = []
+            properties_without_raw_data = []
+            
+            for prop in properties:
+                if prop.get('raw_data'):
+                    properties_with_raw_data.append(prop)
+                else:
+                    properties_without_raw_data.append(prop)
+            
+            print(f"   📊 Properties with raw data: {len(properties_with_raw_data)}")
+            print(f"   📊 Properties without raw data: {len(properties_without_raw_data)}")
+            
+            if properties_with_raw_data:
+                print(f"\n🔍 ANALYZING RAW DATA STRUCTURE:")
+                sample_prop = properties_with_raw_data[0]
+                raw_data = sample_prop.get('raw_data', {})
+                
+                print(f"   Sample Assessment: {sample_prop.get('assessment_number', 'N/A')}")
+                print(f"   Raw data keys: {list(raw_data.keys())}")
+                
+                # Compare processed vs raw data for first few properties
+                print(f"\n📋 PROCESSED vs RAW DATA COMPARISON:")
+                for i, prop in enumerate(properties_with_raw_data[:3]):
+                    assessment = prop.get('assessment_number', 'N/A')
+                    raw_data = prop.get('raw_data', {})
+                    
+                    print(f"\n   Property {i+1} - Assessment #{assessment}:")
+                    print(f"      Processed Owner: '{prop.get('owner_name', 'N/A')}'")
+                    print(f"      Raw Owner: '{raw_data.get('owner_name', 'N/A')}'")
+                    print(f"      Processed Address: '{prop.get('property_address', 'N/A')}'")
+                    print(f"      Raw Parcel Desc: '{raw_data.get('parcel_description', 'N/A')}'")
+                    print(f"      Processed Redeemable: '{prop.get('redeemable', 'N/A')}'")
+                    print(f"      Raw Redeemable: '{raw_data.get('redeemable', 'N/A')}'")
+                    print(f"      Processed HST: '{prop.get('hst_applicable', 'N/A')}'")
+                    print(f"      Raw HST: '{raw_data.get('hst_applicable', 'N/A')}'")
+                
+                return True, {
+                    "total_properties": len(properties),
+                    "with_raw_data": len(properties_with_raw_data),
+                    "without_raw_data": len(properties_without_raw_data)
+                }
+            else:
+                print(f"   ⚠️ No properties have raw data available for analysis")
+                return False, {"error": "No raw data available"}
+                
+        else:
+            print(f"❌ Failed to retrieve Halifax properties: {response.status_code}")
+            return False, None
+    except Exception as e:
+        print(f"❌ Raw data analysis error: {e}")
         return False, None
 
 def test_stats_endpoint():
@@ -344,14 +471,16 @@ def initialize_municipalities_if_needed():
 def run_comprehensive_test():
     """Run all tests in sequence"""
     print("🚀 Starting Comprehensive Halifax Tax Sale Scraper Tests")
-    print("=" * 60)
+    print("🎯 FOCUS: Data Truncation & Redeemable Status Issues")
+    print("=" * 70)
     
     test_results = {
         "api_connection": False,
         "municipalities": False,
         "halifax_scraper": False,
         "tax_sales": False,
-        "property_descriptions": False,
+        "data_truncation": False,
+        "raw_data_analysis": False,
         "stats": False,
         "map_data": False
     }
@@ -377,22 +506,26 @@ def run_comprehensive_test():
     tax_sales_success, halifax_properties = test_tax_sales_endpoint()
     test_results["tax_sales"] = tax_sales_success
     
-    # Test 5: Property descriptions bug test (CRITICAL for this review)
-    descriptions_success, description_data = test_property_descriptions_bug()
-    test_results["property_descriptions"] = descriptions_success
+    # Test 5: Data truncation issues (CRITICAL for this review)
+    truncation_success, truncation_data = test_data_truncation_issues()
+    test_results["data_truncation"] = truncation_success
     
-    # Test 6: Statistics endpoint
+    # Test 6: Raw data analysis
+    raw_data_success, raw_data_info = test_raw_property_data_analysis()
+    test_results["raw_data_analysis"] = raw_data_success
+    
+    # Test 7: Statistics endpoint
     stats_success, stats_data = test_stats_endpoint()
     test_results["stats"] = stats_success
     
-    # Test 7: Map data endpoint
+    # Test 8: Map data endpoint
     map_success, map_data = test_map_data_endpoint()
     test_results["map_data"] = map_success
     
     # Summary
-    print("\n" + "=" * 60)
-    print("📋 TEST SUMMARY")
-    print("=" * 60)
+    print("\n" + "=" * 70)
+    print("📋 TEST SUMMARY - HALIFAX TAX SALE SCRAPER DATA QUALITY")
+    print("=" * 70)
     
     passed_tests = sum(test_results.values())
     total_tests = len(test_results)
@@ -403,17 +536,26 @@ def run_comprehensive_test():
     
     print(f"\nOverall: {passed_tests}/{total_tests} tests passed")
     
-    # Special focus on property descriptions bug
-    if not test_results["property_descriptions"]:
-        print("\n🚨 CRITICAL BUG CONFIRMED: Property descriptions are not being extracted properly!")
-        print("   This matches the user's report about assessment #00079006 showing placeholder text.")
+    # Special focus on data quality issues
+    if not test_results["data_truncation"]:
+        print("\n🚨 CRITICAL DATA QUALITY ISSUES CONFIRMED!")
+        print("   User reports about truncation and redeemable status are validated.")
+        if truncation_data:
+            if truncation_data.get("truncation_issues"):
+                print(f"   - {len(truncation_data['truncation_issues'])} truncation issues found")
+            if truncation_data.get("redeemable_issues"):
+                print(f"   - {len(truncation_data['redeemable_issues'])} redeemable status issues found")
+            if truncation_data.get("hst_issues"):
+                print(f"   - {len(truncation_data['hst_issues'])} HST status issues found")
+    else:
+        print("\n✅ Data quality appears good - no critical truncation issues found")
     
     if passed_tests == total_tests:
-        print("🎉 ALL TESTS PASSED - Halifax scraper is working correctly!")
-    elif passed_tests >= 5:  # Core functionality working
-        print("⚠️ MOSTLY WORKING - Core functionality operational with minor issues")
+        print("🎉 ALL TESTS PASSED - Halifax scraper data quality is excellent!")
+    elif passed_tests >= 6:  # Core functionality working
+        print("⚠️ MOSTLY WORKING - Core functionality operational with minor data quality issues")
     else:
-        print("❌ MAJOR ISSUES - Halifax scraper has significant problems")
+        print("❌ MAJOR ISSUES - Halifax scraper has significant data quality problems")
     
     return test_results
 
@@ -429,7 +571,7 @@ if __name__ == "__main__":
     
     if passed_tests == total_tests:
         sys.exit(0)  # All tests passed
-    elif passed_tests >= 4:  # Core functionality working
+    elif passed_tests >= 5:  # Core functionality working
         sys.exit(1)  # Minor issues
     else:
         sys.exit(2)  # Major issues
