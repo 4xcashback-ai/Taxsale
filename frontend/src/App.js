@@ -495,6 +495,25 @@ function App() {
                             <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">🏛️ Location: {property.sale_location}</span>
                           )}
                         </div>
+
+                        {/* Redeemable and HST Information */}
+                        {(property.redeemable || property.hst_applicable) && (
+                          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <h4 className="font-semibold text-amber-800 text-sm mb-2">⚠️ Important Legal Information</h4>
+                            {property.redeemable && (
+                              <div className="mb-2">
+                                <span className="text-xs font-medium text-amber-700">🔄 Redemption:</span>
+                                <p className="text-xs text-amber-700">{property.redeemable}</p>
+                              </div>
+                            )}
+                            {property.hst_applicable && (
+                              <div>
+                                <span className="text-xs font-medium text-amber-700">💰 HST:</span>
+                                <p className="text-xs text-amber-700">{property.hst_applicable}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))
