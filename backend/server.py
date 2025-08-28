@@ -363,150 +363,143 @@ async def scrape_halifax_tax_sales():
                                     logger.warning(f"Error processing table: {table_error}")
                                     continue
                     
-                    # If no tables found, try text extraction with better parsing
+                    # If no tables found, extract complete text and parse more carefully
                     if not tables:
-                        logger.info("No tables found, trying enhanced text extraction...")
+                        logger.info("No tables found, extracting complete PDF text for careful parsing...")
                         text = page.extract_text()
                         if text:
-                            # Debug: Log first few lines of raw PDF text to understand structure
-                            text_lines = text.split('\n')[:10]
-                            logger.info(f"Raw PDF text sample: {text_lines}")
+                            # Get all lines and clean them
+                            all_lines = text.split('\n')
+                            cleaned_lines = [line.strip() for line in all_lines if line.strip()]
                             
-                            # Look for property data patterns in text - Halifax PDFs typically have structured lines
-                            lines = text.split('\n')
-                            for line in lines:
-                                # Look for lines that contain property data (assessment number + owner + address)
-                                if (re.search(r'\d{8}', line) and  # Has 8-digit number (assessment/PID)
-                                    len(line.split()) >= 4 and    # Has multiple parts
-                                    any(c.isupper() for c in line)):  # Has uppercase (likely names)
+                            logger.info(f"Extracted {len(cleaned_lines)} non-empty text lines from PDF")
+                            logger.info(f"Sample lines: {cleaned_lines[:5]}")
+                            
+                            # Process lines to find property data - look for patterns that indicate property entries
+                            i = 0
+                            while i < len(cleaned_lines):
+                                line = cleaned_lines[i]
+                                
+                                # Look for lines starting with assessment numbers (8 digits)
+                                assessment_match = re.search(r'^(\d{8})\s+(.+)', line)
+                                if assessment_match:
+                                    assessment_num = assessment_match.group(1)
+                                    rest_of_line = assessment_match.group(2)
                                     
+                                    # The rest of the line and potentially next lines contain owner + property info
+                                    full_property_text = rest_of_line
+                                    
+                                    # Check if the property data continues on next lines
+                                    j = i + 1
+                                    while j < len(cleaned_lines) and not re.match(r'^\d{8}\s+', cleaned_lines[j]):
+                                        # This line is part of the current property entry
+                                        full_property_text += " " + cleaned_lines[j]
+                                        j += 1
+                                    
+                                    logger.info(f"Full property text for {assessment_num}: '{full_property_text[:100]}...'")
+                                    
+                                    # Parse the complete property text
                                     try:
-                                        # Split the line more intelligently to separate AAN, owner, and description
-                                        parts = line.strip().split()
+                                        # Extract owner name - typically uppercase words at the beginning
+                                        words = full_property_text.split()
+                                        owner_parts = []
+                                        property_parts = []
                                         
-                                        # Find assessment number (first 8-digit number)
-                                        assessment_num = None
-                                        for part in parts:
-                                            if re.match(r'^\d{8}$', part):
-                                                assessment_num = part
-                                                break
-                                        
-                                        if assessment_num:
-                                            # Find the position of the assessment number
-                                            assessment_pos = line.find(assessment_num)
-                                            after_assessment = line[assessment_pos + len(assessment_num):].strip()
-                                            
-                                            # The next part should be the owner name (uppercase names)
-                                            # Find where owner name ends and address begins - be more generous with extraction
-                                            words = after_assessment.split()
-                                            owner_parts = []
-                                            address_parts = []
-                                            
-                                            # Collect uppercase words as owner name - be more inclusive to avoid truncation
-                                            collecting_owner = True
-                                            for i, word in enumerate(words):
-                                                # Check if this looks like an owner name (uppercase) or address (mixed case with address indicators)
-                                                if collecting_owner:
-                                                    # More generous owner name collection - include names, estates, middle initials
-                                                    if (word.isupper() or 
-                                                        word in ["ESTATE", "LTD", "LIMITED", "INC", "CORP"] or
-                                                        (len(word) > 1 and word[0].isupper() and 
-                                                         not any(addr_word in word.lower() for addr_word in ["rd", "st", "ave", "drive", "road", "street", "lot", "unit", "hwy", "highway", "grant"]) and
-                                                         not re.match(r'^\d+$', word))):  # Not just a number
+                                        # More sophisticated owner name extraction
+                                        in_owner_section = True
+                                        for word_idx, word in enumerate(words):
+                                            if in_owner_section:
+                                                # Owner names are typically uppercase, include ESTATE, LTD, etc.
+                                                if (word.isupper() or 
+                                                    word in ['ESTATE', 'LTD', 'LIMITED', 'INC', 'CORP', 'COMPANY'] or
+                                                    re.match(r'^[A-Z]+[,.]?$', word)):  # All caps with optional comma/period
+                                                    owner_parts.append(word.rstrip(','))  # Remove trailing comma
+                                                else:
+                                                    # Check if this might be a continuation like "A2", "JR", "SR", "III"
+                                                    if word in ['A2', 'A', 'B', 'C', 'JR', 'SR', 'III', 'II', 'IV']:
                                                         owner_parts.append(word)
                                                     else:
-                                                        # Check if we're hitting an address or should continue with owner
-                                                        # Look ahead to see if next few words are also uppercase (continuing owner name)
-                                                        remaining_words = words[i:i+3]  # Look at next 3 words
-                                                        uppercase_count = sum(1 for w in remaining_words if w.isupper() and len(w) > 1)
-                                                        
-                                                        if uppercase_count >= 2:  # More uppercase words coming, continue owner
-                                                            owner_parts.append(word)
-                                                        else:  # Start collecting address
-                                                            collecting_owner = False
-                                                            address_parts.append(word)
-                                                else:
-                                                    address_parts.append(word)
+                                                        # Transition to property description
+                                                        in_owner_section = False
+                                                        property_parts = words[word_idx:]
+                                                        break
                                             
-                                            owner_name = " ".join(owner_parts) if owner_parts else None
-                                            description = " ".join(address_parts) if address_parts else None
-                                            
-                                            # Clean up the description to remove PIDs and amounts
-                                            if description:
-                                                # Remove PID numbers and dollar amounts from description  
-                                                description = re.sub(r'\b\d{8}\b', '', description)  # Remove 8-digit numbers (PIDs)
-                                                description = re.sub(r'\$[\d,]+\.?\d*', '', description)  # Remove dollar amounts
-                                                description = re.sub(r'\s+', ' ', description).strip()  # Clean up spaces
-                                            
-                                            # Use the more structured extraction
-                                            if assessment_num and owner_name:
-                                                # Extract redeemable status and HST status from the original line
-                                                redeemable_status = "Contact HRM for redemption status"  # Default
-                                                hst_status = "Contact HRM for HST details"  # Default
-                                                
-                                                # Look for redeemable indicators in the line
-                                                line_lower = line.lower()
-                                                if "redeemable" in line_lower:
-                                                    if "not redeemable" in line_lower or "non-redeemable" in line_lower:
-                                                        redeemable_status = "No"
-                                                    else:
-                                                        redeemable_status = "Yes"
-                                                elif "redeem" in line_lower and "subject" in line_lower:
-                                                    redeemable_status = "Subject to redemption"
-                                                elif "exempt" in line_lower and "redeem" in line_lower:
-                                                    redeemable_status = "No"
-                                                
-                                                # Look for HST indicators in the line  
-                                                if "hst" in line_lower:
-                                                    if "no hst" in line_lower or "hst no" in line_lower or "hst: no" in line_lower:
-                                                        hst_status = "No"
-                                                    elif "hst yes" in line_lower or "hst: yes" in line_lower or "hst applicable" in line_lower:
-                                                        hst_status = "Yes"
-                                                elif "tax" in line_lower and ("exempt" in line_lower or "no" in line_lower):
-                                                    hst_status = "No"
-                                                
-                                                # Extract opening bid from line if present
-                                                opening_bid = 1000.0  # Default
-                                                bid_matches = re.findall(r'\$[\d,]+\.?\d*', line)
-                                                if bid_matches:
-                                                    try:
-                                                        # Take the largest dollar amount as likely opening bid
-                                                        amounts = [float(match.replace('$', '').replace(',', '')) for match in bid_matches]
-                                                        opening_bid = max(amounts)
-                                                    except:
-                                                        pass
-                                                
-                                                # If we don't have a good description, try to extract PID for fallback
-                                                pid = None
-                                                pid_match = re.search(r'\b(\d{8})\b', after_assessment)
-                                                if pid_match and pid_match.group(1) != assessment_num:
-                                                    pid = pid_match.group(1)
-                                                else:
-                                                    pid = assessment_num
-                                                
-                                                # If description is empty or too short, create a descriptive fallback
-                                                if not description or len(description.strip()) < 5:
-                                                    description = f"Property at assessment #{assessment_num}"
-                                                
-                                                property_data = {
-                                                    "assessment_num": assessment_num,
-                                                    "owner_name": owner_name,
-                                                    "description": description,
-                                                    "pid": pid,
-                                                    "opening_bid": opening_bid,
-                                                    "hst_status": hst_status,
-                                                    "redeemable_status": redeemable_status
-                                                }
-                                                
-                                                halifax_properties.append(property_data)
-                                                logger.info(f"Enhanced extraction - Assessment: {assessment_num}")
-                                                logger.info(f"  Full owner: '{owner_name}' (len={len(owner_name) if owner_name else 0})")
-                                                logger.info(f"  Full address: '{description}' (len={len(description) if description else 0})")
-                                                logger.info(f"  Redeemable: {redeemable_status}, HST: {hst_status}")
+                                        owner_name = " ".join(owner_parts) if owner_parts else f"Owner for {assessment_num}"
+                                        property_desc_words = property_parts if property_parts else words[len(owner_parts):]
+                                        
+                                        # Extract property description (address/location)
+                                        description = " ".join(property_desc_words) if property_desc_words else f"Property at assessment #{assessment_num}"
+                                        
+                                        # Clean description - remove PIDs and dollar amounts but keep the address
+                                        if description:
+                                            # Remove PID numbers, dollar amounts, but preserve property description
+                                            cleaned_desc = description
+                                            # Remove standalone 8-digit numbers (PIDs) but keep street numbers
+                                            cleaned_desc = re.sub(r'\b\d{8}\b', '', cleaned_desc)
+                                            # Remove dollar amounts
+                                            cleaned_desc = re.sub(r'\$[\d,]+\.?\d*', '', cleaned_desc)
+                                            # Clean up multiple spaces
+                                            cleaned_desc = re.sub(r'\s+', ' ', cleaned_desc).strip()
+                                            if cleaned_desc and len(cleaned_desc) > 5:
+                                                description = cleaned_desc
+                                        
+                                        # Extract redeemable and HST status from the full text
+                                        redeemable_status = "Contact HRM for redemption details"  
+                                        hst_status = "Contact HRM for HST details"
+                                        
+                                        full_text_lower = full_property_text.lower()
+                                        # Look for actual redeemable indicators
+                                        if 'no' in full_text_lower and 'redeem' in full_text_lower:
+                                            redeemable_status = "No"
+                                        elif 'yes' in full_text_lower and 'redeem' in full_text_lower:
+                                            redeemable_status = "Yes"
+                                        elif 'subject' in full_text_lower and 'redeem' in full_text_lower:
+                                            redeemable_status = "Subject to redemption"
+                                        
+                                        # Look for HST indicators
+                                        if 'hst' in full_text_lower:
+                                            if 'no' in full_text_lower:
+                                                hst_status = "No"
+                                            elif 'yes' in full_text_lower:
+                                                hst_status = "Yes"
+                                        
+                                        # Extract opening bid
+                                        opening_bid = 1000.0
+                                        bid_matches = re.findall(r'\$[\d,]+\.?\d*', full_property_text)
+                                        if bid_matches:
+                                            try:
+                                                amounts = [float(match.replace('$', '').replace(',', '')) for match in bid_matches]
+                                                opening_bid = max(amounts) if amounts else 1000.0
+                                            except:
+                                                pass
+                                        
+                                        # Extract PID
+                                        pid_match = re.search(r'\b(\d{8})\b', full_property_text)
+                                        pid = pid_match.group(1) if pid_match and pid_match.group(1) != assessment_num else assessment_num
+                                        
+                                        property_data = {
+                                            "assessment_num": assessment_num,
+                                            "owner_name": owner_name,
+                                            "description": description,
+                                            "pid": pid,
+                                            "opening_bid": opening_bid,
+                                            "hst_status": hst_status,
+                                            "redeemable_status": redeemable_status
+                                        }
+                                        
+                                        halifax_properties.append(property_data)
+                                        logger.info(f"Parsed complete property - Assessment: {assessment_num}")
+                                        logger.info(f"  Owner: '{owner_name}' (len: {len(owner_name)})")
+                                        logger.info(f"  Description: '{description}' (len: {len(description)})")
+                                        logger.info(f"  Redeemable: {redeemable_status}, HST: {hst_status}")
+                                        
+                                    except Exception as parse_error:
+                                        logger.warning(f"Error parsing property {assessment_num}: {parse_error}")
                                     
-                                    except Exception as text_error:
-                                        logger.warning(f"Error processing enhanced text line: {text_error}")
-                                        continue
+                                    # Move to the next property (skip lines we already processed)
+                                    i = j
+                                else:
+                                    i += 1
             
             logger.info(f"Successfully parsed PDF - extracted {len(halifax_properties)} properties")
             
