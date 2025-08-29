@@ -132,6 +132,45 @@ function MainApp() {
     }
   };
 
+  const handleAddMunicipality = async () => {
+    if (!newMunicipality.name.trim()) return;
+    
+    try {
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${BACKEND_URL}/api/municipalities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMunicipality)
+      });
+      
+      if (response.ok) {
+        setNewMunicipality({ name: '', scraper_type: 'generic', tax_sale_url: '' });
+        setShowAddMunicipality(false);
+        fetchMunicipalities(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error adding municipality:', error);
+    }
+  };
+
+  const handleEditMunicipality = async (municipality) => {
+    try {
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${BACKEND_URL}/api/municipalities/${municipality.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(municipality)
+      });
+      
+      if (response.ok) {
+        setEditingMunicipality(null);
+        fetchMunicipalities(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error editing municipality:', error);
+    }
+  };
+
   const handleSearch = async () => {
     await fetchTaxSales(selectedMunicipality, searchQuery);
     await fetchMapData();
