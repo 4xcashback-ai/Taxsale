@@ -201,6 +201,33 @@ function MainApp() {
     }
   };
 
+  const handleDeleteMunicipality = async (municipalityId, municipalityName) => {
+    if (!window.confirm(`Are you sure you want to delete "${municipalityName}"? This will also delete all associated tax sale properties.`)) {
+      return;
+    }
+    
+    try {
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${BACKEND_URL}/api/municipalities/${municipalityId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        fetchMunicipalities(); // Refresh the list
+        fetchStats(); // Refresh stats
+        alert(result.message);
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.detail || 'Failed to delete municipality'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting municipality:', error);
+      alert('Error deleting municipality. Please try again.');
+    }
+  };
+
   const handleSearch = async () => {
     await fetchTaxSales(selectedMunicipality, searchQuery);
     await fetchMapData();
