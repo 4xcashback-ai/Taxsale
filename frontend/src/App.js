@@ -635,6 +635,36 @@ function MainApp() {
                 ) : (
                   taxSales.map((property) => (
                     <Card key={property.id} className="bg-white/80 backdrop-blur-sm border-slate-200/50 hover:shadow-lg transition-shadow">
+                      <div className="flex">
+                        {/* Satellite Thumbnail */}
+                        <div className="w-32 h-32 flex-shrink-0">
+                          {property.latitude && property.longitude ? (
+                            <div className="relative w-full h-full rounded-l-lg overflow-hidden">
+                              <img
+                                src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=18&size=128x128&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY}`}
+                                alt={`Satellite view of ${property.property_address}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to a placeholder if satellite image fails
+                                  e.target.src = `data:image/svg+xml;base64,${btoa('<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" fill="#e5e7eb"/><text x="64" y="64" text-anchor="middle" dy=".3em" fill="#6b7280" font-size="12">🛰️</text></svg>')}`
+                                }}
+                              />
+                              <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">
+                                Satellite
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-l-lg flex items-center justify-center">
+                              <div className="text-center text-gray-500">
+                                <div className="text-2xl mb-1">🏠</div>
+                                <div className="text-xs">No Image</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Property Content */}
+                        <div className="flex-1">
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
