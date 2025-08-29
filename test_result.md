@@ -244,11 +244,14 @@ frontend:
     file: "App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Frontend displays properties with external links to PVSC (AANs), Viewpoint.ca (PIDs), and municipality websites."
+      - working: true
+        agent: "testing"
+        comment: "GOOGLE MAPS INFO WINDOW FIX COMPLETELY VERIFIED! The critical 'undefined' property data bug has been completely resolved. COMPREHENSIVE TEST RESULTS: 1) LIVE MAP TAB: Successfully loads Google Maps with 62 property markers distributed across Nova Scotia, 2) PROPERTY MARKERS: All markers are visible and clickable with proper titles (e.g., '42 Anderson Crt Lot A2 Upper Hammonds Plains - Dwelling'), 3) INFO WINDOWS WORKING PERFECTLY: Successfully tested 5 different property info windows, all showing REAL property data with NO 'undefined' values anywhere, 4) CORRECT FIELD NAMES CONFIRMED: Info windows use proper field names - property_address, owner_name, municipality_name, assessment_number as specified in the fix, 5) ANDERSON PROPERTY VERIFIED: The specific property mentioned in review request (Assessment #00079006) shows correct data: Title: '42 Anderson Crt Lot A2 Upper Hammonds Plains - Dwelling', Owner: 'OWEN ST. CLAIR ANDERSON', Opening Bid: '$2,547.4', Municipality: 'Halifax Regional Municipality', Assessment: '00079006', 6) FALLBACK VALUES WORKING: All fields show proper data or 'Not Available' fallbacks, no 'undefined' values detected, 7) VIEW DETAILS BUTTON: Present in all info windows and functional, 8) MULTIPLE PROPERTIES TESTED: Each marker shows different property information correctly, confirming the fix works across all properties. ROOT CAUSE RESOLUTION CONFIRMED: The main agent's fix to use full /api/tax-sales endpoint instead of /api/tax-sales/map-data is working perfectly. All property fields now display real database values instead of 'undefined'. The Google Maps info window functionality is production-ready and meets all requirements from the review request."
 
   - task: "Interactive Map Display"
     implemented: true
