@@ -1639,56 +1639,183 @@ async def query_ns_government_parcel(pid_number: str):
             "error": str(e)
         }
 
-@api_router.post("/create-ns-government-boundary/{assessment_number}")
-async def create_ns_government_boundary_map(assessment_number: str):
-    """Create boundary image using Nova Scotia government data and Google Maps satellite overlay"""
+@api_router.post("/batch-process-ns-government-boundaries")
+async def batch_process_ns_government_boundaries():
+    """Batch process all properties to generate boundary thumbnails using NS Government data"""
     try:
-        # Get property details
-        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
-        if not property_data:
-            raise HTTPException(status_code=404, detail="Property not found")
+        # Get all properties with PIDs
+        properties = await db.tax_sales.find({
+            "pid_number": {"$exists": True, "$ne": None, "$ne": ""}
+        }).to_list(1000)
         
-        pid_number = property_data.get('pid_number')
-        if not pid_number:
-            raise HTTPException(status_code=400, detail="Property has no PID number")
-        
-        # Query NS government service for boundary data
-        parcel_data = await query_ns_government_parcel(pid_number)
-        
-        if not parcel_data.get('found'):
-            raise HTTPException(status_code=404, detail=f"PID {pid_number} not found in NS government database")
-        
-        screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
-        
-        # Update property record with boundary screenshot filename
-        await db.tax_sales.update_one(
-            {"assessment_number": assessment_number},
-            {"$set": {"boundary_screenshot": screenshot_filename}}
-        )
-        
-        # Get boundary center and zoom for optimal satellite view
-        center = parcel_data['center']
-        zoom_level = parcel_data['zoom_level']
-        
-        return {
-            "message": "NS Government boundary data retrieved successfully",
-            "assessment_number": assessment_number,
-            "pid_number": pid_number,
-            "screenshot_filename": screenshot_filename,
-            "property_info": parcel_data['property_info'],
-            "center_coordinates": center,
-            "zoom_level": zoom_level,
-            "bbox": parcel_data['bbox'],
-            "google_satellite_url": f"https://maps.googleapis.com/maps/api/staticmap?center={center['lat']},{center['lon']}&zoom={zoom_level}&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY",
-            "property_address": property_data.get('property_address', 'Unknown'),
-            "source": "Nova Scotia Government NSPRD + Google Maps",
-            "ready_for_screenshot": True
+        results = {
+            "total_properties": len(properties),
+            "processed": [],
+            "failed": [],
+            "government_data_found": 0,
+            "thumbnails_created": 0
         }
         
-    except HTTPException:
-        raise
+        for prop in properties:
+            pid_number = prop.get('pid_number')
+            assessment_number = prop.get('assessment_number')
+            
+            if not pid_number or not assessment_number:
+                results["failed"].append({
+                    "assessment_number": assessment_number,
+                    "reason": "Missing PID or assessment number"
+                })
+                continue
+            
+            try:
+                # Query NS Government service for this property
+                parcel_data = await query_ns_government_parcel(pid_number)
+                
+                if parcel_data.get('found'):
+                    # Create boundary thumbnail using government data
+                    screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
+                    
+                    # Update property record with boundary screenshot
+                    await db.tax_sales.update_one(
+                        {"assessment_number": assessment_number},
+                        {"$set": {
+                            "boundary_screenshot": screenshot_filename,
+                            "government_boundary_data": {
+                                "area_sqm": parcel_data['property_info']['area_sqm'],
+                                "perimeter_m": parcel_data['property_info']['perimeter_m'],
+                                "center_lat": parcel_data['center']['lat'],
+                                "center_lon": parcel_data['center']['lon'],
+                                "zoom_level": parcel_data['zoom_level'],
+                                "update_date": parcel_data['property_info']['update_date'],
+                                "source": "Nova Scotia Government NSPRD"
+                            }
+                        }}
+                    )
+                    
+                    # Generate Google Maps satellite image for this property
+                    center = parcel_data['center']
+                    zoom = parcel_data['zoom_level']
+                    satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={center['lat']},{center['lon']}&zoom={zoom}&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+                    
+                    results["processed"].append({
+                        "assessment_number": assessment_number,
+                        "pid_number": pid_number,
+                        "property_address": prop.get('property_address', 'Unknown'),
+                        "area_sqm": parcel_data['property_info']['area_sqm'],
+                        "screenshot_filename": screenshot_filename,
+                        "satellite_url": satellite_url,
+                        "center": center,
+                        "status": "Government data found, thumbnail prepared"
+                    })
+                    
+                    results["government_data_found"] += 1
+                    results["thumbnails_created"] += 1
+                    
+                else:
+                    results["failed"].append({
+                        "assessment_number": assessment_number,
+                        "pid_number": pid_number,
+                        "reason": "Not found in NS Government database"
+                    })
+                    
+            except Exception as e:
+                results["failed"].append({
+                    "assessment_number": assessment_number,
+                    "pid_number": pid_number,
+                    "reason": f"Error processing: {str(e)}"
+                })
+        
+        return {
+            "message": f"Batch processing completed: {results['government_data_found']}/{results['total_properties']} properties found in NS Government database",
+            "results": results,
+            "success_rate": f"{(results['government_data_found']/results['total_properties']*100):.1f}%"
+        }
+        
     except Exception as e:
-        logger.error(f"Error creating NS government boundary map: {e}")
+        logger.error(f"Error in batch processing NS Government boundaries: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/capture-satellite-thumbnails-batch")  
+async def capture_satellite_thumbnails_batch(batch_size: int = 5):
+    """Capture actual satellite thumbnail images for properties with government boundary data"""
+    try:
+        # Get properties that have government boundary data but need actual image files
+        properties = await db.tax_sales.find({
+            "government_boundary_data": {"$exists": True},
+            "boundary_screenshot": {"$exists": True}
+        }).limit(batch_size).to_list(batch_size)
+        
+        captured_count = 0
+        results = []
+        
+        for prop in properties:
+            assessment_number = prop.get('assessment_number')
+            pid_number = prop.get('pid_number')
+            boundary_data = prop.get('government_boundary_data', {})
+            screenshot_filename = prop.get('boundary_screenshot')
+            
+            if not all([assessment_number, pid_number, screenshot_filename]):
+                continue
+                
+            screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+            
+            # Check if image already exists and is substantial (not demo)
+            if Path(screenshot_path).exists():
+                file_size = Path(screenshot_path).stat().st_size
+                if file_size > 10000:  # 10KB+ indicates real satellite image
+                    continue
+            
+            try:
+                # Get Google Maps satellite image centered on government boundary data
+                center_lat = boundary_data.get('center_lat')
+                center_lon = boundary_data.get('center_lon') 
+                zoom = boundary_data.get('zoom_level', 18)
+                
+                if center_lat and center_lon:
+                    # Create high-quality satellite thumbnail using PIL/requests
+                    satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={center_lat},{center_lon}&zoom={zoom}&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+                    
+                    # Download the satellite image
+                    import requests
+                    response = requests.get(satellite_url, timeout=10)
+                    
+                    if response.status_code == 200:
+                        # Save the actual satellite image
+                        Path(screenshot_path).parent.mkdir(parents=True, exist_ok=True)
+                        with open(screenshot_path, 'wb') as f:
+                            f.write(response.content)
+                        
+                        captured_count += 1
+                        results.append({
+                            "assessment_number": assessment_number,
+                            "pid_number": pid_number,
+                            "screenshot_filename": screenshot_filename,
+                            "file_size": len(response.content),
+                            "status": "Satellite thumbnail captured successfully"
+                        })
+                    else:
+                        results.append({
+                            "assessment_number": assessment_number,
+                            "pid_number": pid_number,
+                            "status": f"Failed to download satellite image: HTTP {response.status_code}"
+                        })
+                        
+            except Exception as e:
+                results.append({
+                    "assessment_number": assessment_number,
+                    "pid_number": pid_number,
+                    "status": f"Error capturing thumbnail: {str(e)}"
+                })
+        
+        return {
+            "message": f"Captured {captured_count} satellite thumbnails from batch of {len(properties)} properties",
+            "captured_count": captured_count,
+            "total_processed": len(properties),
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error capturing satellite thumbnails: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/property/{assessment_number}/boundary-image")
