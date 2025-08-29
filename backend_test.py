@@ -469,20 +469,27 @@ def initialize_municipalities_if_needed():
         return False
 
 def test_municipality_management_api():
-    """Test Municipality Management API endpoints - Focus on field name fix"""
-    print("\n🏛️ Testing Municipality Management API (Field Name Fix)...")
-    print("🎯 FOCUS: Testing 'website_url' field acceptance (was 'tax_sale_url' bug)")
+    """Test Municipality Management API endpoints - Focus on NEW FEATURES from review request"""
+    print("\n🏛️ Testing Municipality Management API (NEW FEATURES)...")
+    print("🎯 FOCUS: DELETE endpoint, Enhanced PUT with scheduling, New scheduling fields")
     
     try:
-        # Test data with the correct field name 'website_url'
+        # Test data with NEW scheduling fields from review request
         test_municipality = {
             "name": "Test Municipality for API Testing",
-            "website_url": "https://test-municipality.ca",  # This is the corrected field name
+            "website_url": "https://test-municipality.ca",
             "tax_sale_url": "https://test-municipality.ca/tax-sales",
             "region": "Test Region",
             "latitude": 45.0,
             "longitude": -64.0,
-            "scraper_type": "generic"
+            "scraper_type": "generic",
+            # NEW SCHEDULING FIELDS from review request
+            "scrape_enabled": True,
+            "scrape_frequency": "weekly",
+            "scrape_day_of_week": 2,  # Tuesday
+            "scrape_day_of_month": 15,
+            "scrape_time_hour": 3,
+            "scrape_time_minute": 30
         }
         
         print(f"   📝 Test municipality data prepared with 'website_url' field")
