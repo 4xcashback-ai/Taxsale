@@ -1360,42 +1360,94 @@ async def save_boundary_screenshot(request_data: dict):
 
 @api_router.post("/capture-all-boundaries") 
 async def capture_all_property_boundaries():
-    """Prepare data for capturing boundary screenshots for all properties with coordinates"""
+    """Prepare data for capturing boundary screenshots for all properties with PIDs"""
     try:
-        # Get all properties that have coordinates but no boundary screenshots
+        # Get all properties that have PID numbers
         properties = await db.tax_sales.find({
-            "latitude": {"$ne": None},
-            "longitude": {"$ne": None},
-            "boundary_screenshot": {"$exists": False}
+            "pid_number": {"$exists": True, "$ne": None, "$ne": ""}
         }).to_list(1000)
         
         boundary_data = []
         for prop in properties:
-            latitude = prop.get('latitude')
-            longitude = prop.get('longitude')
-            if latitude and longitude:
-                # Create Google Maps satellite URL
-                google_maps_url = f"https://www.google.com/maps/@{latitude},{longitude},19z/data=!3m1!1e3"
+            pid_number = prop.get('pid_number')
+            assessment_number = prop.get('assessment_number')
+            
+            if pid_number and assessment_number:
+                screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
+                screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+                
+                # Check if screenshot already exists
+                has_screenshot = Path(screenshot_path).exists()
                 
                 boundary_data.append({
-                    "assessment_number": prop.get('assessment_number'),
-                    "pid_number": prop.get('pid_number'),
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "google_maps_url": google_maps_url,
-                    "viewpoint_url": f"https://www.viewpoint.ca/map#pid={prop.get('pid_number')}" if prop.get('pid_number') else None,
-                    "property_address": prop.get('property_address', 'Unknown')
+                    "assessment_number": assessment_number,
+                    "pid_number": pid_number,
+                    "viewpoint_url": f"https://www.viewpoint.ca/map#pid={pid_number}",
+                    "screenshot_filename": screenshot_filename,
+                    "screenshot_path": screenshot_path,
+                    "property_address": prop.get('property_address', 'Unknown'),
+                    "has_screenshot": has_screenshot,
+                    "needs_capture": not has_screenshot
                 })
         
+        ready_for_capture = [item for item in boundary_data if item['needs_capture']]
+        
         return {
-            "message": f"Found {len(boundary_data)} properties ready for boundary capture",
+            "message": f"Found {len(boundary_data)} properties with PIDs, {len(ready_for_capture)} need screenshot capture",
             "properties": boundary_data,
             "total_count": len(boundary_data),
-            "method": "google_maps_satellite"
+            "ready_for_capture": len(ready_for_capture),
+            "method": "viewpoint_ca_boundaries"
         }
         
     except Exception as e:
         logger.error(f"Error preparing boundary capture data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/create-demo-boundary/{assessment_number}")
+async def create_demo_boundary_image(assessment_number: str):
+    """Create a demo boundary image for testing (placeholder until viewpoint.ca capture works)"""
+    try:
+        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_data:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        pid_number = property_data.get('pid_number')
+        if not pid_number:
+            raise HTTPException(status_code=400, detail="Property has no PID number")
+        
+        screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
+        
+        # Update property record with demo screenshot
+        await db.tax_sales.update_one(
+            {"assessment_number": assessment_number},
+            {"$set": {"boundary_screenshot": screenshot_filename}}
+        )
+        
+        # Create a simple demo image file (1x1 pixel placeholder)
+        import base64
+        # Create a simple colored square as demo
+        demo_image_data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAWA0VkwAAAABJRU5ErkJggg=="
+        demo_image_bytes = base64.b64decode(demo_image_data)
+        
+        screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+        Path(screenshot_path).parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(screenshot_path, 'wb') as f:
+            f.write(demo_image_bytes)
+        
+        return {
+            "message": "Demo boundary image created",
+            "assessment_number": assessment_number,
+            "pid_number": pid_number,
+            "screenshot_filename": screenshot_filename,
+            "image_url": f"/static/property_screenshots/{screenshot_filename}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating demo boundary image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/property/{assessment_number}/boundary-image")
