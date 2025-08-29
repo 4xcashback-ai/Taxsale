@@ -1235,7 +1235,11 @@ def run_comprehensive_test():
     # Initialize municipalities if needed
     initialize_municipalities_if_needed()
     
-    # Test 2: Quick Municipality Endpoints Test (HIGHEST PRIORITY - Review Request Focus)
+    # Test 2: NSPRD Boundary Overlay System (HIGHEST PRIORITY - Review Request Focus)
+    nsprd_success, nsprd_data = test_nsprd_boundary_api()
+    test_results["nsprd_boundary_system"] = nsprd_success
+    
+    # Test 3: Quick Municipality Endpoints Test (HIGH PRIORITY)
     quick_muni_success, quick_muni_data = test_municipality_endpoints_quick()
     test_results["municipality_endpoints_quick"] = quick_muni_success
     
