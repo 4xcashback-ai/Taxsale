@@ -171,6 +171,8 @@ function MainApp() {
   };
 
   const handleEditMunicipality = async (municipality) => {
+    if (!municipality.name.trim() || !municipality.website_url.trim()) return;
+    
     try {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${BACKEND_URL}/api/municipalities/${municipality.id}`, {
@@ -182,9 +184,14 @@ function MainApp() {
       if (response.ok) {
         setEditingMunicipality(null);
         fetchMunicipalities(); // Refresh the list
+        alert('Municipality updated successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.detail || 'Failed to update municipality'}`);
       }
     } catch (error) {
       console.error('Error editing municipality:', error);
+      alert('Error updating municipality. Please try again.');
     }
   };
 
