@@ -107,15 +107,18 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
 backend:
   - task: "Municipality Management API Fix"
     implemented: true
-    working: false
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Fixed field name mismatch bug in frontend App.js. Frontend was sending 'tax_sale_url' but backend MunicipalityCreate model expects 'website_url'. Updated handleAddMunicipality and handleEditMunicipality functions to send correct field name. Ready for testing."
+      - working: true
+        agent: "testing"
+        comment: "MUNICIPALITY MANAGEMENT API FIX VERIFIED! Comprehensive testing confirms the field name bug has been completely resolved. All municipality management endpoints are working correctly: 1) POST /api/municipalities successfully accepts 'website_url' field with no HTTP 422 errors, 2) PUT /api/municipalities/{id} successfully updates municipalities with 'website_url' field, 3) MunicipalityCreate Pydantic model validation works correctly - properly rejects missing required fields and accepts valid data with 'website_url', 4) Backend correctly rejects requests missing the required 'website_url' field (returns HTTP 422 as expected), 5) Frontend-backend field name synchronization is now working properly. The bug where frontend sent 'tax_sale_url' but backend expected 'website_url' has been completely fixed. Municipalities can now be added and edited successfully through the Admin panel."
 
   - task: "Halifax Tax Sale PDF Parsing"
     implemented: true
