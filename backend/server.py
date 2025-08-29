@@ -780,10 +780,10 @@ async def get_municipality(municipality_id: str):
     if '_id' in municipality:
         del municipality['_id']
     
-    # Ensure website_url field exists (migrate from tax_sale_url if needed)
-    if 'website_url' not in municipality and 'tax_sale_url' in municipality:
+    # Ensure website_url field exists and is not None (migrate from tax_sale_url if needed)
+    if ('website_url' not in municipality or municipality.get('website_url') is None) and 'tax_sale_url' in municipality:
         municipality['website_url'] = municipality['tax_sale_url']
-    elif 'website_url' not in municipality:
+    elif 'website_url' not in municipality or municipality.get('website_url') is None:
         municipality['website_url'] = "https://example.com"  # Default fallback
     
     return Municipality(**municipality)
