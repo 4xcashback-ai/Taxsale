@@ -1349,11 +1349,11 @@ def run_comprehensive_test():
         print("\n✅ Data quality appears good - no critical truncation issues found")
     
     if passed_tests == total_tests:
-        print("🎉 ALL TESTS PASSED - Municipality API fix verified & Halifax data quality excellent!")
-    elif passed_tests >= 7:  # Core functionality working including municipality API
-        print("⚠️ MOSTLY WORKING - Municipality API working with minor data quality issues")
+        print("🎉 ALL TESTS PASSED - NSPRD Boundary System & Municipality API fully functional!")
+    elif passed_tests >= 8:  # Core functionality working including NSPRD system
+        print("⚠️ MOSTLY WORKING - NSPRD Boundary System working with minor issues")
     else:
-        print("❌ MAJOR ISSUES - Critical API or data quality problems found")
+        print("❌ MAJOR ISSUES - Critical NSPRD or API problems found")
     
     return test_results
 
