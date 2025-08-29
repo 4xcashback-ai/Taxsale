@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import "./App.css";
 import axios from "axios";
@@ -8,13 +8,12 @@ import { Input } from "./components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Badge } from "./components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import PropertyDetails from './components/PropertyDetails';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
