@@ -107,9 +107,14 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         // Add property boundary polygon if PID exists
         if (property.pid_number) {
           // Fetch and display NSPRD boundary polygon
+          console.log(`Fetching boundary for PID: ${property.pid_number}`);
           fetch(`${BACKEND_URL}/api/query-ns-government-parcel/${property.pid_number}`)
-            .then(response => response.json())
+            .then(response => {
+              console.log(`Boundary API response for ${property.pid_number}:`, response.status);
+              return response.json();
+            })
             .then(data => {
+              console.log(`Boundary data for ${property.pid_number}:`, data);
               if (data.found && data.geometry && data.geometry.rings) {
                 // Convert NSPRD polygon to Google Maps format
                 const paths = data.geometry.rings.map(ring => 
