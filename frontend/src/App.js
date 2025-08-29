@@ -61,6 +61,11 @@ function MainApp() {
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedStatus, setSelectedStatus] = useState('active'); // New status filter state
   const [scrapeStatus, setScrapeStatus] = useState("");
+  
+  // Municipality management state
+  const [editingMunicipality, setEditingMunicipality] = useState(null);
+  const [showAddMunicipality, setShowAddMunicipality] = useState(false);
+  const [newMunicipality, setNewMunicipality] = useState({ name: '', scraper_type: 'generic', tax_sale_url: '' });
 
   // Fetch initial data and refresh when filters change
   useEffect(() => {
