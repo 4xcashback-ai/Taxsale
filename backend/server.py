@@ -1273,35 +1273,47 @@ print(result if result else "Failed")
 
 @api_router.post("/capture-boundary/{assessment_number}")
 async def capture_property_boundary(assessment_number: str):
-    """Capture property boundary screenshot using Google Maps satellite view with coordinates"""
+    """Capture and store property boundary screenshot from viewpoint.ca"""
     try:
         # Get property details
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
         if not property_data:
             raise HTTPException(status_code=404, detail="Property not found")
         
-        latitude = property_data.get('latitude')
-        longitude = property_data.get('longitude')
         pid_number = property_data.get('pid_number')
+        if not pid_number:
+            raise HTTPException(status_code=400, detail="Property has no PID number")
         
-        if not latitude or not longitude:
-            raise HTTPException(status_code=400, detail="Property has no coordinates for mapping")
+        # Check if screenshot already exists
+        screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
+        screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
         
-        # Create Google Maps URL with satellite view centered on property coordinates
-        # Using high zoom level to show property boundaries
-        google_maps_url = f"https://www.google.com/maps/@{latitude},{longitude},19z/data=!3m1!1e3"
+        if Path(screenshot_path).exists():
+            # Update database with existing screenshot
+            await db.tax_sales.update_one(
+                {"assessment_number": assessment_number},
+                {"$set": {"boundary_screenshot": screenshot_filename}}
+            )
+            return {
+                "message": "Boundary screenshot already exists",
+                "assessment_number": assessment_number,
+                "pid_number": pid_number,
+                "screenshot_filename": screenshot_filename,
+                "needs_capture": False
+            }
+        
+        # Return data for screenshot automation
+        viewpoint_url = f"https://www.viewpoint.ca/map#pid={pid_number}"
         
         return {
-            "message": "Property satellite view data prepared",
+            "message": "Ready for boundary screenshot capture",
             "assessment_number": assessment_number,
             "pid_number": pid_number,
-            "latitude": latitude,
-            "longitude": longitude,
-            "google_maps_url": google_maps_url,
-            "viewpoint_url": f"https://www.viewpoint.ca/map#pid={pid_number}" if pid_number else None,
+            "viewpoint_url": viewpoint_url,
+            "screenshot_filename": screenshot_filename,
+            "screenshot_path": screenshot_path,
             "property_address": property_data.get('property_address', 'Unknown'),
-            "ready_for_capture": True,
-            "method": "google_maps_satellite"
+            "needs_capture": True
         }
             
     except HTTPException:
@@ -1315,24 +1327,25 @@ async def save_boundary_screenshot(request_data: dict):
     """Save the boundary screenshot path to property record"""
     try:
         assessment_number = request_data.get('assessment_number')
-        screenshot_path = request_data.get('screenshot_path')
+        screenshot_filename = request_data.get('screenshot_filename')
         
-        if not assessment_number or not screenshot_path:
-            raise HTTPException(status_code=400, detail="Missing assessment_number or screenshot_path")
+        if not assessment_number or not screenshot_filename:
+            raise HTTPException(status_code=400, detail="Missing assessment_number or screenshot_filename")
         
-        # Update property record with screenshot path
+        # Update property record with screenshot filename
         result = await db.tax_sales.update_one(
             {"assessment_number": assessment_number},
-            {"$set": {"boundary_screenshot": screenshot_path}}
+            {"$set": {"boundary_screenshot": screenshot_filename}}
         )
         
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Property not found")
         
         return {
-            "message": "Boundary screenshot path saved successfully",
+            "message": "Boundary screenshot saved successfully",
             "assessment_number": assessment_number,
-            "screenshot_path": screenshot_path
+            "screenshot_filename": screenshot_filename,
+            "image_url": f"/static/property_screenshots/{screenshot_filename}"
         }
         
     except HTTPException:
