@@ -55,7 +55,7 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         const marker = new window.google.maps.Marker({
           position: { lat: property.latitude, lng: property.longitude },
           map: map,
-          title: property.property_description,
+          title: property.property_address || property.address || 'Tax Sale Property',
           icon: {
             path: window.google.maps.SymbolPath.CIRCLE,
             fillColor: iconColor,
