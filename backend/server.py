@@ -1436,10 +1436,11 @@ async def capture_all_property_boundaries():
         logger.error(f"Error preparing boundary capture data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.post("/create-demo-boundary/{assessment_number}")
-async def create_demo_boundary_image(assessment_number: str):
-    """Create a demo boundary image for testing (placeholder until viewpoint.ca capture works)"""
+@api_router.post("/capture-viewpoint-boundary/{assessment_number}")
+async def capture_viewpoint_boundary_real(assessment_number: str):
+    """Initiate real viewpoint.ca boundary screenshot capture for a property"""
     try:
+        # Get property details
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
         if not property_data:
             raise HTTPException(status_code=404, detail="Property not found")
@@ -1449,37 +1450,89 @@ async def create_demo_boundary_image(assessment_number: str):
             raise HTTPException(status_code=400, detail="Property has no PID number")
         
         screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
-        
-        # Update property record with demo screenshot
-        await db.tax_sales.update_one(
-            {"assessment_number": assessment_number},
-            {"$set": {"boundary_screenshot": screenshot_filename}}
-        )
-        
-        # Create a simple demo image file (1x1 pixel placeholder)
-        import base64
-        # Create a simple colored square as demo
-        demo_image_data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAWA0VkwAAAABJRU5ErkJggg=="
-        demo_image_bytes = base64.b64decode(demo_image_data)
-        
         screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
-        Path(screenshot_path).parent.mkdir(parents=True, exist_ok=True)
         
-        with open(screenshot_path, 'wb') as f:
-            f.write(demo_image_bytes)
+        # Check if real screenshot already exists (not demo)
+        if Path(screenshot_path).exists():
+            file_size = Path(screenshot_path).stat().st_size
+            # If file is larger than 5KB, assume it's a real screenshot (demos are ~3KB)
+            if file_size > 5000:
+                return {
+                    "message": "Real boundary screenshot already exists",
+                    "assessment_number": assessment_number,
+                    "pid_number": pid_number,
+                    "screenshot_filename": screenshot_filename,
+                    "needs_capture": False,
+                    "file_size": file_size
+                }
+        
+        # Prepare data for viewpoint.ca screenshot automation
+        viewpoint_url = f"https://www.viewpoint.ca/map#pid={pid_number}"
         
         return {
-            "message": "Demo boundary image created",
+            "message": "Ready for viewpoint.ca boundary screenshot capture",
             "assessment_number": assessment_number,
             "pid_number": pid_number,
+            "viewpoint_url": viewpoint_url,
             "screenshot_filename": screenshot_filename,
-            "image_url": f"/static/property_screenshots/{screenshot_filename}"
+            "screenshot_path": screenshot_path,
+            "property_address": property_data.get('property_address', 'Unknown'),
+            "needs_capture": True,
+            "automation_ready": True
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating demo boundary image: {e}")
+        logger.error(f"Error preparing viewpoint boundary capture: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/batch-capture-viewpoint")
+async def batch_capture_viewpoint_boundaries():
+    """Get batch of properties ready for viewpoint.ca boundary screenshot capture"""
+    try:
+        # Get properties with PIDs that need real boundary screenshots
+        properties = await db.tax_sales.find({
+            "pid_number": {"$exists": True, "$ne": None, "$ne": ""}
+        }).to_list(1000)
+        
+        capture_batch = []
+        for prop in properties:
+            pid_number = prop.get('pid_number')
+            assessment_number = prop.get('assessment_number')
+            
+            if pid_number and assessment_number:
+                screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
+                screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+                
+                # Check if needs real capture (no file or demo file)
+                needs_capture = True
+                if Path(screenshot_path).exists():
+                    file_size = Path(screenshot_path).stat().st_size
+                    # If larger than 5KB, assume it's a real screenshot
+                    if file_size > 5000:
+                        needs_capture = False
+                
+                if needs_capture:
+                    capture_batch.append({
+                        "assessment_number": assessment_number,
+                        "pid_number": pid_number,
+                        "viewpoint_url": f"https://www.viewpoint.ca/map#pid={pid_number}",
+                        "screenshot_filename": screenshot_filename,
+                        "screenshot_path": screenshot_path,
+                        "property_address": prop.get('property_address', 'Unknown')
+                    })
+        
+        return {
+            "message": f"Found {len(capture_batch)} properties ready for viewpoint.ca capture",
+            "properties": capture_batch[:10],  # Return first 10 for batch processing
+            "total_count": len(capture_batch),
+            "batch_size": min(10, len(capture_batch)),
+            "method": "viewpoint_ca_real_boundaries"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error preparing batch viewpoint capture: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/property/{assessment_number}/boundary-image")
