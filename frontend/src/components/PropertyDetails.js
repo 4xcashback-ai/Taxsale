@@ -417,75 +417,101 @@ const PropertyDetails = () => {
                 </div>
               ) : null}
               
-              {/* Interactive Map */}
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Interactive Map</h3>
-              
-              {/* Google Maps Link Button */}
-              {property.google_maps_link && (
-                <div className="mb-4">
-                  <a
-                    href={property.google_maps_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors mr-2"
-                  >
-                    🗺️ Open in Google Maps
-                  </a>
-                  <button
-                    onClick={() => {
-                      const address = property.civic_address || property.property_address;
-                      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-                      window.open(directionsUrl, '_blank');
+              {/* Interactive Map with Property Boundaries */}
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h3>
+              {property.latitude && property.longitude ? (
+                <div className="w-full h-96 rounded-lg overflow-hidden border border-slate-200">
+                  <div 
+                    id="google-map-with-boundaries"
+                    className="w-full h-full"
+                    ref={(node) => {
+                      if (node && window.google && !node.hasChildNodes()) {
+                        // Create Google Map
+                        const map = new window.google.maps.Map(node, {
+                          center: { lat: property.latitude, lng: property.longitude },
+                          zoom: 17,
+                          mapTypeControl: true,
+                          streetViewControl: true,
+                          fullscreenControl: true,
+                          zoomControl: true
+                        });
+                        
+                        // Add property marker
+                        const marker = new window.google.maps.Marker({
+                          position: { lat: property.latitude, lng: property.longitude },
+                          map: map,
+                          title: property.property_address,
+                          icon: {
+                            path: window.google.maps.SymbolPath.CIRCLE,
+                            fillColor: '#dc2626',
+                            fillOpacity: 1,
+                            strokeColor: 'white',
+                            strokeWeight: 2,
+                            scale: 8
+                          }
+                        });
+                        
+                        // Add property boundary polygon if we have government data
+                        if (property.government_boundary_data) {
+                          fetch(`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/api/query-ns-government-parcel/${property.pid_number}`)
+                            .then(response => response.json())
+                            .then(data => {
+                              if (data.found && data.geometry && data.geometry.rings) {
+                                // Convert NSPRD polygon to Google Maps format
+                                const paths = data.geometry.rings.map(ring => 
+                                  ring.map(coord => ({ lat: coord[1], lng: coord[0] }))
+                                );
+                                
+                                // Create property boundary polygon
+                                const propertyPolygon = new window.google.maps.Polygon({
+                                  paths: paths,
+                                  strokeColor: '#dc2626',
+                                  strokeOpacity: 0.8,
+                                  strokeWeight: 3,
+                                  fillColor: '#dc2626',
+                                  fillOpacity: 0.2,
+                                  map: map
+                                });
+                                
+                                // Fit map to show entire property
+                                const bounds = new window.google.maps.LatLngBounds();
+                                paths.forEach(path => {
+                                  path.forEach(point => bounds.extend(point));
+                                });
+                                map.fitBounds(bounds);
+                              }
+                            })
+                            .catch(error => console.warn('Could not load property boundaries:', error));
+                        }
+                        
+                        // Add info window
+                        const infoWindow = new window.google.maps.InfoWindow({
+                          content: `
+                            <div style="max-width: 250px;">
+                              <h3 style="margin: 0 0 8px 0; color: #1f2937;">${property.property_address}</h3>
+                              <p style="margin: 4px 0; color: #6b7280;"><strong>PID:</strong> ${property.pid_number}</p>
+                              <p style="margin: 4px 0; color: #6b7280;"><strong>Assessment:</strong> ${property.assessment_number}</p>
+                              <p style="margin: 4px 0; color: #6b7280;"><strong>Opening Bid:</strong> $${parseFloat(property.opening_bid || 0).toLocaleString()}</p>
+                              ${property.government_boundary_data ? `<p style="margin: 4px 0; color: #6b7280;"><strong>Area:</strong> ${Math.round(property.government_boundary_data.area_sqm)} sqm</p>` : ''}
+                            </div>
+                          `
+                        });
+                        
+                        marker.addListener('click', () => {
+                          infoWindow.open(map, marker);
+                        });
+                      }
                     }}
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    🧭 Get Directions
-                  </button>
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <div className="text-4xl mb-4">🗺️</div>
+                    <p>No location data available for this property</p>
+                  </div>
                 </div>
               )}
-              
-              <div className="h-80 w-full rounded-lg overflow-hidden border">
-                {property.google_maps_link || property.civic_address || property.property_address ? (
-                  <iframe
-                    src={`https://www.google.com/maps?q=${encodeURIComponent(
-                      property.civic_address || 
-                      property.property_address || 
-                      (property.google_maps_link && property.google_maps_link.includes('?q=') ? 
-                        decodeURIComponent(property.google_maps_link.split('?q=')[1]) : 
-                        property.property_address)
-                    )}&output=embed&z=16`}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Property Location Map"
-                  ></iframe>
-                ) : property.latitude && property.longitude ? (
-                  // Fallback to coordinates if available
-                  <iframe
-                    src={`https://www.google.com/maps?q=${property.latitude},${property.longitude}&output=embed&z=16`}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Property Location Map"
-                  ></iframe>
-                ) : (
-                  <div className="bg-gray-100 h-full flex items-center justify-center flex-col">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">🗺️</div>
-                      <p className="text-gray-500 mb-2">Map location not available</p>
-                      <p className="text-sm text-gray-400">
-                        Property address: {property.property_address}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
               
               {property.civic_address && property.civic_address !== property.property_address && (
                 <div className="mt-4 p-3 bg-green-50 rounded-lg">
