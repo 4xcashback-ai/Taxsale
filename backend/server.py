@@ -846,6 +846,10 @@ async def get_statistics():
     total_municipalities = await db.municipalities.count_documents({})
     total_properties = await db.tax_sales.count_documents({})
     
+    # Count active and inactive properties
+    active_properties = await db.tax_sales.count_documents({"status": "active"})
+    inactive_properties = await db.tax_sales.count_documents({"status": "inactive"})
+    
     # Get municipalities scraped today
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     scraped_today = await db.municipalities.count_documents({
@@ -857,12 +861,14 @@ async def get_statistics():
         {"last_scraped": {"$exists": True}},
         sort=[("last_scraped", -1)]
     )
-    last_scrape = last_scrape_doc["last_scraped"] if last_scrape_doc else None
+    last_scrape = last_scrape_doc["last_scrape"] if last_scrape_doc else None
     
     return ScrapeStats(
         total_municipalities=total_municipalities,
         scraped_today=scraped_today,
         total_properties=total_properties,
+        active_properties=active_properties,
+        inactive_properties=inactive_properties,
         last_scrape=last_scrape
     )
 
