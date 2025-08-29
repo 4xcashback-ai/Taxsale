@@ -848,6 +848,8 @@ async def get_municipality(municipality_id: str):
     if 'next_scrape_time' not in municipality:
         municipality['next_scrape_time'] = None
     
+    return Municipality(**municipality)
+
 @api_router.delete("/municipalities/{municipality_id}")
 async def delete_municipality(municipality_id: str):
     """Delete a municipality and optionally its associated tax sale properties"""
