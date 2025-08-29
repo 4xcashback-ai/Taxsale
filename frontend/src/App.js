@@ -636,29 +636,36 @@ function MainApp() {
                   taxSales.map((property) => (
                     <Card key={property.id} className="bg-white/80 backdrop-blur-sm border-slate-200/50 hover:shadow-lg transition-shadow">
                       <div className="flex">
-                        {/* Satellite Thumbnail */}
+                        {/* Property Boundary Thumbnail from viewpoint.ca */}
                         <div className="w-32 h-32 flex-shrink-0">
-                          {property.latitude && property.longitude ? (
+                          {property.boundary_screenshot ? (
                             <div className="relative w-full h-full rounded-l-lg overflow-hidden">
                               <img
-                                src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=18&size=128x128&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY}`}
-                                alt={`Satellite view of ${property.property_address}`}
+                                src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/static/property_screenshots/${property.boundary_screenshot}`}
+                                alt={`Property boundary map of ${property.property_address}`}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  // Fallback to a placeholder div if satellite image fails
+                                  // Fallback to coordinates-based placeholder
                                   e.target.style.display = 'none';
-                                  e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gray-200 flex items-center justify-center"><div class="text-center text-gray-500"><div class="text-2xl mb-1">🛰️</div><div class="text-xs">No Image</div></div></div>';
+                                  e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center"><div class="text-center text-gray-600"><div class="text-xl mb-1">🗺️</div><div class="text-xs">Boundary Map</div></div></div>';
                                 }}
                               />
-                              <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">
-                                Satellite
+                              <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                                Boundaries
+                              </div>
+                            </div>
+                          ) : property.latitude && property.longitude ? (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 rounded-l-lg flex items-center justify-center">
+                              <div className="text-center text-gray-600">
+                                <div className="text-xl mb-1">🗺️</div>
+                                <div className="text-xs">Capture Available</div>
                               </div>
                             </div>
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-l-lg flex items-center justify-center">
                               <div className="text-center text-gray-500">
                                 <div className="text-2xl mb-1">🏠</div>
-                                <div className="text-xs">No Image</div>
+                                <div className="text-xs">No Map</div>
                               </div>
                             </div>
                           )}
