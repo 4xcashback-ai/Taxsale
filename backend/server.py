@@ -1273,34 +1273,72 @@ print(result if result else "Failed")
 
 @api_router.post("/capture-boundary/{assessment_number}")
 async def capture_property_boundary(assessment_number: str):
-    """Capture property boundary screenshot from viewpoint.ca"""
+    """Capture property boundary screenshot using Google Maps satellite view with coordinates"""
     try:
         # Get property details
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
         if not property_data:
             raise HTTPException(status_code=404, detail="Property not found")
         
+        latitude = property_data.get('latitude')
+        longitude = property_data.get('longitude')
         pid_number = property_data.get('pid_number')
-        if not pid_number:
-            raise HTTPException(status_code=400, detail="Property has no PID number")
         
-        # Return the data needed for frontend automation
-        # We'll implement the actual screenshot capture in the frontend using our existing screenshot_tool
-        viewpoint_url = f"https://www.viewpoint.ca/map#pid={pid_number}"
+        if not latitude or not longitude:
+            raise HTTPException(status_code=400, detail="Property has no coordinates for mapping")
+        
+        # Create Google Maps URL with satellite view centered on property coordinates
+        # Using high zoom level to show property boundaries
+        google_maps_url = f"https://www.google.com/maps/@{latitude},{longitude},19z/data=!3m1!1e3"
         
         return {
-            "message": "Boundary screenshot data prepared",
+            "message": "Property satellite view data prepared",
             "assessment_number": assessment_number,
             "pid_number": pid_number,
-            "viewpoint_url": viewpoint_url,
+            "latitude": latitude,
+            "longitude": longitude,
+            "google_maps_url": google_maps_url,
+            "viewpoint_url": f"https://www.viewpoint.ca/map#pid={pid_number}" if pid_number else None,
             "property_address": property_data.get('property_address', 'Unknown'),
-            "ready_for_capture": True
+            "ready_for_capture": True,
+            "method": "google_maps_satellite"
         }
             
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error in boundary capture endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/save-boundary-screenshot")
+async def save_boundary_screenshot(request_data: dict):
+    """Save the boundary screenshot path to property record"""
+    try:
+        assessment_number = request_data.get('assessment_number')
+        screenshot_path = request_data.get('screenshot_path')
+        
+        if not assessment_number or not screenshot_path:
+            raise HTTPException(status_code=400, detail="Missing assessment_number or screenshot_path")
+        
+        # Update property record with screenshot path
+        result = await db.tax_sales.update_one(
+            {"assessment_number": assessment_number},
+            {"$set": {"boundary_screenshot": screenshot_path}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        return {
+            "message": "Boundary screenshot path saved successfully",
+            "assessment_number": assessment_number,
+            "screenshot_path": screenshot_path
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving boundary screenshot: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/capture-all-boundaries") 
