@@ -288,7 +288,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Property Display with External Links"
+    - "Satellite Thumbnail Images in Property Cards"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
