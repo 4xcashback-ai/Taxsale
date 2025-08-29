@@ -171,15 +171,15 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
                 propertyPolygon.addListener('mouseover', () => {
                   propertyPolygon.setOptions({
                     strokeOpacity: 1.0,
-                    fillOpacity: 0.25,
+                    fillOpacity: 0.4,
                     strokeWeight: 3
                   });
                 });
 
                 propertyPolygon.addListener('mouseout', () => {
                   propertyPolygon.setOptions({
-                    strokeOpacity: 0.8,
-                    fillOpacity: 0.15,
+                    strokeOpacity: 0.9,
+                    fillOpacity: 0.25,
                     strokeWeight: 2
                   });
                 });
