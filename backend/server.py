@@ -42,6 +42,35 @@ app = FastAPI(title="NS Tax Sale Aggregator", description="Nova Scotia Municipal
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Instead, serve images via API endpoint to work with existing proxy routing
+@api_router.get("/boundary-image/{filename}")
+async def serve_boundary_image(filename: str):
+    """Serve boundary screenshot images via API endpoint"""
+    try:
+        from fastapi.responses import FileResponse
+        import os
+        
+        # Security: only allow PNG files and sanitize filename
+        if not filename.endswith('.png') or '..' in filename or '/' in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+        
+        file_path = f"/app/backend/static/property_screenshots/{filename}"
+        
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        return FileResponse(
+            file_path,
+            media_type="image/png",
+            headers={"Cache-Control": "max-age=3600"}  # Cache for 1 hour
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving boundary image {filename}: {e}")
+        raise HTTPException(status_code=500, detail="Error serving image")
+
 # Initialize scheduler
 scheduler = AsyncIOScheduler()
 
