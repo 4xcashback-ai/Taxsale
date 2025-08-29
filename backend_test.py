@@ -1247,31 +1247,31 @@ def run_comprehensive_test():
     municipality_api_success, municipality_api_data = test_municipality_management_api()
     test_results["municipality_management_api"] = municipality_api_success
     
-    # Test 4: Municipalities endpoint
+    # Test 5: Municipalities endpoint
     municipalities_success, halifax_data = test_municipalities_endpoint()
     test_results["municipalities"] = municipalities_success
     
-    # Test 5: Halifax scraper
+    # Test 6: Halifax scraper
     scraper_success, scraper_result = test_halifax_scraper()
     test_results["halifax_scraper"] = scraper_success
     
-    # Test 6: Tax sales endpoint
+    # Test 7: Tax sales endpoint
     tax_sales_success, halifax_properties = test_tax_sales_endpoint()
     test_results["tax_sales"] = tax_sales_success
     
-    # Test 7: Data truncation issues (CRITICAL for this review)
+    # Test 8: Data truncation issues (CRITICAL for this review)
     truncation_success, truncation_data = test_data_truncation_issues()
     test_results["data_truncation"] = truncation_success
     
-    # Test 8: Raw data analysis
+    # Test 9: Raw data analysis
     raw_data_success, raw_data_info = test_raw_property_data_analysis()
     test_results["raw_data_analysis"] = raw_data_success
     
-    # Test 9: Statistics endpoint
+    # Test 10: Statistics endpoint
     stats_success, stats_data = test_stats_endpoint()
     test_results["stats"] = stats_success
     
-    # Test 10: Map data endpoint
+    # Test 11: Map data endpoint
     map_success, map_data = test_map_data_endpoint()
     test_results["map_data"] = map_success
     
