@@ -267,7 +267,17 @@ function MainApp() {
                   <span>{stats.total_municipalities} Municipalities</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Gavel className="h-4 w-4 text-orange-500" />
+                  <Gavel className="h-4 w-4 text-green-500" />
+                  <span>{stats.active_properties || 0} Active</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-red-500" />
+                  <span>{stats.inactive_properties || 0} Inactive</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Home className="h-4 w-4 text-orange-500" />
+                  <span>{stats.total_properties} Total Properties</span>
+                </div>
                   <span>{stats.total_properties} Properties</span>
                 </div>
                 <div className="flex items-center space-x-2">
