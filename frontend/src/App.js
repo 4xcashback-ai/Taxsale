@@ -273,7 +273,23 @@ function MainApp() {
 
   const fetchMapData = async () => {
     try {
-      const response = await axios.get(`${API}/tax-sales/map-data`);
+      // Use full tax sales data for map instead of simplified map-data endpoint
+      let url = `${API}/tax-sales`;
+      const params = new URLSearchParams();
+      
+      if (selectedStatus && selectedStatus !== 'all') {
+        params.append('status', selectedStatus);
+      }
+      
+      if (selectedMunicipality) {
+        params.append('municipality', selectedMunicipality);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await axios.get(url);
       setMapData(response.data);
     } catch (error) {
       console.error("Error fetching map data:", error);
