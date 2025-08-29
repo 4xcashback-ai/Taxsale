@@ -122,6 +122,8 @@ class ScrapeStats(BaseModel):
     total_municipalities: int
     scraped_today: int
     total_properties: int
+    active_properties: int = 0
+    inactive_properties: int = 0
     last_scrape: Optional[datetime] = None
 
 
