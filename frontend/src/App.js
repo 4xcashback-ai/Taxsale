@@ -947,6 +947,91 @@ function MainApp() {
                             <option value="pdf">PDF Parser</option>
                           </select>
                         </div>
+                        
+                        {/* Scheduling Configuration */}
+                        <div className="border-t pt-3">
+                          <h4 className="text-md font-semibold text-gray-800 mb-2">Scraping Schedule</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Scrape Enabled</label>
+                              <select
+                                value={newMunicipality.scrape_enabled}
+                                onChange={(e) => setNewMunicipality({...newMunicipality, scrape_enabled: e.target.value === 'true'})}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                              >
+                                <option value="true">Enabled</option>
+                                <option value="false">Disabled</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                              <select
+                                value={newMunicipality.scrape_frequency}
+                                onChange={(e) => setNewMunicipality({...newMunicipality, scrape_frequency: e.target.value})}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                              >
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                              </select>
+                            </div>
+                            {newMunicipality.scrape_frequency === 'weekly' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Day of Week</label>
+                                <select
+                                  value={newMunicipality.scrape_day_of_week}
+                                  onChange={(e) => setNewMunicipality({...newMunicipality, scrape_day_of_week: parseInt(e.target.value)})}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                >
+                                  <option value={0}>Monday</option>
+                                  <option value={1}>Tuesday</option>
+                                  <option value={2}>Wednesday</option>
+                                  <option value={3}>Thursday</option>
+                                  <option value={4}>Friday</option>
+                                  <option value={5}>Saturday</option>
+                                  <option value={6}>Sunday</option>
+                                </select>
+                              </div>
+                            )}
+                            {newMunicipality.scrape_frequency === 'monthly' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Day of Month</label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="28"
+                                  value={newMunicipality.scrape_day_of_month}
+                                  onChange={(e) => setNewMunicipality({...newMunicipality, scrape_day_of_month: parseInt(e.target.value)})}
+                                  className="w-full"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Scrape Time</label>
+                              <div className="flex space-x-1">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="23"
+                                  value={newMunicipality.scrape_time_hour}
+                                  onChange={(e) => setNewMunicipality({...newMunicipality, scrape_time_hour: parseInt(e.target.value)})}
+                                  className="w-16"
+                                  placeholder="HH"
+                                />
+                                <span className="text-gray-500">:</span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="59"
+                                  value={newMunicipality.scrape_time_minute}
+                                  onChange={(e) => setNewMunicipality({...newMunicipality, scrape_time_minute: parseInt(e.target.value)})}
+                                  className="w-16"
+                                  placeholder="MM"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <div className="flex space-x-2">
                           <Button onClick={handleAddMunicipality} className="bg-green-600 hover:bg-green-700">
                             <Save className="h-4 w-4 mr-2" />
