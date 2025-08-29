@@ -12,6 +12,29 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// AdSense Component
+const AdSenseAd = () => {
+  useEffect(() => {
+    try {
+      if (window.adsbygoogle) {
+        window.adsbygoogle.push({});
+      }
+    } catch (err) {
+      console.log('AdSense error:', err);
+    }
+  }, []);
+
+  return (
+    <ins className="adsbygoogle"
+         style={{display:'block'}}
+         data-ad-client="ca-pub-5947395928510215"
+         data-ad-slot="3653544552"
+         data-ad-format="auto"
+         data-full-width-responsive="true">
+    </ins>
+  );
+};
+
 const PropertyDetails = () => {
   const { assessmentNumber } = useParams();
   const navigate = useNavigate();
