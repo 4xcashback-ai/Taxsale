@@ -1054,15 +1054,19 @@ def run_comprehensive_test():
         print(f"   ❌ The reported bug may still exist")
     
     if test_results["municipality_management_api"]:
-        print(f"\n🎉 MUNICIPALITY MANAGEMENT API FIX VERIFIED!")
-        print(f"   ✅ 'website_url' field is working correctly")
-        print(f"   ✅ No HTTP 422 errors when submitting municipality data")
-        print(f"   ✅ MunicipalityCreate Pydantic model validation working")
+        print(f"\n🎉 MUNICIPALITY MANAGEMENT API NEW FEATURES VERIFIED!")
+        print(f"   ✅ DELETE /api/municipalities/{id} endpoint working")
+        print(f"   ✅ Enhanced PUT /api/municipalities/{id} with scheduling working")
+        print(f"   ✅ New scheduling fields (scrape_enabled, scrape_frequency, etc.) working")
+        print(f"   ✅ next_scrape_time calculation working for daily/weekly/monthly")
+        print(f"   ✅ Cascade delete of associated tax sale properties working")
+        print(f"   ✅ Data migration for existing municipalities working")
     else:
-        print(f"\n🚨 MUNICIPALITY MANAGEMENT API ISSUES FOUND!")
-        print(f"   ❌ Field name mismatch may still exist")
-        print(f"   ❌ HTTP 422 errors may be occurring")
-        print(f"   ❌ Frontend-backend field name synchronization needs attention")
+        print(f"\n🚨 MUNICIPALITY MANAGEMENT API NEW FEATURES ISSUES FOUND!")
+        print(f"   ❌ DELETE endpoint may not be working")
+        print(f"   ❌ Enhanced PUT with scheduling may have issues")
+        print(f"   ❌ Scheduling fields may not be saved/calculated correctly")
+        print(f"   ❌ Data migration for scheduling fields may be incomplete")
     
     # Special focus on data quality issues
     if not test_results["data_truncation"]:
