@@ -1138,6 +1138,176 @@ async def geocode_existing_properties():
         logger.error(f"Error geocoding properties: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+async def capture_property_boundary_screenshot(pid_number: str, assessment_number: str) -> Optional[str]:
+    """
+    Capture property boundary screenshot from viewpoint.ca
+    Returns the path to the saved screenshot or None if failed
+    """
+    try:
+        import subprocess
+        import tempfile
+        import base64
+        
+        # Create screenshots directory if it doesn't exist
+        screenshots_dir = Path("property_screenshots")
+        screenshots_dir.mkdir(exist_ok=True)
+        
+        # Playwright script for viewpoint.ca automation
+        playwright_script = f'''
+import asyncio
+from playwright.async_api import async_playwright
+import time
+
+async def capture_viewpoint_screenshot():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        
+        try:
+            # Navigate to viewpoint.ca with PID
+            viewpoint_url = f"https://www.viewpoint.ca/map#pid={pid_number}"
+            print(f"Navigating to: {{viewpoint_url}}")
+            
+            await page.goto(viewpoint_url, wait_until="networkidle", timeout=30000)
+            await page.wait_for_timeout(5000)  # Wait for map to load
+            
+            # Wait for map container to be visible
+            await page.wait_for_selector(".leaflet-container", timeout=15000)
+            print("Map container loaded")
+            
+            # Try to find and click satellite/aerial view button
+            satellite_buttons = [
+                "text=Satellite", "text=Aerial", "text=Imagery", 
+                "[title*='satellite']", "[title*='aerial']", "[title*='imagery']",
+                ".leaflet-control-layers-selector"
+            ]
+            
+            for selector in satellite_buttons:
+                try:
+                    if await page.locator(selector).count() > 0:
+                        await page.locator(selector).first.click()
+                        print(f"Clicked satellite button: {{selector}}")
+                        await page.wait_for_timeout(3000)
+                        break
+                except:
+                    continue
+            
+            # Try to close any property details/info panels that might obstruct the view
+            close_selectors = [
+                ".close", ".btn-close", "[aria-label='Close']", 
+                ".modal-close", ".popup-close", ".info-close"
+            ]
+            
+            for selector in close_selectors:
+                try:
+                    if await page.locator(selector).count() > 0:
+                        await page.locator(selector).first.click()
+                        await page.wait_for_timeout(1000)
+                except:
+                    continue
+            
+            # Wait for property to be highlighted and map to settle
+            await page.wait_for_timeout(3000)
+            
+            # Take screenshot of the map area
+            map_element = page.locator(".leaflet-container").first
+            screenshot_path = "property_screenshots/{pid_number}_{assessment_number}_boundary.png"
+            
+            await map_element.screenshot(
+                path=screenshot_path,
+                quality=90,
+                type="png"
+            )
+            
+            print(f"Screenshot captured: {{screenshot_path}}")
+            return screenshot_path
+            
+        except Exception as e:
+            print(f"Error during automation: {{e}}")
+            return None
+        finally:
+            await browser.close()
+
+# Run the async function
+result = asyncio.run(capture_viewpoint_screenshot())
+print(result if result else "Failed")
+'''
+        
+        # Write the script to a temporary file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write(playwright_script)
+            script_path = f.name
+        
+        try:
+            # Run the Playwright script
+            result = subprocess.run(
+                ['python', script_path], 
+                capture_output=True, 
+                text=True, 
+                timeout=60,
+                cwd='/app/backend'
+            )
+            
+            if result.returncode == 0:
+                screenshot_path = f"property_screenshots/{pid_number}_{assessment_number}_boundary.png"
+                full_path = Path(f"/app/backend/{screenshot_path}")
+                
+                if full_path.exists():
+                    logger.info(f"Successfully captured boundary screenshot for PID {pid_number}")
+                    return screenshot_path
+                else:
+                    logger.warning(f"Screenshot file not found: {full_path}")
+                    return None
+            else:
+                logger.error(f"Playwright script failed: {result.stderr}")
+                return None
+                
+        finally:
+            # Clean up the temporary script file
+            Path(script_path).unlink(missing_ok=True)
+            
+    except Exception as e:
+        logger.error(f"Error capturing boundary screenshot for PID {pid_number}: {e}")
+        return None
+
+@api_router.post("/capture-boundary/{assessment_number}")
+async def capture_property_boundary(assessment_number: str):
+    """Capture property boundary screenshot from viewpoint.ca"""
+    try:
+        # Get property details
+        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_data:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        pid_number = property_data.get('pid_number')
+        if not pid_number:
+            raise HTTPException(status_code=400, detail="Property has no PID number")
+        
+        # Capture screenshot
+        screenshot_path = await capture_property_boundary_screenshot(pid_number, assessment_number)
+        
+        if screenshot_path:
+            # Update property record with screenshot path
+            await db.tax_sales.update_one(
+                {"assessment_number": assessment_number},
+                {"$set": {"boundary_screenshot": screenshot_path}}
+            )
+            
+            return {
+                "message": "Boundary screenshot captured successfully",
+                "assessment_number": assessment_number,
+                "pid_number": pid_number,
+                "screenshot_path": screenshot_path
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to capture boundary screenshot")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in boundary capture endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Enhanced Scraping Endpoints
 @api_router.post("/scrape/halifax")
 async def scrape_halifax():
