@@ -1464,7 +1464,7 @@ async def get_property_boundary_image(assessment_number: str):
                 "assessment_number": assessment_number,
                 "has_boundary_image": True,
                 "boundary_screenshot": boundary_screenshot,
-                "image_url": f"/static/screenshots/{boundary_screenshot}"
+                "image_url": f"/static/property_screenshots/{boundary_screenshot}"
             }
         else:
             # Return data for capturing screenshot
