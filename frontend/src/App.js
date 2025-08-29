@@ -139,7 +139,7 @@ function MainApp() {
   };
 
   const handleAddMunicipality = async () => {
-    if (!newMunicipality.name.trim()) return;
+    if (!newMunicipality.name.trim() || !newMunicipality.website_url.trim()) return;
     
     try {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
@@ -150,12 +150,23 @@ function MainApp() {
       });
       
       if (response.ok) {
-        setNewMunicipality({ name: '', scraper_type: 'generic', tax_sale_url: '' });
+        setNewMunicipality({ 
+          name: '', 
+          scraper_type: 'generic', 
+          website_url: '', 
+          tax_sale_url: '', 
+          region: '' 
+        });
         setShowAddMunicipality(false);
         fetchMunicipalities(); // Refresh the list
+        alert('Municipality added successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.detail || 'Failed to add municipality'}`);
       }
     } catch (error) {
       console.error('Error adding municipality:', error);
+      alert('Error adding municipality. Please try again.');
     }
   };
 
