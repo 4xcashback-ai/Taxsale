@@ -15,27 +15,164 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
-// Fix for default markers in react-leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Google Maps component
+const GoogleMapComponent = ({ properties, onMarkerClick }) => {
+  const mapRef = useRef();
+  const [map, setMap] = useState(null);
+  const [markers, setMarkers] = useState([]);
 
-// Custom map icons for different property types
-const createCustomIcon = (color) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10]
-  });
+  const onLoad = useCallback((map) => {
+    mapRef.current = map;
+    setMap(map);
+  }, []);
+
+  const onUnmount = useCallback(() => {
+    mapRef.current = null;
+    setMap(null);
+  }, []);
+
+  // Update markers when properties change
+  useEffect(() => {
+    if (!map || !properties.length) return;
+
+    // Clear existing markers
+    markers.forEach(marker => marker.setMap(null));
+    const newMarkers = [];
+
+    // Add markers for each property
+    properties.forEach((property) => {
+      if (property.latitude && property.longitude) {
+        // Determine marker color based on property type
+        let iconColor = '#3b82f6'; // Blue default
+        const propertyType = property.property_description?.toLowerCase() || '';
+        
+        if (propertyType.includes('commercial') || propertyType.includes('business')) {
+          iconColor = '#f59e0b'; // Orange
+        } else if (propertyType.includes('land') || propertyType.includes('lot')) {
+          iconColor = '#10b981'; // Green
+        }
+
+        const marker = new window.google.maps.Marker({
+          position: { lat: property.latitude, lng: property.longitude },
+          map: map,
+          title: property.property_description,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            fillColor: iconColor,
+            fillOpacity: 0.8,
+            strokeColor: 'white',
+            strokeWeight: 2,
+            scale: 8
+          }
+        });
+
+        // Add click event for marker
+        marker.addListener('click', () => {
+          if (onMarkerClick) {
+            onMarkerClick(property);
+          }
+        });
+
+        // Add info window
+        const infoWindow = new window.google.maps.InfoWindow({
+          content: `
+            <div style="max-width: 250px;">
+              <h3 style="margin: 0 0 8px 0; color: #1f2937;">${property.property_description}</h3>
+              <p style="margin: 4px 0; color: #6b7280;"><strong>Owner:</strong> ${property.owner_name}</p>
+              <p style="margin: 4px 0; color: #6b7280;"><strong>Opening Bid:</strong> $${parseFloat(property.opening_bid || 0).toLocaleString()}</p>
+              <p style="margin: 4px 0; color: #6b7280;"><strong>Municipality:</strong> ${property.municipality_name}</p>
+              <button 
+                onclick="window.open('/property/${property.assessment_number}', '_blank')"
+                style="margin-top: 8px; padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                View Details
+              </button>
+            </div>
+          `
+        });
+
+        marker.addListener('click', () => {
+          infoWindow.open(map, marker);
+        });
+
+        newMarkers.push(marker);
+      }
+    });
+
+    setMarkers(newMarkers);
+
+    // Adjust map bounds to show all markers
+    if (newMarkers.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      newMarkers.forEach(marker => {
+        bounds.extend(marker.getPosition());
+      });
+      map.fitBounds(bounds);
+      
+      // Don't zoom in too much for single markers
+      const listener = window.google.maps.event.addListener(map, 'bounds_changed', () => {
+        if (map.getZoom() > 15) map.setZoom(15);
+        window.google.maps.event.removeListener(listener);
+      });
+    }
+  }, [map, properties, markers, onMarkerClick]);
+
+  return (
+    <div 
+      style={{ height: '400px', width: '100%' }}
+      ref={(node) => {
+        if (node && !map) {
+          const mapInstance = new window.google.maps.Map(node, {
+            center: { lat: 44.6488, lng: -63.5752 }, // Halifax center
+            zoom: 8,
+            mapTypeControl: true,
+            streetViewControl: true,
+            fullscreenControl: true,
+            zoomControl: true,
+            styles: [
+              {
+                featureType: "poi",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }]
+              }
+            ]
+          });
+          setMap(mapInstance);
+        }
+      }}
+    />
+  );
 };
 
-const residentialIcon = createCustomIcon('#3b82f6'); // Blue
-const commercialIcon = createCustomIcon('#f59e0b'); // Orange  
-const landIcon = createCustomIcon('#10b981'); // Green
+// Google Maps Wrapper with loading states
+const MapWrapper = ({ properties, onMarkerClick }) => {
+  const render = (status) => {
+    switch (status) {
+      case Status.LOADING:
+        return <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading Google Maps...</p>
+          </div>
+        </div>;
+      case Status.FAILURE:
+        return <div className="flex items-center justify-center h-96 bg-red-50 rounded-lg border border-red-200">
+          <div className="text-center text-red-600">
+            <p>Failed to load Google Maps</p>
+            <p className="text-sm mt-1">Please check your internet connection</p>
+          </div>
+        </div>;
+      default:
+        return <GoogleMapComponent properties={properties} onMarkerClick={onMarkerClick} />;
+    }
+  };
+
+  return (
+    <Wrapper apiKey={GOOGLE_MAPS_API_KEY} render={render}>
+      <GoogleMapComponent properties={properties} onMarkerClick={onMarkerClick} />
+    </Wrapper>
+  );
+};
 
 function App() {
   return (
