@@ -105,6 +105,21 @@
 user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale data, including finding, downloading, and correctly extracting all property details from the PDF. Address any remaining 'Property Details TBD' placeholders by properly scraping all property information from source documents."
 
 backend:
+  - task: "Municipality List Display Bug"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Bug reported by user: Header shows '15 Municipalities' but admin page shows none. Investigation revealed GET /api/municipalities returning HTTP 500 due to missing 'website_url' fields in database records."
+      - working: true
+        agent: "main"
+        comment: "BUG FIXED! Added data migration logic to GET /api/municipalities endpoint to handle missing 'website_url' fields. Endpoint now successfully returns 15 municipalities. Backend testing confirms HTTP 500 errors resolved and all municipality API endpoints working correctly."
+
   - task: "Municipality Management API Fix"
     implemented: true
     working: true
