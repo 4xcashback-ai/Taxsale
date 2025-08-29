@@ -1035,8 +1035,13 @@ async def create_municipality(municipality: MunicipalityCreate):
         new_municipality = {
             "id": str(uuid.uuid4()),
             "name": municipality.name,
+            "website_url": municipality.website_url,  # Add missing website_url field
             "scraper_type": municipality.scraper_type,
             "tax_sale_url": municipality.tax_sale_url,
+            "region": municipality.region,
+            "latitude": municipality.latitude,
+            "longitude": municipality.longitude,
+            "province": "Nova Scotia",
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
             "last_scraped": None,
