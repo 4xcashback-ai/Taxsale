@@ -1306,7 +1306,7 @@ def run_comprehensive_test():
         print(f"   ❌ PID integration with tax sales may have issues")
         print(f"   ❌ Performance may not support frontend requirements")
     
-    # Special focus on Municipality Management API (Review Request Priority)
+    # Special focus on Municipality Management API
     if test_results["municipality_endpoints_quick"]:
         print(f"\n🎉 MUNICIPALITY ENDPOINTS QUICK TEST PASSED!")
         print(f"   ✅ GET /api/municipalities returns municipalities without HTTP 500")
