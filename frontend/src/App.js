@@ -645,8 +645,9 @@ function MainApp() {
                                 alt={`Satellite view of ${property.property_address}`}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  // Fallback to a placeholder if satellite image fails
-                                  e.target.src = `data:image/svg+xml;base64,${btoa('<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" fill="#e5e7eb"/><text x="64" y="64" text-anchor="middle" dy=".3em" fill="#6b7280" font-size="12">🛰️</text></svg>')}`
+                                  // Fallback to a placeholder div if satellite image fails
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gray-200 flex items-center justify-center"><div class="text-center text-gray-500"><div class="text-2xl mb-1">🛰️</div><div class="text-xs">No Image</div></div></div>';
                                 }}
                               />
                               <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">
