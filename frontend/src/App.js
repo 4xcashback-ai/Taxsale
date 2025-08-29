@@ -641,7 +641,7 @@ function MainApp() {
                           {property.boundary_screenshot ? (
                             <div className="relative w-full h-full rounded-l-lg overflow-hidden">
                               <img
-                                src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/static/property_screenshots/${property.boundary_screenshot}`}
+                                src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
                                 alt={`Property boundary map of ${property.property_address}`}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
