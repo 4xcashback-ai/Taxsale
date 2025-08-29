@@ -579,6 +579,21 @@ const PropertyDetails = () => {
               <p className="text-sm text-gray-500">CAD</p>
             </div>
 
+            {/* Google AdSense - Detail Page */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215"
+                   crossOrigin="anonymous"></script>
+              <ins className="adsbygoogle"
+                   style={{display:'block'}}
+                   data-ad-client="ca-pub-5947395928510215"
+                   data-ad-slot="3653544552"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+              <script>
+                   {typeof window !== 'undefined' && (window.adsbygoogle = window.adsbygoogle || []).push({})}
+              </script>
+            </div>
+
             {/* External Links */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">External Resources</h2>
