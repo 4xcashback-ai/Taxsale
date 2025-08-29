@@ -775,6 +775,17 @@ async def get_municipality(municipality_id: str):
     municipality = await db.municipalities.find_one({"id": municipality_id})
     if not municipality:
         raise HTTPException(status_code=404, detail="Municipality not found")
+    
+    # Remove MongoDB _id field if present
+    if '_id' in municipality:
+        del municipality['_id']
+    
+    # Ensure website_url field exists (migrate from tax_sale_url if needed)
+    if 'website_url' not in municipality and 'tax_sale_url' in municipality:
+        municipality['website_url'] = municipality['tax_sale_url']
+    elif 'website_url' not in municipality:
+        municipality['website_url'] = "https://example.com"  # Default fallback
+    
     return Municipality(**municipality)
 
 
