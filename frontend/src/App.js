@@ -151,7 +151,8 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
                   });
                 });
 
-                newPolygons.push(propertyPolygon);
+                // Add polygon to state immediately when loaded
+                setBoundaryPolygons(current => [...current, propertyPolygon]);
               }
             })
             .catch(error => {
@@ -162,7 +163,8 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
     });
 
     setMarkers(newMarkers);
-    setBoundaryPolygons(newPolygons);
+    // Clear existing boundary polygons at start, new ones will be added as they load
+    setBoundaryPolygons([]);
 
     // Adjust map bounds to show all properties
     if (newMarkers.length > 0) {
