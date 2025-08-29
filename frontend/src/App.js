@@ -1097,20 +1097,43 @@ function MainApp() {
                                     Type: {municipality.scraper_type} | 
                                     Last Scraped: {municipality.last_scraped ? formatDate(municipality.last_scraped) : 'Never'}
                                   </div>
+                                  <div className="text-sm text-gray-500">
+                                    Schedule: {municipality.scrape_enabled ? 
+                                      `${municipality.scrape_frequency} at ${String(municipality.scrape_time_hour || 2).padStart(2, '0')}:${String(municipality.scrape_time_minute || 0).padStart(2, '0')}` : 
+                                      'Disabled'
+                                    }
+                                    {municipality.scrape_frequency === 'weekly' && municipality.scrape_enabled && (
+                                      ` (${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][municipality.scrape_day_of_week || 1]})`
+                                    )}
+                                    {municipality.scrape_frequency === 'monthly' && municipality.scrape_enabled && (
+                                      ` (${municipality.scrape_day_of_month || 1}th)`
+                                    )}
+                                  </div>
                                   {municipality.tax_sale_url && (
                                     <div className="text-xs text-blue-600 truncate mt-1">
                                       URL: {municipality.tax_sale_url}
                                     </div>
                                   )}
                                 </div>
-                                <Button
-                                  onClick={() => setEditingMunicipality({...municipality})}
-                                  size="sm"
-                                  variant="outline"
-                                >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Edit
-                                </Button>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    onClick={() => setEditingMunicipality({...municipality})}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleDeleteMunicipality(municipality.id, municipality.name)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
                               </>
                             )}
                           </div>
