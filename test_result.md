@@ -105,6 +105,18 @@
 user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale data, including finding, downloading, and correctly extracting all property details from the PDF. Address any remaining 'Property Details TBD' placeholders by properly scraping all property information from source documents."
 
 backend:
+  - task: "Municipality Management API Fix"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Fixed field name mismatch bug in frontend App.js. Frontend was sending 'tax_sale_url' but backend MunicipalityCreate model expects 'website_url'. Updated handleAddMunicipality and handleEditMunicipality functions to send correct field name. Ready for testing."
+
   - task: "Halifax Tax Sale PDF Parsing"
     implemented: true
     working: true
