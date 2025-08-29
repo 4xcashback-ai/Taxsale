@@ -1214,6 +1214,7 @@ def run_comprehensive_test():
     
     test_results = {
         "api_connection": False,
+        "nsprd_boundary_system": False,
         "municipality_endpoints_quick": False,
         "municipality_management_api": False,
         "municipalities": False,
