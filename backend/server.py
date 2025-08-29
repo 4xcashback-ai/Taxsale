@@ -1167,27 +1167,8 @@ async def get_property_statistics():
         logger.error(f"Error getting property statistics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# API endpoint for updating a municipality
-@app.put("/api/municipalities/{municipality_id}")
-async def update_municipality(municipality_id: str, municipality: MunicipalityCreate):
-    """Update an existing municipality"""
-    try:
-        municipality_dict = municipality.dict()
-        municipality_dict["updated_at"] = datetime.now(timezone.utc)
-        
-        result = await db.municipalities.update_one(
-            {"id": municipality_id},
-            {"$set": municipality_dict}
-        )
-        
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Municipality not found")
-        
-        return {"message": "Municipality updated successfully"}
-        
-    except Exception as e:
-        logger.error(f"Error updating municipality: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# API endpoint for updating a municipality - REMOVED DUPLICATE
+# This functionality is handled by the api_router.put("/municipalities/{municipality_id}") endpoint above
 
 # API endpoint for creating a new municipality - REMOVED DUPLICATE
 # This functionality is handled by the api_router.post("/municipalities") endpoint above
