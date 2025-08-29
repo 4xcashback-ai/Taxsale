@@ -107,7 +107,7 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         // Add property boundary polygon if PID exists
         if (property.pid_number) {
           // Fetch and display NSPRD boundary polygon
-          fetch(`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/api/query-ns-government-parcel/${property.pid_number}`)
+          fetch(`${BACKEND_URL}/api/query-ns-government-parcel/${property.pid_number}`)
             .then(response => response.json())
             .then(data => {
               if (data.found && data.geometry && data.geometry.rings) {
