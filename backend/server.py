@@ -861,7 +861,7 @@ async def get_statistics():
         {"last_scraped": {"$exists": True}},
         sort=[("last_scraped", -1)]
     )
-    last_scrape = last_scrape_doc["last_scrape"] if last_scrape_doc else None
+    last_scrape = last_scrape_doc["last_scraped"] if last_scrape_doc else None
     
     return ScrapeStats(
         total_municipalities=total_municipalities,
