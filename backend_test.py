@@ -742,7 +742,7 @@ def run_comprehensive_test():
     
     # Summary
     print("\n" + "=" * 70)
-    print("📋 TEST SUMMARY - HALIFAX TAX SALE SCRAPER DATA QUALITY")
+    print("📋 TEST SUMMARY - MUNICIPALITY API & HALIFAX DATA QUALITY")
     print("=" * 70)
     
     passed_tests = sum(test_results.values())
@@ -754,11 +754,23 @@ def run_comprehensive_test():
     
     print(f"\nOverall: {passed_tests}/{total_tests} tests passed")
     
+    # Special focus on Municipality Management API (Review Request Priority)
+    if test_results["municipality_management_api"]:
+        print(f"\n🎉 MUNICIPALITY MANAGEMENT API FIX VERIFIED!")
+        print(f"   ✅ 'website_url' field is working correctly")
+        print(f"   ✅ No HTTP 422 errors when submitting municipality data")
+        print(f"   ✅ MunicipalityCreate Pydantic model validation working")
+    else:
+        print(f"\n🚨 MUNICIPALITY MANAGEMENT API ISSUES FOUND!")
+        print(f"   ❌ Field name mismatch may still exist")
+        print(f"   ❌ HTTP 422 errors may be occurring")
+        print(f"   ❌ Frontend-backend field name synchronization needs attention")
+    
     # Special focus on data quality issues
     if not test_results["data_truncation"]:
         print("\n🚨 CRITICAL DATA QUALITY ISSUES CONFIRMED!")
         print("   User reports about truncation and redeemable status are validated.")
-        if truncation_data:
+        if 'truncation_data' in locals() and truncation_data:
             if truncation_data.get("truncation_issues"):
                 print(f"   - {len(truncation_data['truncation_issues'])} truncation issues found")
             if truncation_data.get("redeemable_issues"):
