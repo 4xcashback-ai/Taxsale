@@ -1243,7 +1243,7 @@ def run_comprehensive_test():
     quick_muni_success, quick_muni_data = test_municipality_endpoints_quick()
     test_results["municipality_endpoints_quick"] = quick_muni_success
     
-    # Test 3: Municipality Management API (HIGH PRIORITY - Review Request Focus)
+    # Test 4: Municipality Management API (HIGH PRIORITY)
     municipality_api_success, municipality_api_data = test_municipality_management_api()
     test_results["municipality_management_api"] = municipality_api_success
     
