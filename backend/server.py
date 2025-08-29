@@ -1533,52 +1533,125 @@ async def test_viewpoint_accessibility():
             "ready_for_automation": False
         }
 
-@api_router.post("/create-realistic-boundary/{assessment_number}")
-async def create_realistic_boundary_image(assessment_number: str):
-    """Create a realistic property boundary image using coordinates and Google Maps as interim solution"""
+@api_router.post("/capture-arcgis-boundary/{assessment_number}")
+async def capture_arcgis_boundary(assessment_number: str):
+    """Capture property boundary using ArcGIS Tax Parcels service"""
     try:
+        # Get property details
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
         if not property_data:
             raise HTTPException(status_code=404, detail="Property not found")
         
         pid_number = property_data.get('pid_number')
-        latitude = property_data.get('latitude')
-        longitude = property_data.get('longitude')
-        
         if not pid_number:
             raise HTTPException(status_code=400, detail="Property has no PID number")
         
-        if not latitude or not longitude:
-            raise HTTPException(status_code=400, detail="Property has no coordinates")
-        
         screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
         
-        # Update property record with interim screenshot
-        await db.tax_sales.update_one(
-            {"assessment_number": assessment_number},
-            {"$set": {"boundary_screenshot": screenshot_filename}}
+        # Query ArcGIS service for the parcel boundary using PID
+        arcgis_query_url = (
+            "https://services1.arcgis.com/Fw15y9AZK02r2ZNA/arcgis/rest/services/GIS_Layers/FeatureServer/7/query"
+            f"?where=PARCELID='{pid_number}'"
+            "&outFields=*"
+            "&outSR=4326"
+            "&f=json"
         )
         
-        # Generate Google Maps satellite URL for realistic interim imagery
-        # This provides real satellite imagery while we work on viewpoint.ca integration
-        google_satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={latitude},{longitude}&zoom=19&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
-        
         return {
-            "message": "Realistic interim boundary solution prepared",
+            "message": "ArcGIS boundary capture prepared",
             "assessment_number": assessment_number,
             "pid_number": pid_number,
+            "arcgis_query_url": arcgis_query_url,
             "screenshot_filename": screenshot_filename,
-            "google_satellite_url": google_satellite_url,
-            "coordinates": {"latitude": latitude, "longitude": longitude},
             "property_address": property_data.get('property_address', 'Unknown'),
-            "note": "Using Google Maps satellite as interim solution while viewpoint.ca integration is developed"
+            "service": "ArcGIS Tax Parcels",
+            "automation_ready": True
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating realistic boundary image: {e}")
+        logger.error(f"Error preparing ArcGIS boundary capture: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/query-arcgis-parcel/{pid_number}")
+async def query_arcgis_parcel(pid_number: str):
+    """Query ArcGIS service for parcel boundary geometry"""
+    try:
+        import aiohttp
+        
+        # Build ArcGIS REST query for the specific PID
+        query_url = (
+            "https://services1.arcgis.com/Fw15y9AZK02r2ZNA/arcgis/rest/services/GIS_Layers/FeatureServer/7/query"
+            f"?where=PARCELID='{pid_number}'"
+            "&outFields=PARCELID,STATEDAREA,CVTTXCD"
+            "&outSR=4326"
+            "&returnGeometry=true"
+            "&f=json"
+        )
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(query_url, timeout=15) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    if data.get('features'):
+                        feature = data['features'][0]
+                        geometry = feature.get('geometry')
+                        attributes = feature.get('attributes')
+                        
+                        # Extract bounding box for map extent
+                        if geometry and geometry.get('rings'):
+                            coords = []
+                            for ring in geometry['rings']:
+                                coords.extend(ring)
+                            
+                            if coords:
+                                lons = [coord[0] for coord in coords]
+                                lats = [coord[1] for coord in coords]
+                                
+                                bbox = {
+                                    "minLon": min(lons),
+                                    "maxLon": max(lons), 
+                                    "minLat": min(lats),
+                                    "maxLat": max(lats)
+                                }
+                                
+                                center_lat = (bbox["minLat"] + bbox["maxLat"]) / 2
+                                center_lon = (bbox["minLon"] + bbox["maxLon"]) / 2
+                                
+                                return {
+                                    "found": True,
+                                    "pid_number": pid_number,
+                                    "attributes": attributes,
+                                    "geometry": geometry,
+                                    "bbox": bbox,
+                                    "center": {"lat": center_lat, "lon": center_lon},
+                                    "arcgis_map_url": f"https://www.arcgis.com/apps/mapviewer/index.html?layers=63d267e2624a457c88fabfc8fe4232c7&center={center_lon},{center_lat}&level=18",
+                                    "query_url": query_url
+                                }
+                    
+                    return {
+                        "found": False,
+                        "pid_number": pid_number,
+                        "message": "No parcel found with this PID in ArcGIS service",
+                        "query_url": query_url
+                    }
+                else:
+                    return {
+                        "found": False,
+                        "pid_number": pid_number,
+                        "error": f"ArcGIS service returned status {response.status}",
+                        "query_url": query_url
+                    }
+                    
+    except Exception as e:
+        logger.error(f"Error querying ArcGIS parcel {pid_number}: {e}")
+        return {
+            "found": False,
+            "pid_number": pid_number,
+            "error": str(e)
+        }
 
 @api_router.get("/property/{assessment_number}/boundary-image")
 async def get_property_boundary_image(assessment_number: str):
