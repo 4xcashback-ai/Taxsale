@@ -23,7 +23,25 @@ const PropertyDetails = () => {
 
   useEffect(() => {
     fetchPropertyDetails();
+    fetchBoundaryImage();
   }, [assessmentNumber]);
+
+  const fetchBoundaryImage = async () => {
+    try {
+      setBoundaryLoading(true);
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/property/${assessmentNumber}/boundary-image`);
+      
+      if (response.ok) {
+        const boundaryData = await response.json();
+        setBoundaryImage(boundaryData);
+      }
+    } catch (error) {
+      console.warn('Could not fetch boundary image:', error);
+    } finally {
+      setBoundaryLoading(false);
+    }
+  };
 
   const fetchPropertyDetails = async () => {
     try {
