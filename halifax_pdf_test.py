@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Get backend URL from environment
-BACKEND_URL = "https://propfinder-24.preview.emergentagent.com/api"
+BACKEND_URL = "https://nstaxsales.preview.emergentagent.com/api"
 
 def test_halifax_pdf_parsing():
     """Test Halifax PDF parsing specifically"""

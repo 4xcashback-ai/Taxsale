@@ -8,7 +8,7 @@ import requests
 import json
 import re
 
-BACKEND_URL = "https://propfinder-24.preview.emergentagent.com/api"
+BACKEND_URL = "https://nstaxsales.preview.emergentagent.com/api"
 
 def analyze_user_concern():
     """

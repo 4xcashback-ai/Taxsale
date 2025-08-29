@@ -1,109 +1,184 @@
 <analysis>
-The previous AI engineer successfully initiated a Nova Scotia Tax Sale Aggregator application using a React frontend, FastAPI backend, and MongoDB. The project began with defining core features: scraping tax sale data from all Nova Scotia municipalities, displaying it in a searchable and map-based interface, with weekly updates.
+The AI engineer successfully built a Nova Scotia Tax Sale Aggregator application, moving from initial MVP to a feature-rich state. Key work involved robust Halifax PDF scraping, which was a multi-stage process riddled with data extraction and parsing challenges, especially regarding property descriptions and redeemable/HST status. The engineer meticulously debugged truncation issues, incorrect field assignments, and execution flow problems (identified by the troubleshoot agent).
 
-The development progressed through several iterations. Initially, the AI engineer set up the basic application structure, implemented a foundational UI, and created endpoints for municipality management and data display. Key enhancements included the integration of interactive maps using React-Leaflet and adding external links to PVSC (Property Valuation Services Corporation) for assessment details, Viewpoint.ca for property locations (via PID), and municipal websites for tax sale pages.
-
-A significant portion of the work involved iterative bug fixing related to data scraping and integrity. The scraper for Halifax Regional Municipality proved particularly challenging due to complex PDF parsing, missing Assessment Numbers (AANs), incorrect data mappings, and duplicate detection issues. The engineer repeatedly refined the scraper, cleared and re-scraped the database, and updated the UI to display accurate property, owner, and legal information (including redeemable status and HST requirements).
-
-The final state of the trajectory shows the engineer attempting to fully implement a robust PDF parsing mechanism for the Halifax tax sale data, recognizing previous attempts at data extraction were flawed. The current challenge is to correctly read and interpret the structured information from the provided PDF, rather than relying on manual data reconstruction or flawed parsing.
+Post-scraping, the focus shifted to enhancing the user experience. This included developing a detailed property page, fixing external links to PVSC and Viewpoint.ca, integrating Google Maps for precise location, and removing internal database IDs from display. Finally, a comprehensive property status management system was implemented, allowing for active/inactive filtering and displaying these statistics in the application header, along with municipality management features. The immediate task involves fixing the municipality management form's API call.
 </analysis>
 
 <product_requirements>
-The user requested a web application to scrape Nova Scotia municipality websites for tax sale information, store it, and display it in a searchable and map-based format.
+The core product goal is a web application aggregating Nova Scotia tax sale information, displaying it in a searchable and map-based format with weekly updates.
 
-**Initial Requirements (MVP):**
-*   **Data to Scrape:** Tax sales information.
-*   **Municipalities:** All Nova Scotia municipalities.
-*   **Search/Display Features:** Search by municipality name, map-based interface.
-*   **Scraping Frequency:** Weekly updates.
+**Initial Requirements:**
+*   Scrape tax sale data from all Nova Scotia municipalities.
+*   Display data via search and an interactive map.
+*   Weekly data updates.
 
-**Subsequent Enhancements:**
-*   **Real Web Scraping:** Implement actual scraping of municipality websites (starting with Halifax).
-*   **Interactive Map Integration:** Display properties geographically using an interactive map.
-*   **Weekly Scheduling System:** Automate scraping on a weekly basis.
-*   **External Links:**
-    *   Assessment Numbers (AAN) link to PVSC (Property Valuation Services Corporation).
-    *   PID (Parcel Identification Number) link to Viewpoint.ca for property locations.
-    *   Municipality names link back to their respective tax sale pages.
-*   **Redeemable Information:** Include details on property redeemability and HST status.
-*   **Data Accuracy:** Ensure all scraped data (AAN, owner, address, PID, opening bid, HST, redeemable) is correct and matches source documents, and that all properties are displayed.
-*   **Database Management:** Clear old sample data and use only actual scraped data.
-*   **PDF Parsing:** Develop a robust scraper to automatically find, download, and correctly parse PDF documents containing tax sale data from municipal websites.
+**Implemented Enhancements & Bug Fixes:**
+*   **Halifax Scraper:** Implemented a robust PDF scraper to automatically find, download, and parse Halifax tax sale PDFs, extracting Owner Names, Property Descriptions, PIDs, Opening Bids, Redeemable status, and HST status. This required extensive debugging for accurate data extraction, handling truncation, and correct field mapping.
+*   **Interactive Map:** Integrated  (later replaced by Google Maps) to display properties.
+*   **External Links:** Properties link to PVSC (Property Valuation Services Corporation) for assessment details, Viewpoint.ca for specific property pages (by PID), and municipal websites for tax sale pages. These links were extensively debugged to ensure correct URLs and specific property navigation.
+*   **Property Details Page:** Created a dedicated page for each property, showing comprehensive details, financial information, legal descriptions, and integrated Google Maps location.
+*   **Property Status Management:** Implemented active/inactive status for properties based on sale dates or removal from listings, with frontend filtering options and status badges.
+*   **Enhanced Statistics & Admin:** Displayed summary statistics (total, active, inactive properties, municipalities) in the header. Added functionality to the Admin panel to add and edit municipalities.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack development**: React (frontend), FastAPI (backend), MongoDB (database).
--   **Web Scraping**: ,  for HTML/PDF parsing and data extraction.
--   **State Management**: React components with .
+-   **Web Scraping**: , , usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
+
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing. for HTML and PDF parsing.
 -   **UI Components**: Shadcn UI, Tailwind CSS for styling.
--   **Mapping**:  for interactive geographic display.
--   **Task Scheduling**:  for weekly backend scraping automation.
--   **Data Validation**: Pydantic models for data integrity.
+-   **Mapping**:  (initially), Google Maps Embedding (currently).
+-   **Task Scheduling**:  for weekly scraping.
+-   **Routing**:  for frontend navigation.
 </key_technical_concepts>
 
 <code_architecture>
 
 
-
--   **/app/backend/server.py**:
-    -   **Summary**: This is the core FastAPI application file, handling API routes, database interactions (MongoDB), web scraping logic, and scheduling. It defines data models, CRUD operations for municipalities and tax sale properties, and the scraping functions.
+-   ****:
+    -   **Summary**: The central FastAPI application. Manages API routes, MongoDB interaction, web scraping, and scheduling. It defines data models for  and , and handles CRUD operations.
     -   **Changes Made**:
-        -   Initial setup of FastAPI app, CORS, MongoDB connection.
-        -   Defined Pydantic models for  and  (including fields like , , , , , , , ).
-        -   Implemented endpoints for , , , , , .
-        -   The  function was repeatedly modified to correctly find and parse the Halifax tax sale data, initially using direct links and later attempting PDF parsing.
-        -    was integrated for weekly scraping.
-        -   Duplicate detection logic in  was refined to handle properties with and without assessment numbers using a combination of AAN, owner name, and address.
+        -   Refined  model to include , , , , , , , , and  (active/inactive).
+        -   Significantly updated  for robust PDF parsing (using usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
 
--   **/app/frontend/src/App.js**:
-    -   **Summary**: This is the main React component, rendering the application's UI, including the header, tabs (Search, Map View, Admin), search bar, property cards, and the interactive map. It fetches data from the FastAPI backend and displays it.
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing.), handling dynamic column detection, text extraction, data cleaning, and accurate status parsing (Redeemable/HST).
+        -   Added API endpoints for property status management (), enhanced property details (PVSC scraping), and municipality management (, ).
+        -   Updated  to include active/inactive property counts.
+        -   Fixed  in stats endpoint.
+        -   Corrected MongoDB cursor handling.
+
+-   ****:
+    -   **Summary**: The main React component rendering the UI. Handles global state, data fetching from FastAPI, and UI layout.
     -   **Changes Made**:
-        -   Initial UI structure with Tailwind CSS for layout and styling.
-        -   Implemented search functionality and municipality filtering.
-        -   Integrated Shadcn UI components (tabs, input, button, select, card).
-        -   Integrated  for the interactive map view, displaying property markers with popups.
-        -   Added logic to display property details, including dynamically generated external links for AAN (PVSC), PID (Viewpoint.ca), and Municipality (official tax sale page).
-        -   Introduced an amber warning box to display  and  information prominently.
-        -   Updated Admin panel UI to show system statistics and scraper status.
+        -   Integrated  for navigation (e.g., to property detail pages).
+        -   Added See More Details buttons to property cards.
+        -   Implemented UI for property status filtering (Active/Inactive/All) with corresponding badges on property cards.
+        -   Enhanced the header to display active/inactive property counts, total properties, and total municipalities.
+        -   Added Admin panel UI for municipality management (add/edit).
+        -   Updated  to include status filtering.
+        -   Fixed municipality management form fields to match backend ().
 
--   **/app/frontend/package.json**:
+-   ****:
+    -   **Summary**: A new React component responsible for displaying detailed information about a single tax sale property.
+    -   **Changes Made**:
+        -   Initial creation to display comprehensive property information based on the  reference.
+        -   Integrated fetched data, including PVSC-scraped details (assessment, land size, building details).
+        -   Replaced  with embedded Google Maps for precise property location using PVSC's civic address.
+        -   Corrected external links to Viewpoint.ca and PVSC for specific property navigation.
+        -   Removed the display of internal database UUIDs (Property ID).
+        -   Fixed empty municipality display by correcting field reference to .
+        -   Corrected labels for Redeemable/HST status.
+
+-   ****:
     -   **Summary**: Manages Node.js dependencies for the React frontend.
-    -   **Changes Made**:
-        -   Added  and  for map integration.
+    -   **Changes Made**: Added .
 
--   **/app/backend/requirements.txt**:
+-   ****:
     -   **Summary**: Manages Python dependencies for the FastAPI backend.
-    -   **Changes Made**:
-        -   Added  for scheduling background tasks.
-        -   Added  and  for web scraping.
-        -   Added  and  for MongoDB interaction.
-        -    for environment variable management.
+    -   **Changes Made**: Included , usage: pdfplumber [-h] [--structure | --structure-text]
+                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
+                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
+                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
+                  [--laparams LAPARAMS] [--precision PRECISION]
+                  [--pages PAGES [PAGES ...]] [--indent INDENT]
+                  [infile]
 
--   **/app/backend/.env & /app/frontend/.env**:
-    -   **Summary**: Configuration files for environment variables.
-    -   **Changes Made**: These files were confirmed to exist and contain  and  respectively, but their *values* were explicitly not modified. The backend uses  and frontend uses .
+positional arguments:
+  infile
+
+options:
+  -h, --help            show this help message and exit
+  --structure           Write the structure tree as JSON. All other arguments
+                        except --pages, --laparams, and --indent will be
+                        ignored
+  --structure-text      Write the structure tree as JSON including text
+                        contents. All other arguments except --pages,
+                        --laparams, and --indent will be ignored
+  --format {csv,json,text}
+  --types TYPES [TYPES ...]
+  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
+                        Include *only* these object attributes in output.
+  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
+                        Exclude these object attributes from output.
+  --laparams LAPARAMS
+  --precision PRECISION
+  --pages PAGES [PAGES ...]
+  --indent INDENT       Indent level for JSON pretty-printing.,  for PDF parsing.
 </code_architecture>
 
 <pending_tasks>
--   Complete the robust PDF parsing for Halifax tax sale data, including finding, downloading, and correctly extracting all property details from the PDF.
--   Address any remaining Property Details TBD placeholders by properly scraping all property information from source documents.
+-   Complete the fix for municipality management form's API call.
 -   Implement scraping for other Nova Scotia municipalities using the established generic scraper framework.
--   Enhance geocoding for precise property locations.
+-   Enhance geocoding for precise property locations (beyond Google Maps embedding).
 -   Implement email alerts for new tax sales.
 -   Implement property history tracking and analytics.
 </pending_tasks>
 
 <current_work>
-The AI engineer was most recently working on correctly parsing the Halifax tax sale PDF document. The user provided a PDF () which the engineer had been attempting to parse. Previous attempts at parsing led to incorrect data, missing Assessment Numbers (AANs), and placeholder property descriptions.
+The AI engineer was immediately working on fixing a bug in the municipality management section of the Admin panel. The user reported that the management is not active to save.
 
-The engineer acknowledged that the scraper's approach to parsing the PDF was flawed. The task immediately before this summary request was to completely rebuild the Halifax scraper to:
-1.  Automatically find the PDF link on the Halifax tax sale page.
-2.  Programmatically download the PDF.
-3.  Correctly parse the PDF's table structure to extract all property data (Owner Names, Property Descriptions, PIDs, Opening Bids, HST status, Redeemable status).
+Upon investigation, the engineer discovered the frontend was sending the wrong field name () to the backend API when attempting to add or edit a municipality. The backend  Pydantic model in  explicitly requires a  field. This mismatch led to a  (Unprocessable Entity) error from the backend.
 
-The engineer had just started implementing the PDF parsing logic in  and had updated sections related to property data handling, aiming to remove all hardcoded and placeholder data in favor of data extracted directly from the PDF. The last action was to confirm the previous edit and prepare to add the missing PDF parsing dependencies and complete the solution.
+The engineer made several edits to  to correct this:
+1.  Updated the form's state variable and input field to correctly reference  as .
+2.  Modified the  and  functions to ensure they send  in the API payload, aligning with the backend's expected schema.
+3.  Adjusted the form reset logic to properly clear the  field.
+
+The immediate next step is to test this fixed municipality API endpoint to confirm that adding and editing municipalities now works correctly.
 </current_work>
 
 <optional_next_step>
-Add the necessary Python dependencies for PDF parsing and implement the complete PDF parsing logic in  for the Halifax scraper.
+Test the fixed municipality management API endpoint to confirm saving functionality.
 </optional_next_step>

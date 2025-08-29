@@ -8,7 +8,7 @@ import requests
 import json
 import re
 
-BACKEND_URL = "https://propfinder-24.preview.emergentagent.com/api"
+BACKEND_URL = "https://nstaxsales.preview.emergentagent.com/api"
 
 def test_specific_assessments():
     """Test specific assessment numbers mentioned in the review request"""
