@@ -813,6 +813,150 @@ function MainApp() {
                 </Card>
               )}
 
+              {/* Municipality Management */}
+              <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Municipality Management</CardTitle>
+                      <CardDescription>
+                        Add new municipalities and edit existing ones
+                      </CardDescription>
+                    </div>
+                    <Button
+                      onClick={() => setShowAddMunicipality(true)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Municipality
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Add Municipality Form */}
+                  {showAddMunicipality && (
+                    <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <h3 className="text-lg font-semibold text-green-800 mb-3">Add New Municipality</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Municipality Name</label>
+                          <Input
+                            value={newMunicipality.name}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, name: e.target.value})}
+                            placeholder="e.g., Dartmouth, Sydney, Truro"
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Tax Sale URL (Optional)</label>
+                          <Input
+                            value={newMunicipality.tax_sale_url}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, tax_sale_url: e.target.value})}
+                            placeholder="https://example.com/tax-sales"
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Scraper Type</label>
+                          <select
+                            value={newMunicipality.scraper_type}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, scraper_type: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          >
+                            <option value="generic">Generic</option>
+                            <option value="halifax">Halifax-style</option>
+                            <option value="pdf">PDF Parser</option>
+                          </select>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button onClick={handleAddMunicipality} className="bg-green-600 hover:bg-green-700">
+                            <Save className="h-4 w-4 mr-2" />
+                            Add Municipality
+                          </Button>
+                          <Button 
+                            onClick={() => setShowAddMunicipality(false)} 
+                            variant="outline"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Municipality List */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Existing Municipalities</h3>
+                    {municipalities.length === 0 ? (
+                      <p className="text-gray-500 italic">No municipalities found. Add one to get started.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {municipalities.map((municipality) => (
+                          <div key={municipality.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                            {editingMunicipality?.id === municipality.id ? (
+                              <div className="flex-1 space-y-2">
+                                <Input
+                                  value={editingMunicipality.name}
+                                  onChange={(e) => setEditingMunicipality({...editingMunicipality, name: e.target.value})}
+                                  className="mb-2"
+                                />
+                                <Input
+                                  value={editingMunicipality.tax_sale_url || ''}
+                                  onChange={(e) => setEditingMunicipality({...editingMunicipality, tax_sale_url: e.target.value})}
+                                  placeholder="Tax Sale URL"
+                                />
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    onClick={() => handleEditMunicipality(editingMunicipality)}
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    <Save className="h-3 w-3 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button 
+                                    onClick={() => setEditingMunicipality(null)}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-gray-800">{municipality.name}</div>
+                                  <div className="text-sm text-gray-500">
+                                    Type: {municipality.scraper_type} | 
+                                    Last Scraped: {municipality.last_scraped ? formatDate(municipality.last_scraped) : 'Never'}
+                                  </div>
+                                  {municipality.tax_sale_url && (
+                                    <div className="text-xs text-blue-600 truncate mt-1">
+                                      URL: {municipality.tax_sale_url}
+                                    </div>
+                                  )}
+                                </div>
+                                <Button
+                                  onClick={() => setEditingMunicipality({...municipality})}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Enhanced Admin Actions */}
               <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
                 <CardHeader>
