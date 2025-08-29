@@ -1533,58 +1533,17 @@ async def test_viewpoint_accessibility():
             "ready_for_automation": False
         }
 
-@api_router.post("/capture-arcgis-boundary/{assessment_number}")
-async def capture_arcgis_boundary(assessment_number: str):
-    """Capture property boundary using ArcGIS Tax Parcels service"""
-    try:
-        # Get property details
-        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
-        if not property_data:
-            raise HTTPException(status_code=404, detail="Property not found")
-        
-        pid_number = property_data.get('pid_number')
-        if not pid_number:
-            raise HTTPException(status_code=400, detail="Property has no PID number")
-        
-        screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
-        
-        # Query ArcGIS service for the parcel boundary using PID
-        arcgis_query_url = (
-            "https://services1.arcgis.com/Fw15y9AZK02r2ZNA/arcgis/rest/services/GIS_Layers/FeatureServer/7/query"
-            f"?where=PARCELID='{pid_number}'"
-            "&outFields=*"
-            "&outSR=4326"
-            "&f=json"
-        )
-        
-        return {
-            "message": "ArcGIS boundary capture prepared",
-            "assessment_number": assessment_number,
-            "pid_number": pid_number,
-            "arcgis_query_url": arcgis_query_url,
-            "screenshot_filename": screenshot_filename,
-            "property_address": property_data.get('property_address', 'Unknown'),
-            "service": "ArcGIS Tax Parcels",
-            "automation_ready": True
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error preparing ArcGIS boundary capture: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/query-arcgis-parcel/{pid_number}")
-async def query_arcgis_parcel(pid_number: str):
-    """Query ArcGIS service for parcel boundary geometry"""
+@api_router.get("/query-ns-government-parcel/{pid_number}")
+async def query_ns_government_parcel(pid_number: str):
+    """Query official Nova Scotia government ArcGIS service for property boundary"""
     try:
         import aiohttp
         
-        # Build ArcGIS REST query for the specific PID
+        # Query the official Nova Scotia Property Registration Database (NSPRD)
         query_url = (
-            "https://services1.arcgis.com/Fw15y9AZK02r2ZNA/arcgis/rest/services/GIS_Layers/FeatureServer/7/query"
-            f"?where=PARCELID='{pid_number}'"
-            "&outFields=PARCELID,STATEDAREA,CVTTXCD"
+            "https://nsgiwa2.novascotia.ca/arcgis/rest/services/PLAN/PLAN_NSPRD_WM84/MapServer/0/query"
+            f"?where=PID='{pid_number}'"
+            "&outFields=*"
             "&outSR=4326"
             "&returnGeometry=true"
             "&f=json"
@@ -1595,10 +1554,20 @@ async def query_arcgis_parcel(pid_number: str):
                 if response.status == 200:
                     data = await response.json()
                     
-                    if data.get('features'):
+                    if data.get('features') and len(data['features']) > 0:
                         feature = data['features'][0]
                         geometry = feature.get('geometry')
                         attributes = feature.get('attributes')
+                        
+                        # Extract property details
+                        property_info = {
+                            "pid": attributes.get('PID'),
+                            "area_sqm": attributes.get('SHAPE.AREA'),
+                            "perimeter_m": attributes.get('PERIMETER'),
+                            "source_id": attributes.get('SOURCE_ID'),
+                            "update_date": attributes.get('UPDAT_DATE'),
+                            "theme_no": attributes.get('THEME_NO')
+                        }
                         
                         # Extract bounding box for map extent
                         if geometry and geometry.get('rings'):
@@ -1620,38 +1589,107 @@ async def query_arcgis_parcel(pid_number: str):
                                 center_lat = (bbox["minLat"] + bbox["maxLat"]) / 2
                                 center_lon = (bbox["minLon"] + bbox["maxLon"]) / 2
                                 
+                                # Calculate appropriate zoom level based on property size
+                                lat_range = bbox["maxLat"] - bbox["minLat"]
+                                lon_range = bbox["maxLon"] - bbox["minLon"]
+                                max_range = max(lat_range, lon_range)
+                                
+                                # Zoom calculation (higher zoom for smaller properties)
+                                if max_range < 0.001:
+                                    zoom_level = 19
+                                elif max_range < 0.005:
+                                    zoom_level = 18
+                                elif max_range < 0.01:
+                                    zoom_level = 17
+                                else:
+                                    zoom_level = 16
+                                
                                 return {
                                     "found": True,
                                     "pid_number": pid_number,
-                                    "attributes": attributes,
+                                    "property_info": property_info,
                                     "geometry": geometry,
                                     "bbox": bbox,
                                     "center": {"lat": center_lat, "lon": center_lon},
-                                    "arcgis_map_url": f"https://www.arcgis.com/apps/mapviewer/index.html?layers=63d267e2624a457c88fabfc8fe4232c7&center={center_lon},{center_lat}&level=18",
-                                    "query_url": query_url
+                                    "zoom_level": zoom_level,
+                                    "ns_arcgis_url": f"https://nsgiwa2.novascotia.ca/arcgis/rest/services/PLAN/PLAN_NSPRD_WM84/MapServer/0/query?where=PID='{pid_number}'&outFields=*&outSR=4326&returnGeometry=true&f=json",
+                                    "query_url": query_url,
+                                    "source": "Nova Scotia Government NSPRD"
                                 }
                     
                     return {
                         "found": False,
                         "pid_number": pid_number,
-                        "message": "No parcel found with this PID in ArcGIS service",
+                        "message": "Property not found in Nova Scotia government database",
                         "query_url": query_url
                     }
                 else:
                     return {
                         "found": False,
                         "pid_number": pid_number,
-                        "error": f"ArcGIS service returned status {response.status}",
+                        "error": f"NS Government service returned status {response.status}",
                         "query_url": query_url
                     }
                     
     except Exception as e:
-        logger.error(f"Error querying ArcGIS parcel {pid_number}: {e}")
+        logger.error(f"Error querying NS Government parcel {pid_number}: {e}")
         return {
             "found": False,
             "pid_number": pid_number,
             "error": str(e)
         }
+
+@api_router.post("/create-ns-government-boundary/{assessment_number}")
+async def create_ns_government_boundary_map(assessment_number: str):
+    """Create boundary image using Nova Scotia government data and Google Maps satellite overlay"""
+    try:
+        # Get property details
+        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_data:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        pid_number = property_data.get('pid_number')
+        if not pid_number:
+            raise HTTPException(status_code=400, detail="Property has no PID number")
+        
+        # Query NS government service for boundary data
+        parcel_data = await query_ns_government_parcel(pid_number)
+        
+        if not parcel_data.get('found'):
+            raise HTTPException(status_code=404, detail=f"PID {pid_number} not found in NS government database")
+        
+        screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
+        
+        # Update property record with boundary screenshot filename
+        await db.tax_sales.update_one(
+            {"assessment_number": assessment_number},
+            {"$set": {"boundary_screenshot": screenshot_filename}}
+        )
+        
+        # Get boundary center and zoom for optimal satellite view
+        center = parcel_data['center']
+        zoom_level = parcel_data['zoom_level']
+        
+        return {
+            "message": "NS Government boundary data retrieved successfully",
+            "assessment_number": assessment_number,
+            "pid_number": pid_number,
+            "screenshot_filename": screenshot_filename,
+            "property_info": parcel_data['property_info'],
+            "center_coordinates": center,
+            "zoom_level": zoom_level,
+            "bbox": parcel_data['bbox'],
+            "google_satellite_url": f"https://maps.googleapis.com/maps/api/staticmap?center={center['lat']},{center['lon']}&zoom={zoom_level}&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY",
+            "property_address": property_data.get('property_address', 'Unknown'),
+            "source": "Nova Scotia Government NSPRD + Google Maps",
+            "ready_for_screenshot": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating NS government boundary map: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/property/{assessment_number}/boundary-image")
 async def get_property_boundary_image(assessment_number: str):
