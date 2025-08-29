@@ -876,6 +876,18 @@ def run_comprehensive_test():
     print(f"\nOverall: {passed_tests}/{total_tests} tests passed")
     
     # Special focus on Municipality Management API (Review Request Priority)
+    if test_results["municipality_endpoints_quick"]:
+        print(f"\n🎉 MUNICIPALITY ENDPOINTS QUICK TEST PASSED!")
+        print(f"   ✅ GET /api/municipalities returns municipalities without HTTP 500")
+        print(f"   ✅ POST /api/municipalities still works correctly")
+        print(f"   ✅ website_url field migration working properly")
+        print(f"   ✅ No HTTP 500 errors detected on repeated calls")
+    else:
+        print(f"\n🚨 MUNICIPALITY ENDPOINTS ISSUES FOUND!")
+        print(f"   ❌ GET /api/municipalities may be returning HTTP 500")
+        print(f"   ❌ website_url field migration may have issues")
+        print(f"   ❌ The reported bug may still exist")
+    
     if test_results["municipality_management_api"]:
         print(f"\n🎉 MUNICIPALITY MANAGEMENT API FIX VERIFIED!")
         print(f"   ✅ 'website_url' field is working correctly")
