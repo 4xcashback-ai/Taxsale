@@ -1173,7 +1173,15 @@ async def create_municipality(municipality: MunicipalityCreate):
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
             "last_scraped": None,
-            "scrape_status": "pending"
+            "scrape_status": "pending",
+            # Add new scheduling fields
+            "scrape_enabled": municipality.scrape_enabled,
+            "scrape_frequency": municipality.scrape_frequency,
+            "scrape_day_of_week": municipality.scrape_day_of_week,
+            "scrape_day_of_month": municipality.scrape_day_of_month,
+            "scrape_time_hour": municipality.scrape_time_hour,
+            "scrape_time_minute": municipality.scrape_time_minute,
+            "next_scrape_time": None  # Will be calculated by scheduler
         }
         
         await db.municipalities.insert_one(new_municipality)
