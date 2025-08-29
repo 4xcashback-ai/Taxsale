@@ -71,6 +71,28 @@ class MunicipalityCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     scraper_type: str = "generic"
+    # Scraping Schedule Configuration
+    scrape_enabled: bool = True
+    scrape_frequency: str = "weekly"  # daily, weekly, monthly
+    scrape_day_of_week: Optional[int] = 1  # 0=Monday, 6=Sunday (for weekly)
+    scrape_day_of_month: Optional[int] = 1  # 1-28 (for monthly)
+    scrape_time_hour: int = 2  # 24-hour format
+    scrape_time_minute: int = 0
+
+class MunicipalityUpdate(BaseModel):
+    name: Optional[str] = None
+    website_url: Optional[str] = None
+    tax_sale_url: Optional[str] = None
+    region: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    scraper_type: Optional[str] = None
+    scrape_enabled: Optional[bool] = None
+    scrape_frequency: Optional[str] = None
+    scrape_day_of_week: Optional[int] = None
+    scrape_day_of_month: Optional[int] = None
+    scrape_time_hour: Optional[int] = None
+    scrape_time_minute: Optional[int] = None
 
 class TaxSaleProperty(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
