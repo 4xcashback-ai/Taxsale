@@ -708,7 +708,11 @@ def run_comprehensive_test():
     # Initialize municipalities if needed
     initialize_municipalities_if_needed()
     
-    # Test 2: Municipalities endpoint
+    # Test 2: Municipality Management API (HIGH PRIORITY - Review Request Focus)
+    municipality_api_success, municipality_api_data = test_municipality_management_api()
+    test_results["municipality_management_api"] = municipality_api_success
+    
+    # Test 3: Municipalities endpoint
     municipalities_success, halifax_data = test_municipalities_endpoint()
     test_results["municipalities"] = municipalities_success
     
