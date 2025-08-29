@@ -54,6 +54,14 @@ class Municipality(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     scraper_type: str = "generic"  # generic, halifax, cbrm, etc.
+    # Scraping Schedule Configuration
+    scrape_enabled: bool = True
+    scrape_frequency: str = "weekly"  # daily, weekly, monthly
+    scrape_day_of_week: Optional[int] = 1  # 0=Monday, 6=Sunday (for weekly)
+    scrape_day_of_month: Optional[int] = 1  # 1-28 (for monthly)
+    scrape_time_hour: int = 2  # 24-hour format
+    scrape_time_minute: int = 0
+    next_scrape_time: Optional[datetime] = None
 
 class MunicipalityCreate(BaseModel):
     name: str
