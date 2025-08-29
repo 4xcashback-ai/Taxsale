@@ -70,7 +70,13 @@ function MainApp() {
     scraper_type: 'generic', 
     website_url: '', 
     tax_sale_url: '', 
-    region: '' 
+    region: '',
+    scrape_enabled: true,
+    scrape_frequency: 'weekly',
+    scrape_day_of_week: 1,
+    scrape_day_of_month: 1,
+    scrape_time_hour: 2,
+    scrape_time_minute: 0
   });
 
   // Fetch initial data and refresh when filters change
