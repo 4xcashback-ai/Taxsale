@@ -1343,33 +1343,85 @@ async def save_boundary_screenshot(request_data: dict):
 
 @api_router.post("/capture-all-boundaries") 
 async def capture_all_property_boundaries():
-    """Prepare data for capturing boundary screenshots for all properties"""
+    """Prepare data for capturing boundary screenshots for all properties with coordinates"""
     try:
-        # Get all properties that have PID numbers but no boundary screenshots
+        # Get all properties that have coordinates but no boundary screenshots
         properties = await db.tax_sales.find({
-            "pid_number": {"$exists": True, "$ne": None},
+            "latitude": {"$ne": None},
+            "longitude": {"$ne": None},
             "boundary_screenshot": {"$exists": False}
         }).to_list(1000)
         
         boundary_data = []
         for prop in properties:
-            pid_number = prop.get('pid_number')
-            if pid_number:
+            latitude = prop.get('latitude')
+            longitude = prop.get('longitude')
+            if latitude and longitude:
+                # Create Google Maps satellite URL
+                google_maps_url = f"https://www.google.com/maps/@{latitude},{longitude},19z/data=!3m1!1e3"
+                
                 boundary_data.append({
                     "assessment_number": prop.get('assessment_number'),
-                    "pid_number": pid_number,
-                    "viewpoint_url": f"https://www.viewpoint.ca/map#pid={pid_number}",
+                    "pid_number": prop.get('pid_number'),
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "google_maps_url": google_maps_url,
+                    "viewpoint_url": f"https://www.viewpoint.ca/map#pid={prop.get('pid_number')}" if prop.get('pid_number') else None,
                     "property_address": prop.get('property_address', 'Unknown')
                 })
         
         return {
             "message": f"Found {len(boundary_data)} properties ready for boundary capture",
-            "properties": boundary_data[:10],  # Return first 10 for testing
-            "total_count": len(boundary_data)
+            "properties": boundary_data,
+            "total_count": len(boundary_data),
+            "method": "google_maps_satellite"
         }
         
     except Exception as e:
         logger.error(f"Error preparing boundary capture data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/property/{assessment_number}/boundary-image")
+async def get_property_boundary_image(assessment_number: str):
+    """Get boundary screenshot for a specific property"""
+    try:
+        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_data:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        boundary_screenshot = property_data.get('boundary_screenshot')
+        if boundary_screenshot:
+            return {
+                "assessment_number": assessment_number,
+                "has_boundary_image": True,
+                "boundary_screenshot": boundary_screenshot,
+                "image_url": f"/static/screenshots/{boundary_screenshot}"
+            }
+        else:
+            # Return data for capturing screenshot
+            latitude = property_data.get('latitude')
+            longitude = property_data.get('longitude')
+            
+            if latitude and longitude:
+                google_maps_url = f"https://www.google.com/maps/@{latitude},{longitude},19z/data=!3m1!1e3"
+                return {
+                    "assessment_number": assessment_number,
+                    "has_boundary_image": False,
+                    "google_maps_url": google_maps_url,
+                    "ready_for_capture": True
+                }
+            else:
+                return {
+                    "assessment_number": assessment_number,
+                    "has_boundary_image": False,
+                    "ready_for_capture": False,
+                    "error": "No coordinates available for this property"
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting boundary image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Enhanced Scraping Endpoints
