@@ -760,22 +760,11 @@ async def get_municipalities():
         if '_id' in municipality:
             del municipality['_id']
         
-        # Debug logging
-        name = municipality.get('name', 'Unknown')
-        has_website_url = 'website_url' in municipality
-        website_url_value = municipality.get('website_url')
-        
         # Ensure website_url field exists and is not None (migrate from tax_sale_url if needed)
         if ('website_url' not in municipality or municipality.get('website_url') is None) and 'tax_sale_url' in municipality:
             municipality['website_url'] = municipality['tax_sale_url']
-            logger.info(f"Migrated website_url from tax_sale_url for {name}")
         elif 'website_url' not in municipality or municipality.get('website_url') is None:
             municipality['website_url'] = "https://example.com"  # Default fallback
-            logger.info(f"Set default website_url for {name}")
-            
-        # Verify the field is now set
-        final_website_url = municipality.get('website_url')
-        logger.info(f"Municipality {name}: website_url = {repr(final_website_url)}")
             
         processed_municipalities.append(Municipality(**municipality))
     
