@@ -967,6 +967,52 @@ async def get_property_statistics():
         logger.error(f"Error getting property statistics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# API endpoint for updating a municipality
+@app.put("/api/municipalities/{municipality_id}")
+async def update_municipality(municipality_id: str, municipality: MunicipalityCreate):
+    """Update an existing municipality"""
+    try:
+        municipality_dict = municipality.dict()
+        municipality_dict["updated_at"] = datetime.now(timezone.utc)
+        
+        result = await db.municipalities.update_one(
+            {"id": municipality_id},
+            {"$set": municipality_dict}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        return {"message": "Municipality updated successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error updating municipality: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# API endpoint for creating a new municipality
+@app.post("/api/municipalities")
+async def create_municipality(municipality: MunicipalityCreate):
+    """Create a new municipality"""
+    try:
+        new_municipality = {
+            "id": str(uuid.uuid4()),
+            "name": municipality.name,
+            "scraper_type": municipality.scraper_type,
+            "tax_sale_url": municipality.tax_sale_url,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+            "last_scraped": None,
+            "scrape_status": "pending"
+        }
+        
+        await db.municipalities.insert_one(new_municipality)
+        
+        return {"message": "Municipality created successfully", "id": new_municipality["id"]}
+        
+    except Exception as e:
+        logger.error(f"Error creating municipality: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 async def scrape_pvsc_details(assessment_number: str):
     """
     Scrape additional property details from PVSC website
