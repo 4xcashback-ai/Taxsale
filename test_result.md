@@ -257,13 +257,16 @@ frontend:
     implemented: true
     working: false
     file: "App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "SATELLITE THUMBNAIL IMPLEMENTATION TESTED - CRITICAL API KEY ISSUE FOUND! The satellite thumbnail feature has been correctly implemented in the frontend code but is not working due to Google Maps Static API authentication failure. DETAILED FINDINGS: 1) IMPLEMENTATION CORRECT: All 62 property cards have proper satellite thumbnail containers (128x128 pixels) with side-by-side flex layout as specified, 2) CODE STRUCTURE VERIFIED: Google Maps Static API URLs are generated correctly with proper parameters (center coordinates, zoom=18, size=128x128, maptype=satellite), 3) NETWORK REQUESTS CONFIRMED: All satellite image requests are being made to Google Maps Static API with correct coordinates for each property, 4) ROOT CAUSE IDENTIFIED: Google Maps Static API returns HTTP 403 Forbidden error for all image requests, indicating API key authentication failure, 5) FALLBACK WORKING: All property cards correctly display fallback placeholder with satellite emoji and 'No Image' text when images fail to load, 6) LAYOUT VERIFIED: Side-by-side layout with thumbnail on left and property content on right is working correctly. CRITICAL ISSUE: The Google Maps API key (AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY) is either invalid, expired, or lacks proper permissions for Static Maps API. All satellite thumbnails show fallback placeholders instead of actual satellite imagery. The implementation is production-ready except for the API key configuration issue."
+      - working: false
+        agent: "testing"
+        comment: "BOUNDARY THUMBNAIL IMAGES CRITICAL INFRASTRUCTURE BUG IDENTIFIED! Comprehensive testing reveals the boundary image system has a fundamental routing/proxy configuration issue. ROOT CAUSE ANALYSIS: 1) BACKEND FILES EXIST: Boundary images are correctly stored at `/app/backend/static/property_screenshots/boundary_00424945_00079006.png` and are valid PNG files (2865 bytes), 2) BACKEND API WORKS: `/api/property/00079006/boundary-image` returns correct JSON with `has_boundary_image: true` and proper image paths, 3) FRONTEND CODE CORRECT: Both property cards and property details pages have correct image loading logic with proper error handling, 4) CRITICAL ROUTING ISSUE: URLs like `/static/property_screenshots/boundary_00424945_00079006.png` are being routed to the frontend Express server (returns `content-type: text/html; x-powered-by: Express`) instead of the FastAPI backend where the files actually exist, 5) INFRASTRUCTURE PROBLEM: `/api/*` routes correctly go to FastAPI backend (uvicorn), but `/static/*` routes go to frontend server which doesn't have the boundary image files. IMPACT: All 62 property cards show 'Boundary Map' placeholders instead of actual boundary images, property details pages show 'Satellite image not available' instead of boundary images. SOLUTION NEEDED: Fix proxy/routing configuration to route `/static/property_screenshots/*` to backend, OR move files to frontend static directory, OR change image URLs to use `/api/` prefix."
 
   - task: "Interactive Map Display"
     implemented: true
