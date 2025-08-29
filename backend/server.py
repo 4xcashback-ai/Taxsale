@@ -832,6 +832,22 @@ async def get_municipality(municipality_id: str):
     elif 'website_url' not in municipality or municipality.get('website_url') is None:
         municipality['website_url'] = "https://example.com"  # Default fallback
     
+    # Add missing scheduling fields with defaults
+    if 'scrape_enabled' not in municipality:
+        municipality['scrape_enabled'] = True
+    if 'scrape_frequency' not in municipality:
+        municipality['scrape_frequency'] = "weekly"
+    if 'scrape_day_of_week' not in municipality:
+        municipality['scrape_day_of_week'] = 1
+    if 'scrape_day_of_month' not in municipality:
+        municipality['scrape_day_of_month'] = 1
+    if 'scrape_time_hour' not in municipality:
+        municipality['scrape_time_hour'] = 2
+    if 'scrape_time_minute' not in municipality:
+        municipality['scrape_time_minute'] = 0
+    if 'next_scrape_time' not in municipality:
+        municipality['next_scrape_time'] = None
+    
 @api_router.delete("/municipalities/{municipality_id}")
 async def delete_municipality(municipality_id: str):
     """Delete a municipality and optionally its associated tax sale properties"""
