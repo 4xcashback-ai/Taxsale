@@ -18,6 +18,8 @@ const PropertyDetails = () => {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [boundaryImage, setBoundaryImage] = useState(null);
+  const [boundaryLoading, setBoundaryLoading] = useState(false);
 
   useEffect(() => {
     fetchPropertyDetails();
