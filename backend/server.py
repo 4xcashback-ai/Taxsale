@@ -1284,29 +1284,54 @@ async def capture_property_boundary(assessment_number: str):
         if not pid_number:
             raise HTTPException(status_code=400, detail="Property has no PID number")
         
-        # Capture screenshot
-        screenshot_path = await capture_property_boundary_screenshot(pid_number, assessment_number)
+        # Return the data needed for frontend automation
+        # We'll implement the actual screenshot capture in the frontend using our existing screenshot_tool
+        viewpoint_url = f"https://www.viewpoint.ca/map#pid={pid_number}"
         
-        if screenshot_path:
-            # Update property record with screenshot path
-            await db.tax_sales.update_one(
-                {"assessment_number": assessment_number},
-                {"$set": {"boundary_screenshot": screenshot_path}}
-            )
-            
-            return {
-                "message": "Boundary screenshot captured successfully",
-                "assessment_number": assessment_number,
-                "pid_number": pid_number,
-                "screenshot_path": screenshot_path
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Failed to capture boundary screenshot")
+        return {
+            "message": "Boundary screenshot data prepared",
+            "assessment_number": assessment_number,
+            "pid_number": pid_number,
+            "viewpoint_url": viewpoint_url,
+            "property_address": property_data.get('property_address', 'Unknown'),
+            "ready_for_capture": True
+        }
             
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error in boundary capture endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/capture-all-boundaries") 
+async def capture_all_property_boundaries():
+    """Prepare data for capturing boundary screenshots for all properties"""
+    try:
+        # Get all properties that have PID numbers but no boundary screenshots
+        properties = await db.tax_sales.find({
+            "pid_number": {"$exists": True, "$ne": None},
+            "boundary_screenshot": {"$exists": False}
+        }).to_list(1000)
+        
+        boundary_data = []
+        for prop in properties:
+            pid_number = prop.get('pid_number')
+            if pid_number:
+                boundary_data.append({
+                    "assessment_number": prop.get('assessment_number'),
+                    "pid_number": pid_number,
+                    "viewpoint_url": f"https://www.viewpoint.ca/map#pid={pid_number}",
+                    "property_address": prop.get('property_address', 'Unknown')
+                })
+        
+        return {
+            "message": f"Found {len(boundary_data)} properties ready for boundary capture",
+            "properties": boundary_data[:10],  # Return first 10 for testing
+            "total_count": len(boundary_data)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error preparing boundary capture data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Enhanced Scraping Endpoints
