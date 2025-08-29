@@ -677,11 +677,17 @@ async def scrape_halifax_tax_sales():
                     }
                 }
                 
-                # TODO: Implement proper geocoding for actual property locations
-                # For now, we'll set coordinates to None until we can geocode the addresses
-                # The fake coordinate generation was placing properties in wrong locations
-                property_data["latitude"] = None
-                property_data["longitude"] = None
+                # Geocode the property address to get real coordinates
+                address_for_geocoding = description.split(' - ')[0]  # Remove property type suffix
+                latitude, longitude = await geocode_address(address_for_geocoding)
+                
+                property_data["latitude"] = latitude
+                property_data["longitude"] = longitude
+                
+                if latitude and longitude:
+                    logger.info(f"Geocoded {assessment_num}: {address_for_geocoding} -> {latitude}, {longitude}")
+                else:
+                    logger.warning(f"Could not geocode {assessment_num}: {address_for_geocoding}")
                 
                 # Check if property already exists using a unique combination
                 # Use assessment number if available, otherwise use owner name + description
