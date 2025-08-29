@@ -781,11 +781,11 @@ def run_comprehensive_test():
         print("\n✅ Data quality appears good - no critical truncation issues found")
     
     if passed_tests == total_tests:
-        print("🎉 ALL TESTS PASSED - Halifax scraper data quality is excellent!")
-    elif passed_tests >= 6:  # Core functionality working
-        print("⚠️ MOSTLY WORKING - Core functionality operational with minor data quality issues")
+        print("🎉 ALL TESTS PASSED - Municipality API fix verified & Halifax data quality excellent!")
+    elif passed_tests >= 7:  # Core functionality working including municipality API
+        print("⚠️ MOSTLY WORKING - Municipality API working with minor data quality issues")
     else:
-        print("❌ MAJOR ISSUES - Halifax scraper has significant data quality problems")
+        print("❌ MAJOR ISSUES - Critical API or data quality problems found")
     
     return test_results
 
