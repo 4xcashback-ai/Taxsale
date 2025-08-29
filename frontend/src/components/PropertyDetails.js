@@ -342,68 +342,55 @@ const PropertyDetails = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Location & Property Boundaries</h2>
               
               {/* Property Boundary Satellite View */}
-              {boundaryImage ? (
+              {boundaryImage && boundaryImage.has_boundary_image ? (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-3">Satellite Property View</h3>
-                  {boundaryImage.has_boundary_image ? (
-                    <div className="relative">
-                      <img 
-                        src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}${boundaryImage.image_url}`}
-                        alt={`Property boundary map of ${property.property_address}`}
-                        className="w-full h-80 object-cover rounded-lg border"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'block';
-                        }}
-                      />
-                      <div 
-                        className="hidden w-full h-80 bg-gray-100 rounded-lg border flex items-center justify-center"
-                      >
-                        <div className="text-center">
-                          <p className="text-gray-500">Satellite image not available</p>
-                          {boundaryImage.google_maps_url && (
-                            <a
-                              href={boundaryImage.google_maps_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-2 text-blue-600 hover:text-blue-800 underline"
-                            >
-                              View on Google Maps
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
-                        High-resolution satellite view
-                      </div>
-                    </div>
-                  ) : boundaryImage.ready_for_capture ? (
-                    <div className="w-full h-80 bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
+                  <div className="relative">
+                    <img 
+                      src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}${boundaryImage.image_url}`}
+                      alt={`Property boundary map of ${property.property_address}`}
+                      className="w-full h-80 object-cover rounded-lg border"
+                      onLoad={() => console.log('Boundary image loaded successfully')}
+                      onError={(e) => {
+                        console.error('Boundary image failed to load:', e.target.src);
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                    <div 
+                      className="hidden w-full h-80 bg-gray-100 rounded-lg border flex items-center justify-center"
+                    >
                       <div className="text-center">
-                        <div className="text-4xl mb-4">🛰️</div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">Satellite View Available</h4>
-                        <p className="text-gray-600 mb-4">High-resolution satellite imagery shows property boundaries and surrounding area</p>
-                        <div className="space-y-2">
-                          <a
-                            href={boundaryImage.google_maps_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            🗺️ View Satellite Image
-                          </a>
-                          <p className="text-xs text-gray-500">Opens in Google Maps satellite view</p>
-                        </div>
+                        <p className="text-gray-500">Satellite image not available</p>
+                        <p className="text-xs text-gray-400 mt-1">URL: {boundaryImage.image_url}</p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="w-full h-80 bg-gray-100 rounded-lg border flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <p>Satellite view not available</p>
-                        <p className="text-sm">No coordinates available for this property</p>
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                      High-resolution satellite view
+                    </div>
+                  </div>
+                </div>
+              ) : boundaryImage && boundaryImage.ready_for_capture ? (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Satellite Property View</h3>
+                  <div className="w-full h-80 bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-4xl mb-4">🛰️</div>
+                      <h4 className="text-lg font-medium text-gray-900 mb-2">Satellite View Available</h4>
+                      <p className="text-gray-600 mb-4">High-resolution satellite imagery shows property boundaries and surrounding area</p>
+                      <div className="space-y-2">
+                        <a
+                          href={boundaryImage.google_maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                          🗺️ View Satellite Image
+                        </a>
+                        <p className="text-xs text-gray-500">Opens in Google Maps satellite view</p>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               ) : boundaryLoading ? (
                 <div className="mb-6">
@@ -415,7 +402,18 @@ const PropertyDetails = () => {
                     </div>
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Satellite Property View</h3>
+                  <div className="w-full h-80 bg-gray-100 rounded-lg border flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <p>Satellite view not available</p>
+                      <p className="text-sm">No boundary image data for this property</p>
+                      <p className="text-xs mt-2">API Response: {JSON.stringify(boundaryImage)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Interactive Map with Property Boundaries */}
               <h3 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h3>
