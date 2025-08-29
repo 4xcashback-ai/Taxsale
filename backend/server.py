@@ -1189,42 +1189,8 @@ async def update_municipality(municipality_id: str, municipality: MunicipalityCr
         logger.error(f"Error updating municipality: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# API endpoint for creating a new municipality
-@app.post("/api/municipalities")
-async def create_municipality(municipality: MunicipalityCreate):
-    """Create a new municipality"""
-    try:
-        new_municipality = {
-            "id": str(uuid.uuid4()),
-            "name": municipality.name,
-            "website_url": municipality.website_url,  # Add missing website_url field
-            "scraper_type": municipality.scraper_type,
-            "tax_sale_url": municipality.tax_sale_url,
-            "region": municipality.region,
-            "latitude": municipality.latitude,
-            "longitude": municipality.longitude,
-            "province": "Nova Scotia",
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc),
-            "last_scraped": None,
-            "scrape_status": "pending",
-            # Add new scheduling fields
-            "scrape_enabled": municipality.scrape_enabled,
-            "scrape_frequency": municipality.scrape_frequency,
-            "scrape_day_of_week": municipality.scrape_day_of_week,
-            "scrape_day_of_month": municipality.scrape_day_of_month,
-            "scrape_time_hour": municipality.scrape_time_hour,
-            "scrape_time_minute": municipality.scrape_time_minute,
-            "next_scrape_time": None  # Will be calculated by scheduler
-        }
-        
-        await db.municipalities.insert_one(new_municipality)
-        
-        return {"message": "Municipality created successfully", "id": new_municipality["id"]}
-        
-    except Exception as e:
-        logger.error(f"Error creating municipality: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# API endpoint for creating a new municipality - REMOVED DUPLICATE
+# This functionality is handled by the api_router.post("/municipalities") endpoint above
 
 async def scrape_pvsc_details(assessment_number: str):
     """
