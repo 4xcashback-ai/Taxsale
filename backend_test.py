@@ -689,6 +689,7 @@ def run_comprehensive_test():
     
     test_results = {
         "api_connection": False,
+        "municipality_management_api": False,
         "municipalities": False,
         "halifax_scraper": False,
         "tax_sales": False,
