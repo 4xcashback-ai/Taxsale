@@ -348,8 +348,8 @@ const PropertyDetails = () => {
                   {boundaryImage.has_boundary_image ? (
                     <div className="relative">
                       <img 
-                        src={boundaryImage.image_url}
-                        alt={`Satellite view of ${property.property_address}`}
+                        src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}${boundaryImage.image_url}`}
+                        alt={`Property boundary map of ${property.property_address}`}
                         className="w-full h-80 object-cover rounded-lg border"
                         onError={(e) => {
                           e.target.style.display = 'none';
