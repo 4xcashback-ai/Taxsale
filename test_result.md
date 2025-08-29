@@ -291,7 +291,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Boundary thumbnail system verification completed successfully"
+    - "NSPRD boundary overlay system verification completed successfully"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
