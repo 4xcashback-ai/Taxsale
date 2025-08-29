@@ -294,9 +294,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Satellite Thumbnail Images in Property Cards"
-  stuck_tasks:
-    - "Satellite Thumbnail Images in Property Cards"
+    - "All boundary image testing completed successfully"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
