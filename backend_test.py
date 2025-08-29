@@ -805,6 +805,7 @@ def run_comprehensive_test():
     
     test_results = {
         "api_connection": False,
+        "municipality_endpoints_quick": False,
         "municipality_management_api": False,
         "municipalities": False,
         "halifax_scraper": False,
@@ -824,7 +825,11 @@ def run_comprehensive_test():
     # Initialize municipalities if needed
     initialize_municipalities_if_needed()
     
-    # Test 2: Municipality Management API (HIGH PRIORITY - Review Request Focus)
+    # Test 2: Quick Municipality Endpoints Test (HIGHEST PRIORITY - Review Request Focus)
+    quick_muni_success, quick_muni_data = test_municipality_endpoints_quick()
+    test_results["municipality_endpoints_quick"] = quick_muni_success
+    
+    # Test 3: Municipality Management API (HIGH PRIORITY - Review Request Focus)
     municipality_api_success, municipality_api_data = test_municipality_management_api()
     test_results["municipality_management_api"] = municipality_api_success
     
