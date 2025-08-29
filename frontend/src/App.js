@@ -848,6 +848,8 @@ function MainApp() {
                           </Link>
                         </div>
                       </CardContent>
+                        </div>  {/* Close flex-1 div */}
+                      </div>  {/* Close flex container */}
                     </Card>
                   ))
                 )}
