@@ -1170,6 +1170,52 @@ async def get_property_statistics():
 # API endpoint for creating a new municipality - REMOVED DUPLICATE
 # This functionality is handled by the api_router.post("/municipalities") endpoint above
 
+async def geocode_address(address: str) -> tuple[Optional[float], Optional[float]]:
+    """
+    Geocode an address using Google Maps Geocoding API
+    Returns (latitude, longitude) or (None, None) if geocoding fails
+    """
+    try:
+        # Use environment variable for Google Maps API key
+        api_key = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY')
+        
+        if not api_key:
+            logger.warning("Google Maps API key not found, skipping geocoding")
+            return None, None
+        
+        # Clean and prepare the address for geocoding
+        # Add Nova Scotia, Canada to help with geocoding accuracy
+        full_address = f"{address}, Nova Scotia, Canada"
+        encoded_address = quote(full_address)
+        
+        geocoding_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={encoded_address}&key={api_key}"
+        
+        response = requests.get(geocoding_url, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if data['status'] == 'OK' and data.get('results'):
+            location = data['results'][0]['geometry']['location']
+            latitude = location['lat']
+            longitude = location['lng']
+            
+            # Verify coordinates are within Nova Scotia bounds (roughly)
+            # Nova Scotia: lat 43.4-47.0, lng -66.5 to -59.5
+            if 43.0 <= latitude <= 47.5 and -67.0 <= longitude <= -59.0:
+                logger.info(f"Successfully geocoded '{address}' to {latitude}, {longitude}")
+                return latitude, longitude
+            else:
+                logger.warning(f"Geocoded coordinates for '{address}' are outside Nova Scotia: {latitude}, {longitude}")
+                return None, None
+        else:
+            logger.warning(f"Geocoding failed for '{address}': {data.get('status', 'Unknown error')}")
+            return None, None
+            
+    except Exception as e:
+        logger.error(f"Error geocoding address '{address}': {e}")
+        return None, None
+
 async def scrape_pvsc_details(assessment_number: str):
     """
     Scrape additional property details from PVSC website
