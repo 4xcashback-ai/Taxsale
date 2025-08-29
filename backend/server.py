@@ -677,14 +677,11 @@ async def scrape_halifax_tax_sales():
                     }
                 }
                 
-                # Generate varied coordinates within Halifax region
-                lat_base = 44.6488
-                lng_base = -63.5752
-                lat_offset = (hash(assessment_num) % 2000) / 10000 - 0.1  # Range: -0.1 to +0.1
-                lng_offset = (hash(assessment_num + "lng") % 2000) / 10000 - 0.1
-                
-                property_data["latitude"] = lat_base + lat_offset
-                property_data["longitude"] = lng_base + lng_offset
+                # TODO: Implement proper geocoding for actual property locations
+                # For now, we'll set coordinates to None until we can geocode the addresses
+                # The fake coordinate generation was placing properties in wrong locations
+                property_data["latitude"] = None
+                property_data["longitude"] = None
                 
                 # Check if property already exists using a unique combination
                 # Use assessment number if available, otherwise use owner name + description
