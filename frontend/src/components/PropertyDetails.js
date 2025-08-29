@@ -47,6 +47,21 @@ const PropertyDetails = () => {
   useEffect(() => {
     fetchPropertyDetails();
     fetchBoundaryImage();
+    
+    // Load AdSense script
+    const script = document.createElement('script');
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+    
+    return () => {
+      // Cleanup script on unmount
+      const existingScript = document.querySelector(`script[src="${script.src}"]`);
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
   }, [assessmentNumber]);
 
   const fetchBoundaryImage = async () => {
