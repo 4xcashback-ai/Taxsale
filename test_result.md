@@ -292,7 +292,8 @@ metadata:
 test_plan:
   current_focus:
     - "Satellite Thumbnail Images in Property Cards"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Satellite Thumbnail Images in Property Cards"
   test_all: false
   test_priority: "high_first"
 
