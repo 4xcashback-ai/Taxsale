@@ -121,6 +121,8 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
                   ring.map(coord => ({ lat: coord[1], lng: coord[0] }))
                 );
                 
+                console.log(`Creating polygon for PID ${property.pid_number} with ${paths.length} paths`);
+                
                 // Create property boundary polygon with tax sale styling
                 const propertyPolygon = new window.google.maps.Polygon({
                   paths: paths,
