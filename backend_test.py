@@ -492,10 +492,10 @@ def test_municipality_management_api():
             "scrape_time_minute": 30
         }
         
-        print(f"   📝 Test municipality data prepared with 'website_url' field")
+        print(f"   📝 Test municipality data prepared with NEW scheduling fields")
         
-        # Test 1: POST /api/municipalities - Create new municipality
-        print(f"\n   🔧 TEST 1: POST /api/municipalities (Create Municipality)")
+        # Test 1: POST /api/municipalities - Create new municipality with scheduling fields
+        print(f"\n   🔧 TEST 1: POST /api/municipalities (Create Municipality with Scheduling)")
         create_response = requests.post(
             f"{BACKEND_URL}/municipalities", 
             json=test_municipality,
@@ -511,9 +511,40 @@ def test_municipality_management_api():
             print(f"      Name: {created_municipality.get('name')}")
             print(f"      Website URL: {created_municipality.get('website_url')}")
             
+            # Verify NEW scheduling fields from review request
+            print(f"   📅 SCHEDULING FIELDS VERIFICATION:")
+            print(f"      Scrape Enabled: {created_municipality.get('scrape_enabled')}")
+            print(f"      Scrape Frequency: {created_municipality.get('scrape_frequency')}")
+            print(f"      Scrape Day of Week: {created_municipality.get('scrape_day_of_week')}")
+            print(f"      Scrape Day of Month: {created_municipality.get('scrape_day_of_month')}")
+            print(f"      Scrape Time Hour: {created_municipality.get('scrape_time_hour')}")
+            print(f"      Scrape Time Minute: {created_municipality.get('scrape_time_minute')}")
+            print(f"      Next Scrape Time: {created_municipality.get('next_scrape_time')}")
+            
+            # Verify all scheduling fields were saved correctly
+            scheduling_fields_correct = (
+                created_municipality.get('scrape_enabled') == test_municipality['scrape_enabled'] and
+                created_municipality.get('scrape_frequency') == test_municipality['scrape_frequency'] and
+                created_municipality.get('scrape_day_of_week') == test_municipality['scrape_day_of_week'] and
+                created_municipality.get('scrape_time_hour') == test_municipality['scrape_time_hour'] and
+                created_municipality.get('scrape_time_minute') == test_municipality['scrape_time_minute']
+            )
+            
+            if scheduling_fields_correct:
+                print(f"   ✅ ALL scheduling fields saved correctly - NEW FEATURE VERIFIED")
+            else:
+                print(f"   ❌ Some scheduling fields not saved correctly")
+                return False, {"error": "scheduling fields not saved correctly"}
+            
+            # Verify next_scrape_time was calculated automatically
+            if created_municipality.get('next_scrape_time'):
+                print(f"   ✅ next_scrape_time calculated automatically - FEATURE VERIFIED")
+            else:
+                print(f"   ⚠️ next_scrape_time not calculated (may be expected if scrape_enabled=False)")
+            
             # Verify the website_url field was accepted correctly
             if created_municipality.get('website_url') == test_municipality['website_url']:
-                print(f"   ✅ 'website_url' field accepted correctly - BUG FIX VERIFIED")
+                print(f"   ✅ 'website_url' field accepted correctly")
             else:
                 print(f"   ❌ 'website_url' field not saved correctly")
                 return False, {"error": "website_url field not saved correctly"}
