@@ -122,6 +122,7 @@ class TaxSaleProperty(BaseModel):
     raw_data: Optional[dict] = None  # Store original scraped data
     status: str = "active"  # active, inactive, sold
     status_updated_at: Optional[datetime] = None
+    boundary_screenshot: Optional[str] = None  # Path to viewpoint.ca boundary screenshot
 
 class TaxSalePropertyCreate(BaseModel):
     municipality_id: str
