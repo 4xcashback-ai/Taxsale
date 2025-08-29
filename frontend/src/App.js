@@ -433,19 +433,6 @@ function MainApp() {
     return new Date(dateString).toLocaleDateString('en-CA');
   };
 
-  const getPropertyIcon = (propertyType) => {
-    switch (propertyType?.toLowerCase()) {
-      case 'dwelling':
-      case 'residential':
-        return residentialIcon;
-      case 'commercial':
-        return commercialIcon;
-      case 'land':
-      default:
-        return landIcon;
-    }
-  };
-
   const getMunicipalityTaxSaleUrl = (municipalityName) => {
     const municipalityLinks = {
       'Halifax Regional Municipality': 'https://www.halifax.ca/home-property/property-taxes/tax-sale',
