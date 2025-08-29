@@ -115,7 +115,7 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         window.google.maps.event.removeListener(listener);
       });
     }
-  }, [map, properties, markers, onMarkerClick]);
+  }, [map, properties, onMarkerClick]);
 
   return (
     <div 
