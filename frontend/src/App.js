@@ -77,10 +77,11 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
             <div style="max-width: 250px;">
-              <h3 style="margin: 0 0 8px 0; color: #1f2937;">${property.property_description}</h3>
-              <p style="margin: 4px 0; color: #6b7280;"><strong>Owner:</strong> ${property.owner_name}</p>
+              <h3 style="margin: 0 0 8px 0; color: #1f2937;">${property.property_address || property.address || 'Property'}</h3>
+              <p style="margin: 4px 0; color: #6b7280;"><strong>Owner:</strong> ${property.owner_name || 'Not Available'}</p>
               <p style="margin: 4px 0; color: #6b7280;"><strong>Opening Bid:</strong> $${parseFloat(property.opening_bid || 0).toLocaleString()}</p>
-              <p style="margin: 4px 0; color: #6b7280;"><strong>Municipality:</strong> ${property.municipality_name}</p>
+              <p style="margin: 4px 0; color: #6b7280;"><strong>Municipality:</strong> ${property.municipality_name || property.municipality || 'Not Available'}</p>
+              <p style="margin: 4px 0; color: #6b7280;"><strong>Assessment:</strong> ${property.assessment_number || 'Not Available'}</p>
               <button 
                 onclick="window.open('/property/${property.assessment_number}', '_blank')"
                 style="margin-top: 8px; padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;"
