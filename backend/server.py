@@ -816,7 +816,116 @@ async def get_municipality(municipality_id: str):
     elif 'website_url' not in municipality or municipality.get('website_url') is None:
         municipality['website_url'] = "https://example.com"  # Default fallback
     
-    return Municipality(**municipality)
+@api_router.delete("/municipalities/{municipality_id}")
+async def delete_municipality(municipality_id: str):
+    """Delete a municipality and optionally its associated tax sale properties"""
+    try:
+        # First check if municipality exists
+        municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not municipality:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        # Check if municipality has associated tax sale properties
+        property_count = await db.tax_sales.count_documents({"municipality_id": municipality_id})
+        
+        # Delete the municipality
+        result = await db.municipalities.delete_one({"id": municipality_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        # Also delete associated tax sale properties if any exist
+        if property_count > 0:
+            await db.tax_sales.delete_many({"municipality_id": municipality_id})
+        
+        return {
+            "message": f"Municipality '{municipality.get('name', 'Unknown')}' deleted successfully",
+            "deleted_properties": property_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting municipality: {str(e)}")
+
+@api_router.put("/municipalities/{municipality_id}", response_model=Municipality)
+async def update_municipality_enhanced(municipality_id: str, update_data: MunicipalityUpdate):
+    """Update an existing municipality with enhanced scheduling options"""
+    try:
+        # Check if municipality exists
+        existing_municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not existing_municipality:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        # Build update dictionary with only provided fields
+        update_dict = {}
+        for field, value in update_data.dict(exclude_unset=True).items():
+            if value is not None:
+                update_dict[field] = value
+        
+        # Always update the timestamp
+        update_dict["updated_at"] = datetime.now(timezone.utc)
+        
+        # Calculate next scrape time if schedule fields were updated
+        if any(field in update_dict for field in ['scrape_frequency', 'scrape_day_of_week', 'scrape_day_of_month', 'scrape_time_hour', 'scrape_time_minute', 'scrape_enabled']):
+            # Get current or updated schedule values
+            frequency = update_dict.get('scrape_frequency', existing_municipality.get('scrape_frequency', 'weekly'))
+            enabled = update_dict.get('scrape_enabled', existing_municipality.get('scrape_enabled', True))
+            hour = update_dict.get('scrape_time_hour', existing_municipality.get('scrape_time_hour', 2))
+            minute = update_dict.get('scrape_time_minute', existing_municipality.get('scrape_time_minute', 0))
+            
+            if enabled:
+                if frequency == 'daily':
+                    next_scrape = datetime.now(timezone.utc).replace(hour=hour, minute=minute, second=0, microsecond=0)
+                    if next_scrape <= datetime.now(timezone.utc):
+                        next_scrape += timedelta(days=1)
+                elif frequency == 'weekly':
+                    day_of_week = update_dict.get('scrape_day_of_week', existing_municipality.get('scrape_day_of_week', 1))
+                    next_scrape = datetime.now(timezone.utc).replace(hour=hour, minute=minute, second=0, microsecond=0)
+                    days_ahead = day_of_week - next_scrape.weekday()
+                    if days_ahead <= 0:
+                        days_ahead += 7
+                    next_scrape += timedelta(days=days_ahead)
+                elif frequency == 'monthly':
+                    day_of_month = update_dict.get('scrape_day_of_month', existing_municipality.get('scrape_day_of_month', 1))
+                    next_scrape = datetime.now(timezone.utc).replace(day=day_of_month, hour=hour, minute=minute, second=0, microsecond=0)
+                    if next_scrape <= datetime.now(timezone.utc):
+                        if next_scrape.month == 12:
+                            next_scrape = next_scrape.replace(year=next_scrape.year + 1, month=1)
+                        else:
+                            next_scrape = next_scrape.replace(month=next_scrape.month + 1)
+                
+                update_dict["next_scrape_time"] = next_scrape
+            else:
+                update_dict["next_scrape_time"] = None
+        
+        # Update the municipality
+        result = await db.municipalities.update_one(
+            {"id": municipality_id},
+            {"$set": update_dict}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        # Return updated municipality
+        updated_municipality = await db.municipalities.find_one({"id": municipality_id})
+        
+        # Handle data migration for the response
+        if '_id' in updated_municipality:
+            del updated_municipality['_id']
+        
+        # Ensure all required fields exist
+        if 'website_url' not in updated_municipality or updated_municipality.get('website_url') is None:
+            updated_municipality['website_url'] = "https://example.com"
+        
+        return Municipality(**updated_municipality)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating municipality: {str(e)}")
+
 
 
 # Tax Sale Property Endpoints
