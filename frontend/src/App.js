@@ -65,7 +65,13 @@ function MainApp() {
   // Municipality management state
   const [editingMunicipality, setEditingMunicipality] = useState(null);
   const [showAddMunicipality, setShowAddMunicipality] = useState(false);
-  const [newMunicipality, setNewMunicipality] = useState({ name: '', scraper_type: 'generic', tax_sale_url: '' });
+  const [newMunicipality, setNewMunicipality] = useState({ 
+    name: '', 
+    scraper_type: 'generic', 
+    website_url: '', 
+    tax_sale_url: '', 
+    region: '' 
+  });
 
   // Fetch initial data and refresh when filters change
   useEffect(() => {
