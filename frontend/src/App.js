@@ -278,8 +278,6 @@ function MainApp() {
                   <Home className="h-4 w-4 text-orange-500" />
                   <span>{stats.total_properties} Total Properties</span>
                 </div>
-                  <span>{stats.total_properties} Properties</span>
-                </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-green-500" />
                   <span>{stats.scraped_today} Scraped Today</span>
