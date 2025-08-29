@@ -133,10 +133,10 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
                 const propertyPolygon = new window.google.maps.Polygon({
                   paths: paths,
                   strokeColor: iconColor,
-                  strokeOpacity: 0.8,
+                  strokeOpacity: 0.9,
                   strokeWeight: 2,
                   fillColor: iconColor,
-                  fillOpacity: 0.15,
+                  fillOpacity: 0.25,
                   map: map,
                   clickable: true
                 });
