@@ -1,29 +1,24 @@
 <analysis>
-The AI engineer successfully built a Nova Scotia Tax Sale Aggregator application, moving from initial MVP to a feature-rich state. Key work involved robust Halifax PDF scraping, which was a multi-stage process riddled with data extraction and parsing challenges, especially regarding property descriptions and redeemable/HST status. The engineer meticulously debugged truncation issues, incorrect field assignments, and execution flow problems (identified by the troubleshoot agent).
+The previous AI engineer successfully transformed a basic Nova Scotia Tax Sale Aggregator into a robust application. The journey involved iterative development, deep debugging, and significant feature additions. Key initial efforts focused on enhancing Halifax PDF scraping for accurate data extraction and enriching property details with external links and an interactive map.
 
-Post-scraping, the focus shifted to enhancing the user experience. This included developing a detailed property page, fixing external links to PVSC and Viewpoint.ca, integrating Google Maps for precise location, and removing internal database IDs from display. Finally, a comprehensive property status management system was implemented, allowing for active/inactive filtering and displaying these statistics in the application header, along with municipality management features. The immediate task involves fixing the municipality management form's API call.
+A major part of the work addressed user experience and data accuracy. This included implementing comprehensive municipality management (add, edit, delete, scheduling), integrating Google Maps (replacing Leaflet) for property visualization, and meticulous debugging of map functionalities (crashes, zoom, data display). Crucially, the engineer tackled a persistent challenge: accurate property boundary visualization. After initial attempts with Viewpoint.ca failed due to accessibility, the focus shifted to leveraging official Nova Scotia Government ArcGIS data. This involved discovering the correct NS GIS service, integrating it to retrieve precise property boundaries, and then successfully combining this data with Google Maps Static API to generate high-quality satellite thumbnails with property lines. The work culminated in starting the integration of these NSPRD boundaries onto the live interactive map.
 </analysis>
 
 <product_requirements>
 The core product goal is a web application aggregating Nova Scotia tax sale information, displaying it in a searchable and map-based format with weekly updates.
 
-**Initial Requirements:**
-*   Scrape tax sale data from all Nova Scotia municipalities.
-*   Display data via search and an interactive map.
-*   Weekly data updates.
-
-**Implemented Enhancements & Bug Fixes:**
-*   **Halifax Scraper:** Implemented a robust PDF scraper to automatically find, download, and parse Halifax tax sale PDFs, extracting Owner Names, Property Descriptions, PIDs, Opening Bids, Redeemable status, and HST status. This required extensive debugging for accurate data extraction, handling truncation, and correct field mapping.
-*   **Interactive Map:** Integrated  (later replaced by Google Maps) to display properties.
-*   **External Links:** Properties link to PVSC (Property Valuation Services Corporation) for assessment details, Viewpoint.ca for specific property pages (by PID), and municipal websites for tax sale pages. These links were extensively debugged to ensure correct URLs and specific property navigation.
-*   **Property Details Page:** Created a dedicated page for each property, showing comprehensive details, financial information, legal descriptions, and integrated Google Maps location.
-*   **Property Status Management:** Implemented active/inactive status for properties based on sale dates or removal from listings, with frontend filtering options and status badges.
-*   **Enhanced Statistics & Admin:** Displayed summary statistics (total, active, inactive properties, municipalities) in the header. Added functionality to the Admin panel to add and edit municipalities.
+**Key Features & Enhancements Implemented:**
+*   **Robust Halifax Scraper:** Automatically finds, downloads, and parses Halifax tax sale PDFs, extracting detailed property information (Owner Names, PIDs, Opening Bids, Redeemable/HST status, assessment numbers). This involved extensive debugging for data accuracy and handling various PDF structures.
+*   **Interactive Mapping:** Integrated Google Maps (replacing ) to display properties, including custom markers, detailed info windows, and precise locations through Google Geocoding.
+*   **Property Details Page:** Dedicated page for each property showing comprehensive details, PVSC-scraped data, and embedded Google Maps. External links to PVSC and Viewpoint.ca are accurate.
+*   **Property Status Management:** Active/inactive property statuses with frontend filtering and display.
+*   **Enhanced Statistics & Admin:** Displays summary statistics (total, active, inactive properties, municipalities) and an Admin panel for adding, editing, and deleting municipalities, including setting scraping schedules.
+*   **Accurate Property Boundaries:** Integrated official Nova Scotia Government ArcGIS Tax Parcels data to retrieve precise property boundaries (polygons). These boundaries are used to generate satellite image thumbnails (via Google Maps Static API) which are displayed in search results and property detail pages, providing real-world property visualization.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack development**: React (frontend), FastAPI (backend), MongoDB (database).
--   **Web Scraping**: , , usage: pdfplumber [-h] [--structure | --structure-text]
+-   **Full-stack Development**: React (frontend), FastAPI (backend), MongoDB (database).
+-   **Web Scraping**: usage: pdfplumber [-h] [--structure | --structure-text]
                   [--format {csv,json,text}] [--types TYPES [TYPES ...]]
                   [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
                   [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
@@ -51,83 +46,61 @@ options:
   --laparams LAPARAMS
   --precision PRECISION
   --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing. for HTML and PDF parsing.
--   **UI Components**: Shadcn UI, Tailwind CSS for styling.
--   **Mapping**:  (initially), Google Maps Embedding (currently).
--   **Task Scheduling**:  for weekly scraping.
--   **Routing**:  for frontend navigation.
+  --indent INDENT       Indent level for JSON pretty-printing., ,  for PDF and HTML parsing.
+-   **Mapping & Geocoding**: Google Maps JavaScript API, Google Maps Static API, Google Geocoding API.
+-   **GIS Integration**: ArcGIS REST API (Nova Scotia Government's NSPRD service).
+-   **State Management/Routing**: React (, , ), .
+-   **Data Validation**: Pydantic models for FastAPI backend.
+-   **Asynchronous Tasks**:  (for scraping),  in FastAPI.
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Summary**: The central FastAPI application. Manages API routes, MongoDB interaction, web scraping, and scheduling. It defines data models for  and , and handles CRUD operations.
+    -   **Summary**: The core FastAPI application handling API routes, MongoDB interaction, web scraping, and scheduling. It defines data models, implements CRUD operations for  and .
     -   **Changes Made**:
-        -   Refined  model to include , , , , , , , , and  (active/inactive).
-        -   Significantly updated  for robust PDF parsing (using usage: pdfplumber [-h] [--structure | --structure-text]
-                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
-                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
-                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
-                  [--laparams LAPARAMS] [--precision PRECISION]
-                  [--pages PAGES [PAGES ...]] [--indent INDENT]
-                  [infile]
-
-positional arguments:
-  infile
-
-options:
-  -h, --help            show this help message and exit
-  --structure           Write the structure tree as JSON. All other arguments
-                        except --pages, --laparams, and --indent will be
-                        ignored
-  --structure-text      Write the structure tree as JSON including text
-                        contents. All other arguments except --pages,
-                        --laparams, and --indent will be ignored
-  --format {csv,json,text}
-  --types TYPES [TYPES ...]
-  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
-                        Include *only* these object attributes in output.
-  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
-                        Exclude these object attributes from output.
-  --laparams LAPARAMS
-  --precision PRECISION
-  --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing.), handling dynamic column detection, text extraction, data cleaning, and accurate status parsing (Redeemable/HST).
-        -   Added API endpoints for property status management (), enhanced property details (PVSC scraping), and municipality management (, ).
-        -   Updated  to include active/inactive property counts.
-        -   Fixed  in stats endpoint.
-        -   Corrected MongoDB cursor handling.
+        -    model updated with  field.
+        -    model updated with , , .
+        -   Fixed  validation error by making  optional during data retrieval.
+        -   Added  endpoint.
+        -   Updated  for new scheduling fields.
+        -   Modified  to use  for real coordinates, replacing fake ones.
+        -   Added  function using Google Geocoding API.
+        -   Added  to query official NS ArcGIS service for property boundaries.
+        -   Added  endpoint to serve locally stored boundary screenshots, bypassing  routing issues.
+        -   Added  to generate Google Maps Static API URLs with NS government polygon overlays.
+        -   Added  and  for batch processing.
 
 -   ****:
-    -   **Summary**: The main React component rendering the UI. Handles global state, data fetching from FastAPI, and UI layout.
+    -   **Summary**: Main React component, handling application layout, routing, global state, and data fetching. Displays property listings, filters, and municipality management.
     -   **Changes Made**:
-        -   Integrated  for navigation (e.g., to property detail pages).
-        -   Added See More Details buttons to property cards.
-        -   Implemented UI for property status filtering (Active/Inactive/All) with corresponding badges on property cards.
-        -   Enhanced the header to display active/inactive property counts, total properties, and total municipalities.
-        -   Added Admin panel UI for municipality management (add/edit).
-        -   Updated  to include status filtering.
-        -   Fixed municipality management form fields to match backend ().
+        -   Updated municipality state and forms for , , .
+        -   Implemented .
+        -   Replaced  map with  component.
+        -   Fixed Google Maps  infinite loop.
+        -   Updated map data fetching to use full  for richer info windows.
+        -   Integrated thumbnail display ( tag) in property cards using .
+        -   Started implementing NSPRD boundary overlays on the main live Google Map.
 
 -   ****:
-    -   **Summary**: A new React component responsible for displaying detailed information about a single tax sale property.
+    -   **Summary**: Component to display detailed information for a single property.
     -   **Changes Made**:
-        -   Initial creation to display comprehensive property information based on the  reference.
-        -   Integrated fetched data, including PVSC-scraped details (assessment, land size, building details).
-        -   Replaced  with embedded Google Maps for precise property location using PVSC's civic address.
-        -   Corrected external links to Viewpoint.ca and PVSC for specific property navigation.
-        -   Removed the display of internal database UUIDs (Property ID).
-        -   Fixed empty municipality display by correcting field reference to .
-        -   Corrected labels for Redeemable/HST status.
+        -   Added  state and  function.
+        -   Added a section to display the satellite boundary image, using the  endpoint, prefixed with .
+        -   Fixed an issue where  was not being rendered correctly by ensuring  prefix.
 
 -   ****:
-    -   **Summary**: Manages Node.js dependencies for the React frontend.
+    -   **Summary**: Frontend environment variables.
     -   **Changes Made**: Added .
 
 -   ****:
-    -   **Summary**: Manages Python dependencies for the FastAPI backend.
-    -   **Changes Made**: Included , usage: pdfplumber [-h] [--structure | --structure-text]
+    -   **Summary**: Backend environment variables.
+    -   **Changes Made**: Added  for geocoding.
+
+-   ****:
+    -   **Summary**: Python dependencies for FastAPI.
+    -   **Changes Made**: Included  (initially for Viewpoint.ca automation), , usage: pdfplumber [-h] [--structure | --structure-text]
                   [--format {csv,json,text}] [--types TYPES [TYPES ...]]
                   [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
                   [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
@@ -155,30 +128,28 @@ options:
   --laparams LAPARAMS
   --precision PRECISION
   --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing.,  for PDF parsing.
+  --indent INDENT       Indent level for JSON pretty-printing..
+
+-   ****:
+    -   **Summary**: Node.js dependencies for React.
+    -   **Changes Made**: Added , .
 </code_architecture>
 
 <pending_tasks>
--   Complete the fix for municipality management form's API call.
+-   Complete the implementation of NSPRD property boundary overlays on the main live Google Map view in .
 -   Implement scraping for other Nova Scotia municipalities using the established generic scraper framework.
--   Enhance geocoding for precise property locations (beyond Google Maps embedding).
 -   Implement email alerts for new tax sales.
 -   Implement property history tracking and analytics.
 </pending_tasks>
 
 <current_work>
-The AI engineer was immediately working on fixing a bug in the municipality management section of the Admin panel. The user reported that the management is not active to save.
+Immediately before this summary request, the AI engineer was working on integrating the official Nova Scotia Property Registration Database (NSPRD) property boundaries as an overlay on the main interactive Google Map in the frontend.
 
-Upon investigation, the engineer discovered the frontend was sending the wrong field name () to the backend API when attempting to add or edit a municipality. The backend  Pydantic model in  explicitly requires a  field. This mismatch led to a  (Unprocessable Entity) error from the backend.
+Specifically, the engineer had just made modifications to  to enhance the Google Maps component. The goal is to fetch the precise polygon geometry for tax sale properties from the Nova Scotia government's ArcGIS service (which was successfully integrated and tested in the backend) and render these polygons directly on the live map, allowing users to visualize the exact boundaries of all listed properties.
 
-The engineer made several edits to  to correct this:
-1.  Updated the form's state variable and input field to correctly reference  as .
-2.  Modified the  and  functions to ensure they send  in the API payload, aligning with the backend's expected schema.
-3.  Adjusted the form reset logic to properly clear the  field.
-
-The immediate next step is to test this fixed municipality API endpoint to confirm that adding and editing municipalities now works correctly.
+The last action recorded was: Now let me restart the frontend to apply the enhanced live map with NSPRD boundary overlays. This indicates that the code changes for the overlay in  have been made, and the next step is to observe their effect in the UI.
 </current_work>
 
 <optional_next_step>
-Test the fixed municipality management API endpoint to confirm saving functionality.
+Restart the frontend to apply the changes and verify that NSPRD property boundary overlays are correctly displayed on the live Google Map.
 </optional_next_step>
