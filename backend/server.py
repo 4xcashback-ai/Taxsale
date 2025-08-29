@@ -752,7 +752,23 @@ async def create_municipality(municipality: MunicipalityCreate):
 @api_router.get("/municipalities", response_model=List[Municipality])
 async def get_municipalities():
     municipalities = await db.municipalities.find().to_list(1000)
-    return [Municipality(**municipality) for municipality in municipalities]
+    
+    # Handle data migration for municipalities missing website_url field
+    processed_municipalities = []
+    for municipality in municipalities:
+        # Remove MongoDB _id field if present
+        if '_id' in municipality:
+            del municipality['_id']
+        
+        # Ensure website_url field exists (migrate from tax_sale_url if needed)
+        if 'website_url' not in municipality and 'tax_sale_url' in municipality:
+            municipality['website_url'] = municipality['tax_sale_url']
+        elif 'website_url' not in municipality:
+            municipality['website_url'] = "https://example.com"  # Default fallback
+            
+        processed_municipalities.append(Municipality(**municipality))
+    
+    return processed_municipalities
 
 @api_router.get("/municipalities/{municipality_id}", response_model=Municipality)
 async def get_municipality(municipality_id: str):
