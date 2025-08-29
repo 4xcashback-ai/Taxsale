@@ -856,12 +856,24 @@ function MainApp() {
                       <h3 className="text-lg font-semibold text-green-800 mb-3">Add New Municipality</h3>
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Municipality Name</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Municipality Name *</label>
                           <Input
                             value={newMunicipality.name}
                             onChange={(e) => setNewMunicipality({...newMunicipality, name: e.target.value})}
                             placeholder="e.g., Dartmouth, Sydney, Truro"
                             className="w-full"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Municipality Website *</label>
+                          <Input
+                            value={newMunicipality.website_url}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, website_url: e.target.value})}
+                            placeholder="https://www.municipality.ca"
+                            className="w-full"
+                            type="url"
+                            required
                           />
                         </div>
                         <div>
@@ -870,6 +882,16 @@ function MainApp() {
                             value={newMunicipality.tax_sale_url}
                             onChange={(e) => setNewMunicipality({...newMunicipality, tax_sale_url: e.target.value})}
                             placeholder="https://example.com/tax-sales"
+                            className="w-full"
+                            type="url"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Region (Optional)</label>
+                          <Input
+                            value={newMunicipality.region}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, region: e.target.value})}
+                            placeholder="e.g., Halifax Regional Municipality"
                             className="w-full"
                           />
                         </div>
