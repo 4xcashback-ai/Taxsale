@@ -852,97 +852,13 @@ function MainApp() {
               <CardContent>
                 <div className="h-96 rounded-lg overflow-hidden border border-slate-200">
                   {mapData.length > 0 ? (
-                    <MapContainer
-                      center={[44.6488, -63.5752]} // Halifax center
-                      zoom={8}
-                      style={{ height: '100%', width: '100%' }}
-                    >
-                      <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      />
-                      {mapData.map((property) => (
-                        <Marker
-                          key={property.id}
-                          position={[property.latitude, property.longitude]}
-                          icon={getPropertyIcon(property.property_type)}
-                        >
-                          <Popup className="custom-popup">
-                            <div className="p-2 max-w-xs">
-                              <h4 className="font-semibold text-sm mb-2">{property.address}</h4>
-                              <div className="text-xs text-slate-600 mb-2">
-                                {renderMunicipalityLink(property.municipality)}
-                              </div>
-                              
-                              <div className="space-y-1 text-xs">
-                                {property.opening_bid && (
-                                  <div className="flex justify-between">
-                                    <span>Opening Bid:</span>
-                                    <span className="font-semibold text-blue-600">
-                                      {formatCurrency(property.opening_bid)}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {property.tax_owing && (
-                                  <div className="flex justify-between">
-                                    <span>Tax Owing:</span>
-                                    <span className="font-semibold text-red-600">
-                                      {formatCurrency(property.tax_owing)}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {property.sale_date && (
-                                  <div className="flex justify-between">
-                                    <span>Sale Date:</span>
-                                    <span className="font-semibold">
-                                      {formatDate(property.sale_date)}
-                                    </span>
-                                  </div>
-                                )}
-
-                                <div className="mt-2 pt-1 border-t">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <Badge 
-                                      variant="outline" 
-                                      className="text-xs"
-                                    >
-                                      {property.property_type || 'Property'}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="flex flex-col gap-1 text-xs">
-                                    {property.assessment_number && (
-                                      <a
-                                        href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:underline"
-                                        title="View assessment details"
-                                      >
-                                        📋 View Assessment
-                                      </a>
-                                    )}
-                                    {property.pid && (
-                                      <a
-                                        href={`https://www.viewpoint.ca/map#pid=${property.pid}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-green-600 hover:underline"
-                                        title="View property location on Viewpoint.ca"
-                                      >
-                                        📍 View Location
-                                      </a>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      ))}
-                    </MapContainer>
+                    <MapWrapper 
+                      properties={mapData}
+                      onMarkerClick={(property) => {
+                        // Handle marker click - could show property details
+                        console.log('Property clicked:', property);
+                      }}
+                    />
                   ) : (
                     <div className="h-full flex items-center justify-center bg-slate-100">
                       <div className="text-center">
