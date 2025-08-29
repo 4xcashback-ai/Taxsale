@@ -159,7 +159,10 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
                 });
 
                 // Add polygon to state immediately when loaded
+                console.log(`Adding polygon for PID ${property.pid_number} to map`);
                 setBoundaryPolygons(current => [...current, propertyPolygon]);
+              } else {
+                console.log(`No boundary geometry found for PID ${property.pid_number}:`, data);
               }
             })
             .catch(error => {
