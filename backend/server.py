@@ -36,8 +36,8 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI(title="NS Tax Sale Aggregator", description="Nova Scotia Municipality Tax Sale Information Aggregator")
 
-# Mount static files for property screenshots
-app.mount("/static", StaticFiles(directory="/app/backend/static"), name="static")
+# Remove the static mount that's conflicting with proxy routing
+# app.mount("/static", StaticFiles(directory="/app/backend/static"), name="static")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
