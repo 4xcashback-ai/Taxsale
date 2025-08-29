@@ -201,6 +201,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Municipality Management API Fix"
     - "Property Display with External Links"
     - "Interactive Map Display"
   stuck_tasks: []
