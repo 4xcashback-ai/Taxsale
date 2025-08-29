@@ -15,11 +15,12 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
-// Google Maps component
+// Google Maps component with NSPRD boundary overlays
 const GoogleMapComponent = ({ properties, onMarkerClick }) => {
   const mapRef = useRef();
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
+  const [boundaryPolygons, setBoundaryPolygons] = useState([]);
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;
@@ -31,19 +32,21 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
     setMap(null);
   }, []);
 
-  // Update markers when properties change
+  // Update markers and boundaries when properties change
   useEffect(() => {
     if (!map || !properties.length) return;
 
-    // Clear existing markers
+    // Clear existing markers and polygons
     markers.forEach(marker => marker.setMap(null));
+    boundaryPolygons.forEach(polygon => polygon.setMap(null));
     const newMarkers = [];
+    const newPolygons = [];
 
-    // Add markers for each property
+    // Add markers and boundaries for each property
     properties.forEach((property) => {
       if (property.latitude && property.longitude) {
         // Determine marker color based on property type
-        let iconColor = '#3b82f6'; // Blue default
+        let iconColor = '#dc2626'; // Red for tax sale properties
         const propertyType = property.property_description?.toLowerCase() || '';
         
         if (propertyType.includes('commercial') || propertyType.includes('business')) {
@@ -59,7 +62,7 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
           icon: {
             path: window.google.maps.SymbolPath.CIRCLE,
             fillColor: iconColor,
-            fillOpacity: 0.8,
+            fillOpacity: 0.9,
             strokeColor: 'white',
             strokeWeight: 2,
             scale: 8
@@ -73,21 +76,24 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
           }
         });
 
-        // Add info window
+        // Create info window with enhanced property details
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="max-width: 250px;">
-              <h3 style="margin: 0 0 8px 0; color: #1f2937;">${property.property_address || property.address || 'Property'}</h3>
-              <p style="margin: 4px 0; color: #6b7280;"><strong>Owner:</strong> ${property.owner_name || 'Not Available'}</p>
-              <p style="margin: 4px 0; color: #6b7280;"><strong>Opening Bid:</strong> $${parseFloat(property.opening_bid || 0).toLocaleString()}</p>
-              <p style="margin: 4px 0; color: #6b7280;"><strong>Municipality:</strong> ${property.municipality_name || property.municipality || 'Not Available'}</p>
-              <p style="margin: 4px 0; color: #6b7280;"><strong>Assessment:</strong> ${property.assessment_number || 'Not Available'}</p>
-              <button 
-                onclick="window.open('/property/${property.assessment_number}', '_blank')"
-                style="margin-top: 8px; padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;"
-              >
-                View Details
-              </button>
+            <div style="max-width: 280px;">
+              <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 14px;">${property.property_address || 'Tax Sale Property'}</h3>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 12px;"><strong>PID:</strong> ${property.pid_number || 'N/A'}</p>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 12px;"><strong>Assessment:</strong> ${property.assessment_number || 'N/A'}</p>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 12px;"><strong>Opening Bid:</strong> $${parseFloat(property.opening_bid || 0).toLocaleString()}</p>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 12px;"><strong>Municipality:</strong> ${property.municipality_name || 'N/A'}</p>
+              ${property.government_boundary_data ? `<p style="margin: 4px 0; color: #16a34a; font-size: 12px;"><strong>Area:</strong> ${Math.round(property.government_boundary_data.area_sqm || 0).toLocaleString()} sqm</p>` : ''}
+              <div style="margin-top: 8px;">
+                <button 
+                  onclick="window.open('/property/${property.assessment_number}', '_blank')"
+                  style="padding: 4px 8px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;"
+                >
+                  View Details
+                </button>
+              </div>
             </div>
           `
         });
@@ -97,12 +103,68 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         });
 
         newMarkers.push(marker);
+
+        // Add property boundary polygon if PID exists
+        if (property.pid_number && property.government_boundary_data) {
+          // Fetch and display NSPRD boundary polygon
+          fetch(`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/api/query-ns-government-parcel/${property.pid_number}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.found && data.geometry && data.geometry.rings) {
+                // Convert NSPRD polygon to Google Maps format
+                const paths = data.geometry.rings.map(ring => 
+                  ring.map(coord => ({ lat: coord[1], lng: coord[0] }))
+                );
+                
+                // Create property boundary polygon with tax sale styling
+                const propertyPolygon = new window.google.maps.Polygon({
+                  paths: paths,
+                  strokeColor: iconColor,
+                  strokeOpacity: 0.8,
+                  strokeWeight: 2,
+                  fillColor: iconColor,
+                  fillOpacity: 0.15,
+                  map: map,
+                  clickable: true
+                });
+                
+                // Make polygon clickable to show same info as marker
+                propertyPolygon.addListener('click', () => {
+                  infoWindow.setPosition({ lat: property.latitude, lng: property.longitude });
+                  infoWindow.open(map);
+                });
+
+                // Add hover effect
+                propertyPolygon.addListener('mouseover', () => {
+                  propertyPolygon.setOptions({
+                    strokeOpacity: 1.0,
+                    fillOpacity: 0.25,
+                    strokeWeight: 3
+                  });
+                });
+
+                propertyPolygon.addListener('mouseout', () => {
+                  propertyPolygon.setOptions({
+                    strokeOpacity: 0.8,
+                    fillOpacity: 0.15,
+                    strokeWeight: 2
+                  });
+                });
+
+                newPolygons.push(propertyPolygon);
+              }
+            })
+            .catch(error => {
+              console.warn(`Could not load boundary for PID ${property.pid_number}:`, error);
+            });
+        }
       }
     });
 
     setMarkers(newMarkers);
+    setBoundaryPolygons(newPolygons);
 
-    // Adjust map bounds to show all markers
+    // Adjust map bounds to show all properties
     if (newMarkers.length > 0) {
       const bounds = new window.google.maps.LatLngBounds();
       newMarkers.forEach(marker => {
@@ -110,7 +172,7 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
       });
       map.fitBounds(bounds);
       
-      // Don't zoom in too much for single markers
+      // Don't zoom in too much for single properties
       const listener = window.google.maps.event.addListener(map, 'bounds_changed', () => {
         if (map.getZoom() > 15) map.setZoom(15);
         window.google.maps.event.removeListener(listener);
