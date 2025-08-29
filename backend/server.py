@@ -1083,6 +1083,61 @@ async def clear_all_tax_sales():
     result = await db.tax_sales.delete_many({})
     return {"deleted_count": result.deleted_count, "message": "All tax sale properties cleared"}
 
+@api_router.post("/geocode-properties")
+async def geocode_existing_properties():
+    """Geocode all existing properties that have fake or missing coordinates"""
+    try:
+        # Get all properties that need geocoding
+        properties = await db.tax_sales.find({
+            "$or": [
+                {"latitude": None},
+                {"longitude": None},
+                # Also update properties with fake coordinates (roughly in Halifax center area)
+                {"$and": [{"latitude": {"$gte": 44.5, "$lte": 44.8}}, {"longitude": {"$gte": -63.8, "$lte": -63.3}}]}
+            ]
+        }).to_list(1000)
+        
+        geocoded_count = 0
+        failed_count = 0
+        
+        for property in properties:
+            property_address = property.get('property_address', '')
+            if not property_address:
+                failed_count += 1
+                continue
+            
+            # Clean address for geocoding
+            address_for_geocoding = property_address.split(' - ')[0]  # Remove property type suffix
+            
+            # Geocode the address
+            latitude, longitude = await geocode_address(address_for_geocoding)
+            
+            if latitude and longitude:
+                # Update the property with real coordinates
+                await db.tax_sales.update_one(
+                    {"_id": property["_id"]},
+                    {"$set": {"latitude": latitude, "longitude": longitude}}
+                )
+                geocoded_count += 1
+                logger.info(f"Updated {property.get('assessment_number', 'N/A')}: {address_for_geocoding} -> {latitude}, {longitude}")
+            else:
+                failed_count += 1
+                logger.warning(f"Failed to geocode {property.get('assessment_number', 'N/A')}: {address_for_geocoding}")
+            
+            # Add small delay to respect Google API rate limits
+            await asyncio.sleep(0.1)
+        
+        return {
+            "message": f"Geocoding completed",
+            "total_properties": len(properties),
+            "geocoded_successfully": geocoded_count,
+            "failed": failed_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error geocoding properties: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Enhanced Scraping Endpoints
 @api_router.post("/scrape/halifax")
 async def scrape_halifax():
