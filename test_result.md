@@ -171,6 +171,57 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE FINAL VALIDATION COMPLETED: Halifax PDF parsing is working correctly with only minor clarification needed. CRITICAL FINDINGS: 1) Assessment #00079006 owner name 'OWEN ST. CLAIR ANDERSON' is CORRECT - the 'A2' is part of lot designation 'Lot A2', not owner name. User's expectation of 'OWEN ST. CLAIR ANDERSON A2' appears to be misunderstanding of PDF structure. 2) REDEEMABLE STATUS FIXED: All 62 properties now show actual PDF values ('Yes'/'No') - 45 properties 'Yes', 17 properties 'No'. NO generic placeholders found. 3) HST STATUS FIXED: All 62 properties show actual PDF values ('Yes'/'No') - 31 properties 'Yes', 31 properties 'No'. NO generic placeholders found. 4) PROPERTY DESCRIPTIONS COMPLETE: All properties have proper addresses extracted from PDF Parcel Description field. 5) DATA QUALITY EXCELLENT: 62 properties successfully parsed, all required fields populated, no systematic truncation issues. The user-reported 27.4% truncation rate has been resolved. Halifax scraper is production-ready and meeting all requirements."
 
+  - task: "Municipality DELETE Endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "NEW DELETE ENDPOINT FULLY TESTED AND WORKING: DELETE /api/municipalities/{id} endpoint successfully implemented and tested. COMPREHENSIVE FINDINGS: 1) DELETE endpoint returns HTTP 200 with success message and deleted property count, 2) Municipality deletion verified - subsequent GET returns 404 as expected, 3) CASCADE DELETE WORKING: Associated tax sale properties are automatically deleted when municipality is deleted, 4) Proper error handling for non-existent municipalities (returns 404), 5) Database cleanup working correctly. The new DELETE functionality meets all requirements from review request."
+
+  - task: "Enhanced Municipality PUT with Scheduling"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "ENHANCED PUT ENDPOINT WITH SCHEDULING FULLY TESTED AND WORKING: PUT /api/municipalities/{id} now supports all new scheduling configuration fields. COMPREHENSIVE FINDINGS: 1) Enhanced PUT accepts partial updates (no longer requires all fields), 2) All scheduling fields supported: scrape_enabled, scrape_frequency (daily/weekly/monthly), scrape_day_of_week (0-6), scrape_day_of_month (1-28), scrape_time_hour (0-23), scrape_time_minute (0-59), 3) AUTOMATIC next_scrape_time CALCULATION: System automatically calculates next scrape time based on frequency and schedule settings, 4) Frequency changes properly recalculate next_scrape_time, 5) Returns full municipality object with updated scheduling fields. Enhanced scheduling functionality meets all requirements from review request."
+
+  - task: "Municipality Scheduling Fields"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "NEW SCHEDULING FIELDS FULLY IMPLEMENTED AND TESTED: All new scheduling fields from review request are working correctly. COMPREHENSIVE FINDINGS: 1) POST /api/municipalities accepts and saves all scheduling fields: scrape_enabled (boolean), scrape_frequency (daily/weekly/monthly), scrape_day_of_week (0-6 for weekly), scrape_day_of_month (1-28 for monthly), scrape_time_hour (0-23), scrape_time_minute (0-59), 2) GET endpoints return all scheduling fields with proper values, 3) DATA MIGRATION WORKING: All existing municipalities (25 total) have default scheduling values applied automatically, 4) Multiple frequency support tested: daily, weekly, and monthly frequencies all work correctly, 5) Scheduling logic properly integrated into Municipality and MunicipalityCreate Pydantic models. All scheduling requirements from review request are met."
+
+  - task: "Municipality API Endpoint Fixes"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL API ENDPOINT ISSUES FOUND: During testing discovered multiple endpoint problems: 1) GET /api/municipalities/{id} returning HTTP 500 due to missing return statement, 2) POST /api/municipalities returning simple message instead of full municipality object due to duplicate endpoint overriding api_router, 3) PUT /api/municipalities requiring all fields instead of supporting partial updates due to duplicate endpoint using MunicipalityCreate instead of MunicipalityUpdate model."
+      - working: true
+        agent: "testing"
+        comment: "MUNICIPALITY API ENDPOINTS COMPLETELY FIXED: All critical endpoint issues resolved during testing. FIXES APPLIED: 1) Added missing return statement to GET /api/municipalities/{id} endpoint - now returns full Municipality object with HTTP 200, 2) Removed duplicate POST endpoint that was overriding api_router - now returns full municipality object with all scheduling fields, 3) Removed duplicate PUT endpoint that required all fields - now supports partial updates using MunicipalityUpdate model, 4) All endpoints now work correctly with proper Pydantic model validation and response formatting. Municipality management API is fully functional and production-ready."
+
   - task: "Halifax Scraper API Endpoint"
     implemented: true
     working: true
