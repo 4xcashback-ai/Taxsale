@@ -3287,14 +3287,103 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name}")
     
-    if all_tests_passed:
-        print(f"\n🎉 ALL CRITICAL TESTS PASSED!")
-        print(f"🎯 Boundary thumbnail generation using Google Maps Static API is working correctly")
-        return True
-    else:
-        print(f"\n⚠️ SOME TESTS FAILED")
-        print(f"🔍 Review the detailed output above for specific issues")
+def main():
+    """Main test execution focused on Review Request"""
+    print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
+    print("🎯 REVIEW REQUEST FOCUS: Municipality Data Structure Analysis")
+    print("=" * 80)
+    
+    # Initialize test results
+    test_results = {}
+    
+    # Test 1: Basic API Connection
+    api_connected, _ = test_api_connection()
+    test_results["api_connection"] = api_connected
+    
+    if not api_connected:
+        print("\n❌ Cannot proceed without API connection")
         return False
+    
+    # Test 2: Municipality Data Structure Analysis (MAIN REVIEW REQUEST FOCUS)
+    municipality_structure_working, municipality_structure_data = test_municipality_data_structure()
+    test_results["municipality_data_structure"] = municipality_structure_working
+    
+    # Test 3: Quick Municipality Endpoints Test
+    municipality_endpoints_working, municipality_data = test_municipality_endpoints_quick()
+    test_results["municipality_endpoints"] = municipality_endpoints_working
+    
+    # Test 4: Tax sales data to verify property municipality information
+    tax_sales_working, halifax_properties = test_tax_sales_endpoint()
+    test_results["tax_sales_data"] = tax_sales_working
+    
+    # Test 5: Statistics
+    stats_working, stats_data = test_stats_endpoint()
+    test_results["statistics"] = stats_working
+    
+    # Print final summary
+    print("\n" + "=" * 80)
+    print("📋 FINAL TEST SUMMARY - REVIEW REQUEST FOCUS")
+    print("=" * 80)
+    
+    passed_tests = sum(1 for result in test_results.values() if result)
+    total_tests = len(test_results)
+    
+    for test_name, result in test_results.items():
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"{status} {test_name.replace('_', ' ').title()}")
+    
+    print(f"\n📊 Overall Result: {passed_tests}/{total_tests} tests passed")
+    
+    # Special focus on review request findings
+    if municipality_structure_working and 'municipality_structure_data' in locals():
+        print(f"\n🎯 REVIEW REQUEST FINDINGS - MUNICIPALITY DATA STRUCTURE:")
+        findings = municipality_structure_data
+        
+        print(f"   📊 Municipality Collection:")
+        print(f"      Total municipalities: {findings.get('total_municipalities', 0)}")
+        print(f"      Municipalities with website_url: {findings.get('municipalities_with_website_urls', 0)}")
+        print(f"      Municipalities with tax_sale_url: {findings.get('municipalities_with_tax_sale_urls', 0)}")
+        
+        print(f"\n   🏠 Property Data:")
+        print(f"      Municipality name field in properties: {'✅ Present' if findings.get('property_municipality_name_field') else '❌ Missing'}")
+        print(f"      Unique municipality names in properties: {findings.get('unique_municipality_names_in_properties', 0)}")
+        print(f"      Data consistency: {'✅ Good' if findings.get('data_consistency') else '⚠️ Issues'}")
+        
+        print(f"\n   💡 KEY INSIGHTS:")
+        if findings.get('tax_sale_url_field_present'):
+            print(f"      ✅ Tax sale URL field exists - can be used for direct tax sale page links")
+        else:
+            print(f"      ⚠️ No tax sale URL field - consider adding for direct tax sale links")
+        
+        if findings.get('website_url_field_present'):
+            print(f"      ✅ Website URL field exists - can be used as fallback for municipality info")
+        else:
+            print(f"      ❌ No website URL field - critical for municipality links")
+        
+        print(f"\n   🔗 RECOMMENDATIONS FOR TAX SALE BUTTON:")
+        if findings.get('tax_sale_url_field_present'):
+            print(f"      1. Use tax_sale_url field for direct tax sale page links when available")
+            print(f"      2. Fall back to website_url + '/tax-sales' when tax_sale_url is missing")
+        else:
+            print(f"      1. Add tax_sale_url field to municipality collection")
+            print(f"      2. Use website_url as base for constructing tax sale URLs")
+        
+        print(f"      3. Property municipality_name field can be used to match with municipality collection")
+        print(f"      4. Consider adding municipality URL data to property records for direct access")
+    
+    # Determine overall success
+    critical_tests = ["api_connection", "municipality_data_structure", "municipality_endpoints"]
+    critical_passed = all(test_results.get(test, False) for test in critical_tests)
+    
+    if critical_passed:
+        print(f"\n🎉 REVIEW REQUEST ANALYSIS COMPLETED SUCCESSFULLY")
+        print(f"   Municipality data structure understood and analyzed")
+        print(f"   URL fields identified and recommendations provided")
+    else:
+        print(f"\n⚠️ REVIEW REQUEST ANALYSIS HAD ISSUES")
+        print(f"   Some critical tests failed - check municipality endpoints")
+    
+    return critical_passed
 
 if __name__ == "__main__":
     # Run the main test function focused on boundary thumbnail generation
