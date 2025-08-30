@@ -69,7 +69,7 @@ const PropertyDetails = ({ property, onClose }) => {
       
       // Try to get enhanced details first
       try {
-        const enhancedResponse = await fetch(`${backendUrl}/api/property/${assessmentNumber}/enhanced`);
+        const enhancedResponse = await fetch(`${backendUrl}/api/property/${property.assessment_number}/enhanced`);
         if (enhancedResponse.ok) {
           const enhancedProperty = await enhancedResponse.json();
           setProperty(enhancedProperty);
