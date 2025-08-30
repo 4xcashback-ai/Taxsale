@@ -1498,6 +1498,29 @@ function MainApp() {
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Property Details Modal */}
+        {selectedProperty && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-xl font-semibold">Property Details</h2>
+                <button
+                  onClick={() => setSelectedProperty(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="p-4">
+                <PropertyDetails 
+                  property={selectedProperty}
+                  onClose={() => setSelectedProperty(null)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
