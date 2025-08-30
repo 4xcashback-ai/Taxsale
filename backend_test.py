@@ -3502,7 +3502,7 @@ def main():
 def main():
     """Main test execution focused on Review Request"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
-    print("🎯 REVIEW REQUEST FOCUS: Municipality Data Structure Analysis")
+    print("🎯 REVIEW REQUEST FOCUS: Property Data Structure Analysis")
     print("=" * 80)
     
     # Initialize test results
@@ -3516,19 +3516,23 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Municipality Data Structure Analysis (MAIN REVIEW REQUEST FOCUS)
+    # Test 2: Property Data Structure Analysis (MAIN REVIEW REQUEST FOCUS)
+    property_structure_working, property_structure_data = test_property_data_structure()
+    test_results["property_data_structure"] = property_structure_working
+    
+    # Test 3: Municipality Data Structure Analysis
     municipality_structure_working, municipality_structure_data = test_municipality_data_structure()
     test_results["municipality_data_structure"] = municipality_structure_working
     
-    # Test 3: Quick Municipality Endpoints Test
+    # Test 4: Quick Municipality Endpoints Test
     municipality_endpoints_working, municipality_data = test_municipality_endpoints_quick()
     test_results["municipality_endpoints"] = municipality_endpoints_working
     
-    # Test 4: Tax sales data to verify property municipality information
+    # Test 5: Tax sales data to verify property municipality information
     tax_sales_working, halifax_properties = test_tax_sales_endpoint()
     test_results["tax_sales_data"] = tax_sales_working
     
-    # Test 5: Statistics
+    # Test 6: Statistics
     stats_working, stats_data = test_stats_endpoint()
     test_results["statistics"] = stats_working
     
