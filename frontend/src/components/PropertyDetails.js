@@ -526,7 +526,13 @@ const PropertyDetails = () => {
                   </div>
                   <div>
                     <span className="block text-sm text-gray-500 mb-1">Assessment Value</span>
-                    <span className="text-gray-900 font-semibold">{property.assessment_value ? formatCurrency(property.assessment_value) : 'Not available'}</span>
+                    <span className="text-gray-900 font-semibold">
+                      {propertyDetails?.taxable_assessment ? formatCurrency(propertyDetails.taxable_assessment) : 
+                       property.assessment_value ? formatCurrency(property.assessment_value) : 'Not available'}
+                    </span>
+                    {propertyDetails?.taxable_assessment && (
+                      <span className="block text-xs text-gray-500 mt-1">From PVSC Data</span>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-4">
