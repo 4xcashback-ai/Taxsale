@@ -35,101 +35,88 @@ const PropertyDetails = () => {
     return null;
   };
 
-  // Initialize Google Map
-  const initializeMap = useCallback(() => {
-    if (!window.google || !property || mapLoaded) return;
+  // Google Map Component with NSPRD Boundaries
+  const PropertyMap = ({ property, boundaryData }) => {
+    const mapRef = useRef();
+    const [map, setMap] = useState(null);
+    const [boundaryPolygon, setBoundaryPolygon] = useState(null);
 
-    const mapElement = document.getElementById('property-detail-map');
-    if (!mapElement) return;
+    const onLoad = useCallback((map) => {
+      mapRef.current = map;
+      setMap(map);
 
-    const map = new window.google.maps.Map(mapElement, {
-      center: {
-        lat: parseFloat(property.latitude),
-        lng: parseFloat(property.longitude)
-      },
-      zoom: 17,
-      mapTypeId: 'satellite',
-      disableDefaultUI: false,
-      zoomControl: true,
-      streetViewControl: true,
-      mapTypeControl: true,
-      fullscreenControl: true
-    });
-
-    // Add property marker
-    const marker = new window.google.maps.Marker({
-      position: {
-        lat: parseFloat(property.latitude),
-        lng: parseFloat(property.longitude)
-      },
-      map: map,
-      title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`
-    });
-
-    setMap(map);
-    setMapLoaded(true);
-
-    // Fetch and display boundary data
-    if (property.pid_number) {
-      fetchBoundaryData(property.pid_number).then(boundaryData => {
-        if (boundaryData && boundaryData.geometry && boundaryData.geometry.rings) {
-          displayBoundaryPolygon(map, boundaryData.geometry.rings);
-        }
+      // Add property marker
+      const marker = new window.google.maps.Marker({
+        position: {
+          lat: parseFloat(property.latitude),
+          lng: parseFloat(property.longitude)
+        },
+        map: map,
+        title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`
       });
-    }
-  }, [property, mapLoaded]);
 
-  // Display boundary polygon on map
-  const displayBoundaryPolygon = (map, rings) => {
-    try {
-      // Clear existing polygon
+      console.log('Property Map loaded with marker');
+    }, [property]);
+
+    // Display boundary polygon when data is available
+    useEffect(() => {
+      if (!map || !boundaryData || !boundaryData.geometry || !boundaryData.geometry.rings) return;
+
+      try {
+        // Clear existing polygon
+        if (boundaryPolygon) {
+          boundaryPolygon.setMap(null);
+        }
+
+        // Convert rings to Google Maps format
+        const paths = boundaryData.geometry.rings.map(ring => 
+          ring.map(point => ({
+            lat: point[1], // Latitude is second element
+            lng: point[0]  // Longitude is first element
+          }))
+        );
+
+        // Create polygon
+        const polygon = new window.google.maps.Polygon({
+          paths: paths,
+          strokeColor: '#FF0000',
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: '#FF0000',
+          fillOpacity: 0.15
+        });
+
+        polygon.setMap(map);
+        setBoundaryPolygon(polygon);
+
+        console.log('NSPRD boundary polygon displayed successfully');
+      } catch (error) {
+        console.error('Error displaying boundary polygon:', error);
+      }
+    }, [map, boundaryData, boundaryPolygon]);
+
+    const onUnmount = useCallback(() => {
+      mapRef.current = null;
       if (boundaryPolygon) {
         boundaryPolygon.setMap(null);
       }
+    }, [boundaryPolygon]);
 
-      // Convert rings to Google Maps format
-      const paths = rings.map(ring => 
-        ring.map(point => ({
-          lat: point[1], // Latitude is second element
-          lng: point[0]  // Longitude is first element
-        }))
-      );
-
-      // Create polygon
-      const polygon = new window.google.maps.Polygon({
-        paths: paths,
-        strokeColor: '#FF0000',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#FF0000',
-        fillOpacity: 0.15
-      });
-
-      polygon.setMap(map);
-      setBoundaryPolygon(polygon);
-
-      console.log('NSPRD boundary polygon displayed successfully');
-    } catch (error) {
-      console.error('Error displaying boundary polygon:', error);
-    }
+    return (
+      <div 
+        ref={mapRef}
+        style={{ width: '100%', height: '400px' }}
+        className="bg-gray-100"
+      />
+    );
   };
 
-  // Load Google Maps API
+  // Load boundary data when property is available
   useEffect(() => {
-    if (!window.google && !window.googleMapsLoading) {
-      window.googleMapsLoading = true;
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}&libraries=geometry`;
-      script.async = true;
-      script.onload = () => {
-        console.log('Google Maps API loaded for PropertyDetails');
-        initializeMap();
-      };
-      document.head.appendChild(script);
-    } else if (window.google) {
-      initializeMap();
+    if (property && property.pid_number && !boundaryData) {
+      fetchBoundaryData(property.pid_number);
     }
-  }, [property, initializeMap]);
+  }, [property, boundaryData]);
 
   const fetchPropertyDetails = async () => {
     try {
