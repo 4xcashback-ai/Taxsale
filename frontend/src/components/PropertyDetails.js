@@ -432,13 +432,14 @@ const PropertyDetails = () => {
                 {property.pid_number && <span><strong>PID:</strong> {property.pid_number}</span>}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {/* Comprehensive Property Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
                   <span className="block text-sm text-gray-500">Status</span>
                   <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                     property.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {property.status || 'Unknown'}
+                    {property.status || 'Active'}
                   </span>
                 </div>
                 <div>
@@ -450,8 +451,54 @@ const PropertyDetails = () => {
                   <span className="text-gray-900">{formatDate(property.sale_date)}</span>
                 </div>
                 <div>
+                  <span className="block text-sm text-gray-500">Time Left</span>
+                  <span className="text-gray-900 font-medium text-green-600">
+                    {calculateTimeLeft(property.sale_date)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div>
+                  <span className="block text-sm text-gray-500">Province</span>
+                  <span className="text-gray-900">Nova Scotia</span>
+                </div>
+                <div>
                   <span className="block text-sm text-gray-500">Municipality</span>
                   <span className="text-gray-900">{property.municipality_name || 'Not specified'}</span>
+                </div>
+                <div>
+                  <span className="block text-sm text-gray-500">Property Type</span>
+                  <span className="text-gray-900">{property.property_type || 'Not specified'}</span>
+                </div>
+                <div>
+                  <span className="block text-sm text-gray-500">Redeemable</span>
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                    property.redeemable === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {property.redeemable || 'Not specified'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div>
+                  <span className="block text-sm text-gray-500">HST Status</span>
+                  <span className="text-gray-900">{property.hst_applicable || 'No HST'}</span>
+                </div>
+                <div>
+                  <span className="block text-sm text-gray-500">Opening Bid</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    {formatCurrency(property.opening_bid)}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-sm text-gray-500">Lot Size</span>
+                  <span className="text-gray-900">{property.lot_size || 'Not specified'}</span>
+                </div>
+                <div>
+                  <span className="block text-sm text-gray-500">Zoning</span>
+                  <span className="text-gray-900">{property.zoning || 'Not specified'}</span>
                 </div>
               </div>
             </div>
