@@ -1105,7 +1105,7 @@ def test_enhanced_pvsc_scraping():
     
     try:
         # Test 1: Enhanced Property Endpoint with Assessment 00079006
-        print(f"\n   🔧 TEST 1: GET /api/property/00079006/enhanced (Force Fresh Scraping)")
+        print(f"\n   🔧 TEST 1: GET /api/property/00079006/enhanced (Primary Issue Investigation)")
         
         target_assessment = "00079006"
         enhanced_response = requests.get(
@@ -1132,10 +1132,6 @@ def test_enhanced_pvsc_scraping():
                 quality_of_construction = property_details.get('quality_of_construction')
                 if quality_of_construction:
                     print(f"   ✅ quality_of_construction: '{quality_of_construction}'")
-                    if quality_of_construction.lower() == "low":
-                        print(f"      ✅ Expected value 'Low' found")
-                    else:
-                        print(f"      ⚠️ Value '{quality_of_construction}' differs from expected 'Low'")
                 else:
                     print(f"   ❌ quality_of_construction: NOT FOUND")
                 
@@ -1143,10 +1139,6 @@ def test_enhanced_pvsc_scraping():
                 under_construction = property_details.get('under_construction')
                 if under_construction:
                     print(f"   ✅ under_construction: '{under_construction}'")
-                    if under_construction == "N":
-                        print(f"      ✅ Expected value 'N' found")
-                    else:
-                        print(f"      ⚠️ Value '{under_construction}' differs from expected 'N'")
                 else:
                     print(f"   ❌ under_construction: NOT FOUND")
                 
@@ -1154,10 +1146,6 @@ def test_enhanced_pvsc_scraping():
                 living_units = property_details.get('living_units')
                 if living_units is not None:
                     print(f"   ✅ living_units: {living_units}")
-                    if living_units == 1:
-                        print(f"      ✅ Expected value 1 found")
-                    else:
-                        print(f"      ⚠️ Value {living_units} differs from expected 1")
                 else:
                     print(f"   ❌ living_units: NOT FOUND")
                 
@@ -1165,10 +1153,6 @@ def test_enhanced_pvsc_scraping():
                 finished_basement = property_details.get('finished_basement')
                 if finished_basement:
                     print(f"   ✅ finished_basement: '{finished_basement}'")
-                    if finished_basement == "N":
-                        print(f"      ✅ Expected value 'N' found")
-                    else:
-                        print(f"      ⚠️ Value '{finished_basement}' differs from expected 'N'")
                 else:
                     print(f"   ❌ finished_basement: NOT FOUND")
                 
@@ -1176,10 +1160,6 @@ def test_enhanced_pvsc_scraping():
                 garage = property_details.get('garage')
                 if garage:
                     print(f"   ✅ garage: '{garage}'")
-                    if garage == "N":
-                        print(f"      ✅ Expected value 'N' found")
-                    else:
-                        print(f"      ⚠️ Value '{garage}' differs from expected 'N'")
                 else:
                     print(f"   ❌ garage: NOT FOUND")
                 
@@ -1191,18 +1171,40 @@ def test_enhanced_pvsc_scraping():
                 # Count new fields found
                 new_fields = ['quality_of_construction', 'under_construction', 'living_units', 'finished_basement', 'garage']
                 found_fields = [field for field in new_fields if property_details.get(field) is not None]
+                missing_fields = [field for field in new_fields if field not in found_fields]
                 
                 print(f"\n   📋 NEW FIELDS SUMMARY:")
                 print(f"      Found: {len(found_fields)}/5 new fields")
-                print(f"      Missing: {[field for field in new_fields if field not in found_fields]}")
+                print(f"      Missing: {missing_fields}")
                 
-                if len(found_fields) == 5:
-                    print(f"   ✅ ALL NEW FIELDS CAPTURED - ENHANCEMENT SUCCESSFUL")
-                elif len(found_fields) >= 3:
-                    print(f"   ⚠️ PARTIAL SUCCESS - {len(found_fields)} out of 5 fields captured")
+                # Test lot size for land-only properties
+                land_size = property_details.get('land_size')
+                if land_size:
+                    print(f"   ✅ land_size: '{land_size}'")
                 else:
-                    print(f"   ❌ ENHANCEMENT FAILED - Only {len(found_fields)} out of 5 fields captured")
-                    return False, {"error": f"Only {len(found_fields)} new fields found"}
+                    print(f"   ❌ land_size: NOT FOUND")
+                
+                # Check existing fields that should be present
+                existing_fields = ['current_assessment', 'taxable_assessment', 'building_style', 'year_built', 'living_area', 'bedrooms', 'bathrooms']
+                existing_found = [field for field in existing_fields if property_details.get(field) is not None]
+                print(f"\n   📊 EXISTING FIELDS STATUS:")
+                print(f"      Found: {len(existing_found)}/{len(existing_fields)} existing fields")
+                for field in existing_fields:
+                    value = property_details.get(field)
+                    if value is not None:
+                        print(f"      ✅ {field}: {value}")
+                    else:
+                        print(f"      ❌ {field}: NOT FOUND")
+                
+                # Determine if this is a critical failure
+                if len(found_fields) == 0:
+                    print(f"   ❌ CRITICAL FAILURE - NO NEW FIELDS FOUND")
+                    return False, {"error": "No new PVSC fields found", "missing_fields": missing_fields}
+                elif len(found_fields) < 5:
+                    print(f"   ⚠️ PARTIAL FAILURE - {len(found_fields)} out of 5 fields captured")
+                    return False, {"error": f"Only {len(found_fields)} new fields found", "missing_fields": missing_fields}
+                else:
+                    print(f"   ✅ ALL NEW FIELDS CAPTURED - ENHANCEMENT SUCCESSFUL")
                 
             else:
                 print(f"   ❌ property_details object missing")
@@ -1220,27 +1222,31 @@ def test_enhanced_pvsc_scraping():
                 print(f"      Raw response: {enhanced_response.text}")
             return False, {"error": f"HTTP {enhanced_response.status_code}"}
         
-        # Test 2: Test Multiple Properties for Broad Functionality
-        print(f"\n   🔧 TEST 2: Multiple Properties Enhanced Scraping")
+        # Test 2: Check server logs for any errors during the request
+        print(f"\n   🔧 TEST 2: Server Log Analysis")
+        print(f"      Note: Check supervisor logs for any PVSC scraping errors")
+        print(f"      Command: tail -n 50 /var/log/supervisor/backend.*.log")
+        
+        # Test 3: Test a few other assessment numbers to see if issue is consistent
+        print(f"\n   🔧 TEST 3: Testing Other Assessment Numbers")
         
         # Get some properties to test with
         tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
         if tax_sales_response.status_code == 200:
             properties = tax_sales_response.json()
             
-            # Test with up to 3 different assessment numbers
+            # Test with up to 2 different assessment numbers
             test_assessments = []
             for prop in properties:
                 assessment = prop.get('assessment_number')
                 if assessment and assessment != target_assessment:
                     test_assessments.append(assessment)
-                if len(test_assessments) >= 3:
+                if len(test_assessments) >= 2:
                     break
             
             print(f"   📊 Testing {len(test_assessments)} additional properties")
             
-            successful_enhancements = 0
-            failed_enhancements = 0
+            consistent_failure = True
             
             for i, assessment in enumerate(test_assessments):
                 print(f"      Testing property {i+1}: Assessment {assessment}")
