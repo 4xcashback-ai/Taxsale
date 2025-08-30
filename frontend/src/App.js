@@ -775,233 +775,247 @@ function MainApp() {
                     </CardContent>
                   </Card>
                 ) : (
-                  taxSales.map((property) => (
-                    <Card key={property.id} className="bg-white/80 backdrop-blur-sm border-slate-200/50 hover:shadow-lg transition-shadow">
-                      <div className="flex">
-                        {/* Property Boundary Thumbnail from viewpoint.ca */}
-                        <div className="w-32 h-32 flex-shrink-0">
-                          {property.boundary_screenshot ? (
-                            <div className="relative w-full h-full rounded-l-lg overflow-hidden">
-                              <img
-                                src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
-                                alt={`Property boundary map of ${property.property_address}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Fallback to coordinates-based placeholder
-                                  e.target.style.display = 'none';
-                                  e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center"><div class="text-center text-gray-600"><div class="text-xl mb-1">🗺️</div><div class="text-xs">Boundary Map</div></div></div>';
-                                }}
-                              />
-                              <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                                Boundaries
+                  (() => {
+                    const items = [];
+                    taxSales.forEach((property, index) => {
+                      // Add the property card
+                      items.push(
+                        <Card key={property.id} className="bg-white/80 backdrop-blur-sm border-slate-200/50 hover:shadow-lg transition-shadow">
+                          <div className="flex">
+                            {/* Property Boundary Thumbnail from viewpoint.ca */}
+                            <div className="w-32 h-32 flex-shrink-0">
+                              {property.boundary_screenshot ? (
+                                <div className="relative w-full h-full rounded-l-lg overflow-hidden">
+                                  <img
+                                    src={`${process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
+                                    alt={`Property boundary map of ${property.property_address}`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Fallback to coordinates-based placeholder
+                                      e.target.style.display = 'none';
+                                      e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center"><div class="text-center text-gray-600"><div class="text-xl mb-1">🗺️</div><div class="text-xs">Boundary Map</div></div></div>';
+                                    }}
+                                  />
+                                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                                    Boundaries
+                                  </div>
+                                </div>
+                              ) : property.latitude && property.longitude ? (
+                                <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 rounded-l-lg flex items-center justify-center">
+                                  <div className="text-center text-gray-600">
+                                    <div className="text-xl mb-1">🗺️</div>
+                                    <div className="text-xs">Capture Available</div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-l-lg flex items-center justify-center">
+                                  <div className="text-center text-gray-500">
+                                    <div className="text-2xl mb-1">🏠</div>
+                                    <div className="text-xs">No Map</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Property Content */}
+                            <div className="flex-1">
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                  <CardTitle className="text-lg text-slate-900">
+                                    {property.property_address}
+                                  </CardTitle>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    property.status === 'active' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : property.status === 'inactive'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {property.status === 'active' ? '🟢 Active' : 
+                                     property.status === 'inactive' ? '🔴 Inactive' : 
+                                     '⚪ Unknown'}
+                                  </span>
+                                </div>
+                                <CardDescription className="flex items-center space-x-4 mt-1">
+                                  <div className="flex items-center space-x-2">
+                                    <MapPin className="h-4 w-4 text-slate-500" />
+                                    {renderMunicipalityLink(property.municipality_name)}
+                                  </div>
+                                  {property.assessment_number && (
+                                    <a
+                                      href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                                      title="View full property assessment on PVSC"
+                                    >
+                                      <span className="text-xs font-medium">📋 AAN: {property.assessment_number}</span>
+                                    </a>
+                                  )}
+                                </CardDescription>
+                              </div>
+                              <div className="flex flex-col items-end space-y-2">
+                                <Badge 
+                                  variant="outline" 
+                                  className={
+                                    property.property_type === 'Dwelling' || property.property_type === 'Residential' 
+                                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                                      : property.property_type === 'Commercial' 
+                                      ? "bg-orange-50 text-orange-700 border-orange-200"
+                                      : "bg-green-50 text-green-700 border-green-200"
+                                  }
+                                >
+                                  {property.property_type || 'Property'}
+                                </Badge>
                               </div>
                             </div>
-                          ) : property.latitude && property.longitude ? (
-                            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 rounded-l-lg flex items-center justify-center">
-                              <div className="text-center text-gray-600">
-                                <div className="text-xl mb-1">🗺️</div>
-                                <div className="text-xs">Capture Available</div>
-                              </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {property.opening_bid && (
+                                <div className="flex items-center space-x-2">
+                                  <Gavel className="h-4 w-4 text-blue-500" />
+                                  <div>
+                                    <p className="text-sm text-slate-600">Opening Bid</p>
+                                    <p className="font-semibold text-blue-600">
+                                      {formatCurrency(property.opening_bid)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {property.tax_owing && (
+                                <div className="flex items-center space-x-2">
+                                  <DollarSign className="h-4 w-4 text-red-500" />
+                                  <div>
+                                    <p className="text-sm text-slate-600">Tax Owing</p>
+                                    <p className="font-semibold text-red-600">
+                                      {formatCurrency(property.tax_owing)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {property.assessment_value && (
+                                <div className="flex items-center space-x-2">
+                                  <Building2 className="h-4 w-4 text-purple-500" />
+                                  <div>
+                                    <p className="text-sm text-slate-600">Assessment</p>
+                                    <p className="font-semibold text-purple-600">
+                                      {formatCurrency(property.assessment_value)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {property.sale_date && (
+                                <div className="flex items-center space-x-2">
+                                  <Calendar className="h-4 w-4 text-orange-500" />
+                                  <div>
+                                    <p className="text-sm text-slate-600">Sale Date</p>
+                                    <p className="font-semibold text-orange-600">
+                                      {formatDate(property.sale_date)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-l-lg flex items-center justify-center">
-                              <div className="text-center text-gray-500">
-                                <div className="text-2xl mb-1">🏠</div>
-                                <div className="text-xs">No Map</div>
+                            
+                            {/* Owner Information */}
+                            {property.owner_name && (
+                              <div className="mt-4 p-3 bg-slate-50/80 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <Users className="h-4 w-4 text-slate-600" />
+                                  <span className="text-sm font-medium text-slate-700">Owner</span>
+                                </div>
+                                <p className="text-sm text-slate-600">{property.owner_name}</p>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Property Content */}
-                        <div className="flex-1">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <CardTitle className="text-lg text-slate-900">
-                                {property.property_address}
-                              </CardTitle>
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                property.status === 'active' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : property.status === 'inactive'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {property.status === 'active' ? '🟢 Active' : 
-                                 property.status === 'inactive' ? '🔴 Inactive' : 
-                                 '⚪ Unknown'}
-                              </span>
-                            </div>
-                            <CardDescription className="flex items-center space-x-4 mt-1">
-                              <div className="flex items-center space-x-2">
-                                <MapPin className="h-4 w-4 text-slate-500" />
-                                {renderMunicipalityLink(property.municipality_name)}
+                            )}
+
+                            {/* Property Description */}
+                            {property.property_description && (
+                              <div className="mt-4 p-3 bg-blue-50/80 rounded-lg">
+                                <p className="text-sm text-slate-700">{property.property_description}</p>
                               </div>
+                            )}
+
+                            {/* Additional Details with Links */}
+                            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                              {property.pid_number && (
+                                <a
+                                  href={`https://www.viewpoint.ca/show/property/${property.pid_number}/1/${property.property_address.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').substring(0, 50)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors cursor-pointer"
+                                  title="View property details on Viewpoint.ca"
+                                >
+                                  📍 PID: {property.pid_number}
+                                </a>
+                              )}
                               {property.assessment_number && (
                                 <a
                                   href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
-                                  title="View full property assessment on PVSC"
+                                  className="bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors cursor-pointer"
+                                  title="View property assessment on PVSC"
                                 >
-                                  <span className="text-xs font-medium">📋 AAN: {property.assessment_number}</span>
+                                  📋 AAN: {property.assessment_number}
                                 </a>
                               )}
-                            </CardDescription>
-                          </div>
-                          <div className="flex flex-col items-end space-y-2">
-                            <Badge 
-                              variant="outline" 
-                              className={
-                                property.property_type === 'Dwelling' || property.property_type === 'Residential' 
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : property.property_type === 'Commercial' 
-                                  ? "bg-orange-50 text-orange-700 border-orange-200"
-                                  : "bg-green-50 text-green-700 border-green-200"
-                              }
-                            >
-                              {property.property_type || 'Property'}
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {property.opening_bid && (
-                            <div className="flex items-center space-x-2">
-                              <Gavel className="h-4 w-4 text-blue-500" />
-                              <div>
-                                <p className="text-sm text-slate-600">Opening Bid</p>
-                                <p className="font-semibold text-blue-600">
-                                  {formatCurrency(property.opening_bid)}
-                                </p>
-                              </div>
+                              {property.sale_time && (
+                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">⏰ Time: {property.sale_time}</span>
+                              )}
+                              {property.sale_location && (
+                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">🏛️ Location: {property.sale_location}</span>
+                              )}
                             </div>
-                          )}
 
-                          {property.tax_owing && (
-                            <div className="flex items-center space-x-2">
-                              <DollarSign className="h-4 w-4 text-red-500" />
-                              <div>
-                                <p className="text-sm text-slate-600">Tax Owing</p>
-                                <p className="font-semibold text-red-600">
-                                  {formatCurrency(property.tax_owing)}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {property.assessment_value && (
-                            <div className="flex items-center space-x-2">
-                              <Building2 className="h-4 w-4 text-purple-500" />
-                              <div>
-                                <p className="text-sm text-slate-600">Assessment</p>
-                                <p className="font-semibold text-purple-600">
-                                  {formatCurrency(property.assessment_value)}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {property.sale_date && (
-                            <div className="flex items-center space-x-2">
-                              <Calendar className="h-4 w-4 text-orange-500" />
-                              <div>
-                                <p className="text-sm text-slate-600">Sale Date</p>
-                                <p className="font-semibold text-orange-600">
-                                  {formatDate(property.sale_date)}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Owner Information */}
-                        {property.owner_name && (
-                          <div className="mt-4 p-3 bg-slate-50/80 rounded-lg">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <Users className="h-4 w-4 text-slate-600" />
-                              <span className="text-sm font-medium text-slate-700">Owner</span>
-                            </div>
-                            <p className="text-sm text-slate-600">{property.owner_name}</p>
-                          </div>
-                        )}
-
-                        {/* Property Description */}
-                        {property.property_description && (
-                          <div className="mt-4 p-3 bg-blue-50/80 rounded-lg">
-                            <p className="text-sm text-slate-700">{property.property_description}</p>
-                          </div>
-                        )}
-
-                        {/* Additional Details with Links */}
-                        <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                          {property.pid_number && (
-                            <a
-                              href={`https://www.viewpoint.ca/show/property/${property.pid_number}/1/${property.property_address.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').substring(0, 50)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors cursor-pointer"
-                              title="View property details on Viewpoint.ca"
-                            >
-                              📍 PID: {property.pid_number}
-                            </a>
-                          )}
-                          {property.assessment_number && (
-                            <a
-                              href={`https://webapi.pvsc.ca/Search/Property?ain=${property.assessment_number}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors cursor-pointer"
-                              title="View property assessment on PVSC"
-                            >
-                              📋 AAN: {property.assessment_number}
-                            </a>
-                          )}
-                          {property.sale_time && (
-                            <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">⏰ Time: {property.sale_time}</span>
-                          )}
-                          {property.sale_location && (
-                            <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded">🏛️ Location: {property.sale_location}</span>
-                          )}
-                        </div>
-
-                        {/* Redeemable and HST Information */}
-                        {(property.redeemable || property.hst_applicable) && (
-                          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <h4 className="font-semibold text-amber-800 text-sm mb-2">⚠️ Important Legal Information</h4>
-                            {property.redeemable && (
-                              <div className="mb-2">
-                                <span className="text-xs font-medium text-amber-700">🔄 Redemption:</span>
-                                <p className="text-xs text-amber-700">{property.redeemable}</p>
+                            {/* Redeemable and HST Information */}
+                            {(property.redeemable || property.hst_applicable) && (
+                              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <h4 className="font-semibold text-amber-800 text-sm mb-2">⚠️ Important Legal Information</h4>
+                                {property.redeemable && (
+                                  <div className="mb-2">
+                                    <span className="text-xs font-medium text-amber-700">🔄 Redemption:</span>
+                                    <p className="text-xs text-amber-700">{property.redeemable}</p>
+                                  </div>
+                                )}
+                                {property.hst_applicable && (
+                                  <div>
+                                    <span className="text-xs font-medium text-amber-700">💰 HST:</span>
+                                    <p className="text-xs text-amber-700">{property.hst_applicable}</p>
+                                  </div>
+                                )}
                               </div>
                             )}
-                            {property.hst_applicable && (
-                              <div>
-                                <span className="text-xs font-medium text-amber-700">💰 HST:</span>
-                                <p className="text-xs text-amber-700">{property.hst_applicable}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
 
-                        {/* See More Details Button */}
-                        <div className="mt-6 pt-4 border-t border-slate-200">
-                          <Link
-                            to={`/property/${property.assessment_number}`}
-                            className="block w-full text-center bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                          >
-                            See More Details →
-                          </Link>
-                        </div>
-                      </CardContent>
-                        </div>  {/* Close flex-1 div */}
-                      </div>  {/* Close flex container */}
-                    </Card>
-                  ))
+                            {/* See More Details Button */}
+                            <div className="mt-6 pt-4 border-t border-slate-200">
+                              <Link
+                                to={`/property/${property.assessment_number}`}
+                                className="block w-full text-center bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                              >
+                                See More Details →
+                              </Link>
+                            </div>
+                          </CardContent>
+                            </div>  {/* Close flex-1 div */}
+                          </div>  {/* Close flex container */}
+                        </Card>
+                      );
+                      
+                      // Add an ad after every 5 properties (but not after the last property)
+                      if ((index + 1) % 5 === 0 && index < taxSales.length - 1) {
+                        items.push(
+                          <SearchPageAd key={`ad-${index}`} index={index} />
+                        );
+                      }
+                    });
+                    return items;
+                  })()
                 )}
               </div>
             )}
