@@ -505,58 +505,91 @@ const PropertyDetails = () => {
 
             {/* Property Details Section */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Property Details</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Comprehensive Property Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <span className="block text-sm text-gray-500 mb-1">Address</span>
-                    <span className="text-gray-900">{property.property_address || 'Not available'}</span>
+                    <span className="block text-sm text-gray-500 mb-1">Full Address</span>
+                    <span className="text-gray-900 font-medium">{property.property_address || 'Not available'}</span>
                   </div>
                   <div>
-                    <span className="block text-sm text-gray-500 mb-1">Assessment Number</span>
-                    <span className="text-gray-900">{property.assessment_number}</span>
+                    <span className="block text-sm text-gray-500 mb-1">Assessment Number (AAN)</span>
+                    <span className="text-gray-900 font-mono">{property.assessment_number}</span>
                   </div>
                   <div>
-                    <span className="block text-sm text-gray-500 mb-1">PID</span>
-                    <span className="text-gray-900">{property.pid_number || 'Not available'}</span>
+                    <span className="block text-sm text-gray-500 mb-1">Property Identification (PID)</span>
+                    <span className="text-gray-900 font-mono">{property.pid_number || 'Not available'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-gray-500 mb-1">Property Description</span>
+                    <span className="text-gray-900">{property.property_description || property.property_address || 'Not available'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-gray-500 mb-1">Assessment Value</span>
+                    <span className="text-gray-900 font-semibold">{property.assessment_value ? formatCurrency(property.assessment_value) : 'Not available'}</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <span className="block text-sm text-gray-500 mb-1">Current Owner</span>
+                    <span className="text-gray-900 font-medium">{property.owner_name || 'Not available'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-gray-500 mb-1">Tax Owing</span>
+                    <span className="text-red-600 font-semibold">{property.tax_owing ? formatCurrency(property.tax_owing) : 'Not available'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-gray-500 mb-1">Sale Date & Time</span>
+                    <span className="text-gray-900">
+                      {formatDate(property.sale_date)}
+                      {property.sale_time && <><br /><span className="text-sm text-gray-600">at {property.sale_time}</span></>}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-gray-500 mb-1">Sale Location</span>
+                    <span className="text-gray-900">{property.sale_location || 'To be announced'}</span>
                   </div>
                   {propertyDetails?.current_assessment && (
                     <div>
-                      <span className="block text-sm text-gray-500 mb-1">Current Assessment</span>
+                      <span className="block text-sm text-gray-500 mb-1">PVSC Assessment</span>
                       <span className="text-gray-900">{formatCurrency(propertyDetails.current_assessment)}</span>
                     </div>
                   )}
                 </div>
-                
-                <div className="space-y-4">
-                  {propertyDetails?.property_type && (
-                    <div>
-                      <span className="block text-sm text-gray-500 mb-1">Property Type</span>
-                      <span className="text-gray-900">{propertyDetails.property_type}</span>
-                    </div>
-                  )}
-                  {propertyDetails?.year_built && (
-                    <div>
-                      <span className="block text-sm text-gray-500 mb-1">Year Built</span>
-                      <span className="text-gray-900">{propertyDetails.year_built}</span>
-                    </div>
-                  )}
-                  {propertyDetails?.land_size && (
-                    <div>
-                      <span className="block text-sm text-gray-500 mb-1">Land Size</span>
-                      <span className="text-gray-900">{propertyDetails.land_size}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="block text-sm text-gray-500 mb-1">Redeemable</span>
-                    <span className="text-gray-900">{property.redeemable || 'Yes'}</span>
-                  </div>
-                  <div>
-                    <span className="block text-sm text-gray-500 mb-1">HST Status</span>
-                    <span className="text-gray-900">{property.hst_applicable || 'No HST'}</span>
+              </div>
+              
+              {/* Additional Property Characteristics */}
+              {(property.lot_size || property.zoning || propertyDetails?.bedrooms || propertyDetails?.bathrooms) && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">Property Characteristics</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {property.lot_size && (
+                      <div>
+                        <span className="block text-sm text-gray-500">Lot Size</span>
+                        <span className="text-gray-900 font-medium">{property.lot_size}</span>
+                      </div>
+                    )}
+                    {property.zoning && (
+                      <div>
+                        <span className="block text-sm text-gray-500">Zoning</span>
+                        <span className="text-gray-900">{property.zoning}</span>
+                      </div>
+                    )}
+                    {propertyDetails?.bedrooms && (
+                      <div>
+                        <span className="block text-sm text-gray-500">Bedrooms</span>
+                        <span className="text-gray-900">{propertyDetails.bedrooms}</span>
+                      </div>
+                    )}
+                    {propertyDetails?.bathrooms && (
+                      <div>
+                        <span className="block text-sm text-gray-500">Bathrooms</span>
+                        <span className="text-gray-900">{propertyDetails.bathrooms}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Enhanced Assessment Information */}
