@@ -103,7 +103,7 @@ const PropertyDetails = ({ property, onClose }) => {
           <div className="flex items-center justify-between h-16">
             <nav className="flex items-center space-x-2 text-sm text-gray-500">
               <button 
-                onClick={() => navigate('/')}
+                onClick={onClose}
                 className="hover:text-blue-600 transition-colors"
               >
                 Nova Scotia Tax Sales
@@ -111,10 +111,10 @@ const PropertyDetails = ({ property, onClose }) => {
               <span>›</span>
               <span className="text-gray-900 font-medium">Halifax</span>
               <span>›</span>
-              <span className="text-gray-900 font-medium">{assessmentNumber}</span>
+              <span className="text-gray-900 font-medium">{property.assessment_number}</span>
             </nav>
             <button
-              onClick={() => navigate('/')}
+              onClick={onClose}
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
             >
               ← Back to Search
