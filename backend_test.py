@@ -2948,7 +2948,7 @@ def main():
     test_results = {}
     
     # Test 1: Basic API connectivity
-    api_success, _ = test_api_connection()
+    api_success = test_api_connection()
     test_results['api_connection'] = api_success
     if not api_success:
         all_tests_passed = False
