@@ -1766,7 +1766,7 @@ def run_comprehensive_test():
     }
     
     # Test 1: API Connection
-    api_connected, _ = test_api_connection()
+    api_connected = test_api_connection()
     test_results["api_connection"] = api_connected
     
     if not api_connected:
