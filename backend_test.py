@@ -2529,6 +2529,218 @@ def test_comprehensive_municipality_overview():
         print(f"\n❌ COMPREHENSIVE OVERVIEW ERROR: {e}")
         return False, {"error": str(e)}
 
+def test_property_data_structure():
+    """Test complete property data structure - Review Request Focus"""
+    print("\n📊 Testing Complete Property Data Structure...")
+    print("🎯 FOCUS: Check ALL fields available in property objects")
+    print("📋 REQUIREMENTS: GET /api/tax-sales, GET /api/property/00079006/enhanced, TaxSaleProperty model fields")
+    
+    try:
+        # Test 1: GET /api/tax-sales - Get sample property data and show ALL fields
+        print(f"\n   🔧 TEST 1: GET /api/tax-sales (Sample Property Data)")
+        
+        response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if response.status_code == 200:
+            properties = response.json()
+            print(f"   ✅ Tax sales endpoint working - Found {len(properties)} properties")
+            
+            if properties:
+                # Analyze the first property to show ALL available fields
+                sample_property = properties[0]
+                print(f"\n   📋 COMPLETE PROPERTY DATA STRUCTURE:")
+                print(f"      Assessment Number: {sample_property.get('assessment_number', 'N/A')}")
+                print(f"      Property ID: {sample_property.get('id', 'N/A')}")
+                
+                print(f"\n   🏠 BASIC PROPERTY FIELDS:")
+                basic_fields = [
+                    'municipality_id', 'municipality_name', 'property_address', 'property_description',
+                    'assessment_value', 'tax_owing', 'opening_bid', 'sale_date', 'sale_time', 
+                    'sale_location', 'property_id', 'assessment_number', 'property_type',
+                    'lot_size', 'zoning', 'owner_name', 'pid_number'
+                ]
+                
+                for field in basic_fields:
+                    value = sample_property.get(field, 'N/A')
+                    print(f"      {field}: {value}")
+                
+                print(f"\n   📅 STATUS & TIMING FIELDS:")
+                status_fields = [
+                    'redeemable', 'hst_applicable', 'status', 'status_updated_at', 
+                    'scraped_at', 'source_url'
+                ]
+                
+                for field in status_fields:
+                    value = sample_property.get(field, 'N/A')
+                    print(f"      {field}: {value}")
+                
+                print(f"\n   🗺️ LOCATION & MAPPING FIELDS:")
+                location_fields = ['latitude', 'longitude', 'boundary_screenshot']
+                
+                for field in location_fields:
+                    value = sample_property.get(field, 'N/A')
+                    print(f"      {field}: {value}")
+                
+                print(f"\n   📊 RAW DATA & METADATA:")
+                metadata_fields = ['raw_data']
+                
+                for field in metadata_fields:
+                    value = sample_property.get(field, 'N/A')
+                    if isinstance(value, dict):
+                        print(f"      {field}: {len(value)} keys - {list(value.keys())}")
+                    else:
+                        print(f"      {field}: {value}")
+                
+                # Count total available fields
+                all_fields = list(sample_property.keys())
+                print(f"\n   📊 TOTAL AVAILABLE FIELDS: {len(all_fields)}")
+                print(f"      All field names: {sorted(all_fields)}")
+                
+                # Look for specific assessment 00079006 if available
+                target_property = None
+                for prop in properties:
+                    if prop.get('assessment_number') == '00079006':
+                        target_property = prop
+                        break
+                
+                if target_property:
+                    print(f"\n   🎯 TARGET PROPERTY (Assessment 00079006) DATA:")
+                    print(f"      Owner: {target_property.get('owner_name', 'N/A')}")
+                    print(f"      Address: {target_property.get('property_address', 'N/A')}")
+                    print(f"      Opening Bid: ${target_property.get('opening_bid', 'N/A')}")
+                    print(f"      PID: {target_property.get('pid_number', 'N/A')}")
+                    print(f"      Municipality: {target_property.get('municipality_name', 'N/A')}")
+                    print(f"      Sale Date: {target_property.get('sale_date', 'N/A')}")
+                    print(f"      Redeemable: {target_property.get('redeemable', 'N/A')}")
+                    print(f"      HST Applicable: {target_property.get('hst_applicable', 'N/A')}")
+                    print(f"      Property Type: {target_property.get('property_type', 'N/A')}")
+                    print(f"      Coordinates: {target_property.get('latitude', 'N/A')}, {target_property.get('longitude', 'N/A')}")
+                else:
+                    print(f"\n   ⚠️ Target assessment 00079006 not found in current data")
+                
+            else:
+                print(f"   ❌ No properties found in tax sales data")
+                return False, {"error": "No properties found"}
+                
+        else:
+            print(f"   ❌ Tax sales endpoint failed with status {response.status_code}")
+            return False, {"error": f"Tax sales endpoint failed: {response.status_code}"}
+        
+        # Test 2: GET /api/property/00079006/enhanced - Check enhanced property data
+        print(f"\n   🔧 TEST 2: GET /api/property/00079006/enhanced (Enhanced Property Data)")
+        
+        enhanced_response = requests.get(f"{BACKEND_URL}/property/00079006/enhanced", timeout=30)
+        
+        if enhanced_response.status_code == 200:
+            enhanced_data = enhanced_response.json()
+            print(f"   ✅ Enhanced property endpoint working - HTTP 200")
+            
+            print(f"\n   🔍 ENHANCED PROPERTY DATA STRUCTURE:")
+            print(f"      Assessment Number: {enhanced_data.get('assessment_number', 'N/A')}")
+            print(f"      Owner Name: {enhanced_data.get('owner_name', 'N/A')}")
+            print(f"      Property Address: {enhanced_data.get('property_address', 'N/A')}")
+            print(f"      Opening Bid: ${enhanced_data.get('opening_bid', 'N/A')}")
+            
+            # Check for PVSC enhanced fields
+            print(f"\n   🏢 PVSC ENHANCED FIELDS:")
+            pvsc_fields = [
+                'bedrooms', 'bathrooms', 'taxable_assessment', 'civic_address',
+                'property_class', 'year_built', 'living_area', 'lot_area'
+            ]
+            
+            pvsc_data_found = False
+            for field in pvsc_fields:
+                value = enhanced_data.get(field, 'N/A')
+                print(f"      {field}: {value}")
+                if value != 'N/A' and value is not None:
+                    pvsc_data_found = True
+            
+            if pvsc_data_found:
+                print(f"   ✅ PVSC data integration working - enhanced fields populated")
+            else:
+                print(f"   ⚠️ PVSC data not found - enhanced fields not populated")
+            
+            # Check for additional enhanced fields
+            print(f"\n   📊 ALL ENHANCED FIELDS:")
+            enhanced_fields = list(enhanced_data.keys())
+            print(f"      Total enhanced fields: {len(enhanced_fields)}")
+            print(f"      Enhanced field names: {sorted(enhanced_fields)}")
+            
+            # Compare basic vs enhanced field count
+            basic_field_count = len(all_fields) if 'all_fields' in locals() else 0
+            enhanced_field_count = len(enhanced_fields)
+            additional_fields = enhanced_field_count - basic_field_count
+            
+            print(f"\n   📈 FIELD COMPARISON:")
+            print(f"      Basic property fields: {basic_field_count}")
+            print(f"      Enhanced property fields: {enhanced_field_count}")
+            print(f"      Additional enhanced fields: {additional_fields}")
+            
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Assessment 00079006 not found for enhanced data")
+            return False, {"error": "Assessment 00079006 not found"}
+        elif enhanced_response.status_code == 500:
+            print(f"   ❌ Enhanced property endpoint error - HTTP 500")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {enhanced_response.text[:200]}...")
+            return False, {"error": "Enhanced endpoint HTTP 500"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
+            return False, {"error": f"Enhanced endpoint failed: {enhanced_response.status_code}"}
+        
+        # Test 3: Analyze multiple properties for field consistency
+        print(f"\n   🔧 TEST 3: Field Consistency Analysis (Multiple Properties)")
+        
+        if 'properties' in locals() and len(properties) > 1:
+            print(f"   📊 Analyzing {min(5, len(properties))} properties for field consistency...")
+            
+            # Check which fields are consistently populated
+            field_population = {}
+            
+            for i, prop in enumerate(properties[:5]):
+                print(f"\n      Property {i+1} - Assessment: {prop.get('assessment_number', 'N/A')}")
+                print(f"         Owner: {prop.get('owner_name', 'N/A')}")
+                print(f"         Address: {prop.get('property_address', 'N/A')}")
+                print(f"         Opening Bid: ${prop.get('opening_bid', 'N/A')}")
+                print(f"         PID: {prop.get('pid_number', 'N/A')}")
+                print(f"         Coordinates: {prop.get('latitude', 'N/A')}, {prop.get('longitude', 'N/A')}")
+                print(f"         Redeemable: {prop.get('redeemable', 'N/A')}")
+                print(f"         HST: {prop.get('hst_applicable', 'N/A')}")
+                
+                # Track field population
+                for field, value in prop.items():
+                    if field not in field_population:
+                        field_population[field] = 0
+                    if value is not None and value != '' and value != 'N/A':
+                        field_population[field] += 1
+            
+            print(f"\n   📊 FIELD POPULATION ANALYSIS (out of {min(5, len(properties))} properties):")
+            for field, count in sorted(field_population.items()):
+                percentage = (count / min(5, len(properties))) * 100
+                print(f"      {field}: {count}/{min(5, len(properties))} ({percentage:.1f}%)")
+        
+        print(f"\n   ✅ PROPERTY DATA STRUCTURE ANALYSIS COMPLETED")
+        print(f"   🎯 KEY FINDINGS:")
+        print(f"      - Basic property data: Available with {basic_field_count if 'basic_field_count' in locals() else 'unknown'} fields")
+        print(f"      - Enhanced property data: Available with {enhanced_field_count if 'enhanced_field_count' in locals() else 'unknown'} fields")
+        print(f"      - PVSC integration: {'Working' if pvsc_data_found else 'Not detected'}")
+        print(f"      - Target assessment 00079006: {'Found' if target_property else 'Not found'}")
+        
+        return True, {
+            "basic_fields_count": basic_field_count if 'basic_field_count' in locals() else 0,
+            "enhanced_fields_count": enhanced_field_count if 'enhanced_field_count' in locals() else 0,
+            "pvsc_integration": pvsc_data_found if 'pvsc_data_found' in locals() else False,
+            "target_property_found": target_property is not None if 'target_property' in locals() else False,
+            "total_properties": len(properties) if 'properties' in locals() else 0
+        }
+        
+    except Exception as e:
+        print(f"   ❌ Property data structure test error: {e}")
+        return False, {"error": str(e)}
+
 def test_municipality_data_structure():
     """Test municipality data structure to understand available URLs - Review Request Focus"""
     print("\n🏛️ Testing Municipality Data Structure (Review Request)")
