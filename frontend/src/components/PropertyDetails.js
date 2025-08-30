@@ -146,7 +146,7 @@ const PropertyDetails = () => {
             {/* Header */}
             <div className="mb-8">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Tax Sale Property in Halifax, Nova Scotia
+                Tax Sale Property in {property.municipality_name || 'Nova Scotia'}
               </h1>
               <h2 className="text-2xl text-gray-700 mb-4">
                 {property.property_address || 'Address not available'}
