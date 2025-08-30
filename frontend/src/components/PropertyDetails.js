@@ -58,6 +58,15 @@ const PropertyDetails = () => {
     }).format(amount || 0);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified';
+    return new Date(dateString).toLocaleDateString('en-CA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   const getTaxSaleUrl = (municipality) => {
     // Dynamic URL based on municipality
     switch (municipality?.toLowerCase()) {
