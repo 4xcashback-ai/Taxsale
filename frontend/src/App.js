@@ -512,6 +512,7 @@ function MainApp() {
       const response = await axios.post(`${API}/scrape/halifax`);
       console.log("Halifax scraping results:", response.data);
       await fetchTaxSales();
+      await fetchMunicipalities(); // Refresh municipalities to show updated status
       await fetchStats();
       await fetchMapData();
       setScrapeStatus(`Halifax scraping completed! ${response.data.properties_scraped} properties processed.`);
