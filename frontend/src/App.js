@@ -839,12 +839,12 @@ function MainApp() {
                       </div>
 
                       {/* Action Button */}
-                      <button
-                        onClick={() => setSelectedProperty(property)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200"
+                      <Link
+                        to={`/property/${property.assessment_number}`}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 text-center block"
                       >
                         See More Details →
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 ))}
