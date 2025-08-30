@@ -62,41 +62,6 @@ const PropertyDetails = ({ property, onClose }) => {
     }
   };
 
-  const fetchPropertyDetails = async () => {
-    try {
-      setLoading(true);
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
-      
-      // Try to get enhanced details first
-      try {
-        const enhancedResponse = await fetch(`${backendUrl}/api/property/${property.assessment_number}/enhanced`);
-        if (enhancedResponse.ok) {
-          const enhancedProperty = await enhancedResponse.json();
-          setProperty(enhancedProperty);
-          return;
-        }
-      } catch (enhancedError) {
-        console.warn('Enhanced data not available, falling back to basic data:', enhancedError);
-      }
-      
-      // Fallback to basic property list
-      const response = await fetch(`${backendUrl}/api/tax-sales`);
-      if (!response.ok) throw new Error('Failed to fetch properties');
-      
-      const properties = await response.json();
-      const foundProperty = properties.find(p => p.assessment_number === property.assessment_number);
-      
-      if (foundProperty) {
-        setProperty(foundProperty);
-      } else {
-        setError('Property not found');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-CA', {
