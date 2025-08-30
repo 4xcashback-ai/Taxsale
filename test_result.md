@@ -408,6 +408,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Enhanced Property Details Endpoint"
     - "Cape Breton Municipality Scraper"
     - "Kentville Municipality Scraper"
     - "Updated Scraper Dispatch System"
