@@ -340,6 +340,34 @@ const PropertyDetails = () => {
     }
   };
 
+  const calculateTimeLeft = (saleDate) => {
+    if (!saleDate) return 'Not specified';
+    
+    const now = new Date();
+    const sale = new Date(saleDate);
+    const diffTime = sale - now;
+    
+    if (diffTime <= 0) {
+      return 'Sale ended';
+    }
+    
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      return '1 day left';
+    } else if (diffDays < 30) {
+      return `${diffDays} days left`;
+    } else {
+      const diffMonths = Math.floor(diffDays / 30);
+      const remainingDays = diffDays % 30;
+      if (remainingDays === 0) {
+        return `${diffMonths} month${diffMonths > 1 ? 's' : ''} left`;
+      } else {
+        return `${diffMonths} month${diffMonths > 1 ? 's' : ''}, ${remainingDays} day${remainingDays > 1 ? 's' : ''} left`;
+      }
+    }
+  };
+
   const getTaxSaleUrl = () => {
     // Use database municipality data for URLs
     if (municipalityData) {
