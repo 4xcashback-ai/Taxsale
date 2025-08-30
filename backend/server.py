@@ -2552,10 +2552,14 @@ async def scrape_pvsc_details(assessment_number: str):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        response = requests.get(pvsc_url, headers=headers, timeout=30)
-        response.raise_for_status()
+        # Use aiohttp instead of requests for proper async support
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(pvsc_url, headers=headers, timeout=30) as response:
+                response.raise_for_status()
+                html_content = await response.text()
         
-        soup = BeautifulSoup(response.content, 'html.parser')
+        soup = BeautifulSoup(html_content, 'html.parser')
         
         # Extract Google Maps link
         google_maps_link = None
