@@ -370,6 +370,7 @@ function MainApp() {
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedStatus, setSelectedStatus] = useState('active'); // New status filter state
   const [scrapeStatus, setScrapeStatus] = useState("");
+  const [selectedProperty, setSelectedProperty] = useState(null);
   
   // Municipality management state
   const [editingMunicipality, setEditingMunicipality] = useState(null);
