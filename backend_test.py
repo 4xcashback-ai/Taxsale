@@ -2611,15 +2611,31 @@ def run_review_request_tests():
         print("\n❌ API connection failed. Cannot proceed with further tests.")
         return False
     
-    # Test 2: NSPRD Boundary Endpoint (Main focus)
+    # Test 2: Check if assessment 00079006 exists in database
+    print("\n🔍 Testing Assessment to PID Mapping...")
+    test_results["assessment_pid_mapping"], mapping_result = test_assessment_to_pid_mapping()
+    
+    # Test 3: NSPRD Boundary Endpoint (prerequisite for thumbnail generation)
+    print("\n🗺️ Testing NSPRD Boundary Endpoint...")
     test_results["nsprd_boundary"], boundary_result = test_nsprd_boundary_endpoint()
     
-    # Test 3: Assessment to PID Mapping (Main focus)
-    test_results["assessment_pid_mapping"], mapping_result = test_assessment_to_pid_mapping()
+    # Test 4: MAIN TEST - Boundary Thumbnail Generation
+    print("\n🖼️ Testing Boundary Thumbnail Generation...")
+    test_results["boundary_thumbnail_generation"], thumbnail_result = test_boundary_thumbnail_generation()
+    
+    # Test 5: Tax sales data (verify integration)
+    print("\n🏠 Testing Tax Sales Endpoint...")
+    tax_sales_working, halifax_properties = test_tax_sales_endpoint()
+    test_results["tax_sales_endpoint"] = tax_sales_working
+    
+    # Test 6: Statistics endpoint
+    print("\n📊 Testing Statistics Endpoint...")
+    stats_working, stats_data = test_stats_endpoint()
+    test_results["stats_endpoint"] = stats_working
     
     # Print final summary
     print("\n" + "=" * 80)
-    print("📋 REVIEW REQUEST TEST SUMMARY")
+    print("📋 BOUNDARY THUMBNAIL GENERATION TEST SUMMARY")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
@@ -2634,27 +2650,42 @@ def run_review_request_tests():
     # Detailed findings for review request
     print(f"\n🎯 REVIEW REQUEST FINDINGS:")
     
-    if test_results.get("nsprd_boundary"):
-        print(f"   ✅ NSPRD Boundary Endpoint: WORKING")
-        if boundary_result:
-            print(f"      - PID 00424945 found: {boundary_result.get('pid_found', False)}")
-            print(f"      - geometry.rings present: {boundary_result.get('geometry_rings_present', False)}")
-            print(f"      - property_info.area_sqm present: {boundary_result.get('area_sqm_present', False)}")
-            if boundary_result.get('area_value'):
-                print(f"      - Area value: {boundary_result.get('area_value')} sqm")
+    if test_results.get("boundary_thumbnail_generation"):
+        print(f"   ✅ Boundary Thumbnail Generation: WORKING PERFECTLY")
+        if thumbnail_result:
+            print(f"      - Thumbnail filename: {thumbnail_result.get('thumbnail_filename', 'N/A')}")
+            print(f"      - Image serving: {'✅ Working' if thumbnail_result.get('image_serving') else '❌ Failed'}")
+            print(f"      - Property updated: {'✅ Yes' if thumbnail_result.get('property_updated') else '❌ No'}")
+            print(f"      - Property image integration: {'✅ Working' if thumbnail_result.get('property_image_integration') else '❌ Failed'}")
+            print(f"      - Thumbnail size: {thumbnail_result.get('thumbnail_size', 0)} bytes")
     else:
-        print(f"   ❌ NSPRD Boundary Endpoint: ISSUES FOUND")
+        print(f"   ❌ Boundary Thumbnail Generation: CRITICAL ISSUES FOUND")
+        if thumbnail_result and 'error' in thumbnail_result:
+            print(f"      - Error: {thumbnail_result['error']}")
+    
+    if test_results.get("nsprd_boundary"):
+        print(f"   ✅ NSPRD Boundary Data: AVAILABLE")
+        if boundary_result:
+            print(f"      - PID found in government database: {'✅ Yes' if boundary_result.get('pid_found') else '❌ No'}")
+            print(f"      - Geometry rings present: {'✅ Yes' if boundary_result.get('geometry_rings_present') else '❌ No'}")
+            print(f"      - Area data available: {'✅ Yes' if boundary_result.get('area_sqm_present') else '❌ No'}")
+    else:
+        print(f"   ❌ NSPRD Boundary Data: ISSUES DETECTED")
     
     if test_results.get("assessment_pid_mapping"):
-        print(f"   ✅ Assessment to PID Mapping: WORKING")
+        print(f"   ✅ Assessment 00079006: FOUND IN DATABASE")
         if mapping_result:
-            print(f"      - Assessment 00079006 found: {mapping_result.get('assessment_found', False)}")
-            print(f"      - PID field present: {mapping_result.get('pid_present', False)}")
+            print(f"      - Has PID number: {'✅ Yes' if mapping_result.get('pid_present') else '❌ No'}")
             print(f"      - PID value: {mapping_result.get('pid_value', 'N/A')}")
-            print(f"      - Total properties: {mapping_result.get('total_properties', 0)}")
-            print(f"      - PID coverage: {mapping_result.get('pid_coverage_percent', 0):.1f}%")
     else:
-        print(f"   ❌ Assessment to PID Mapping: ISSUES FOUND")
+        print(f"   ❌ Assessment 00079006: NOT FOUND OR MISSING DATA")
+    
+    if test_results.get("tax_sales_endpoint"):
+        print(f"   ✅ Tax Sales Integration: WORKING")
+        if halifax_properties:
+            print(f"      - Halifax properties available: {len(halifax_properties)}")
+    else:
+        print(f"   ❌ Tax Sales Integration: ISSUES DETECTED")
     
     print(f"\n🏁 Review request testing completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
