@@ -101,7 +101,7 @@ const PropertyDetails = ({ property, onClose }) => {
           <div className="border rounded-lg overflow-hidden">
             {property.boundary_screenshot ? (
               <img
-                src={`${(typeof window !== 'undefined' && window.REACT_APP_BACKEND_URL) || process.env.REACT_APP_BACKEND_URL || (typeof import !== 'undefined' && import.meta?.env?.REACT_APP_BACKEND_URL) || 'https://nova-taxmap.preview.emergentagent.com'}/api/boundary-image/${property.boundary_screenshot}`}
+                src={`${window?.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL || import.meta?.env?.REACT_APP_BACKEND_URL || 'https://nova-taxmap.preview.emergentagent.com'}/api/boundary-image/${property.boundary_screenshot}`}
                 alt="Property boundary"
                 className="w-full h-64 object-cover"
               />
