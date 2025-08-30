@@ -1096,6 +1096,241 @@ def test_nsprd_boundary_endpoint():
         print(f"   ❌ NSPRD boundary endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_enhanced_pvsc_scraping():
+    """Test Enhanced PVSC Scraping with New Fields - Review Request Focus"""
+    print("\n🏠 Testing Enhanced PVSC Scraping with New Fields...")
+    print("🎯 FOCUS: GET /api/property/00079006/enhanced with new PVSC fields")
+    print("📋 REQUIREMENTS: quality_of_construction, under_construction, living_units, finished_basement, garage")
+    
+    try:
+        # Test 1: Enhanced Property Endpoint with Assessment 00079006
+        print(f"\n   🔧 TEST 1: GET /api/property/00079006/enhanced (Force Fresh Scraping)")
+        
+        target_assessment = "00079006"
+        enhanced_response = requests.get(
+            f"{BACKEND_URL}/property/{target_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if enhanced_response.status_code == 200:
+            property_data = enhanced_response.json()
+            print(f"   ✅ Enhanced property endpoint SUCCESS - HTTP 200")
+            print(f"      Assessment: {property_data.get('assessment_number')}")
+            print(f"      Owner: {property_data.get('owner_name')}")
+            print(f"      Address: {property_data.get('property_address')}")
+            
+            # Check for property_details object
+            property_details = property_data.get('property_details', {})
+            if property_details:
+                print(f"   ✅ property_details object present with {len(property_details)} fields")
+                
+                # Test NEW FIELDS from review request
+                print(f"\n   🎯 TESTING NEW PVSC FIELDS:")
+                
+                # Quality of Construction
+                quality_of_construction = property_details.get('quality_of_construction')
+                if quality_of_construction:
+                    print(f"   ✅ quality_of_construction: '{quality_of_construction}'")
+                    if quality_of_construction.lower() == "low":
+                        print(f"      ✅ Expected value 'Low' found")
+                    else:
+                        print(f"      ⚠️ Value '{quality_of_construction}' differs from expected 'Low'")
+                else:
+                    print(f"   ❌ quality_of_construction: NOT FOUND")
+                
+                # Under Construction
+                under_construction = property_details.get('under_construction')
+                if under_construction:
+                    print(f"   ✅ under_construction: '{under_construction}'")
+                    if under_construction == "N":
+                        print(f"      ✅ Expected value 'N' found")
+                    else:
+                        print(f"      ⚠️ Value '{under_construction}' differs from expected 'N'")
+                else:
+                    print(f"   ❌ under_construction: NOT FOUND")
+                
+                # Living Units
+                living_units = property_details.get('living_units')
+                if living_units is not None:
+                    print(f"   ✅ living_units: {living_units}")
+                    if living_units == 1:
+                        print(f"      ✅ Expected value 1 found")
+                    else:
+                        print(f"      ⚠️ Value {living_units} differs from expected 1")
+                else:
+                    print(f"   ❌ living_units: NOT FOUND")
+                
+                # Finished Basement
+                finished_basement = property_details.get('finished_basement')
+                if finished_basement:
+                    print(f"   ✅ finished_basement: '{finished_basement}'")
+                    if finished_basement == "N":
+                        print(f"      ✅ Expected value 'N' found")
+                    else:
+                        print(f"      ⚠️ Value '{finished_basement}' differs from expected 'N'")
+                else:
+                    print(f"   ❌ finished_basement: NOT FOUND")
+                
+                # Garage
+                garage = property_details.get('garage')
+                if garage:
+                    print(f"   ✅ garage: '{garage}'")
+                    if garage == "N":
+                        print(f"      ✅ Expected value 'N' found")
+                    else:
+                        print(f"      ⚠️ Value '{garage}' differs from expected 'N'")
+                else:
+                    print(f"   ❌ garage: NOT FOUND")
+                
+                # Show complete property_details object
+                print(f"\n   📊 COMPLETE PROPERTY_DETAILS OBJECT:")
+                for key, value in property_details.items():
+                    print(f"      {key}: {value}")
+                
+                # Count new fields found
+                new_fields = ['quality_of_construction', 'under_construction', 'living_units', 'finished_basement', 'garage']
+                found_fields = [field for field in new_fields if property_details.get(field) is not None]
+                
+                print(f"\n   📋 NEW FIELDS SUMMARY:")
+                print(f"      Found: {len(found_fields)}/5 new fields")
+                print(f"      Missing: {[field for field in new_fields if field not in found_fields]}")
+                
+                if len(found_fields) == 5:
+                    print(f"   ✅ ALL NEW FIELDS CAPTURED - ENHANCEMENT SUCCESSFUL")
+                elif len(found_fields) >= 3:
+                    print(f"   ⚠️ PARTIAL SUCCESS - {len(found_fields)} out of 5 fields captured")
+                else:
+                    print(f"   ❌ ENHANCEMENT FAILED - Only {len(found_fields)} out of 5 fields captured")
+                    return False, {"error": f"Only {len(found_fields)} new fields found"}
+                
+            else:
+                print(f"   ❌ property_details object missing")
+                return False, {"error": "property_details object missing"}
+                
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Assessment {target_assessment} not found")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {enhanced_response.text}")
+            return False, {"error": f"HTTP {enhanced_response.status_code}"}
+        
+        # Test 2: Test Multiple Properties for Broad Functionality
+        print(f"\n   🔧 TEST 2: Multiple Properties Enhanced Scraping")
+        
+        # Get some properties to test with
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        if tax_sales_response.status_code == 200:
+            properties = tax_sales_response.json()
+            
+            # Test with up to 3 different assessment numbers
+            test_assessments = []
+            for prop in properties:
+                assessment = prop.get('assessment_number')
+                if assessment and assessment != target_assessment:
+                    test_assessments.append(assessment)
+                if len(test_assessments) >= 3:
+                    break
+            
+            print(f"   📊 Testing {len(test_assessments)} additional properties")
+            
+            successful_enhancements = 0
+            failed_enhancements = 0
+            
+            for i, assessment in enumerate(test_assessments):
+                print(f"      Testing property {i+1}: Assessment {assessment}")
+                
+                multi_response = requests.get(
+                    f"{BACKEND_URL}/property/{assessment}/enhanced",
+                    timeout=60
+                )
+                
+                if multi_response.status_code == 200:
+                    multi_data = multi_response.json()
+                    multi_details = multi_data.get('property_details', {})
+                    
+                    # Count how many new fields are present
+                    new_fields_count = sum(1 for field in new_fields if multi_details.get(field) is not None)
+                    
+                    print(f"         ✅ Enhanced data retrieved - {new_fields_count}/5 new fields")
+                    successful_enhancements += 1
+                else:
+                    print(f"         ❌ Failed with status {multi_response.status_code}")
+                    failed_enhancements += 1
+            
+            print(f"   📊 Multiple Properties Results:")
+            print(f"      Successful: {successful_enhancements}")
+            print(f"      Failed: {failed_enhancements}")
+            
+            if successful_enhancements > 0:
+                print(f"   ✅ Enhanced scraping works broadly across multiple properties")
+            else:
+                print(f"   ❌ Enhanced scraping failed for all test properties")
+        
+        # Test 3: Verify Regex Patterns Don't Break Existing Functionality
+        print(f"\n   🔧 TEST 3: Verify Existing PVSC Fields Still Work")
+        
+        if 'property_data' in locals():
+            property_details = property_data.get('property_details', {})
+            
+            # Check existing fields that should still work
+            existing_fields = {
+                'current_assessment': 'Current Assessment Value',
+                'taxable_assessment': 'Taxable Assessment Value', 
+                'building_style': 'Building Style',
+                'year_built': 'Year Built',
+                'living_area': 'Living Area',
+                'bedrooms': 'Bedrooms',
+                'bathrooms': 'Bathrooms',
+                'land_size': 'Land Size'
+            }
+            
+            existing_found = 0
+            for field, description in existing_fields.items():
+                if property_details.get(field) is not None:
+                    existing_found += 1
+                    print(f"      ✅ {description}: {property_details.get(field)}")
+                else:
+                    print(f"      ❌ {description}: NOT FOUND")
+            
+            print(f"   📊 Existing Fields: {existing_found}/{len(existing_fields)} still working")
+            
+            if existing_found >= len(existing_fields) * 0.7:  # 70% threshold
+                print(f"   ✅ Existing functionality preserved")
+            else:
+                print(f"   ⚠️ Some existing functionality may be broken")
+        
+        print(f"\n   ✅ ENHANCED PVSC SCRAPING TESTS COMPLETED")
+        print(f"   🎯 REVIEW REQUEST REQUIREMENTS:")
+        
+        if 'found_fields' in locals():
+            for field in new_fields:
+                status = "✅ FOUND" if field in found_fields else "❌ NOT FOUND"
+                expected_value = {
+                    'quality_of_construction': 'Low',
+                    'under_construction': 'N',
+                    'living_units': '1',
+                    'finished_basement': 'N',
+                    'garage': 'N'
+                }.get(field, 'Expected')
+                print(f"      {field} (expected: {expected_value}): {status}")
+        
+        return True, {
+            "endpoint_working": enhanced_response.status_code == 200 if 'enhanced_response' in locals() else False,
+            "new_fields_found": len(found_fields) if 'found_fields' in locals() else 0,
+            "total_new_fields": 5,
+            "existing_fields_preserved": existing_found if 'existing_found' in locals() else 0,
+            "multiple_properties_tested": successful_enhancements if 'successful_enhancements' in locals() else 0
+        }
+        
+    except Exception as e:
+        print(f"   ❌ Enhanced PVSC scraping test error: {e}")
+        return False, {"error": str(e)}
+
 def test_boundary_thumbnail_generation():
     """Test Boundary Thumbnail Generation System - Review Request Focus"""
     print("\n🖼️ Testing Boundary Thumbnail Generation System...")
