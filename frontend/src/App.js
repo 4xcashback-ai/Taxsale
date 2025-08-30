@@ -778,7 +778,7 @@ function MainApp() {
                         />
                       ) : property.latitude && property.longitude ? (
                         <img
-                          src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`}
+                          src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`}
                           alt={`Satellite view of ${property.property_address}`}
                           className="w-full h-full object-cover rounded-t-lg"
                           onError={(e) => {
