@@ -2069,15 +2069,19 @@ def run_comprehensive_test():
         print("\n❌ CRITICAL: API connection failed. Cannot proceed with other tests.")
         return test_results
     
-    # Test 2: Comprehensive Municipality Overview (Main Review Request)
+    # Test 2: NEW Municipality Scrapers (Main Review Request Focus)
+    new_scrapers_success, new_scrapers_data = test_new_municipality_scrapers()
+    test_results["new_municipality_scrapers"] = new_scrapers_success
+    
+    # Test 3: Comprehensive Municipality Overview
     overview_success, overview_data = test_comprehensive_municipality_overview()
     test_results["comprehensive_overview"] = overview_success
     
-    # Test 3: Quick Municipality Endpoints Verification
+    # Test 4: Quick Municipality Endpoints Verification
     municipalities_working, muni_data = test_municipality_endpoints_quick()
     test_results["municipality_endpoints"] = municipalities_working
     
-    # Test 4: Statistics Endpoint
+    # Test 5: Statistics Endpoint
     stats_working, stats_data = test_stats_endpoint()
     test_results["stats_endpoint"] = stats_working
     
