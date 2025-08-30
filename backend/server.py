@@ -1773,7 +1773,7 @@ async def capture_satellite_thumbnails_batch(batch_size: int = 5):
                 
                 if center_lat and center_lon:
                     # Create high-quality satellite thumbnail using PIL/requests
-                    satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={center_lat},{center_lon}&zoom={zoom}&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+                    satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={center_lat},{center_lon}&zoom={zoom}&size=400x300&maptype=satellite&key={os.environ.get('GOOGLE_MAPS_API_KEY')}"
                     
                     # Download the satellite image
                     import requests
