@@ -2489,7 +2489,7 @@ async def initialize_municipalities():
             "region": "Annapolis Valley",
             "latitude": 45.0777,
             "longitude": -64.4963,
-            "scraper_type": "generic"
+            "scraper_type": "kentville"
         },
         {
             "name": "Antigonish",
