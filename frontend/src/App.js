@@ -752,11 +752,47 @@ function MainApp() {
 
           {/* Search Tab */}
           <TabsContent value="search">
-            <ImprovedPropertySearch 
-              properties={taxSales}
-              onPropertyClick={setSelectedProperty}
-              backendUrl={import.meta.env.REACT_APP_BACKEND_URL}
-            />
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Tax Sale Properties</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {taxSales.map((property, index) => (
+                  <div
+                    key={property.id || index}
+                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-slate-200"
+                    onClick={() => setSelectedProperty(property)}
+                  >
+                    <div className="p-6">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                          {property.property_address || 'Address not available'}
+                        </h3>
+                        <p className="text-sm text-slate-600">
+                          Assessment #: {property.assessment_number}
+                        </p>
+                      </div>
+
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg font-bold text-green-600">
+                          ${parseFloat(property.opening_bid || 0).toLocaleString()}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          property.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-slate-100 text-slate-800'
+                        }`}>
+                          {property.status}
+                        </span>
+                      </div>
+
+                      <div className="text-sm text-slate-600 space-y-1">
+                        <div>Owner: {property.owner_name || 'Not available'}</div>
+                        <div>Municipality: {property.municipality || 'Not available'}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </TabsContent>
 
           {/* Enhanced Interactive Map Tab */}
