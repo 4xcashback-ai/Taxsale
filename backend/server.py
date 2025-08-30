@@ -1966,6 +1966,27 @@ async def scrape_municipality(municipality_id: str):
     
     return result
 
+@api_router.post("/scrape-municipality/{municipality_id}")
+async def scrape_municipality_by_id(municipality_id: str):
+    """Trigger scraping for a specific municipality by ID"""
+    try:
+        municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not municipality:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        scraper_type = municipality.get("scraper_type", "generic")
+        
+        if scraper_type == "halifax":
+            result = await scrape_halifax_tax_sales_for_municipality(municipality_id)
+        else:
+            result = await scrape_generic_municipality(municipality_id)
+            
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error scraping municipality {municipality_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/scrape-all")
 async def scrape_all_municipalities():
     """Trigger scraping for all municipalities"""
