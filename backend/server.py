@@ -2157,6 +2157,10 @@ async def scrape_municipality_by_id(municipality_id: str):
         
         if scraper_type == "halifax":
             result = await scrape_halifax_tax_sales_for_municipality(municipality_id)
+        elif scraper_type == "cape_breton":
+            result = await scrape_cape_breton_tax_sales()
+        elif scraper_type == "kentville":
+            result = await scrape_kentville_tax_sales()
         else:
             result = await scrape_generic_municipality(municipality_id)
             
