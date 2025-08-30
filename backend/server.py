@@ -1890,9 +1890,13 @@ async def scrape_all_municipalities():
     
     for municipality in municipalities:
         try:
-            if municipality["name"] == "Halifax Regional Municipality":
+            scraper_type = municipality.get("scraper_type", "generic")
+            
+            if scraper_type == "halifax":
+                # Use Halifax scraper for any municipality with scraper_type "halifax"
                 result = await scrape_halifax_tax_sales()
             else:
+                # Use generic scraper for municipalities with scraper_type "generic"
                 result = await scrape_generic_municipality(municipality["id"])
             results.append(result)
         except Exception as e:
