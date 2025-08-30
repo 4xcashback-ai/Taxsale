@@ -2686,10 +2686,12 @@ async def scrape_pvsc_details(assessment_number: str):
 @api_router.get("/property/{assessment_number}/enhanced")
 async def get_enhanced_property_details(assessment_number: str):
     """Get property details enhanced with PVSC data"""
+    print(f"DEBUG: Enhanced endpoint called for {assessment_number}")
     logger.info(f"ENHANCED ENDPOINT CALLED for assessment {assessment_number}")
     try:
         # Get basic property from database
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        print(f"DEBUG: Property found in database: {property_data is not None}")
         
         if not property_data:
             logger.warning(f"Property {assessment_number} not found in database")
