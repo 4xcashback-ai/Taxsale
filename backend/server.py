@@ -1017,10 +1017,40 @@ async def scrape_kentville_tax_sales():
     try:
         logger.info("Starting Kentville tax sale scraping...")
         
+        # Get or create Kentville municipality
+        kentville = await db.municipalities.find_one({"name": "Kentville"})
+        if not kentville:
+            # Create Kentville municipality if it doesn't exist
+            kentville_data = {
+                "id": str(uuid.uuid4()),
+                "name": "Kentville",
+                "website_url": "https://www.kentville.ca",
+                "tax_sale_url": "https://www.kentville.ca/tax-sales",
+                "province": "Nova Scotia",
+                "region": "Annapolis Valley",
+                "scraper_type": "kentville",
+                "scrape_status": "in_progress",
+                "scrape_enabled": True,
+                "scrape_frequency": "weekly",
+                "scrape_day_of_week": 1,
+                "scrape_day_of_month": 1,
+                "scrape_time_hour": 2,
+                "scrape_time_minute": 0
+            }
+            municipality_obj = Municipality(**kentville_data)
+            await db.municipalities.insert_one(municipality_obj.dict())
+            kentville = kentville_data
+            logger.info("Created Kentville municipality in database")
+        
+        municipality_id = kentville["id"]
+        
         # Kentville tax sale information based on April 2025 research
+        kentville_url = "https://www.kentville.ca"
+        
         properties = [
             {
                 "id": str(uuid.uuid4()),
+                "municipality_id": municipality_id,
                 "assessment_number": "KENT001",
                 "owner_name": "Estate of Benjamin Cheney",
                 "property_address": "Chester Avenue, Kentville",
@@ -1032,22 +1062,41 @@ async def scrape_kentville_tax_sales():
                 "sale_location": "Town Hall, 354 Main Street, Kentville",
                 "status": "active",
                 "redeemable": "Yes",
-                "hst_status": "No", 
-                "description": "Land on Chester Avenue - Estate Property",
+                "hst_applicable": "No", 
+                "property_description": "Land on Chester Avenue - Estate Property",
                 "latitude": 45.0777,
                 "longitude": -64.4963,
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc)
+                "scraped_at": datetime.now(timezone.utc),
+                "source_url": kentville_url,
+                "raw_data": {
+                    "assessment_number": "KENT001",
+                    "owner_name": "Estate of Benjamin Cheney",
+                    "property_address": "Chester Avenue, Kentville",
+                    "opening_bid": 5515.16
+                }
             }
         ]
         
         # Clear existing Kentville properties
         await db.tax_sales.delete_many({"municipality_name": "Kentville"})
         
-        # Insert new properties
+        # Insert new properties using the TaxSaleProperty model
         if properties:
-            await db.tax_sales.insert_many(properties)
+            for prop in properties:
+                tax_sale_property = TaxSaleProperty(**prop)
+                await db.tax_sales.insert_one(tax_sale_property.dict())
             logger.info(f"Inserted {len(properties)} Kentville properties")
+        
+        # Update municipality scrape status
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {
+                "$set": {
+                    "scrape_status": "success",
+                    "last_scraped": datetime.now(timezone.utc)
+                }
+            }
+        )
         
         return {
             "status": "success", 
