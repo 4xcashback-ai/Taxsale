@@ -2257,11 +2257,12 @@ def test_comprehensive_municipality_overview():
 def run_comprehensive_test():
     """Run tests focused on review request requirements"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
-    print("🎯 FOCUS: NEW Municipality Scrapers - Cape Breton & Kentville (Review Request)")
+    print("🎯 FOCUS: Enhanced Property Endpoint & NEW Municipality Scrapers (Review Request)")
     print("=" * 80)
     
     test_results = {
         "api_connection": False,
+        "enhanced_property_endpoint": False,
         "new_municipality_scrapers": False,
         "comprehensive_overview": False,
         "municipality_endpoints": False,
@@ -2276,19 +2277,23 @@ def run_comprehensive_test():
         print("\n❌ CRITICAL: API connection failed. Cannot proceed with other tests.")
         return test_results
     
-    # Test 2: NEW Municipality Scrapers (Main Review Request Focus)
+    # Test 2: Enhanced Property Endpoint (MAIN REVIEW REQUEST FOCUS)
+    enhanced_success, enhanced_data = test_enhanced_property_endpoint()
+    test_results["enhanced_property_endpoint"] = enhanced_success
+    
+    # Test 3: NEW Municipality Scrapers (Review Request Focus)
     new_scrapers_success, new_scrapers_data = test_new_municipality_scrapers()
     test_results["new_municipality_scrapers"] = new_scrapers_success
     
-    # Test 3: Comprehensive Municipality Overview
+    # Test 4: Comprehensive Municipality Overview
     overview_success, overview_data = test_comprehensive_municipality_overview()
     test_results["comprehensive_overview"] = overview_success
     
-    # Test 4: Quick Municipality Endpoints Verification
+    # Test 5: Quick Municipality Endpoints Verification
     municipalities_working, muni_data = test_municipality_endpoints_quick()
     test_results["municipality_endpoints"] = municipalities_working
     
-    # Test 5: Statistics Endpoint
+    # Test 6: Statistics Endpoint
     stats_working, stats_data = test_stats_endpoint()
     test_results["stats_endpoint"] = stats_working
     
@@ -2306,7 +2311,18 @@ def run_comprehensive_test():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status}: {test_name}")
     
-    # Key Findings from Review Request
+    # Key Findings from Review Request - Enhanced Property Endpoint
+    if enhanced_success and 'enhanced_data' in locals():
+        print(f"\n🎯 KEY FINDINGS FOR ENHANCED PROPERTY ENDPOINT:")
+        print(f"   - Endpoint Accessibility: {'✅ WORKING' if enhanced_data.get('endpoint_accessible') else '❌ FAILED'}")
+        print(f"   - Basic Property Data: {'✅ PRESENT' if enhanced_data.get('basic_data_present') else '❌ MISSING'}")
+        print(f"   - PVSC Data Integration: {'✅ WORKING' if enhanced_data.get('pvsc_data_present') else '❌ FAILED'}")
+        print(f"   - Target Fields Found: {enhanced_data.get('target_fields_found', 0)} (bedrooms, bathrooms, taxable_assessment)")
+        print(f"   - Multiple Assessments Tested: {enhanced_data.get('multiple_assessments_tested', 0)}")
+        if enhanced_data.get('average_response_time'):
+            print(f"   - Average Response Time: {enhanced_data.get('average_response_time'):.2f}s")
+    
+    # Key Findings from Review Request - New Municipality Scrapers
     if new_scrapers_success and 'new_scrapers_data' in locals():
         print(f"\n🎯 KEY FINDINGS FOR NEW MUNICIPALITY SCRAPERS:")
         print(f"   - Cape Breton Scraper: {'✅ WORKING' if new_scrapers_data.get('cape_breton_scraper') else '❌ FAILED'}")
