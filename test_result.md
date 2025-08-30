@@ -124,13 +124,16 @@ backend:
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
         comment: "ENHANCED PVSC SCRAPING COMPREHENSIVE TESTING COMPLETED - CRITICAL ISSUE IDENTIFIED! Review request requirements thoroughly tested and analyzed. DETAILED FINDINGS: 1) PVSC WEBSITE DATA AVAILABILITY: All requested fields are available on PVSC website for assessment 00079006 - Quality of Construction: 'Low', Under Construction: 'N', Living Units: 1, Finished Basement: 'N', Garage: 'N' (confirmed via direct curl test), 2) REGEX PATTERNS IMPLEMENTATION: All 5 new regex patterns are correctly implemented in server.py lines 2624-2646 with proper field extraction logic, 3) DIRECT SCRAPING FUNCTION TEST: Standalone scraping function works perfectly - extracts all 5 new fields successfully when called directly (test_pvsc_direct.py), 4) ASYNC SCRAPING FUNCTION TEST: Async version of scraping function works correctly - all 5 new fields extracted successfully (test_async_scraping.py), 5) ENHANCED ENDPOINT ISSUE: GET /api/property/00079006/enhanced returns HTTP 200 but property_details object contains only 10 fields (existing fields) and MISSING all 5 new fields, 6) SERVER INTEGRATION PROBLEM: Enhanced endpoint calls scrape_pvsc_details() function but new fields are not being returned in the response, suggesting server-side integration issue or code version mismatch. ROOT CAUSE: The scraping logic is working correctly but there's a disconnect between the working scraping function and the server endpoint response. SOLUTION NEEDED: Investigation of server-side integration, potential code deployment issue, or async function call handling in the enhanced endpoint."
+      - working: false
+        agent: "main"
+        comment: "DEBUGGING STARTED: Investigating the disconnect between working PVSC scraping function and missing enhanced fields in API response. User also reported lot size not showing for land-only properties. Code review shows scraping function correctly extracts 5 new fields (quality_of_construction, under_construction, living_units, finished_basement, garage) and returns them in property_details object. Enhanced endpoint appears to call the function correctly with async/await. Need to debug the actual data flow and identify why scraped data isn't appearing in final response."
 
   - task: "Enhanced Property Details Endpoint"
     implemented: true
