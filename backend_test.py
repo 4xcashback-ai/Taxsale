@@ -1097,6 +1097,192 @@ def test_nsprd_boundary_endpoint():
         print(f"   ❌ NSPRD boundary endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_land_size_scraping_fix_00374059():
+    """Test Fixed Land Size Scraping for Assessment 00374059 - Review Request Focus"""
+    print("\n🏠 Testing Fixed Land Size Scraping for Assessment 00374059...")
+    print("🎯 FOCUS: Test enhanced endpoint for assessment 00374059 after regex fix")
+    print("📋 REQUIREMENTS: Verify land_size field now captures '28.44 Acres' correctly")
+    print("🔍 GOAL: Confirm regex fix works for land-only properties with 'Land Size 28.44 Acres' format")
+    
+    try:
+        # Test 1: Enhanced Property Endpoint with Assessment 00374059 - Focus on Land Size Fix
+        print(f"\n   🔧 TEST 1: GET /api/property/00374059/enhanced (Land Size Regex Fix)")
+        
+        target_assessment = "00374059"
+        enhanced_response = requests.get(
+            f"{BACKEND_URL}/property/{target_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if enhanced_response.status_code == 200:
+            property_data = enhanced_response.json()
+            print(f"   ✅ Enhanced property endpoint SUCCESS - HTTP 200")
+            print(f"      Assessment: {property_data.get('assessment_number')}")
+            print(f"      Owner: {property_data.get('owner_name')}")
+            print(f"      Address: {property_data.get('property_address')}")
+            
+            # CRITICAL: Check for land_size in property_details after regex fix
+            property_details = property_data.get('property_details', {})
+            if property_details:
+                print(f"\n   🎯 CHECKING LAND_SIZE FIELD AFTER REGEX FIX:")
+                print(f"   ✅ property_details object present with {len(property_details)} fields")
+                
+                # Check for land_size field specifically
+                land_size = property_details.get('land_size')
+                if land_size:
+                    print(f"   ✅ property_details.land_size: '{land_size}'")
+                    
+                    # Verify it shows "28.44 Acres" as expected
+                    if "28.44 Acres" in land_size:
+                        print(f"   ✅ REGEX FIX VERIFIED: land_size shows '28.44 Acres' correctly!")
+                        print(f"   🎯 SUCCESS: Regex now captures 'Land Size 28.44 Acres' format")
+                    elif "28.44" in land_size and "Acres" in land_size:
+                        print(f"   ✅ REGEX FIX WORKING: Contains '28.44' and 'Acres'")
+                        print(f"   📊 Actual value: '{land_size}'")
+                    else:
+                        print(f"   ❌ REGEX FIX FAILED: Expected '28.44 Acres', got '{land_size}'")
+                        return False, {"error": f"Expected '28.44 Acres', got '{land_size}'", "assessment": target_assessment}
+                else:
+                    print(f"   ❌ property_details.land_size: NOT FOUND")
+                    print(f"   ❌ REGEX FIX FAILED: land_size field missing for land-only property")
+                    
+                    # Show all available fields for debugging
+                    print(f"   📊 Available fields in property_details:")
+                    for key, value in sorted(property_details.items()):
+                        print(f"      {key}: {value}")
+                    
+                    return False, {"error": "land_size field missing after regex fix", "assessment": target_assessment}
+                
+                # Show complete property_details to verify other fields
+                print(f"\n   📊 COMPLETE PROPERTY_DETAILS AFTER REGEX FIX:")
+                for key, value in sorted(property_details.items()):
+                    print(f"      {key}: {value}")
+                
+            else:
+                print(f"   ❌ property_details object missing")
+                return False, {"error": "property_details object missing", "assessment": target_assessment}
+                
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Assessment {target_assessment} not found")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {enhanced_response.text}")
+            return False, {"error": f"HTTP {enhanced_response.status_code}"}
+        
+        # Test 2: Compare with dwelling property to verify regex works for both formats
+        print(f"\n   🔧 TEST 2: Compare with Dwelling Property (00079006) - Verify Both Formats Work")
+        
+        dwelling_assessment = "00079006"
+        dwelling_response = requests.get(
+            f"{BACKEND_URL}/property/{dwelling_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if dwelling_response.status_code == 200:
+            dwelling_data = dwelling_response.json()
+            dwelling_details = dwelling_data.get('property_details', {})
+            dwelling_land_size = dwelling_details.get('land_size')
+            
+            print(f"   ✅ Dwelling property (00079006) enhanced endpoint SUCCESS")
+            if dwelling_land_size:
+                print(f"   ✅ Dwelling land_size: '{dwelling_land_size}'")
+                
+                # Verify dwelling shows Sq. Ft. format
+                if "Sq. Ft." in dwelling_land_size or "Sq Ft" in dwelling_land_size:
+                    print(f"   ✅ Dwelling property shows Sq. Ft. format correctly")
+                else:
+                    print(f"   ⚠️ Dwelling property land_size format: '{dwelling_land_size}'")
+            else:
+                print(f"   ❌ Dwelling property missing land_size field")
+        else:
+            print(f"   ⚠️ Could not test dwelling property comparison (status: {dwelling_response.status_code})")
+        
+        # Test 3: Verify scraping logs show the regex working
+        print(f"\n   🔧 TEST 3: Test Scraping Process to Check Logs")
+        print(f"   📋 This will trigger fresh PVSC scraping to see regex in action")
+        
+        # Make another call to trigger fresh scraping and see logs
+        fresh_response = requests.get(
+            f"{BACKEND_URL}/property/{target_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if fresh_response.status_code == 200:
+            fresh_data = fresh_response.json()
+            fresh_details = fresh_data.get('property_details', {})
+            fresh_land_size = fresh_details.get('land_size')
+            
+            print(f"   ✅ Fresh scraping call completed")
+            if fresh_land_size:
+                print(f"   ✅ Fresh land_size result: '{fresh_land_size}'")
+                
+                # Verify consistency
+                if 'land_size' in locals() and fresh_land_size == land_size:
+                    print(f"   ✅ Consistent results across multiple calls")
+                else:
+                    print(f"   ⚠️ Results may vary between calls")
+            else:
+                print(f"   ❌ Fresh scraping did not return land_size")
+        
+        # Test 4: Summary and Verification
+        print(f"\n   📋 LAND SIZE REGEX FIX VERIFICATION SUMMARY:")
+        
+        success_criteria = []
+        if 'land_size' in locals() and land_size:
+            success_criteria.append("✅ land_size field present")
+            if "28.44" in land_size and "Acres" in land_size:
+                success_criteria.append("✅ Contains '28.44 Acres' as expected")
+            else:
+                success_criteria.append(f"❌ Does not contain '28.44 Acres' (got: '{land_size}')")
+        else:
+            success_criteria.append("❌ land_size field missing")
+        
+        if enhanced_response.status_code == 200:
+            success_criteria.append("✅ Enhanced endpoint accessible")
+        else:
+            success_criteria.append(f"❌ Enhanced endpoint failed ({enhanced_response.status_code})")
+        
+        print(f"   🎯 VERIFICATION RESULTS:")
+        for criterion in success_criteria:
+            print(f"      {criterion}")
+        
+        # Determine overall success
+        all_success = all("✅" in criterion for criterion in success_criteria)
+        
+        if all_success:
+            print(f"\n   ✅ LAND SIZE REGEX FIX VERIFICATION: SUCCESS")
+            print(f"   🎯 Assessment 00374059 now shows land_size correctly!")
+            print(f"   📊 Regex fix working for 'Land Size 28.44 Acres' format")
+            
+            return True, {
+                "assessment": target_assessment,
+                "land_size_found": True,
+                "land_size_value": land_size if 'land_size' in locals() else None,
+                "regex_fix_working": True,
+                "endpoint_accessible": enhanced_response.status_code == 200
+            }
+        else:
+            print(f"\n   ❌ LAND SIZE REGEX FIX VERIFICATION: FAILED")
+            print(f"   🔍 Some criteria not met - see details above")
+            
+            return False, {
+                "assessment": target_assessment,
+                "land_size_found": 'land_size' in locals() and bool(land_size),
+                "land_size_value": land_size if 'land_size' in locals() else None,
+                "regex_fix_working": False,
+                "endpoint_accessible": enhanced_response.status_code == 200,
+                "success_criteria": success_criteria
+            }
+            
+    except Exception as e:
+        print(f"   ❌ Land size regex fix test error: {e}")
+        return False, {"error": str(e)}
+
 def test_pvsc_data_structure_and_lot_size():
     """Test PVSC Data Structure and Lot Size Field Location - Review Request Focus"""
     print("\n🏠 Testing PVSC Data Structure and Lot Size Field Location...")
