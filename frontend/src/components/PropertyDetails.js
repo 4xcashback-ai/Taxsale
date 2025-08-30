@@ -391,20 +391,12 @@ const PropertyDetails = () => {
                 <div className="mb-6">
                   <h4 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h4>
                   <div className="border rounded-lg overflow-hidden">
-                    <div 
-                      id="property-detail-map"
-                      style={{ width: '100%', height: '400px' }}
-                      className="bg-gray-100"
+                    <Wrapper 
+                      apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}
+                      libraries={['geometry']}
                     >
-                      {!mapLoaded && (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="text-center text-gray-500">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                            <p>Loading Interactive Map with NSPRD Boundaries...</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      <PropertyMap property={property} boundaryData={boundaryData} />
+                    </Wrapper>
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
                     📍 Property Location: {property.latitude}, {property.longitude}
