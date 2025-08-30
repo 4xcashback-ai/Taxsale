@@ -531,6 +531,7 @@ function MainApp() {
       const response = await axios.post(`${API}/scrape-all`);
       console.log("All scraping results:", response.data);
       await fetchTaxSales();
+      await fetchMunicipalities(); // Refresh municipalities to show updated status
       await fetchStats();
       await fetchMapData();
       setScrapeStatus("Scraping completed for all municipalities!");
