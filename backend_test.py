@@ -1105,8 +1105,8 @@ def test_pvsc_data_structure_and_lot_size():
     print("🔍 GOAL: Fix bug where lot size shows 'Not specified' despite being available in PVSC data")
     
     try:
-        # Test 1: Enhanced Property Endpoint with Assessment 00079006
-        print(f"\n   🔧 TEST 1: GET /api/property/00079006/enhanced (Primary Issue Investigation)")
+        # Test 1: Enhanced Property Endpoint with Assessment 00079006 - Focus on Lot Size Fields
+        print(f"\n   🔧 TEST 1: GET /api/property/00079006/enhanced (Lot Size Field Investigation)")
         
         target_assessment = "00079006"
         enhanced_response = requests.get(
@@ -1121,95 +1121,105 @@ def test_pvsc_data_structure_and_lot_size():
             print(f"      Owner: {property_data.get('owner_name')}")
             print(f"      Address: {property_data.get('property_address')}")
             
-            # Check for property_details object
+            # CRITICAL: Check for lot_size at ROOT LEVEL
+            print(f"\n   🎯 CHECKING ROOT LEVEL LOT SIZE FIELDS:")
+            root_lot_size = property_data.get('lot_size')
+            if root_lot_size:
+                print(f"   ✅ property.lot_size (ROOT LEVEL): '{root_lot_size}'")
+            else:
+                print(f"   ❌ property.lot_size (ROOT LEVEL): NOT FOUND")
+            
+            # Check for property_details object and nested lot size fields
             property_details = property_data.get('property_details', {})
             if property_details:
+                print(f"\n   🎯 CHECKING PROPERTY_DETAILS NESTED LOT SIZE FIELDS:")
                 print(f"   ✅ property_details object present with {len(property_details)} fields")
                 
-                # Test NEW FIELDS from review request
-                print(f"\n   🎯 TESTING NEW PVSC FIELDS:")
-                
-                # Quality of Construction
-                quality_of_construction = property_details.get('quality_of_construction')
-                if quality_of_construction:
-                    print(f"   ✅ quality_of_construction: '{quality_of_construction}'")
-                else:
-                    print(f"   ❌ quality_of_construction: NOT FOUND")
-                
-                # Under Construction
-                under_construction = property_details.get('under_construction')
-                if under_construction:
-                    print(f"   ✅ under_construction: '{under_construction}'")
-                else:
-                    print(f"   ❌ under_construction: NOT FOUND")
-                
-                # Living Units
-                living_units = property_details.get('living_units')
-                if living_units is not None:
-                    print(f"   ✅ living_units: {living_units}")
-                else:
-                    print(f"   ❌ living_units: NOT FOUND")
-                
-                # Finished Basement
-                finished_basement = property_details.get('finished_basement')
-                if finished_basement:
-                    print(f"   ✅ finished_basement: '{finished_basement}'")
-                else:
-                    print(f"   ❌ finished_basement: NOT FOUND")
-                
-                # Garage
-                garage = property_details.get('garage')
-                if garage:
-                    print(f"   ✅ garage: '{garage}'")
-                else:
-                    print(f"   ❌ garage: NOT FOUND")
-                
-                # Show complete property_details object
-                print(f"\n   📊 COMPLETE PROPERTY_DETAILS OBJECT:")
-                for key, value in property_details.items():
-                    print(f"      {key}: {value}")
-                
-                # Count new fields found
-                new_fields = ['quality_of_construction', 'under_construction', 'living_units', 'finished_basement', 'garage']
-                found_fields = [field for field in new_fields if property_details.get(field) is not None]
-                missing_fields = [field for field in new_fields if field not in found_fields]
-                
-                print(f"\n   📋 NEW FIELDS SUMMARY:")
-                print(f"      Found: {len(found_fields)}/5 new fields")
-                print(f"      Missing: {missing_fields}")
-                
-                # Test lot size for land-only properties
+                # Check for land_size in property_details
                 land_size = property_details.get('land_size')
                 if land_size:
-                    print(f"   ✅ land_size: '{land_size}'")
+                    print(f"   ✅ property_details.land_size: '{land_size}'")
                 else:
-                    print(f"   ❌ land_size: NOT FOUND")
+                    print(f"   ❌ property_details.land_size: NOT FOUND")
                 
-                # Check existing fields that should be present
-                existing_fields = ['current_assessment', 'taxable_assessment', 'building_style', 'year_built', 'living_area', 'bedrooms', 'bathrooms']
-                existing_found = [field for field in existing_fields if property_details.get(field) is not None]
-                print(f"\n   📊 EXISTING FIELDS STATUS:")
-                print(f"      Found: {len(existing_found)}/{len(existing_fields)} existing fields")
-                for field in existing_fields:
-                    value = property_details.get(field)
-                    if value is not None:
-                        print(f"      ✅ {field}: {value}")
-                    else:
-                        print(f"      ❌ {field}: NOT FOUND")
-                
-                # Determine if this is a critical failure
-                if len(found_fields) == 0:
-                    print(f"   ❌ CRITICAL FAILURE - NO NEW FIELDS FOUND")
-                    return False, {"error": "No new PVSC fields found", "missing_fields": missing_fields}
-                elif len(found_fields) < 5:
-                    print(f"   ⚠️ PARTIAL FAILURE - {len(found_fields)} out of 5 fields captured")
-                    return False, {"error": f"Only {len(found_fields)} new fields found", "missing_fields": missing_fields}
+                # Check for lot_size in property_details (alternative location)
+                nested_lot_size = property_details.get('lot_size')
+                if nested_lot_size:
+                    print(f"   ✅ property_details.lot_size: '{nested_lot_size}'")
                 else:
-                    print(f"   ✅ ALL NEW FIELDS CAPTURED - ENHANCEMENT SUCCESSFUL")
+                    print(f"   ❌ property_details.lot_size: NOT FOUND")
+                
+                # Show complete property_details object to identify all available fields
+                print(f"\n   📊 COMPLETE PROPERTY_DETAILS OBJECT (All Available Fields):")
+                for key, value in sorted(property_details.items()):
+                    print(f"      {key}: {value}")
+                
+                # Look for any field that might contain lot/land size information
+                print(f"\n   🔍 SEARCHING FOR LOT/LAND SIZE RELATED FIELDS:")
+                lot_related_fields = []
+                for key, value in property_details.items():
+                    if any(keyword in key.lower() for keyword in ['lot', 'land', 'size', 'area', 'sq', 'ft', 'acre']):
+                        lot_related_fields.append((key, value))
+                        print(f"      🎯 POTENTIAL LOT SIZE FIELD: {key} = '{value}'")
+                
+                if not lot_related_fields:
+                    print(f"      ❌ NO LOT/LAND SIZE RELATED FIELDS FOUND")
                 
             else:
                 print(f"   ❌ property_details object missing")
-                return False, {"error": "property_details object missing"}
+            
+            # SUMMARY: Determine the correct field path for frontend
+            print(f"\n   📋 LOT SIZE FIELD ANALYSIS SUMMARY:")
+            
+            lot_size_sources = []
+            if root_lot_size:
+                lot_size_sources.append(f"ROOT LEVEL: property.lot_size = '{root_lot_size}'")
+            if 'land_size' in locals() and land_size:
+                lot_size_sources.append(f"NESTED: property_details.land_size = '{land_size}'")
+            if 'nested_lot_size' in locals() and nested_lot_size:
+                lot_size_sources.append(f"NESTED: property_details.lot_size = '{nested_lot_size}'")
+            
+            if lot_size_sources:
+                print(f"   ✅ LOT SIZE DATA FOUND IN {len(lot_size_sources)} LOCATION(S):")
+                for i, source in enumerate(lot_size_sources, 1):
+                    print(f"      {i}. {source}")
+                
+                # Recommend the correct field path for frontend
+                if root_lot_size:
+                    print(f"\n   🎯 RECOMMENDATION FOR FRONTEND:")
+                    print(f"      Use: property.lot_size (ROOT LEVEL)")
+                    print(f"      Value: '{root_lot_size}'")
+                elif 'land_size' in locals() and land_size:
+                    print(f"\n   🎯 RECOMMENDATION FOR FRONTEND:")
+                    print(f"      Use: property_details.land_size (NESTED)")
+                    print(f"      Value: '{land_size}'")
+                elif 'nested_lot_size' in locals() and nested_lot_size:
+                    print(f"\n   🎯 RECOMMENDATION FOR FRONTEND:")
+                    print(f"      Use: property_details.lot_size (NESTED)")
+                    print(f"      Value: '{nested_lot_size}'")
+                
+            else:
+                print(f"   ❌ NO LOT SIZE DATA FOUND - This explains the 'Not specified' bug")
+                print(f"   🔍 PVSC data may not contain lot size for this property")
+                return False, {"error": "No lot size data found in any location", "assessment": target_assessment}
+                
+            # Show the complete response structure for debugging
+            print(f"\n   📊 COMPLETE API RESPONSE STRUCTURE:")
+            print(f"      Root level fields: {list(property_data.keys())}")
+            if property_details:
+                print(f"      property_details fields: {list(property_details.keys())}")
+                
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Assessment {target_assessment} not found")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {enhanced_response.text}")
+            return False, {"error": f"HTTP {enhanced_response.status_code}"}
                 
         elif enhanced_response.status_code == 404:
             print(f"   ❌ Assessment {target_assessment} not found")
