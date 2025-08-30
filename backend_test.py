@@ -2935,13 +2935,109 @@ def run_review_request_tests():
     # Return success status
     return passed_tests == total_tests
 
+def main():
+    """Main test execution function"""
+    print("🚀 STARTING BACKEND API TESTING")
+    print("=" * 80)
+    print("🎯 FOCUS: Boundary Thumbnail Generation using Google Maps Static API")
+    print("📋 TARGET: Assessment #00079006 boundary thumbnail with red boundary lines")
+    print("=" * 80)
+    
+    # Track overall results
+    all_tests_passed = True
+    test_results = {}
+    
+    # Test 1: Basic API connectivity
+    api_success, _ = test_api_connection()
+    test_results['api_connection'] = api_success
+    if not api_success:
+        all_tests_passed = False
+        print("\n❌ CRITICAL: API connection failed - stopping tests")
+        return False
+    
+    # Test 2: Initialize municipalities if needed
+    init_success = initialize_municipalities_if_needed()
+    test_results['municipality_initialization'] = init_success
+    if not init_success:
+        print("\n⚠️ Municipality initialization failed - continuing with existing data")
+    
+    # Test 3: Check municipalities endpoint
+    muni_success, halifax_data = test_municipalities_endpoint()
+    test_results['municipalities_endpoint'] = muni_success
+    if not muni_success:
+        all_tests_passed = False
+        print("\n❌ CRITICAL: Municipalities endpoint failed")
+    
+    # Test 4: Tax sales data verification (needed for boundary generation)
+    tax_sales_success, halifax_properties = test_tax_sales_endpoint()
+    test_results['tax_sales_endpoint'] = tax_sales_success
+    if not tax_sales_success:
+        all_tests_passed = False
+        print("\n❌ CRITICAL: Tax sales endpoint failed")
+    
+    # Test 5: Assessment to PID Mapping (needed for boundary data)
+    pid_mapping_success, pid_mapping_result = test_assessment_to_pid_mapping()
+    test_results['assessment_pid_mapping'] = pid_mapping_success
+    if not pid_mapping_success:
+        print("\n⚠️ Assessment to PID mapping had issues")
+    
+    # Test 6: NSPRD Boundary Endpoint (needed for boundary generation)
+    nsprd_success, nsprd_result = test_nsprd_boundary_endpoint()
+    test_results['nsprd_boundary_endpoint'] = nsprd_success
+    if not nsprd_success:
+        print("\n⚠️ NSPRD boundary endpoint had issues")
+    
+    # Test 7: MAIN FOCUS - Boundary Thumbnail Generation System
+    boundary_success, boundary_result = test_boundary_thumbnail_generation()
+    test_results['boundary_thumbnail_generation'] = boundary_success
+    if not boundary_success:
+        all_tests_passed = False
+        print("\n❌ CRITICAL: Boundary thumbnail generation failed")
+    
+    # Test 8: Statistics endpoint
+    stats_success, stats_data = test_stats_endpoint()
+    test_results['stats_endpoint'] = stats_success
+    if not stats_success:
+        print("\n⚠️ Statistics endpoint had issues")
+    
+    # Test 9: Map data endpoint
+    map_success, map_data = test_map_data_endpoint()
+    test_results['map_data_endpoint'] = map_success
+    if not map_success:
+        print("\n⚠️ Map data endpoint had issues")
+    
+    # Print final summary
+    print("\n" + "=" * 80)
+    print("📊 FINAL TEST SUMMARY")
+    print("=" * 80)
+    
+    passed_tests = sum(1 for result in test_results.values() if result)
+    total_tests = len(test_results)
+    
+    print(f"✅ Passed: {passed_tests}/{total_tests} tests")
+    print(f"❌ Failed: {total_tests - passed_tests}/{total_tests} tests")
+    
+    print(f"\n📋 DETAILED RESULTS:")
+    for test_name, result in test_results.items():
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"   {status} - {test_name}")
+    
+    if all_tests_passed:
+        print(f"\n🎉 ALL CRITICAL TESTS PASSED!")
+        print(f"🎯 Boundary thumbnail generation using Google Maps Static API is working correctly")
+        return True
+    else:
+        print(f"\n⚠️ SOME TESTS FAILED")
+        print(f"🔍 Review the detailed output above for specific issues")
+        return False
+
 if __name__ == "__main__":
-    # Run the specific review request tests
-    success = run_review_request_tests()
+    # Run the main test function focused on boundary thumbnail generation
+    success = main()
     
     if success:
-        print("🎉 All review request tests passed!")
+        print("🎉 All boundary thumbnail generation tests passed!")
         sys.exit(0)
     else:
-        print("⚠️ Some review request tests failed")
+        print("⚠️ Some boundary thumbnail generation tests failed")
         sys.exit(1)
