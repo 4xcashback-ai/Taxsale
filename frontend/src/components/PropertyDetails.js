@@ -35,110 +35,120 @@ const PropertyDetails = () => {
     return null;
   };
 
-  // Google Map Component with NSPRD Boundaries
-  const PropertyMap = ({ property, boundaryData }) => {
-    const mapRef = useRef();
-    const [map, setMap] = useState(null);
-    const [boundaryPolygon, setBoundaryPolygon] = useState(null);
-
-    const onLoad = useCallback((map) => {
-      mapRef.current = map;
-      setMap(map);
-
-      // Add property marker
-      const marker = new window.google.maps.Marker({
-        position: {
-          lat: parseFloat(property.latitude),
-          lng: parseFloat(property.longitude)
-        },
-        map: map,
-        title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`
-      });
-
-      console.log('Property Map loaded with marker');
-    }, [property]);
-
-    // Display boundary polygon when data is available
-    useEffect(() => {
-      if (!map || !boundaryData || !boundaryData.geometry || !boundaryData.geometry.rings) return;
-
-      try {
-        // Clear existing polygon
-        if (boundaryPolygon) {
-          boundaryPolygon.setMap(null);
-        }
-
-        // Convert rings to Google Maps format
-        const paths = boundaryData.geometry.rings.map(ring => 
-          ring.map(point => ({
-            lat: point[1], // Latitude is second element
-            lng: point[0]  // Longitude is first element
-          }))
-        );
-
-        // Create polygon
-        const polygon = new window.google.maps.Polygon({
-          paths: paths,
-          strokeColor: '#FF0000',
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: '#FF0000',
-          fillOpacity: 0.15
-        });
-
-        polygon.setMap(map);
-        setBoundaryPolygon(polygon);
-
-        console.log('NSPRD boundary polygon displayed successfully');
-      } catch (error) {
-        console.error('Error displaying boundary polygon:', error);
-      }
-    }, [map, boundaryData, boundaryPolygon]);
-
-    const onUnmount = useCallback(() => {
-      mapRef.current = null;
-      if (boundaryPolygon) {
-        boundaryPolygon.setMap(null);
-      }
-    }, [boundaryPolygon]);
-
-    useEffect(() => {
-      if (!window.google) return;
-
-      const map = new window.google.maps.Map(mapRef.current, {
-        center: {
-          lat: parseFloat(property.latitude),
-          lng: parseFloat(property.longitude)
-        },
-        zoom: 17,
-        mapTypeId: 'satellite',
-        disableDefaultUI: false,
-        zoomControl: true,
-        streetViewControl: true,
-        mapTypeControl: true,
-        fullscreenControl: true
-      });
-
-      onLoad(map);
-
-      return () => onUnmount();
-    }, [property, onLoad, onUnmount]);
-
-    return (
-      <div 
-        ref={mapRef}
-        style={{ width: '100%', height: '400px' }}
-        className="bg-gray-100"
-      />
-    );
-  };
-
   // Load boundary data when property is available
   useEffect(() => {
     if (property && property.pid_number && !boundaryData) {
       fetchBoundaryData(property.pid_number);
     }
   }, [property, boundaryData]);
+
+  // Initialize Google Map with boundary polygons
+  useEffect(() => {
+    if (!property?.latitude || !property?.longitude || !mapRef.current) return;
+
+    // Initialize map directly without LoadScript to avoid conflicts
+    const initMap = () => {
+      if (!window.google?.maps) {
+        console.log('Google Maps not yet loaded, waiting...');
+        return;
+      }
+
+      try {
+        const map = new window.google.maps.Map(mapRef.current, {
+          center: {
+            lat: parseFloat(property.latitude),
+            lng: parseFloat(property.longitude)
+          },
+          zoom: 17,
+          mapTypeId: 'satellite',
+          disableDefaultUI: false,
+          zoomControl: true,
+          streetViewControl: true,
+          mapTypeControl: true,
+          fullscreenControl: true
+        });
+
+        // Add property marker
+        new window.google.maps.Marker({
+          position: {
+            lat: parseFloat(property.latitude),
+            lng: parseFloat(property.longitude)
+          },
+          map: map,
+          title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`
+        });
+
+        setMap(map);
+        console.log('Google Map initialized successfully');
+
+        // Draw boundary polygon if data is available
+        if (boundaryData?.geometry?.rings) {
+          drawBoundaryPolygon(map, boundaryData.geometry.rings);
+        }
+
+      } catch (error) {
+        console.error('Error initializing Google Map:', error);
+      }
+    };
+
+    // Check if Google Maps is already loaded
+    if (window.google?.maps) {
+      initMap();
+    } else {
+      // Wait for Google Maps to load (it should be loaded by the main App.js)
+      const checkGoogleMaps = setInterval(() => {
+        if (window.google?.maps) {
+          clearInterval(checkGoogleMaps);
+          initMap();
+        }
+      }, 100);
+
+      // Cleanup interval after 10 seconds
+      setTimeout(() => clearInterval(checkGoogleMaps), 10000);
+    }
+  }, [property, boundaryData]);
+
+  // Draw NSPRD boundary polygon on the map
+  const drawBoundaryPolygon = (map, rings) => {
+    try {
+      // Clear existing polygon
+      if (boundaryPolygon) {
+        boundaryPolygon.setMap(null);
+      }
+
+      // Convert rings to Google Maps format
+      const paths = rings.map(ring => 
+        ring.map(point => ({
+          lat: point[1], // Latitude is second element
+          lng: point[0]  // Longitude is first element
+        }))
+      );
+
+      // Create and display polygon
+      const polygon = new window.google.maps.Polygon({
+        paths: paths,
+        strokeColor: '#FF0000',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#FF0000',
+        fillOpacity: 0.15
+      });
+
+      polygon.setMap(map);
+      setBoundaryPolygon(polygon);
+
+      console.log('NSPRD boundary polygon drawn successfully on map');
+    } catch (error) {
+      console.error('Error drawing boundary polygon:', error);
+    }
+  };
+
+  // Update polygon when boundary data changes
+  useEffect(() => {
+    if (map && boundaryData?.geometry?.rings) {
+      drawBoundaryPolygon(map, boundaryData.geometry.rings);
+    }
+  }, [map, boundaryData]);
 
   const fetchPropertyDetails = async () => {
     try {
