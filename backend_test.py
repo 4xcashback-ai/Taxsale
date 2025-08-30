@@ -3716,11 +3716,12 @@ def test_enhanced_property_endpoint_pvsc_fields():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - FOCUSED ON ENHANCED PROPERTY ENDPOINT"""
+    """Main test execution function - FOCUSED ON ENHANCED PROPERTY ENDPOINT PVSC FIELDS"""
     print("🚀 STARTING BACKEND API TESTING")
     print("=" * 80)
-    print("🎯 FOCUS: Enhanced Property Endpoint Field Structure Analysis")
-    print("📋 TARGET: Assessment #00079006 complete JSON response with assessment fields")
+    print("🎯 FOCUS: Enhanced Property Endpoint PVSC Fields Analysis")
+    print("📋 TARGET: Assessment #00079006 - Show ALL PVSC fields in property_details")
+    print("📋 REQUIREMENTS: Find building_style, quality_of_construction, under_construction, living_units, total_living_area, finished_basement, garage")
     print("=" * 80)
     
     # Track overall results
@@ -3735,60 +3736,28 @@ def main():
         print("\n❌ CRITICAL: API connection failed - stopping tests")
         return False
     
-    # Test 2: Initialize municipalities if needed
-    init_success = initialize_municipalities_if_needed()
-    test_results['municipality_initialization'] = init_success
-    if not init_success:
-        print("\n⚠️ Municipality initialization failed - continuing with existing data")
-    
-    # Test 3: Check municipalities endpoint
-    muni_success, halifax_data = test_municipalities_endpoint()
-    test_results['municipalities_endpoint'] = muni_success
-    if not muni_success:
+    # Test 2: MAIN FOCUS - Enhanced Property Endpoint PVSC Fields Analysis
+    pvsc_fields_success, pvsc_fields_result = test_enhanced_property_endpoint_pvsc_fields()
+    test_results['enhanced_property_pvsc_fields'] = pvsc_fields_success
+    if not pvsc_fields_success:
         all_tests_passed = False
-        print("\n❌ CRITICAL: Municipalities endpoint failed")
+        print("\n❌ CRITICAL: Enhanced Property PVSC Fields analysis failed")
     
-    # Test 4: Tax sales data verification (needed for boundary generation)
+    # Test 3: Tax sales data verification (to ensure property exists)
     tax_sales_success, halifax_properties = test_tax_sales_endpoint()
     test_results['tax_sales_endpoint'] = tax_sales_success
     if not tax_sales_success:
-        all_tests_passed = False
-        print("\n❌ CRITICAL: Tax sales endpoint failed")
+        print("\n⚠️ Tax sales endpoint had issues")
     
-    # Test 5: Assessment to PID Mapping (needed for boundary data)
-    pid_mapping_success, pid_mapping_result = test_assessment_to_pid_mapping()
-    test_results['assessment_pid_mapping'] = pid_mapping_success
-    if not pid_mapping_success:
-        print("\n⚠️ Assessment to PID mapping had issues")
-    
-    # Test 6: NSPRD Boundary Endpoint (needed for boundary generation)
-    nsprd_success, nsprd_result = test_nsprd_boundary_endpoint()
-    test_results['nsprd_boundary_endpoint'] = nsprd_success
-    if not nsprd_success:
-        print("\n⚠️ NSPRD boundary endpoint had issues")
-    
-    # Test 7: MAIN FOCUS - Boundary Thumbnail Generation System
-    boundary_success, boundary_result = test_boundary_thumbnail_generation()
-    test_results['boundary_thumbnail_generation'] = boundary_success
-    if not boundary_success:
-        all_tests_passed = False
-        print("\n❌ CRITICAL: Boundary thumbnail generation failed")
-    
-    # Test 8: Statistics endpoint
+    # Test 4: Statistics endpoint
     stats_success, stats_data = test_stats_endpoint()
     test_results['stats_endpoint'] = stats_success
     if not stats_success:
         print("\n⚠️ Statistics endpoint had issues")
     
-    # Test 9: Map data endpoint
-    map_success, map_data = test_map_data_endpoint()
-    test_results['map_data_endpoint'] = map_success
-    if not map_success:
-        print("\n⚠️ Map data endpoint had issues")
-    
     # Print final summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST SUMMARY")
+    print("📊 FINAL TEST SUMMARY - PVSC FIELDS ANALYSIS")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
@@ -3801,6 +3770,48 @@ def main():
     for test_name, result in test_results.items():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name}")
+    
+    # Show detailed PVSC fields analysis results
+    if pvsc_fields_success and pvsc_fields_result:
+        print(f"\n🎯 PVSC FIELDS ANALYSIS RESULTS:")
+        print(f"   📊 Total response fields: {pvsc_fields_result.get('total_fields', 0)}")
+        print(f"   📊 Property details fields: {pvsc_fields_result.get('property_details_fields', 0)}")
+        
+        found_fields = pvsc_fields_result.get('found_requested_fields', {})
+        missing_fields = pvsc_fields_result.get('missing_requested_fields', [])
+        
+        if found_fields:
+            print(f"\n   ✅ FOUND REQUESTED FIELDS ({len(found_fields)}):")
+            for field, value in found_fields.items():
+                print(f"      - {field}: {value}")
+        
+        if missing_fields:
+            print(f"\n   ❌ MISSING REQUESTED FIELDS ({len(missing_fields)}):")
+            for field in missing_fields:
+                print(f"      - {field}")
+        
+        # Show all available property_details fields for frontend mapping
+        all_property_details = pvsc_fields_result.get('all_property_details', {})
+        if all_property_details:
+            print(f"\n   📋 ALL AVAILABLE PROPERTY_DETAILS FIELDS FOR FRONTEND MAPPING:")
+            for field, value in all_property_details.items():
+                value_str = str(value)[:50] + "..." if len(str(value)) > 50 else str(value)
+                print(f"      {field}: {value_str}")
+    
+    # Determine overall success
+    critical_tests = ["api_connection", "enhanced_property_pvsc_fields"]
+    critical_passed = all(test_results.get(test, False) for test in critical_tests)
+    
+    if critical_passed:
+        print(f"\n🎉 PVSC FIELDS ANALYSIS COMPLETED SUCCESSFULLY")
+        print(f"   ✅ Enhanced property endpoint accessible")
+        print(f"   ✅ Property details object analyzed")
+        print(f"   ✅ Field mapping information provided for frontend")
+    else:
+        print(f"\n⚠️ PVSC FIELDS ANALYSIS HAD ISSUES")
+        print(f"   Check enhanced property endpoint or property data availability")
+    
+    return critical_passed
     
 def main():
     """Main test execution focused on Review Request"""
