@@ -404,20 +404,28 @@ const PropertyDetails = () => {
                 <div className="mb-6">
                   <h4 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h4>
                   <div className="border rounded-lg overflow-hidden">
-                    {/* Use direct iframe approach to avoid LoadScript conflicts */}
-                    <iframe
-                      src={`https://www.google.com/maps/embed/v1/place?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}&q=${property.latitude},${property.longitude}&zoom=17&maptype=satellite`}
-                      width="100%"
-                      height="400"
-                      style={{ border: 0 }}
-                      allowFullScreen=""
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Property Location Map"
-                    ></iframe>
+                    <div 
+                      id="property-detail-map"
+                      style={{ width: '100%', height: '400px' }}
+                      className="bg-gray-100"
+                    >
+                      {!mapLoaded && (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="text-center text-gray-500">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p>Loading Interactive Map with NSPRD Boundaries...</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
                     📍 Property Location: {property.latitude}, {property.longitude}
+                    {boundaryData && (
+                      <span className="ml-4 text-green-600">
+                        🔴 NSPRD Boundaries: {Math.round(boundaryData.property_info?.area_sqm || 0).toLocaleString()} sqm
+                      </span>
+                    )}
                   </p>
                 </div>
               )}
