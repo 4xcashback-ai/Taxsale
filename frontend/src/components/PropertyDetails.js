@@ -68,22 +68,23 @@ const PropertyDetails = () => {
           fullscreenControl: true
         });
 
-        // Add property marker
-        new window.google.maps.Marker({
-          position: {
-            lat: parseFloat(property.latitude),
-            lng: parseFloat(property.longitude)
-          },
-          map: map,
-          title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`
-        });
-
+        // Don't add marker here - will be added in drawBoundaryPolygon at centroid
         setMap(map);
         console.log('Google Map initialized successfully');
 
         // Draw boundary polygon if data is available
         if (boundaryData?.geometry?.rings) {
           drawBoundaryPolygon(map, boundaryData.geometry.rings);
+        } else {
+          // If no boundary data, add marker at original coordinates
+          new window.google.maps.Marker({
+            position: {
+              lat: parseFloat(property.latitude),
+              lng: parseFloat(property.longitude)
+            },
+            map: map,
+            title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`
+          });
         }
 
       } catch (error) {
