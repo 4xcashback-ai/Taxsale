@@ -559,10 +559,10 @@ const PropertyDetails = () => {
                     <span className="block text-sm text-gray-500 mb-1">Sale Location</span>
                     <span className="text-gray-900">{property.sale_location || 'To be announced'}</span>
                   </div>
-                  {propertyDetails?.current_assessment && (
+                  {propertyDetails?.property_details?.current_assessment && (
                     <div>
                       <span className="block text-sm text-gray-500 mb-1">PVSC Assessment</span>
-                      <span className="text-gray-900">{formatCurrency(propertyDetails.current_assessment)}</span>
+                      <span className="text-gray-900">{formatCurrency(propertyDetails.property_details.current_assessment)}</span>
                     </div>
                   )}
                 </div>
