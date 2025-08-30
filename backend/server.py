@@ -1961,7 +1961,7 @@ async def geocode_address(address: str) -> tuple[Optional[float], Optional[float
     """
     try:
         # Use environment variable for Google Maps API key
-        api_key = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY')
+        api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
         
         if not api_key:
             logger.warning("Google Maps API key not found, skipping geocoding")
