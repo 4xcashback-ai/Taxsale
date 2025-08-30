@@ -769,7 +769,7 @@ function MainApp() {
                           onError={(e) => {
                             // Fallback to satellite image
                             if (property.latitude && property.longitude) {
-                              e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`;
+                              e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
                             } else {
                               e.target.style.display = 'none';
                               e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
