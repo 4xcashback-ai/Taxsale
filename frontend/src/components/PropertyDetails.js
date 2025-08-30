@@ -494,7 +494,7 @@ const PropertyDetails = () => {
                 </div>
                 <div>
                   <span className="block text-sm text-gray-500">Lot Size</span>
-                  <span className="text-gray-900">{property.lot_size || 'Not specified'}</span>
+                  <span className="text-gray-900">{propertyDetails?.property_details?.land_size || property.lot_size || 'Not specified'}</span>
                 </div>
                 <div>
                   <span className="block text-sm text-gray-500">Zoning</span>
