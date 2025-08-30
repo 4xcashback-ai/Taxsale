@@ -591,6 +591,34 @@ function MainApp() {
     }
   };
 
+  const scrapeIndividualMunicipality = async (municipalityId, municipalityName, scraperType) => {
+    setLoading(true);
+    setScrapeStatus(`Scraping ${municipalityName}...`);
+    try {
+      let response;
+      
+      if (scraperType === 'halifax') {
+        // For Halifax scraper type, use the Halifax endpoint (now supports any municipality with halifax type)
+        response = await axios.post(`${API}/scrape/halifax`);
+      } else {
+        // For generic scraper type, use the generic endpoint
+        response = await axios.post(`${API}/scrape-municipality/${municipalityId}`);
+      }
+      
+      console.log(`${municipalityName} scraping results:`, response.data);
+      await fetchTaxSales();
+      await fetchMunicipalities(); // Refresh municipalities to show updated status
+      await fetchStats();
+      await fetchMapData();
+      setScrapeStatus(`${municipalityName} scraping completed! ${response.data.properties_scraped || 0} properties processed.`);
+    } catch (error) {
+      console.error(`Error scraping ${municipalityName}:`, error);
+      setScrapeStatus(`${municipalityName} scraping failed. Please try again.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const scrapeAllMunicipalities = async () => {
     setLoading(true);
     setScrapeStatus("Scraping all municipalities...");
