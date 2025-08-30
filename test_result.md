@@ -301,6 +301,8 @@ agent_communication:
     message: "Halifax scraper currently uses hardcoded sample data. Need to implement proper PDF parsing to extract all property data from the actual PDF document. PyPDF2 is already imported but parsing logic is not implemented."
   - agent: "main"
     message: "Implemented comprehensive PDF parsing logic using pdfplumber. The scraper now attempts to extract property data from both table structures and text patterns in the PDF. Ready for testing with actual PDF documents."
+  - agent: "main"
+    message: "VPS DEPLOYMENT ISSUE INVESTIGATION: User reports scraping status not updating on frontend and Halifax Live button failing on VPS. Preview environment testing shows both backend API (curl POST /api/scrape/halifax returns 62 properties) and frontend (Scrape Halifax Live button) working correctly. Frontend implementation confirmed: scrapeHalifax() function calls backend, then refreshes municipalities via fetchMunicipalities() to update status. Need to test actual VPS environment vs preview to identify deployment-specific issues."
   - agent: "testing"
     message: "COMPREHENSIVE TESTING COMPLETED: All Halifax scraper endpoints are working perfectly. The /api/scrape/halifax endpoint successfully processes sample data, /api/tax-sales returns proper property data with all required fields, /api/municipalities shows Halifax with success status, /api/stats shows accurate counts, and search functionality works correctly. The only remaining task is implementing actual PDF parsing to replace the hardcoded sample data. Current implementation is ready for production except for PDF parsing logic."
   - agent: "testing"
