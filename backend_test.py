@@ -2387,19 +2387,85 @@ def run_comprehensive_test():
     
     return test_results
 
-if __name__ == "__main__":
-    print(f"Testing backend at: {BACKEND_URL}")
-    print(f"Test started at: {datetime.now()}")
+def run_review_request_tests():
+    """Run specific tests for the review request"""
+    print("🚀 Starting NSPRD Boundary Endpoint Testing - Review Request Focus")
+    print("=" * 80)
+    print("🎯 SPECIFIC REQUIREMENTS:")
+    print("   1. Test NSPRD Boundary Endpoint: GET /api/query-ns-government-parcel/00424945")
+    print("   2. Verify boundary data with geometry.rings and property_info.area_sqm")
+    print("   3. Test Assessment to PID Mapping for assessment 00079006")
+    print("   4. Check GET /api/tax-sales for PID field")
+    print("=" * 80)
     
-    results = run_comprehensive_test()
+    # Initialize test results
+    test_results = {}
     
-    # Exit with appropriate code
-    passed_tests = sum(results.values())
-    total_tests = len(results)
+    # Test 1: Basic API Connection
+    print("\n🔗 Testing API Connection...")
+    test_results["api_connection"] = test_api_connection()
     
-    if passed_tests == total_tests:
-        sys.exit(0)  # All tests passed
-    elif passed_tests >= 5:  # Core functionality working
-        sys.exit(1)  # Minor issues
+    if not test_results["api_connection"]:
+        print("\n❌ API connection failed. Cannot proceed with further tests.")
+        return False
+    
+    # Test 2: NSPRD Boundary Endpoint (Main focus)
+    test_results["nsprd_boundary"], boundary_result = test_nsprd_boundary_endpoint()
+    
+    # Test 3: Assessment to PID Mapping (Main focus)
+    test_results["assessment_pid_mapping"], mapping_result = test_assessment_to_pid_mapping()
+    
+    # Print final summary
+    print("\n" + "=" * 80)
+    print("📋 REVIEW REQUEST TEST SUMMARY")
+    print("=" * 80)
+    
+    passed_tests = sum(1 for result in test_results.values() if result)
+    total_tests = len(test_results)
+    
+    print(f"\n📊 Overall Results: {passed_tests}/{total_tests} tests passed")
+    
+    for test_name, result in test_results.items():
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"   {status} - {test_name}")
+    
+    # Detailed findings for review request
+    print(f"\n🎯 REVIEW REQUEST FINDINGS:")
+    
+    if test_results.get("nsprd_boundary"):
+        print(f"   ✅ NSPRD Boundary Endpoint: WORKING")
+        if boundary_result:
+            print(f"      - PID 00424945 found: {boundary_result.get('pid_found', False)}")
+            print(f"      - geometry.rings present: {boundary_result.get('geometry_rings_present', False)}")
+            print(f"      - property_info.area_sqm present: {boundary_result.get('area_sqm_present', False)}")
+            if boundary_result.get('area_value'):
+                print(f"      - Area value: {boundary_result.get('area_value')} sqm")
     else:
-        sys.exit(2)  # Major issues
+        print(f"   ❌ NSPRD Boundary Endpoint: ISSUES FOUND")
+    
+    if test_results.get("assessment_pid_mapping"):
+        print(f"   ✅ Assessment to PID Mapping: WORKING")
+        if mapping_result:
+            print(f"      - Assessment 00079006 found: {mapping_result.get('assessment_found', False)}")
+            print(f"      - PID field present: {mapping_result.get('pid_present', False)}")
+            print(f"      - PID value: {mapping_result.get('pid_value', 'N/A')}")
+            print(f"      - Total properties: {mapping_result.get('total_properties', 0)}")
+            print(f"      - PID coverage: {mapping_result.get('pid_coverage_percent', 0):.1f}%")
+    else:
+        print(f"   ❌ Assessment to PID Mapping: ISSUES FOUND")
+    
+    print(f"\n🏁 Review request testing completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Return success status
+    return passed_tests == total_tests
+
+if __name__ == "__main__":
+    # Run the specific review request tests
+    success = run_review_request_tests()
+    
+    if success:
+        print("🎉 All review request tests passed!")
+        sys.exit(0)
+    else:
+        print("⚠️ Some review request tests failed")
+        sys.exit(1)
