@@ -1,19 +1,16 @@
 <analysis>
-The previous AI engineer successfully transformed a basic Nova Scotia Tax Sale Aggregator into a robust application. The journey involved iterative development, deep debugging, and significant feature additions. Key initial efforts focused on enhancing Halifax PDF scraping for accurate data extraction and enriching property details with external links and an interactive map.
-
-A major part of the work addressed user experience and data accuracy. This included implementing comprehensive municipality management (add, edit, delete, scheduling), integrating Google Maps (replacing Leaflet) for property visualization, and meticulous debugging of map functionalities (crashes, zoom, data display). Crucially, the engineer tackled a persistent challenge: accurate property boundary visualization. After initial attempts with Viewpoint.ca failed due to accessibility, the focus shifted to leveraging official Nova Scotia Government ArcGIS data. This involved discovering the correct NS GIS service, integrating it to retrieve precise property boundaries, and then successfully combining this data with Google Maps Static API to generate high-quality satellite thumbnails with property lines. The work culminated in starting the integration of these NSPRD boundaries onto the live interactive map.
+The trajectory details the evolution of the Nova Scotia Tax Sale Aggregator, spanning from core feature development to complex deployment. The previous AI engineer focused on enhancing Halifax PDF scraping, integrating Google Maps with precise NSPRD property boundaries, and developing robust municipality management. Key challenges included debugging map overlays, ensuring accurate marker alignment, and addressing deployment-specific issues like Node.js compatibility and Nginx configuration on a VPS. AdSense integration for revenue generation was also implemented across multiple pages. The work has transitioned to ongoing debugging on a VPS, specifically regarding scraping status updates and the Halifax Live button functionality.
 </analysis>
 
 <product_requirements>
-The core product goal is a web application aggregating Nova Scotia tax sale information, displaying it in a searchable and map-based format with weekly updates.
-
-**Key Features & Enhancements Implemented:**
-*   **Robust Halifax Scraper:** Automatically finds, downloads, and parses Halifax tax sale PDFs, extracting detailed property information (Owner Names, PIDs, Opening Bids, Redeemable/HST status, assessment numbers). This involved extensive debugging for data accuracy and handling various PDF structures.
-*   **Interactive Mapping:** Integrated Google Maps (replacing ) to display properties, including custom markers, detailed info windows, and precise locations through Google Geocoding.
-*   **Property Details Page:** Dedicated page for each property showing comprehensive details, PVSC-scraped data, and embedded Google Maps. External links to PVSC and Viewpoint.ca are accurate.
-*   **Property Status Management:** Active/inactive property statuses with frontend filtering and display.
-*   **Enhanced Statistics & Admin:** Displays summary statistics (total, active, inactive properties, municipalities) and an Admin panel for adding, editing, and deleting municipalities, including setting scraping schedules.
-*   **Accurate Property Boundaries:** Integrated official Nova Scotia Government ArcGIS Tax Parcels data to retrieve precise property boundaries (polygons). These boundaries are used to generate satellite image thumbnails (via Google Maps Static API) which are displayed in search results and property detail pages, providing real-world property visualization.
+The application's core goal is to aggregate Nova Scotia tax sale information, presenting it in a searchable, map-based format with weekly updates.
+**Implemented Features & Enhancements:**
+*   **Halifax Scraper:** Robust PDF scraping extracts property details (Owner, PIDs, Bids, etc.).
+*   **Interactive Mapping (Google Maps):** Displays properties with custom markers, info windows, precise locations via Google Geocoding, and official Nova Scotia Government ArcGIS (NSPRD) property boundaries as overlays. Markers are aligned with boundary centers for accuracy.
+*   **Property Details Page:** Shows comprehensive property data, PVSC links, and a satellite boundary image.
+*   **Property Status Management:** Active/inactive status with frontend filtering.
+*   **Admin Panel:** CRUD for municipalities, including setting scraping schedules (frequency, day, time, scraper type).
+*   **Google AdSense Integration:** Ads displayed on property detail pages (below bid box) and search results (after every 5 properties).
 </product_requirements>
 
 <key_technical_concepts>
@@ -46,61 +43,40 @@ options:
   --laparams LAPARAMS
   --precision PRECISION
   --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing., ,  for PDF and HTML parsing.
--   **Mapping & Geocoding**: Google Maps JavaScript API, Google Maps Static API, Google Geocoding API.
--   **GIS Integration**: ArcGIS REST API (Nova Scotia Government's NSPRD service).
--   **State Management/Routing**: React (, , ), .
--   **Data Validation**: Pydantic models for FastAPI backend.
--   **Asynchronous Tasks**:  (for scraping),  in FastAPI.
+  --indent INDENT       Indent level for JSON pretty-printing., , .
+-   **Mapping & Geocoding**: Google Maps JS API, Static API, Geocoding API.
+-   **GIS Integration**: ArcGIS REST API (Nova Scotia Government NSPRD).
+-   **Process Management**: PM2 (VPS),  (backend).
+-   **Web Server**: Nginx (VPS).
+-   **Deployment**: Git, GitHub, VPS (Ubuntu, Node.js 20+, Python 3.9+, MongoDB 7.0+).
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Summary**: The core FastAPI application handling API routes, MongoDB interaction, web scraping, and scheduling. It defines data models, implements CRUD operations for  and .
-    -   **Changes Made**:
-        -    model updated with  field.
-        -    model updated with , , .
-        -   Fixed  validation error by making  optional during data retrieval.
-        -   Added  endpoint.
-        -   Updated  for new scheduling fields.
-        -   Modified  to use  for real coordinates, replacing fake ones.
-        -   Added  function using Google Geocoding API.
-        -   Added  to query official NS ArcGIS service for property boundaries.
-        -   Added  endpoint to serve locally stored boundary screenshots, bypassing  routing issues.
-        -   Added  to generate Google Maps Static API URLs with NS government polygon overlays.
-        -   Added  and  for batch processing.
+    -   **Summary**: Core FastAPI application, handles API routes, MongoDB, web scraping, and scheduling. Defines  and  models.
+    -   **Changes Made**:  updated with .  model enhanced with scraping fields. CRUD for  updated.  uses Google Geocoding.  for ArcGIS.  endpoint added.  generates static map URLs.  and  for batch processing. PM2 configuration was adjusted to start with  instead of . Environment variables in  were expanded to include , ,  for robust database connection.
 
 -   ****:
-    -   **Summary**: Main React component, handling application layout, routing, global state, and data fetching. Displays property listings, filters, and municipality management.
-    -   **Changes Made**:
-        -   Updated municipality state and forms for , , .
-        -   Implemented .
-        -   Replaced  map with  component.
-        -   Fixed Google Maps  infinite loop.
-        -   Updated map data fetching to use full  for richer info windows.
-        -   Integrated thumbnail display ( tag) in property cards using .
-        -   Started implementing NSPRD boundary overlays on the main live Google Map.
+    -   **Summary**: Main React component for layout, routing, global state, and data fetching. Displays properties, filters, and municipality management.
+    -   **Changes Made**: Municipality state updated for new scheduling fields.  implemented.  replaced with  component. Fixed Google Maps  infinite loop. Map data fetching uses . Thumbnail display integrated. Implemented NSPRD boundary overlays, ensuring properties with  fetch boundary data and using boundary center for marker alignment. Added  after scrape calls and improved municipality status display with color coding. Implemented  component and integrated ads after every 5 properties in search results. The environment variable for backend URL was updated to consistently use  for consistency.
 
 -   ****:
-    -   **Summary**: Component to display detailed information for a single property.
-    -   **Changes Made**:
-        -   Added  state and  function.
-        -   Added a section to display the satellite boundary image, using the  endpoint, prefixed with .
-        -   Fixed an issue where  was not being rendered correctly by ensuring  prefix.
+    -   **Summary**: Displays detailed information for a single property.
+    -   **Changes Made**: Added  state and  function. Integrated satellite boundary image display. Google AdSense code (, slot ) added below the minimum bid box using  for proper script loading.
 
 -   ****:
     -   **Summary**: Frontend environment variables.
-    -   **Changes Made**: Added .
+    -   **Changes Made**:  added.  points to .
 
 -   ****:
     -   **Summary**: Backend environment variables.
-    -   **Changes Made**: Added  for geocoding.
+    -   **Changes Made**:  for geocoding. , , ,  were explicitly defined to resolve  during backend startup.
 
 -   ****:
     -   **Summary**: Python dependencies for FastAPI.
-    -   **Changes Made**: Included  (initially for Viewpoint.ca automation), , usage: pdfplumber [-h] [--structure | --structure-text]
+    -   **Changes Made**: , , usage: pdfplumber [-h] [--structure | --structure-text]
                   [--format {csv,json,text}] [--types TYPES [TYPES ...]]
                   [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
                   [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
@@ -128,28 +104,28 @@ options:
   --laparams LAPARAMS
   --precision PRECISION
   --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing..
+  --indent INDENT       Indent level for JSON pretty-printing. included. Updated as necessary during deployment to VPS.
 
 -   ****:
     -   **Summary**: Node.js dependencies for React.
-    -   **Changes Made**: Added , .
+    -   **Changes Made**: ,  added. Node.js engine requirement updated to .  is used for custom Create React App configuration.
 </code_architecture>
 
 <pending_tasks>
--   Complete the implementation of NSPRD property boundary overlays on the main live Google Map view in .
+-   Complete the implementation of NSPRD property boundary overlays on the main live Google Map view in  (this was done and verified in preview, but needs verification on VPS).
 -   Implement scraping for other Nova Scotia municipalities using the established generic scraper framework.
 -   Implement email alerts for new tax sales.
 -   Implement property history tracking and analytics.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was working on integrating the official Nova Scotia Property Registration Database (NSPRD) property boundaries as an overlay on the main interactive Google Map in the frontend.
+Immediately before this summary request, the focus was on debugging issues encountered during the deployment of the application to a VPS. The main problems reported by the user are:
+1.  **Scraping status not updating on the frontend after clicking Scrape All** on the VPS. While the backend scraping itself was confirmed to work in the Emergent preview environment (and produces 62 properties for Halifax), the frontend UI on the VPS does not reflect the success status for municipalities.
+2.  **Halifax Live button failing on the VPS.** This suggests a specific issue with triggering the Halifax scraper through the frontend UI on the VPS, even though a direct  command to  works.
 
-Specifically, the engineer had just made modifications to  to enhance the Google Maps component. The goal is to fetch the precise polygon geometry for tax sale properties from the Nova Scotia government's ArcGIS service (which was successfully integrated and tested in the backend) and render these polygons directly on the live map, allowing users to visualize the exact boundaries of all listed properties.
-
-The last action recorded was: Now let me restart the frontend to apply the enhanced live map with NSPRD boundary overlays. This indicates that the code changes for the overlay in  have been made, and the next step is to observe their effect in the UI.
+The previous actions involved verifying backend logs, manually testing scraping endpoints via  on the VPS (which indicated the backend logic is sound), and checking frontend environment variables and build status. The core issue seems to lie in the communication or state updates between the frontend and backend on the deployed VPS environment.
 </current_work>
 
 <optional_next_step>
-Restart the frontend to apply the changes and verify that NSPRD property boundary overlays are correctly displayed on the live Google Map.
+I will start by re-verifying the VPS frontend build and backend logs during a frontend-triggered scrape.
 </optional_next_step>
