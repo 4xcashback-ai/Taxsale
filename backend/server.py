@@ -75,6 +75,49 @@ async def serve_boundary_image(filename: str):
         logger.error(f"Error serving boundary image {filename}: {e}")
         raise HTTPException(status_code=500, detail="Error serving image")
 
+@api_router.get("/property-image/{assessment_number}")
+async def get_optimized_property_image(assessment_number: str, width: int = 405, height: int = 290):
+    """Get optimized property image similar to TaxSalesHub format"""
+    try:
+        # Find property by assessment number
+        property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_doc:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        # Try boundary image first
+        if property_doc.get('boundary_screenshot'):
+            file_path = f"static/property_screenshots/{property_doc['boundary_screenshot']}"
+            if os.path.exists(file_path):
+                from fastapi.responses import FileResponse
+                return FileResponse(
+                    file_path,
+                    media_type="image/png",
+                    headers={
+                        "Cache-Control": "public, max-age=86400",
+                        "Content-Type": "image/png"
+                    }
+                )
+        
+        # Fallback to Google Maps satellite image
+        if property_doc.get('latitude') and property_doc.get('longitude'):
+            satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={property_doc['latitude']},{property_doc['longitude']}&zoom=17&size={width}x{height}&maptype=satellite&format=png&key={os.environ.get('GOOGLE_MAPS_API_KEY')}"
+            
+            # Fetch and return the satellite image
+            response = requests.get(satellite_url, timeout=10)
+            if response.status_code == 200:
+                return Response(
+                    content=response.content,
+                    media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"}
+                )
+        
+        # Final fallback - placeholder image
+        raise HTTPException(status_code=404, detail="No image available")
+        
+    except Exception as e:
+        logger.error(f"Error serving property image for {assessment_number}: {e}")
+        raise HTTPException(status_code=404, detail="Image not available")
+
 # Initialize scheduler
 scheduler = AsyncIOScheduler()
 
