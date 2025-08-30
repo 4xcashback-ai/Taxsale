@@ -10,7 +10,6 @@ import { Badge } from "./components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import PropertyDetails from './components/PropertyDetails';
-import ImprovedPropertySearch from './components/ImprovedPropertySearch';
 
 // AdSense Component for Search Page
 const SearchPageAd = ({ index }) => {
