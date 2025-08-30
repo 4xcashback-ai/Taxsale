@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Get backend URL from environment
-BACKEND_URL = "https://taxsale-ns.preview.emergentagent.com/api"
+BACKEND_URL = "https://taxsalecompass.ca/api"
 
 def test_api_connection():
     """Test basic API connectivity"""
