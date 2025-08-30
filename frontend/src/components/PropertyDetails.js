@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 
+// Define libraries outside component to prevent re-renders
+const libraries = ['places'];
+
 const PropertyDetails = () => {
   const { assessmentNumber } = useParams();
   const navigate = useNavigate();
