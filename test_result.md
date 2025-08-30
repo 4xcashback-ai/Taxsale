@@ -420,11 +420,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Enhanced Property Details Endpoint"
-    - "Cape Breton Municipality Scraper"
-    - "Kentville Municipality Scraper"
-    - "Updated Scraper Dispatch System"
-    - "Multi-Municipality Property Integration"
+    - "Boundary Thumbnail Generation System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
