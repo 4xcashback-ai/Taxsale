@@ -1695,7 +1695,7 @@ async def batch_process_ns_government_boundaries():
                     # Generate Google Maps satellite image for this property
                     center = parcel_data['center']
                     zoom = parcel_data['zoom_level']
-                    satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={center['lat']},{center['lon']}&zoom={zoom}&size=400x300&maptype=satellite&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+                    satellite_url = f"https://maps.googleapis.com/maps/api/staticmap?center={center['lat']},{center['lon']}&zoom={zoom}&size=400x300&maptype=satellite&key={os.environ.get('GOOGLE_MAPS_API_KEY')}"
                     
                     results["processed"].append({
                         "assessment_number": assessment_number,
