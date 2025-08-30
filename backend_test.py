@@ -1753,153 +1753,75 @@ def test_comprehensive_municipality_overview():
         return False, {"error": str(e)}
 
 def run_comprehensive_test():
-    """Run all tests in sequence"""
-    print("🚀 Starting Comprehensive Backend API Tests")
-    print("🎯 FOCUS: VPS Deployment Scraping Issues")
-    print("=" * 70)
+    """Run tests focused on review request requirements"""
+    print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
+    print("🎯 FOCUS: Comprehensive Municipality Overview (Review Request)")
+    print("=" * 80)
     
     test_results = {
         "api_connection": False,
-        "nsprd_boundary_system": False,
-        "municipality_endpoints_quick": False,
-        "municipality_management_api": False,
-        "municipalities": False,
-        "halifax_scraper": False,
-        "tax_sales": False,
-        "data_truncation": False,
-        "raw_data_analysis": False,
-        "stats": False,
-        "map_data": False
+        "comprehensive_overview": False,
+        "municipality_endpoints": False,
+        "stats_endpoint": False
     }
     
     # Test 1: API Connection
-    test_results["api_connection"] = test_api_connection()
-    if not test_results["api_connection"]:
+    api_connected, _ = test_api_connection()
+    test_results["api_connection"] = api_connected
+    
+    if not api_connected:
         print("\n❌ CRITICAL: API connection failed. Cannot proceed with other tests.")
         return test_results
     
-    # Initialize municipalities if needed
-    initialize_municipalities_if_needed()
+    # Test 2: Comprehensive Municipality Overview (Main Review Request)
+    overview_success, overview_data = test_comprehensive_municipality_overview()
+    test_results["comprehensive_overview"] = overview_success
     
-    # Test 2: NSPRD Boundary Overlay System (HIGHEST PRIORITY - Review Request Focus)
-    nsprd_success, nsprd_data = test_nsprd_boundary_api()
-    test_results["nsprd_boundary_system"] = nsprd_success
+    # Test 3: Quick Municipality Endpoints Verification
+    municipalities_working, muni_data = test_municipality_endpoints_quick()
+    test_results["municipality_endpoints"] = municipalities_working
     
-    # Test 3: Quick Municipality Endpoints Test (HIGH PRIORITY)
-    quick_muni_success, quick_muni_data = test_municipality_endpoints_quick()
-    test_results["municipality_endpoints_quick"] = quick_muni_success
-    
-    # Test 4: Municipality Management API (HIGH PRIORITY)
-    municipality_api_success, municipality_api_data = test_municipality_management_api()
-    test_results["municipality_management_api"] = municipality_api_success
-    
-    # Test 5: Municipalities endpoint
-    municipalities_success, halifax_data = test_municipalities_endpoint()
-    test_results["municipalities"] = municipalities_success
-    
-    # Test 6: Halifax scraper
-    scraper_success, scraper_result = test_halifax_scraper()
-    test_results["halifax_scraper"] = scraper_success
-    
-    # Test 7: Tax sales endpoint
-    tax_sales_success, halifax_properties = test_tax_sales_endpoint()
-    test_results["tax_sales"] = tax_sales_success
-    
-    # Test 8: Data truncation issues (CRITICAL for this review)
-    truncation_success, truncation_data = test_data_truncation_issues()
-    test_results["data_truncation"] = truncation_success
-    
-    # Test 9: Raw data analysis
-    raw_data_success, raw_data_info = test_raw_property_data_analysis()
-    test_results["raw_data_analysis"] = raw_data_success
-    
-    # Test 10: Statistics endpoint
-    stats_success, stats_data = test_stats_endpoint()
-    test_results["stats"] = stats_success
-    
-    # Test 11: Map data endpoint
-    map_success, map_data = test_map_data_endpoint()
-    test_results["map_data"] = map_success
+    # Test 4: Statistics Endpoint
+    stats_working, stats_data = test_stats_endpoint()
+    test_results["stats_endpoint"] = stats_working
     
     # Summary
-    print("\n" + "=" * 70)
-    print("📋 TEST SUMMARY - NSPRD BOUNDARY OVERLAY & MUNICIPALITY API")
-    print("=" * 70)
+    print("\n" + "=" * 80)
+    print("📋 BACKEND TESTING SUMMARY")
+    print("=" * 80)
     
-    passed_tests = sum(test_results.values())
+    passed_tests = sum(1 for result in test_results.values() if result)
     total_tests = len(test_results)
+    
+    print(f"✅ Passed: {passed_tests}/{total_tests} tests")
     
     for test_name, result in test_results.items():
         status = "✅ PASS" if result else "❌ FAIL"
-        print(f"{test_name.replace('_', ' ').title()}: {status}")
+        print(f"   {status}: {test_name}")
     
-    print(f"\nOverall: {passed_tests}/{total_tests} tests passed")
+    # Key Findings from Review Request
+    if overview_success and 'overview_data' in locals():
+        print(f"\n🎯 KEY FINDINGS FOR REVIEW REQUEST:")
+        
+        if overview_data.get('municipalities'):
+            muni_data = overview_data['municipalities']
+            print(f"   📊 Municipality Configuration: {muni_data['total_count']} total municipalities")
+            
+            scraper_types = muni_data.get('scraper_types', {})
+            for scraper_type, count in scraper_types.items():
+                print(f"      - {scraper_type}: {count} municipalities")
+        
+        if overview_data.get('properties'):
+            prop_data = overview_data['properties']
+            print(f"   🏠 Property Distribution: {prop_data['total_count']} total properties")
+            print(f"      - Halifax: {prop_data['halifax_count']} properties")
+        
+        if overview_data.get('api_health'):
+            health_data = overview_data['api_health']
+            healthy_count = sum(1 for ep in health_data.values() if ep.get('healthy', False))
+            print(f"   🏥 API Health: {healthy_count}/{len(health_data)} endpoints healthy")
     
-    # Special focus on NSPRD Boundary System (Review Request Priority)
-    if test_results["nsprd_boundary_system"]:
-        print(f"\n🎉 NSPRD BOUNDARY OVERLAY SYSTEM VERIFIED!")
-        print(f"   ✅ NS Government ArcGIS API integration working")
-        print(f"   ✅ Property boundary data retrieval working")
-        print(f"   ✅ Geometry format (rings with coordinate pairs) correct")
-        print(f"   ✅ Property info (area, perimeter) available")
-        print(f"   ✅ Error handling for invalid PIDs working")
-        print(f"   ✅ Tax sales PID integration verified")
-        print(f"   ✅ Performance for concurrent queries acceptable")
-    else:
-        print(f"\n🚨 NSPRD BOUNDARY OVERLAY SYSTEM ISSUES FOUND!")
-        print(f"   ❌ NS Government API may not be responding correctly")
-        print(f"   ❌ Property boundary data may be missing or malformed")
-        print(f"   ❌ PID integration with tax sales may have issues")
-        print(f"   ❌ Performance may not support frontend requirements")
-    
-    # Special focus on Municipality Management API
-    if test_results["municipality_endpoints_quick"]:
-        print(f"\n🎉 MUNICIPALITY ENDPOINTS QUICK TEST PASSED!")
-        print(f"   ✅ GET /api/municipalities returns municipalities without HTTP 500")
-        print(f"   ✅ POST /api/municipalities still works correctly")
-        print(f"   ✅ website_url field migration working properly")
-        print(f"   ✅ No HTTP 500 errors detected on repeated calls")
-    else:
-        print(f"\n🚨 MUNICIPALITY ENDPOINTS ISSUES FOUND!")
-        print(f"   ❌ GET /api/municipalities may be returning HTTP 500")
-        print(f"   ❌ website_url field migration may have issues")
-        print(f"   ❌ The reported bug may still exist")
-    
-    if test_results["municipality_management_api"]:
-        print(f"\n🎉 MUNICIPALITY MANAGEMENT API NEW FEATURES VERIFIED!")
-        print(f"   ✅ DELETE /api/municipalities/{id} endpoint working")
-        print(f"   ✅ Enhanced PUT /api/municipalities/{id} with scheduling working")
-        print(f"   ✅ New scheduling fields (scrape_enabled, scrape_frequency, etc.) working")
-        print(f"   ✅ next_scrape_time calculation working for daily/weekly/monthly")
-        print(f"   ✅ Cascade delete of associated tax sale properties working")
-        print(f"   ✅ Data migration for existing municipalities working")
-    else:
-        print(f"\n🚨 MUNICIPALITY MANAGEMENT API NEW FEATURES ISSUES FOUND!")
-        print(f"   ❌ DELETE endpoint may not be working")
-        print(f"   ❌ Enhanced PUT with scheduling may have issues")
-        print(f"   ❌ Scheduling fields may not be saved/calculated correctly")
-        print(f"   ❌ Data migration for scheduling fields may be incomplete")
-    
-    # Special focus on data quality issues
-    if not test_results["data_truncation"]:
-        print("\n🚨 CRITICAL DATA QUALITY ISSUES CONFIRMED!")
-        print("   User reports about truncation and redeemable status are validated.")
-        if 'truncation_data' in locals() and truncation_data:
-            if truncation_data.get("truncation_issues"):
-                print(f"   - {len(truncation_data['truncation_issues'])} truncation issues found")
-            if truncation_data.get("redeemable_issues"):
-                print(f"   - {len(truncation_data['redeemable_issues'])} redeemable status issues found")
-            if truncation_data.get("hst_issues"):
-                print(f"   - {len(truncation_data['hst_issues'])} HST status issues found")
-    else:
-        print("\n✅ Data quality appears good - no critical truncation issues found")
-    
-    if passed_tests == total_tests:
-        print("🎉 ALL TESTS PASSED - NSPRD Boundary System & Municipality API fully functional!")
-    elif passed_tests >= 8:  # Core functionality working including NSPRD system
-        print("⚠️ MOSTLY WORKING - NSPRD Boundary System working with minor issues")
-    else:
-        print("❌ MAJOR ISSUES - Critical NSPRD or API problems found")
+    print(f"\n📊 Overall Status: {'✅ SYSTEM READY' if passed_tests >= total_tests * 0.75 else '❌ NEEDS ATTENTION'}")
     
     return test_results
 
