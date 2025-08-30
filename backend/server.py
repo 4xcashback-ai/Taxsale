@@ -2214,6 +2214,227 @@ async def scrape_halifax():
     result = await scrape_halifax_tax_sales()
     return result
 
+@api_router.post("/generate-boundary-thumbnail/{assessment_number}")
+async def generate_boundary_thumbnail(assessment_number: str):
+    """Generate a thumbnail screenshot of Google Maps with NSPRD boundaries for search page"""
+    try:
+        # Find property by assessment number
+        property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_doc:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        if not property_doc.get('latitude') or not property_doc.get('longitude'):
+            raise HTTPException(status_code=400, detail="Property coordinates not available")
+        
+        # Import Playwright
+        from playwright.async_api import async_playwright
+        import asyncio
+        import base64
+        from datetime import datetime
+        
+        async def capture_boundary_thumbnail():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                context = await browser.new_context(
+                    viewport={'width': 400, 'height': 300}
+                )
+                page = await context.new_page()
+                
+                try:
+                    # Create HTML page with Google Maps and NSPRD boundaries
+                    google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY')
+                    
+                    html_content = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            #map {{ width: 100%; height: 100%; margin: 0; padding: 0; }}
+                            body {{ margin: 0; padding: 0; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div id="map"></div>
+                        <script async defer
+                            src="https://maps.googleapis.com/maps/api/js?key={google_maps_api_key}&libraries=geometry&callback=initMap">
+                        </script>
+                        <script>
+                            let map;
+                            let marker;
+                            let boundaryPolygon;
+                            
+                            function initMap() {{
+                                const propertyLocation = {{ lat: {property_doc['latitude']}, lng: {property_doc['longitude']} }};
+                                
+                                map = new google.maps.Map(document.getElementById("map"), {{
+                                    zoom: 18,
+                                    center: propertyLocation,
+                                    mapTypeId: 'satellite',
+                                    disableDefaultUI: true,
+                                    gestureHandling: 'none',
+                                    keyboardShortcuts: false,
+                                    scrollwheel: false,
+                                    zoomControl: false
+                                }});
+                                
+                                // Add property marker
+                                marker = new google.maps.Marker({{
+                                    position: propertyLocation,
+                                    map: map,
+                                    title: "Property Location"
+                                }});
+                                
+                                // Fetch and draw NSPRD boundaries
+                                fetchAndDrawBoundaries();
+                            }}
+                            
+                            async function fetchAndDrawBoundaries() {{
+                                try {{
+                                    const pidNumber = '{property_doc.get("pid_number", "")}';
+                                    if (!pidNumber) {{
+                                        console.log('No PID number available');
+                                        return;
+                                    }}
+                                    
+                                    const response = await fetch('/api/query-ns-government-parcel/' + pidNumber);
+                                    const data = await response.json();
+                                    
+                                    if (data.found && data.geometry && data.geometry.rings) {{
+                                        drawBoundaryPolygon(data.geometry.rings);
+                                    }}
+                                }} catch (error) {{
+                                    console.error('Error fetching boundary data:', error);
+                                }}
+                            }}
+                            
+                            function drawBoundaryPolygon(rings) {{
+                                try {{
+                                    // Convert rings to Google Maps format
+                                    const paths = rings.map(ring => 
+                                        ring.map(point => ({{
+                                            lat: point[1], // Latitude is second element
+                                            lng: point[0]  // Longitude is first element
+                                        }}))
+                                    );
+                                    
+                                    // Create and display polygon
+                                    boundaryPolygon = new google.maps.Polygon({{
+                                        paths: paths,
+                                        strokeColor: '#FF0000',
+                                        strokeOpacity: 0.9,
+                                        strokeWeight: 3,
+                                        fillColor: '#FF0000',
+                                        fillOpacity: 0.2
+                                    }});
+                                    
+                                    boundaryPolygon.setMap(map);
+                                    console.log('NSPRD boundary polygon drawn for thumbnail');
+                                }} catch (error) {{
+                                    console.error('Error drawing boundary polygon:', error);
+                                }}
+                            }}
+                        </script>
+                    </body>
+                    </html>
+                    """
+                    
+                    # Load the HTML content
+                    await page.set_content(html_content)
+                    
+                    # Wait for map to load and boundaries to be drawn
+                    await page.wait_for_timeout(5000)
+                    
+                    # Take screenshot
+                    screenshot = await page.screenshot(
+                        type='png',
+                        full_page=True,
+                        quality=90
+                    )
+                    
+                    return screenshot
+                    
+                finally:
+                    await browser.close()
+        
+        # Generate the thumbnail screenshot
+        screenshot_bytes = await capture_boundary_thumbnail()
+        
+        # Save screenshot to file
+        screenshots_dir = "/app/backend/static/property_screenshots"
+        os.makedirs(screenshots_dir, exist_ok=True)
+        
+        thumbnail_filename = f"thumbnail_{assessment_number}_{property_doc.get('pid_number', 'unknown')}.png"
+        thumbnail_path = os.path.join(screenshots_dir, thumbnail_filename)
+        
+        with open(thumbnail_path, 'wb') as f:
+            f.write(screenshot_bytes)
+        
+        # Update property document with thumbnail filename
+        await db.tax_sales.update_one(
+            {"assessment_number": assessment_number},
+            {"$set": {"boundary_thumbnail": thumbnail_filename}}
+        )
+        
+        logger.info(f"Generated boundary thumbnail for assessment {assessment_number}: {thumbnail_filename}")
+        
+        return {
+            "status": "success",
+            "assessment_number": assessment_number,
+            "thumbnail_filename": thumbnail_filename,
+            "thumbnail_path": f"/api/boundary-image/{thumbnail_filename}",
+            "message": "Boundary thumbnail generated successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating boundary thumbnail for {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate boundary thumbnail: {str(e)}")
+
+@api_router.post("/generate-all-boundary-thumbnails")
+async def generate_all_boundary_thumbnails():
+    """Generate boundary thumbnails for all properties with PID numbers"""
+    try:
+        # Get all properties with PID numbers
+        properties = await db.tax_sales.find({"pid_number": {"$exists": True, "$ne": None}}).to_list(None)
+        
+        results = []
+        success_count = 0
+        error_count = 0
+        
+        for property_doc in properties:
+            try:
+                assessment_number = property_doc.get("assessment_number")
+                if not assessment_number:
+                    continue
+                
+                # Generate thumbnail for this property
+                result = await generate_boundary_thumbnail(assessment_number)
+                results.append({
+                    "assessment_number": assessment_number,
+                    "status": "success",
+                    "thumbnail": result.get("thumbnail_filename")
+                })
+                success_count += 1
+                
+            except Exception as e:
+                results.append({
+                    "assessment_number": property_doc.get("assessment_number", "unknown"),
+                    "status": "error",
+                    "error": str(e)
+                })
+                error_count += 1
+        
+        return {
+            "status": "completed",
+            "total_properties": len(properties),
+            "success_count": success_count,
+            "error_count": error_count,
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating all boundary thumbnails: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate thumbnails: {str(e)}")
+
 @api_router.post("/scrape/{municipality_id}")
 async def scrape_municipality(municipality_id: str):
     """Trigger scraping for a specific municipality"""
