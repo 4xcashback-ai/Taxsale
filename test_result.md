@@ -321,7 +321,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "NSPRD boundary overlay system verification completed successfully"
+    - "VPS Deployment - Scraping Status Update Issue"
+    - "VPS Frontend - Scraping Status UI Updates"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
