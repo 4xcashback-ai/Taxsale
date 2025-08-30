@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 
 const PropertyDetails = () => {
   const { assessmentNumber } = useParams();
@@ -8,6 +9,7 @@ const PropertyDetails = () => {
   const [propertyDetails, setPropertyDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     fetchPropertyDetails();
