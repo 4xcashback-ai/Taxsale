@@ -804,46 +804,19 @@ async def scrape_halifax_tax_sales_for_municipality(municipality_id: str):
             {"$set": {"scrape_status": "in_progress"}}
         )
         
-        # Use the existing Halifax scraping logic but with the provided municipality_id
-        # For now, delegate to the existing function but could be customized per municipality
-        # Get Halifax municipality data (assuming this municipality uses Halifax scraper)
-        
-        # Scrape main tax sale page to find the PDF link
-        main_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(main_url, headers=headers, timeout=30)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Find the PDF schedule link dynamically
-        schedule_link = None
-        sale_date = "2025-09-16T10:01:00Z"  # Known sale date
-        
-        # Look for the schedule PDF link
-        for link in soup.find_all('a'):
-            href = link.get('href', '')
-            text = link.get_text()
-            # Look for PDF links containing tax sale schedule info
-            if ('SCHEDULE' in text.upper() or 'newspaper' in text.lower()) and href.endswith('.pdf'):
-                schedule_link = href
-                break
-            elif 'Sept16.2025newspaper' in href or '91654' in href:
-                schedule_link = href
-                break
-        
-        # Fallback to known link if not found dynamically
-        if not schedule_link:
-            schedule_link = "https://www.halifax.ca/media/91654"
+        # Check if this is the actual Halifax Regional Municipality
+        if municipality['name'] == 'Halifax Regional Municipality':
+            # Call the actual Halifax scraper for Halifax Regional Municipality
+            logger.info(f"Calling actual Halifax scraper for {municipality['name']}")
+            result = await scrape_halifax_tax_sales()
+            return result
+        else:
+            # For other municipalities with Halifax scraper type, this is not yet implemented
+            logger.info(f"Halifax-style scraping for {municipality['name']} - municipality-specific implementation needed")
             
-        # Make URL absolute if relative
-        if schedule_link.startswith('/'):
-            schedule_link = "https://www.halifax.ca" + schedule_link
-            
-        logger.info(f"Found Halifax schedule link: {schedule_link}")
-        
-        # For now, return a simple success response
-        # The full implementation would include PDF parsing logic similar to scrape_halifax_tax_sales()
+            # In the future, this would implement municipality-specific Halifax-style scraping
+            # using the municipality's website_url or tax_sale_url for their specific PDF/data
+            properties_scraped = 0
         
         # Update municipality scrape status
         await db.municipalities.update_one(
