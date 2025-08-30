@@ -19,6 +19,30 @@ const PropertyDetails = () => {
     fetchPropertyDetails();
   }, [assessmentNumber]);
 
+  // Fetch municipality data when property is loaded
+  useEffect(() => {
+    if (property && property.municipality_name && !municipalityData) {
+      fetchMunicipalityData(property.municipality_name);
+    }
+  }, [property, municipalityData]);
+
+  // Fetch municipality data for tax sale URL
+  const fetchMunicipalityData = async (municipalityName) => {
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://taxsale-ns.preview.emergentagent.com';
+      const response = await fetch(`${backendUrl}/api/municipalities`);
+      const municipalities = await response.json();
+      
+      // Find the municipality that matches the property's municipality name
+      const municipality = municipalities.find(m => m.name === municipalityName);
+      if (municipality) {
+        setMunicipalityData(municipality);
+      }
+    } catch (error) {
+      console.error('Error fetching municipality data:', error);
+    }
+  };
+
   // Fetch NSPRD boundary data
   const fetchBoundaryData = async (pidNumber) => {
     try {
