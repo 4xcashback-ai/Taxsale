@@ -13,6 +13,7 @@ const PropertyDetails = () => {
   const mapRef = useRef();
   const [map, setMap] = useState(null);
   const [boundaryPolygon, setBoundaryPolygon] = useState(null);
+  const [municipalityData, setMunicipalityData] = useState(null);
 
   useEffect(() => {
     fetchPropertyDetails();
