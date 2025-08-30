@@ -2105,6 +2105,26 @@ async def get_property_boundary_image(assessment_number: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Enhanced Scraping Endpoints
+@api_router.post("/scrape/cape-breton")
+async def scrape_cape_breton():
+    """Scrape Cape Breton Regional Municipality tax sales directly"""
+    try:
+        result = await scrape_cape_breton_tax_sales()
+        return result
+    except Exception as e:
+        logger.error(f"Cape Breton scraping endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Cape Breton scraping failed: {str(e)}")
+
+@api_router.post("/scrape/kentville") 
+async def scrape_kentville():
+    """Scrape Kentville tax sales directly"""
+    try:
+        result = await scrape_kentville_tax_sales()
+        return result
+    except Exception as e:
+        logger.error(f"Kentville scraping endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Kentville scraping failed: {str(e)}")
+
 @api_router.post("/scrape/halifax")
 async def scrape_halifax():
     """Trigger Halifax-specific scraping"""
