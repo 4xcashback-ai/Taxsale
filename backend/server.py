@@ -2183,6 +2183,12 @@ async def scrape_all_municipalities():
             if scraper_type == "halifax":
                 # Use Halifax scraper for any municipality with scraper_type "halifax"
                 result = await scrape_halifax_tax_sales_for_municipality(municipality["id"])
+            elif scraper_type == "cape_breton":
+                # Use Cape Breton scraper
+                result = await scrape_cape_breton_tax_sales()
+            elif scraper_type == "kentville":
+                # Use Kentville scraper  
+                result = await scrape_kentville_tax_sales()
             else:
                 # Use generic scraper for municipalities with scraper_type "generic"
                 result = await scrape_generic_municipality(municipality["id"])
