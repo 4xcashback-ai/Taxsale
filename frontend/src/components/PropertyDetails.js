@@ -177,7 +177,7 @@ const PropertyDetails = () => {
                 </div>
                 <div>
                   <span className="block text-sm text-gray-500">Municipality</span>
-                  <span className="text-gray-900">Halifax Regional Municipality</span>
+                  <span className="text-gray-900">{property.municipality_name || 'Not specified'}</span>
                 </div>
               </div>
             </div>
