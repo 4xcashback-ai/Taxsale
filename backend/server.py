@@ -2449,7 +2449,7 @@ async def initialize_municipalities():
             "region": "Cape Breton",
             "latitude": 46.1368,
             "longitude": -60.1942,
-            "scraper_type": "generic"
+            "scraper_type": "cape_breton"
         },
         {
             "name": "Truro",
