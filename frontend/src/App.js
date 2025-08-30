@@ -597,13 +597,8 @@ function MainApp() {
     try {
       let response;
       
-      if (scraperType === 'halifax') {
-        // For Halifax scraper type, use the Halifax endpoint (now supports any municipality with halifax type)
-        response = await axios.post(`${API}/scrape/halifax`);
-      } else {
-        // For generic scraper type, use the generic endpoint
-        response = await axios.post(`${API}/scrape-municipality/${municipalityId}`);
-      }
+      // Always use the individual municipality endpoint - it will route to correct scraper based on type
+      response = await axios.post(`${API}/scrape-municipality/${municipalityId}`);
       
       console.log(`${municipalityName} scraping results:`, response.data);
       await fetchTaxSales();
