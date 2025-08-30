@@ -11,6 +11,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import PropertyDetails from './components/PropertyDetails';
 
+// AdSense Component for Search Page
+const SearchPageAd = ({ index }) => {
+  useEffect(() => {
+    try {
+      // Load AdSense script if not already loaded
+      if (!document.querySelector('script[src*="googlesyndication.com"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215';
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        document.head.appendChild(script);
+      }
+      
+      // Push ad to AdSense
+      if (window.adsbygoogle) {
+        window.adsbygoogle.push({});
+      }
+    } catch (err) {
+      console.log('AdSense error:', err);
+    }
+  }, [index]);
+
+  return (
+    <div className="my-6 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+      <div className="text-center text-sm text-gray-500 mb-2">Advertisement</div>
+      <ins className="adsbygoogle"
+           style={{display:'block'}}
+           data-ad-client="ca-pub-5947395928510215"
+           data-ad-slot="2293195574"
+           data-ad-format="auto"
+           data-full-width-responsive="true">
+      </ins>
+    </div>
+  );
+};
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
