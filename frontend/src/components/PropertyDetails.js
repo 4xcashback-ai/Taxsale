@@ -83,6 +83,20 @@ const PropertyDetails = () => {
     }
   };
 
+  // Google Maps configuration
+  const mapContainerStyle = {
+    width: '100%',
+    height: '400px'
+  };
+
+  const mapOptions = {
+    disableDefaultUI: false,
+    zoomControl: true,
+    streetViewControl: true,
+    mapTypeControl: true,
+    fullscreenControl: true
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
