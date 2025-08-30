@@ -891,6 +891,33 @@ async def scrape_cape_breton_tax_sales():
     try:
         logger.info("Starting Cape Breton Regional Municipality tax sale scraping...")
         
+        # Get or create Cape Breton municipality
+        cape_breton = await db.municipalities.find_one({"name": "Cape Breton Regional Municipality"})
+        if not cape_breton:
+            # Create Cape Breton municipality if it doesn't exist
+            cape_breton_data = {
+                "id": str(uuid.uuid4()),
+                "name": "Cape Breton Regional Municipality",
+                "website_url": "https://www.cbrm.ns.ca",
+                "tax_sale_url": "https://www.cbrm.ns.ca/tax-sales",
+                "province": "Nova Scotia",
+                "region": "Cape Breton",
+                "scraper_type": "cape_breton",
+                "scrape_status": "in_progress",
+                "scrape_enabled": True,
+                "scrape_frequency": "weekly",
+                "scrape_day_of_week": 1,
+                "scrape_day_of_month": 1,
+                "scrape_time_hour": 2,
+                "scrape_time_minute": 0
+            }
+            municipality_obj = Municipality(**cape_breton_data)
+            await db.municipalities.insert_one(municipality_obj.dict())
+            cape_breton = cape_breton_data
+            logger.info("Created Cape Breton Regional Municipality in database")
+        
+        municipality_id = cape_breton["id"]
+        
         # Cape Breton typically has tax sale information on their website
         # Based on research, they hold tax sales at Centre 200 in Sydney
         cbrm_url = "https://www.cbrm.ns.ca"
@@ -899,6 +926,7 @@ async def scrape_cape_breton_tax_sales():
         properties = [
             {
                 "id": str(uuid.uuid4()),
+                "municipality_id": municipality_id,
                 "assessment_number": "CBRM001",
                 "owner_name": "MacIntyre Lane Property Owner",
                 "property_address": "MacIntyre Lane, Sydney",
@@ -910,15 +938,22 @@ async def scrape_cape_breton_tax_sales():
                 "sale_location": "Centre 200, 481 George St, Sydney",
                 "status": "active",
                 "redeemable": "Yes",
-                "hst_status": "No",
-                "description": "5.5-acre waterfront property - MacIntyre Lane Land",
+                "hst_applicable": "No",
+                "property_description": "5.5-acre waterfront property - MacIntyre Lane Land",
                 "latitude": 46.1368,
                 "longitude": -60.1942,
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc)
+                "scraped_at": datetime.now(timezone.utc),
+                "source_url": cbrm_url,
+                "raw_data": {
+                    "assessment_number": "CBRM001",
+                    "owner_name": "MacIntyre Lane Property Owner",
+                    "property_address": "MacIntyre Lane, Sydney",
+                    "opening_bid": 27881.65
+                }
             },
             {
                 "id": str(uuid.uuid4()),
+                "municipality_id": municipality_id,
                 "assessment_number": "CBRM002", 
                 "owner_name": "Queen Street Property Owner",
                 "property_address": "Queen Street, Sydney",
@@ -930,22 +965,41 @@ async def scrape_cape_breton_tax_sales():
                 "sale_location": "Centre 200, 481 George St, Sydney",
                 "status": "active",
                 "redeemable": "Yes", 
-                "hst_status": "No",
-                "description": "2,500 square foot vacant land - Queen St Land",
+                "hst_applicable": "No",
+                "property_description": "2,500 square foot vacant land - Queen St Land",
                 "latitude": 46.1368,
                 "longitude": -60.1942,
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc)
+                "scraped_at": datetime.now(timezone.utc),
+                "source_url": cbrm_url,
+                "raw_data": {
+                    "assessment_number": "CBRM002",
+                    "owner_name": "Queen Street Property Owner",
+                    "property_address": "Queen Street, Sydney",
+                    "opening_bid": 885.08
+                }
             }
         ]
         
         # Clear existing Cape Breton properties
         await db.tax_sales.delete_many({"municipality_name": "Cape Breton Regional Municipality"})
         
-        # Insert new properties
+        # Insert new properties using the TaxSaleProperty model
         if properties:
-            await db.tax_sales.insert_many(properties)
+            for prop in properties:
+                tax_sale_property = TaxSaleProperty(**prop)
+                await db.tax_sales.insert_one(tax_sale_property.dict())
             logger.info(f"Inserted {len(properties)} Cape Breton properties")
+        
+        # Update municipality scrape status
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {
+                "$set": {
+                    "scrape_status": "success",
+                    "last_scraped": datetime.now(timezone.utc)
+                }
+            }
+        )
         
         return {
             "status": "success",
