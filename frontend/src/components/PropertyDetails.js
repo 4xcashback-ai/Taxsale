@@ -2,6 +2,42 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
 
+// AdSense Component for Property Details Page
+const PropertyDetailsAd = () => {
+  useEffect(() => {
+    try {
+      // Load AdSense script if not already loaded
+      if (!document.querySelector('script[src*="googlesyndication.com"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215';
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        document.head.appendChild(script);
+      }
+      
+      // Push ad to AdSense
+      if (window.adsbygoogle) {
+        window.adsbygoogle.push({});
+      }
+    } catch (err) {
+      console.log('AdSense error:', err);
+    }
+  }, []);
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="text-center text-sm text-gray-500 mb-2">Advertisement</div>
+      <ins className="adsbygoogle"
+           style={{display:'block'}}
+           data-ad-client="ca-pub-5947395928510215"
+           data-ad-slot="3653544552"
+           data-ad-format="auto"
+           data-full-width-responsive="true">
+      </ins>
+    </div>
+  );
+};
+
 const PropertyDetails = () => {
   const { assessmentNumber } = useParams();
   const navigate = useNavigate();
