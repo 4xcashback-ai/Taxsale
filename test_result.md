@@ -237,6 +237,21 @@ backend:
         agent: "testing"
         comment: "TESTED: All Halifax scraper endpoints working perfectly. /api/scrape/halifax successfully processes data, /api/tax-sales returns proper property data with all required fields (assessment_number, owner_name, pid_number, opening_bid), /api/municipalities shows Halifax with 'success' status, /api/stats shows accurate counts (8 municipalities, 62 properties), and /api/tax-sales/map-data provides coordinates. Search functionality also working for assessment numbers, owner names, and municipality filtering."
 
+  - task: "VPS Deployment - Scraping Status Update Issue"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reports on VPS: 1) Scraping status not updating on frontend after clicking 'Scrape All', 2) 'Halifax Live' button failing. Preview environment works correctly - backend API returns 62 properties, frontend buttons function properly and update status via fetchMunicipalities()."
+      - working: "NA" 
+        agent: "main"
+        comment: "PREVIEW ENVIRONMENT VERIFICATION: All functionality works correctly. Halifax scraper API POST /api/scrape/halifax returns 62 properties. Frontend 'Scrape Halifax (Live)' button calls scrapeHalifax() which updates status via setScrapeStatus() and refreshes municipalities. Issue appears specific to VPS deployment vs preview environment. Need to test actual VPS environment and compare configuration differences."
+
 frontend:
   - task: "Property Display with External Links"
     implemented: true
