@@ -2050,11 +2050,12 @@ def test_comprehensive_municipality_overview():
 def run_comprehensive_test():
     """Run tests focused on review request requirements"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
-    print("🎯 FOCUS: Comprehensive Municipality Overview (Review Request)")
+    print("🎯 FOCUS: NEW Municipality Scrapers - Cape Breton & Kentville (Review Request)")
     print("=" * 80)
     
     test_results = {
         "api_connection": False,
+        "new_municipality_scrapers": False,
         "comprehensive_overview": False,
         "municipality_endpoints": False,
         "stats_endpoint": False
