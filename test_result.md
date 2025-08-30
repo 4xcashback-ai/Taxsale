@@ -283,6 +283,21 @@ frontend:
         agent: "testing"
         comment: "NSPRD BOUNDARY OVERLAY SYSTEM COMPREHENSIVE TESTING COMPLETED SUCCESSFULLY! All components from review request are working perfectly. DETAILED VERIFICATION: 1) NS GOVERNMENT BOUNDARY API: `/api/query-ns-government-parcel/{pid_number}` endpoint fully functional - tested with PID 00424945 (Anderson Crt property) returns proper JSON with geometry (rings array with coordinate pairs [longitude, latitude]), property_info (area_sqm: 2649.14625, perimeter_m: 226.11695), bbox and center coordinates (44.749738890235065, -63.85260147998366), calculated zoom_level (18). 2) TAX SALES DATA INTEGRATION: All 62 Halifax properties have `pid_number` fields populated (100% coverage), all properties have latitude/longitude coordinates for map positioning. 3) BOUNDARY DATA STRUCTURE: Geometry contains rings array with valid coordinate pairs, 38/38 coordinates validated as proper [longitude, latitude] format within valid ranges, property info includes area and perimeter measurements. 4) SYSTEM PERFORMANCE: Tested concurrent queries with 5 PIDs - all successful in 0.86 seconds (0.17 seconds average per query), system can handle ~62 concurrent requests as required by frontend. 5) ERROR HANDLING: Invalid PIDs (99999999) correctly return 'found: false' with appropriate error messages, robust error handling confirmed. The Nova Scotia government ArcGIS service integration is production-ready and fully supports frontend boundary overlay functionality. All requirements from review request are met and verified."
 
+  - task: "VPS Frontend - Scraping Status UI Updates"
+    implemented: true
+    working: false
+    file: "App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reports VPS-specific issue: Frontend scraping status not updating after clicking buttons. scrapeHalifax() and scrapeAllMunicipalities() functions may not be properly calling fetchMunicipalities() to refresh status, or API calls failing on VPS."
+      - working: "NA"
+        agent: "main"
+        comment: "PREVIEW ENVIRONMENT ANALYSIS: Frontend implementation correct - scrapeHalifax() calls: 1) POST /api/scrape/halifax, 2) fetchTaxSales(), 3) fetchMunicipalities(), 4) fetchStats(), 5) setScrapeStatus() for UI feedback. All buttons render and function properly in preview. Issue appears specific to VPS deployment environment - may be related to API endpoint connectivity, CORS, or environment variable configuration differences."
+
   - task: "Interactive Map Display"
     implemented: true
     working: true
