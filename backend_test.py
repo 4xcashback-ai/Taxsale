@@ -1220,18 +1220,6 @@ def test_pvsc_data_structure_and_lot_size():
             except:
                 print(f"      Raw response: {enhanced_response.text}")
             return False, {"error": f"HTTP {enhanced_response.status_code}"}
-                
-        elif enhanced_response.status_code == 404:
-            print(f"   ❌ Assessment {target_assessment} not found")
-            return False, {"error": f"Assessment {target_assessment} not found"}
-        else:
-            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
-            try:
-                error_detail = enhanced_response.json()
-                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
-            except:
-                print(f"      Raw response: {enhanced_response.text}")
-            return False, {"error": f"HTTP {enhanced_response.status_code}"}
         
         # Test 2: Test Multiple Properties to Identify Pattern
         print(f"\n   🔧 TEST 2: Testing Multiple Properties for Lot Size Field Pattern")
