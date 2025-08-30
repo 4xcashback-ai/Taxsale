@@ -2620,6 +2620,31 @@ async def scrape_pvsc_details(assessment_number: str):
         if bath_match:
             property_details['bathrooms'] = int(bath_match.group(1))
         
+        # Quality of Construction
+        quality_match = re.search(r'Quality of Construction\s*([^\n]+)', assessment_text)
+        if quality_match:
+            property_details['quality_of_construction'] = quality_match.group(1).strip()
+        
+        # Under Construction
+        under_construction_match = re.search(r'Under Construction\s*([YN])', assessment_text)
+        if under_construction_match:
+            property_details['under_construction'] = under_construction_match.group(1)
+        
+        # Living Units
+        living_units_match = re.search(r'Living Units\s*(\d+)', assessment_text)
+        if living_units_match:
+            property_details['living_units'] = int(living_units_match.group(1))
+        
+        # Finished Basement
+        finished_basement_match = re.search(r'Finished Basement\s*([YN])', assessment_text)
+        if finished_basement_match:
+            property_details['finished_basement'] = finished_basement_match.group(1)
+        
+        # Garage
+        garage_match = re.search(r'Garage\s*([YN]|[^\n]+)', assessment_text)
+        if garage_match:
+            property_details['garage'] = garage_match.group(1).strip()
+        
         # Extract coordinates from Google Maps link if available
         latitude, longitude = None, None
         if google_maps_link:
