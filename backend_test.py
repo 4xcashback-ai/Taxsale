@@ -1233,26 +1233,21 @@ def test_pvsc_data_structure_and_lot_size():
                 print(f"      Raw response: {enhanced_response.text}")
             return False, {"error": f"HTTP {enhanced_response.status_code}"}
         
-        # Test 2: Check server logs for any errors during the request
-        print(f"\n   🔧 TEST 2: Server Log Analysis")
-        print(f"      Note: Check supervisor logs for any PVSC scraping errors")
-        print(f"      Command: tail -n 50 /var/log/supervisor/backend.*.log")
-        
-        # Test 3: Test a few other assessment numbers to see if issue is consistent
-        print(f"\n   🔧 TEST 3: Testing Other Assessment Numbers")
+        # Test 2: Test Multiple Properties to Identify Pattern
+        print(f"\n   🔧 TEST 2: Testing Multiple Properties for Lot Size Field Pattern")
         
         # Get some properties to test with
         tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
         if tax_sales_response.status_code == 200:
             properties = tax_sales_response.json()
             
-            # Test with up to 2 different assessment numbers
-            test_assessments = []
+            # Test with up to 3 different assessment numbers
+            test_assessments = ["00125326", "00374059"]  # Known assessments from previous tests
             for prop in properties:
                 assessment = prop.get('assessment_number')
-                if assessment and assessment != target_assessment:
+                if assessment and assessment not in test_assessments and assessment != target_assessment:
                     test_assessments.append(assessment)
-                if len(test_assessments) >= 2:
+                if len(test_assessments) >= 3:
                     break
             
             print(f"   📊 Testing {len(test_assessments)} additional properties")
