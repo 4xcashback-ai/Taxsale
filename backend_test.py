@@ -4170,10 +4170,299 @@ def main():
     
     return critical_passed
 
+def test_land_only_property_lot_size_data():
+    """Test land-only property lot size data availability for assessment 00374059 - Review Request Focus"""
+    print("\n🏞️ Testing Land-Only Property Lot Size Data Availability...")
+    print("🎯 FOCUS: Assessment 00374059 (land property showing 'Not specified')")
+    print("📋 REQUIREMENTS: Check PVSC data structure for land_size field")
+    print("🔍 GOAL: Compare with working property 00079006 to identify differences")
+    
+    try:
+        # Test 1: Enhanced endpoint for assessment 00374059 (the problematic land property)
+        print(f"\n   🔧 TEST 1: GET /api/property/00374059/enhanced (Land-Only Property)")
+        
+        land_assessment = "00374059"
+        land_response = requests.get(
+            f"{BACKEND_URL}/property/{land_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        land_property_data = None
+        if land_response.status_code == 200:
+            land_property_data = land_response.json()
+            print(f"   ✅ Enhanced endpoint SUCCESS for land property - HTTP 200")
+            print(f"      Assessment: {land_property_data.get('assessment_number')}")
+            print(f"      Owner: {land_property_data.get('owner_name')}")
+            print(f"      Address: {land_property_data.get('property_address')}")
+            
+            # Check PVSC data structure for land property
+            land_property_details = land_property_data.get('property_details', {})
+            if land_property_details:
+                print(f"   ✅ property_details object present with {len(land_property_details)} fields")
+                
+                # Check for land_size field specifically
+                land_size = land_property_details.get('land_size')
+                if land_size:
+                    print(f"   ✅ property_details.land_size EXISTS: '{land_size}'")
+                else:
+                    print(f"   ❌ property_details.land_size: NOT FOUND")
+                
+                # Show all available fields for land property
+                print(f"\n   📊 LAND PROPERTY - All Available Fields:")
+                for key, value in sorted(land_property_details.items()):
+                    print(f"      {key}: {value}")
+                    
+                # Look for any size-related fields
+                print(f"\n   🔍 LAND PROPERTY - Size-Related Fields:")
+                size_fields = []
+                for key, value in land_property_details.items():
+                    if any(keyword in key.lower() for keyword in ['size', 'area', 'sq', 'ft', 'acre', 'land', 'lot']):
+                        size_fields.append((key, value))
+                        print(f"      🎯 {key}: '{value}'")
+                
+                if not size_fields:
+                    print(f"      ❌ NO SIZE-RELATED FIELDS FOUND for land property")
+                    
+            else:
+                print(f"   ❌ property_details object missing for land property")
+                
+        else:
+            print(f"   ❌ Enhanced endpoint failed for land property: HTTP {land_response.status_code}")
+            if land_response.status_code == 404:
+                print(f"      Assessment 00374059 not found in database")
+            return False, {"error": f"Land property endpoint failed: {land_response.status_code}"}
+        
+        # Test 2: Enhanced endpoint for assessment 00079006 (the working dwelling property)
+        print(f"\n   🔧 TEST 2: GET /api/property/00079006/enhanced (Working Dwelling Property)")
+        
+        dwelling_assessment = "00079006"
+        dwelling_response = requests.get(
+            f"{BACKEND_URL}/property/{dwelling_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        dwelling_property_data = None
+        if dwelling_response.status_code == 200:
+            dwelling_property_data = dwelling_response.json()
+            print(f"   ✅ Enhanced endpoint SUCCESS for dwelling property - HTTP 200")
+            print(f"      Assessment: {dwelling_property_data.get('assessment_number')}")
+            print(f"      Owner: {dwelling_property_data.get('owner_name')}")
+            print(f"      Address: {dwelling_property_data.get('property_address')}")
+            
+            # Check PVSC data structure for dwelling property
+            dwelling_property_details = dwelling_property_data.get('property_details', {})
+            if dwelling_property_details:
+                print(f"   ✅ property_details object present with {len(dwelling_property_details)} fields")
+                
+                # Check for land_size field specifically
+                dwelling_land_size = dwelling_property_details.get('land_size')
+                if dwelling_land_size:
+                    print(f"   ✅ property_details.land_size EXISTS: '{dwelling_land_size}'")
+                else:
+                    print(f"   ❌ property_details.land_size: NOT FOUND")
+                
+                # Show all available fields for dwelling property
+                print(f"\n   📊 DWELLING PROPERTY - All Available Fields:")
+                for key, value in sorted(dwelling_property_details.items()):
+                    print(f"      {key}: {value}")
+                    
+                # Look for any size-related fields
+                print(f"\n   🔍 DWELLING PROPERTY - Size-Related Fields:")
+                dwelling_size_fields = []
+                for key, value in dwelling_property_details.items():
+                    if any(keyword in key.lower() for keyword in ['size', 'area', 'sq', 'ft', 'acre', 'land', 'lot']):
+                        dwelling_size_fields.append((key, value))
+                        print(f"      🎯 {key}: '{value}'")
+                
+                if not dwelling_size_fields:
+                    print(f"      ❌ NO SIZE-RELATED FIELDS FOUND for dwelling property")
+                    
+            else:
+                print(f"   ❌ property_details object missing for dwelling property")
+                
+        else:
+            print(f"   ❌ Enhanced endpoint failed for dwelling property: HTTP {dwelling_response.status_code}")
+            return False, {"error": f"Dwelling property endpoint failed: {dwelling_response.status_code}"}
+        
+        # Test 3: Compare data structures between land and dwelling properties
+        print(f"\n   🔧 TEST 3: Data Structure Comparison (Land vs Dwelling)")
+        
+        if land_property_data and dwelling_property_data:
+            land_details = land_property_data.get('property_details', {})
+            dwelling_details = dwelling_property_data.get('property_details', {})
+            
+            print(f"   📊 FIELD COUNT COMPARISON:")
+            print(f"      Land property fields: {len(land_details)}")
+            print(f"      Dwelling property fields: {len(dwelling_details)}")
+            
+            # Find fields that exist in dwelling but not in land
+            land_fields = set(land_details.keys())
+            dwelling_fields = set(dwelling_details.keys())
+            
+            missing_in_land = dwelling_fields - land_fields
+            missing_in_dwelling = land_fields - dwelling_fields
+            common_fields = land_fields & dwelling_fields
+            
+            print(f"\n   🔍 FIELD DIFFERENCES:")
+            print(f"      Common fields: {len(common_fields)}")
+            print(f"      Fields missing in land property: {len(missing_in_land)}")
+            print(f"      Fields missing in dwelling property: {len(missing_in_dwelling)}")
+            
+            if missing_in_land:
+                print(f"\n   ❌ FIELDS MISSING IN LAND PROPERTY:")
+                for field in sorted(missing_in_land):
+                    dwelling_value = dwelling_details.get(field)
+                    print(f"      - {field}: '{dwelling_value}' (exists in dwelling)")
+                    
+            if missing_in_dwelling:
+                print(f"\n   ⚠️ FIELDS MISSING IN DWELLING PROPERTY:")
+                for field in sorted(missing_in_dwelling):
+                    land_value = land_details.get(field)
+                    print(f"      - {field}: '{land_value}' (exists in land)")
+            
+            # Check specifically for land_size field
+            land_has_land_size = 'land_size' in land_details and land_details['land_size']
+            dwelling_has_land_size = 'land_size' in dwelling_details and dwelling_details['land_size']
+            
+            print(f"\n   🎯 LAND_SIZE FIELD ANALYSIS:")
+            print(f"      Land property has land_size: {land_has_land_size}")
+            if land_has_land_size:
+                print(f"         Value: '{land_details['land_size']}'")
+            print(f"      Dwelling property has land_size: {dwelling_has_land_size}")
+            if dwelling_has_land_size:
+                print(f"         Value: '{dwelling_details['land_size']}'")
+                
+        # Test 4: Root cause identification
+        print(f"\n   🔧 TEST 4: Root Cause Identification")
+        
+        root_causes = []
+        
+        if land_property_data and dwelling_property_data:
+            land_details = land_property_data.get('property_details', {})
+            dwelling_details = dwelling_property_data.get('property_details', {})
+            
+            # Check if land property has any lot size data at all
+            land_has_any_size = any(
+                key for key in land_details.keys() 
+                if any(keyword in key.lower() for keyword in ['size', 'area', 'sq', 'ft', 'acre', 'land', 'lot'])
+            )
+            
+            if not land_has_any_size:
+                root_causes.append("Land property has NO size-related fields in PVSC data")
+            
+            # Check if there's a different field name for land-only properties
+            if 'land_size' not in land_details:
+                root_causes.append("land_size field does not exist for land-only properties")
+                
+                # Look for alternative field names
+                potential_alternatives = []
+                for key in land_details.keys():
+                    if any(keyword in key.lower() for keyword in ['lot', 'parcel', 'property']):
+                        potential_alternatives.append(key)
+                
+                if potential_alternatives:
+                    root_causes.append(f"Potential alternative fields: {potential_alternatives}")
+            
+            # Check if the values are empty/null
+            if 'land_size' in land_details:
+                land_size_value = land_details['land_size']
+                if not land_size_value or land_size_value.strip() == '':
+                    root_causes.append("land_size field exists but is empty/null")
+        
+        print(f"   🎯 ROOT CAUSE ANALYSIS:")
+        if root_causes:
+            for i, cause in enumerate(root_causes, 1):
+                print(f"      {i}. {cause}")
+        else:
+            print(f"      ✅ No obvious root causes identified - data appears available")
+        
+        # Test 5: Check if properties exist in tax sales database
+        print(f"\n   🔧 TEST 5: Verify Properties Exist in Tax Sales Database")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        if tax_sales_response.status_code == 200:
+            all_properties = tax_sales_response.json()
+            
+            land_property_found = False
+            dwelling_property_found = False
+            
+            for prop in all_properties:
+                if prop.get('assessment_number') == land_assessment:
+                    land_property_found = True
+                    print(f"   ✅ Land property {land_assessment} found in tax sales database")
+                    print(f"      Type: {prop.get('property_type', 'N/A')}")
+                    print(f"      Address: {prop.get('property_address', 'N/A')}")
+                elif prop.get('assessment_number') == dwelling_assessment:
+                    dwelling_property_found = True
+                    print(f"   ✅ Dwelling property {dwelling_assessment} found in tax sales database")
+                    print(f"      Type: {prop.get('property_type', 'N/A')}")
+                    print(f"      Address: {prop.get('property_address', 'N/A')}")
+            
+            if not land_property_found:
+                print(f"   ❌ Land property {land_assessment} NOT found in tax sales database")
+                root_causes.append("Land property not found in tax sales database")
+            
+            if not dwelling_property_found:
+                print(f"   ❌ Dwelling property {dwelling_assessment} NOT found in tax sales database")
+        
+        # Final summary and recommendations
+        print(f"\n   📋 LAND-ONLY PROPERTY LOT SIZE ANALYSIS SUMMARY:")
+        
+        if land_property_data and dwelling_property_data:
+            land_details = land_property_data.get('property_details', {})
+            dwelling_details = dwelling_property_data.get('property_details', {})
+            
+            land_has_land_size = 'land_size' in land_details and land_details.get('land_size')
+            dwelling_has_land_size = 'land_size' in dwelling_details and dwelling_details.get('land_size')
+            
+            if land_has_land_size and dwelling_has_land_size:
+                print(f"   ✅ BOTH properties have land_size data - frontend issue likely")
+                print(f"      Land property land_size: '{land_details['land_size']}'")
+                print(f"      Dwelling property land_size: '{dwelling_details['land_size']}'")
+                return True, {
+                    "land_has_data": True,
+                    "dwelling_has_data": True,
+                    "land_size_value": land_details['land_size'],
+                    "dwelling_size_value": dwelling_details['land_size'],
+                    "issue": "Frontend not accessing correct field path"
+                }
+            elif dwelling_has_land_size and not land_has_land_size:
+                print(f"   ❌ DWELLING has land_size but LAND property does not")
+                print(f"      Dwelling land_size: '{dwelling_details['land_size']}'")
+                print(f"      Land property: No land_size field")
+                return False, {
+                    "land_has_data": False,
+                    "dwelling_has_data": True,
+                    "dwelling_size_value": dwelling_details['land_size'],
+                    "issue": "Land-only properties missing land_size in PVSC data"
+                }
+            elif not dwelling_has_land_size and not land_has_land_size:
+                print(f"   ❌ NEITHER property has land_size data")
+                return False, {
+                    "land_has_data": False,
+                    "dwelling_has_data": False,
+                    "issue": "No land_size data available for either property type"
+                }
+            else:
+                print(f"   ⚠️ UNEXPECTED: Land has data but dwelling does not")
+                return True, {
+                    "land_has_data": True,
+                    "dwelling_has_data": False,
+                    "land_size_value": land_details.get('land_size'),
+                    "issue": "Unexpected data pattern"
+                }
+        else:
+            print(f"   ❌ Could not retrieve data for comparison")
+            return False, {"error": "Could not retrieve property data for comparison"}
+            
+    except Exception as e:
+        print(f"   ❌ Land-only property lot size test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
-    """Main function to run enhanced PVSC testing based on review request"""
-    print("🚀 Enhanced PVSC Data Integration Testing")
-    print("🎯 FOCUS: Testing missing enhanced fields issue for assessment 00079006")
+    """Main function to run land-only property lot size testing based on review request"""
+    print("🚀 Land-Only Property Lot Size Data Testing")
+    print("🎯 FOCUS: Assessment 00374059 lot size data availability issue")
     print("=" * 80)
     
     # Test 1: Basic API Connection
@@ -4183,47 +4472,40 @@ def main():
         print("❌ Cannot proceed - API connection failed")
         return False
     
-    # Test 2: Enhanced PVSC Scraping (Primary Focus)
+    # Test 2: Land-Only Property Lot Size Analysis (Primary Focus)
+    print("\n🏞️ Testing Land-Only Property Lot Size Data...")
+    land_success, land_result = test_land_only_property_lot_size_data()
+    
+    # Test 3: Enhanced PVSC Scraping (Secondary - to verify enhanced endpoint works)
     print("\n🏠 Testing Enhanced PVSC Scraping...")
     pvsc_success, pvsc_result = test_enhanced_pvsc_scraping()
     
-    # Test 3: Check server logs for debugging
-    print("\n📋 Checking Server Logs for PVSC Errors...")
-    try:
-        import subprocess
-        log_result = subprocess.run(['tail', '-n', '50', '/var/log/supervisor/backend.out.log'], 
-                                  capture_output=True, text=True, timeout=10)
-        if log_result.returncode == 0:
-            print("   📊 Recent server logs:")
-            for line in log_result.stdout.split('\n')[-10:]:  # Show last 10 lines
-                if 'PVSC' in line or 'enhanced' in line or 'ERROR' in line:
-                    print(f"      {line}")
-        else:
-            print("   ⚠️ Could not access server logs")
-    except Exception as e:
-        print(f"   ⚠️ Error accessing logs: {e}")
-    
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 ENHANCED PVSC TESTING SUMMARY")
+    print("🏁 LAND-ONLY PROPERTY LOT SIZE TESTING SUMMARY")
     print("=" * 80)
     
-    if pvsc_success:
-        print("✅ Enhanced PVSC endpoint is working correctly")
-        print("   All 5 new fields are being returned in the API response")
+    if land_success:
+        print("✅ Land-only property lot size analysis completed successfully")
+        if land_result and 'issue' in land_result:
+            print(f"   Issue identified: {land_result['issue']}")
+        if land_result and 'land_size_value' in land_result:
+            print(f"   Land property lot size: {land_result['land_size_value']}")
+        if land_result and 'dwelling_size_value' in land_result:
+            print(f"   Dwelling property lot size: {land_result['dwelling_size_value']}")
     else:
-        print("❌ Enhanced PVSC endpoint has issues")
-        if pvsc_result and 'missing_fields' in pvsc_result:
-            missing = pvsc_result['missing_fields']
-            print(f"   Missing fields: {missing}")
-        if pvsc_result and 'error' in pvsc_result:
-            print(f"   Error: {pvsc_result['error']}")
+        print("❌ Land-only property lot size analysis has issues")
+        if land_result and 'error' in land_result:
+            print(f"   Error: {land_result['error']}")
+        if land_result and 'issue' in land_result:
+            print(f"   Issue: {land_result['issue']}")
     
     print(f"\n🎯 REVIEW REQUEST STATUS:")
-    print(f"   Assessment 00079006 enhanced endpoint: {'✅ WORKING' if pvsc_success else '❌ FAILING'}")
-    print(f"   New PVSC fields integration: {'✅ COMPLETE' if pvsc_success else '❌ INCOMPLETE'}")
+    print(f"   Assessment 00374059 enhanced endpoint: {'✅ ACCESSIBLE' if land_success else '❌ FAILING'}")
+    print(f"   Land vs Dwelling data comparison: {'✅ COMPLETE' if land_success else '❌ INCOMPLETE'}")
+    print(f"   Root cause identification: {'✅ IDENTIFIED' if land_success and land_result else '❌ UNCLEAR'}")
     
-    return pvsc_success
+    return land_success
 
 if __name__ == "__main__":
     success = main()
