@@ -352,7 +352,7 @@ function MainApp() {
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Routes>
-          <Route path="/" element={<MainApp />} />
+          <Route path="/" element={<PropertySearch />} />
           <Route path="/property/:assessmentNumber" element={<PropertyDetails />} />
         </Routes>
       </div>
@@ -360,7 +360,7 @@ function MainApp() {
   );
 }
 
-function MainApp() {
+function PropertySearch() {
   const [taxSales, setTaxSales] = useState([]);
   const [municipalities, setMunicipalities] = useState([]);
   const [mapData, setMapData] = useState([]);
