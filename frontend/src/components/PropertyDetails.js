@@ -291,50 +291,17 @@ const PropertyDetails = () => {
                 <div className="mb-6">
                   <h4 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h4>
                   <div className="border rounded-lg overflow-hidden">
-                    <LoadScript 
-                      googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}
-                      libraries={libraries}
-                      loadingElement={
-                        <div className="w-full h-96 bg-gray-100 flex items-center justify-center">
-                          <div className="text-center text-gray-500">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                            <p>Loading Interactive Map...</p>
-                          </div>
-                        </div>
-                      }
-                      onLoad={() => {
-                        console.log('Google Maps LoadScript loaded successfully');
-                        setMapLoaded(true);
-                      }}
-                      onError={(e) => {
-                        console.error('Google Maps LoadScript error:', e);
-                        setMapLoaded(false);
-                      }}
-                    >
-                      <GoogleMap
-                        mapContainerStyle={mapContainerStyle}
-                        center={{
-                          lat: parseFloat(property.latitude),
-                          lng: parseFloat(property.longitude)
-                        }}
-                        zoom={17}
-                        options={mapOptions}
-                        onLoad={(map) => {
-                          console.log('Google Map loaded successfully:', map);
-                        }}
-                        onError={(e) => {
-                          console.error('Google Map error:', e);
-                        }}
-                      >
-                        <Marker
-                          position={{
-                            lat: parseFloat(property.latitude),
-                            lng: parseFloat(property.longitude)
-                          }}
-                          title={`${property.property_address} - ${formatCurrency(property.opening_bid)}`}
-                        />
-                      </GoogleMap>
-                    </LoadScript>
+                    {/* Use direct iframe approach to avoid LoadScript conflicts */}
+                    <iframe
+                      src={`https://www.google.com/maps/embed/v1/place?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}&q=${property.latitude},${property.longitude}&zoom=17&maptype=satellite`}
+                      width="100%"
+                      height="400"
+                      style={{ border: 0 }}
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Property Location Map"
+                    ></iframe>
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
                     📍 Property Location: {property.latitude}, {property.longitude}
