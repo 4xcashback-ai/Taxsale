@@ -1,9 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
-
-// Define libraries outside component to prevent re-renders
-const libraries = ['places'];
 
 const PropertyDetails = () => {
   const { assessmentNumber } = useParams();
@@ -13,6 +9,10 @@ const PropertyDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [boundaryData, setBoundaryData] = useState(null);
+  const mapRef = useRef();
+  const [map, setMap] = useState(null);
+  const [boundaryPolygon, setBoundaryPolygon] = useState(null);
 
   useEffect(() => {
     fetchPropertyDetails();
