@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Wrapper, Status } from "@googlemaps/react-wrapper";
 
 const PropertyDetails = () => {
   const { assessmentNumber } = useParams();
@@ -8,7 +9,6 @@ const PropertyDetails = () => {
   const [propertyDetails, setPropertyDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [boundaryData, setBoundaryData] = useState(null);
   const mapRef = useRef();
   const [map, setMap] = useState(null);
