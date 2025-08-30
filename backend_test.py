@@ -2100,8 +2100,15 @@ def run_comprehensive_test():
         print(f"   {status}: {test_name}")
     
     # Key Findings from Review Request
+    if new_scrapers_success and 'new_scrapers_data' in locals():
+        print(f"\n🎯 KEY FINDINGS FOR NEW MUNICIPALITY SCRAPERS:")
+        print(f"   - Cape Breton Scraper: {'✅ WORKING' if new_scrapers_data.get('cape_breton_scraper') else '❌ FAILED'}")
+        print(f"   - Kentville Scraper: {'✅ WORKING' if new_scrapers_data.get('kentville_scraper') else '❌ FAILED'}")
+        print(f"   - Scraper Dispatch: {'✅ WORKING' if new_scrapers_data.get('scraper_dispatch') else '❌ FAILED'}")
+        print(f"   - Property Integration: {'✅ WORKING' if new_scrapers_data.get('property_integration') else '❌ FAILED'}")
+    
     if overview_success and 'overview_data' in locals():
-        print(f"\n🎯 KEY FINDINGS FOR REVIEW REQUEST:")
+        print(f"\n🎯 SYSTEM OVERVIEW:")
         
         if overview_data.get('municipalities'):
             muni_data = overview_data['municipalities']
