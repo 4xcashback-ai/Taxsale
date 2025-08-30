@@ -49,7 +49,7 @@ const PropertyDetails = ({ property, onClose }) => {
     try {
       setBoundaryLoading(true);
       const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/property/${assessmentNumber}/boundary-image`);
+      const response = await fetch(`${backendUrl}/api/property/${property.assessment_number}/boundary-image`);
       
       if (response.ok) {
         const boundaryData = await response.json();
