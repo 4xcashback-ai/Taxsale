@@ -1007,47 +1007,27 @@ async def scrape_kentville_tax_sales():
         raise HTTPException(status_code=500, detail=f"Kentville scraping failed: {str(e)}")
 
 async def scrape_generic_municipality(municipality_id: str):
-    """Generic scraper dispatcher for municipalities without specific implementation"""
+    """Generic scraper for municipalities without specific implementation"""
     municipality = await db.municipalities.find_one({"id": municipality_id})
     if not municipality:
         raise HTTPException(status_code=404, detail="Municipality not found")
     
     municipality_name = municipality.get("name", "")
     
-    try:
-        # Dispatch to specific scrapers based on municipality name
-        if "Cape Breton" in municipality_name:
-            result = await scrape_cape_breton_tax_sales()
-            status = "success"
-        elif "Kentville" in municipality_name:
-            result = await scrape_kentville_tax_sales()
-            status = "success"
-        else:
-            # Placeholder for other municipalities
-            logger.info(f"Generic scraping for {municipality_name} - specific scraper not yet implemented")
-            result = {"status": "pending", "message": f"Scraper for {municipality_name} not yet implemented"}
-            status = "pending"
-        
-        # Update municipality status
-        await db.municipalities.update_one(
-            {"id": municipality_id},
-            {
-                "$set": {
-                    "scrape_status": status,
-                    "last_scraped": datetime.now(timezone.utc)
-                }
+    # Placeholder for municipalities that don't have specific scrapers yet
+    logger.info(f"Generic scraping for {municipality_name} - specific scraper not yet implemented")
+    
+    await db.municipalities.update_one(
+        {"id": municipality_id},
+        {
+            "$set": {
+                "scrape_status": "pending",
+                "last_scraped": datetime.now(timezone.utc)
             }
-        )
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Generic scraping failed for {municipality_name}: {e}")
-        await db.municipalities.update_one(
-            {"id": municipality_id},
-            {"$set": {"scrape_status": "failed"}}
-        )
-        raise HTTPException(status_code=500, detail=f"Scraping failed for {municipality_name}: {str(e)}")
+        }
+    )
+    
+    return {"status": "pending", "message": f"Scraper for {municipality_name} not yet implemented"}
 
 
 # Municipality Management Endpoints
