@@ -12,7 +12,8 @@ from datetime import datetime
 import time
 
 # Get backend URL from environment
-BACKEND_URL = "https://taxsalecompass.ca/api"
+import os
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com') + '/api'
 
 def test_api_connection():
     """Test basic API connectivity"""
