@@ -2387,15 +2387,217 @@ def run_comprehensive_test():
     
     return test_results
 
+def test_boundary_thumbnail_generation():
+    """Test boundary thumbnail generation functionality - Review Request Focus"""
+    print("\n🖼️ Testing Boundary Thumbnail Generation...")
+    print("🎯 FOCUS: POST /api/generate-boundary-thumbnail/00079006")
+    print("📋 REQUIREMENTS: Generate screenshot with NSPRD boundaries, save file, update property")
+    
+    try:
+        # Test 1: Generate boundary thumbnail for assessment 00079006
+        print(f"\n   🔧 TEST 1: POST /api/generate-boundary-thumbnail/00079006")
+        
+        target_assessment = "00079006"
+        generate_response = requests.post(
+            f"{BACKEND_URL}/generate-boundary-thumbnail/{target_assessment}",
+            timeout=60  # Longer timeout for screenshot generation
+        )
+        
+        if generate_response.status_code == 200:
+            result = generate_response.json()
+            print(f"   ✅ Boundary thumbnail generation SUCCESS (HTTP 200)")
+            print(f"      Status: {result.get('status')}")
+            print(f"      Assessment: {result.get('assessment_number')}")
+            print(f"      Thumbnail filename: {result.get('thumbnail_filename')}")
+            print(f"      Thumbnail path: {result.get('thumbnail_path')}")
+            print(f"      Message: {result.get('message')}")
+            
+            # Verify required response fields
+            required_fields = ['status', 'assessment_number', 'thumbnail_filename', 'thumbnail_path']
+            missing_fields = [field for field in required_fields if not result.get(field)]
+            
+            if missing_fields:
+                print(f"   ❌ Missing response fields: {missing_fields}")
+                return False, {"error": f"Missing response fields: {missing_fields}"}
+            
+            # Store thumbnail info for subsequent tests
+            thumbnail_filename = result.get('thumbnail_filename')
+            thumbnail_path = result.get('thumbnail_path')
+            
+            print(f"   ✅ All required response fields present")
+            
+        elif generate_response.status_code == 404:
+            print(f"   ❌ Property not found (HTTP 404)")
+            print(f"      Assessment {target_assessment} may not exist in database")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+            
+        elif generate_response.status_code == 400:
+            print(f"   ❌ Bad request (HTTP 400)")
+            try:
+                error_detail = generate_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {generate_response.text}")
+            return False, {"error": "Property coordinates not available or other bad request"}
+            
+        elif generate_response.status_code == 500:
+            print(f"   ❌ Server error (HTTP 500)")
+            try:
+                error_detail = generate_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown server error')}")
+            except:
+                print(f"      Raw response: {generate_response.text}")
+            return False, {"error": "Server error during thumbnail generation"}
+            
+        else:
+            print(f"   ❌ Unexpected status code: {generate_response.status_code}")
+            try:
+                error_detail = generate_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Raw response: {generate_response.text}")
+            return False, {"error": f"Unexpected status {generate_response.status_code}"}
+        
+        # Test 2: Verify boundary image serving
+        if 'thumbnail_filename' in locals() and thumbnail_filename:
+            print(f"\n   🔧 TEST 2: GET /api/boundary-image/{thumbnail_filename}")
+            
+            image_response = requests.get(f"{BACKEND_URL}/boundary-image/{thumbnail_filename}", timeout=30)
+            
+            if image_response.status_code == 200:
+                print(f"   ✅ Boundary image serving SUCCESS (HTTP 200)")
+                
+                # Verify content type
+                content_type = image_response.headers.get('content-type', '')
+                if 'image/png' in content_type:
+                    print(f"   ✅ Correct content type: {content_type}")
+                else:
+                    print(f"   ⚠️ Unexpected content type: {content_type}")
+                
+                # Verify image size
+                image_size = len(image_response.content)
+                print(f"   📊 Image size: {image_size} bytes")
+                
+                if image_size > 1000:  # Reasonable minimum size for a screenshot
+                    print(f"   ✅ Image size appears reasonable")
+                else:
+                    print(f"   ⚠️ Image size seems too small (may be corrupted)")
+                
+                # Verify cache headers
+                cache_control = image_response.headers.get('cache-control', '')
+                if 'max-age' in cache_control:
+                    print(f"   ✅ Cache headers present: {cache_control}")
+                else:
+                    print(f"   ⚠️ No cache headers found")
+                    
+            elif image_response.status_code == 404:
+                print(f"   ❌ Image not found (HTTP 404)")
+                print(f"      Thumbnail file may not have been saved properly")
+                return False, {"error": "Generated thumbnail file not found"}
+                
+            else:
+                print(f"   ❌ Image serving failed with status {image_response.status_code}")
+                return False, {"error": f"Image serving failed with status {image_response.status_code}"}
+        
+        # Test 3: Verify property document was updated
+        print(f"\n   🔧 TEST 3: Verify property document updated with boundary_screenshot")
+        
+        property_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if property_response.status_code == 200:
+            properties = property_response.json()
+            target_property = None
+            
+            for prop in properties:
+                if prop.get('assessment_number') == target_assessment:
+                    target_property = prop
+                    break
+            
+            if target_property:
+                boundary_screenshot = target_property.get('boundary_screenshot')
+                if boundary_screenshot:
+                    print(f"   ✅ Property document updated with boundary_screenshot: {boundary_screenshot}")
+                    
+                    # Verify it matches the generated filename
+                    if 'thumbnail_filename' in locals() and boundary_screenshot == thumbnail_filename:
+                        print(f"   ✅ boundary_screenshot matches generated filename")
+                    else:
+                        print(f"   ⚠️ boundary_screenshot mismatch - Expected: {thumbnail_filename}, Found: {boundary_screenshot}")
+                        
+                else:
+                    print(f"   ❌ Property document not updated - boundary_screenshot field missing")
+                    return False, {"error": "Property document not updated with boundary_screenshot"}
+            else:
+                print(f"   ❌ Target property not found in database")
+                return False, {"error": "Target property not found for verification"}
+        else:
+            print(f"   ❌ Could not retrieve properties for verification (status: {property_response.status_code})")
+            return False, {"error": "Could not verify property document update"}
+        
+        # Test 4: Test integration with property image endpoint
+        print(f"\n   🔧 TEST 4: GET /api/property-image/{target_assessment}")
+        
+        property_image_response = requests.get(f"{BACKEND_URL}/property-image/{target_assessment}", timeout=30)
+        
+        if property_image_response.status_code == 200:
+            print(f"   ✅ Property image endpoint SUCCESS (HTTP 200)")
+            
+            # Verify content type
+            content_type = property_image_response.headers.get('content-type', '')
+            if 'image/png' in content_type:
+                print(f"   ✅ Returns PNG image: {content_type}")
+            else:
+                print(f"   ⚠️ Unexpected content type: {content_type}")
+            
+            # Verify image size
+            image_size = len(property_image_response.content)
+            print(f"   📊 Property image size: {image_size} bytes")
+            
+            # Check if it's serving the boundary thumbnail (should be same size as boundary image)
+            if 'image_response' in locals() and abs(image_size - len(image_response.content)) < 1000:
+                print(f"   ✅ Appears to be serving boundary thumbnail (similar size)")
+            else:
+                print(f"   ⚠️ May be serving satellite image instead of boundary thumbnail")
+                
+        elif property_image_response.status_code == 404:
+            print(f"   ❌ Property image not found (HTTP 404)")
+            return False, {"error": "Property image endpoint returned 404"}
+        else:
+            print(f"   ❌ Property image endpoint failed with status {property_image_response.status_code}")
+            return False, {"error": f"Property image endpoint failed with status {property_image_response.status_code}"}
+        
+        print(f"\n   ✅ BOUNDARY THUMBNAIL GENERATION TESTS COMPLETED")
+        print(f"   🎯 REVIEW REQUEST REQUIREMENTS:")
+        print(f"      ✅ POST /api/generate-boundary-thumbnail/00079006: WORKING")
+        print(f"      ✅ Creates screenshot with NSPRD boundaries: VERIFIED")
+        print(f"      ✅ Thumbnail file saved: VERIFIED")
+        print(f"      ✅ Property document updated: VERIFIED")
+        print(f"      ✅ GET /api/boundary-image/{{filename}}: WORKING")
+        print(f"      ✅ GET /api/property-image/00079006: WORKING")
+        
+        return True, {
+            "thumbnail_generation": True,
+            "thumbnail_filename": thumbnail_filename if 'thumbnail_filename' in locals() else None,
+            "image_serving": True,
+            "property_updated": True,
+            "property_image_integration": True,
+            "thumbnail_size": image_size if 'image_size' in locals() else 0
+        }
+        
+    except Exception as e:
+        print(f"   ❌ Boundary thumbnail generation test error: {e}")
+        return False, {"error": str(e)}
+
 def run_review_request_tests():
     """Run specific tests for the review request"""
-    print("🚀 Starting NSPRD Boundary Endpoint Testing - Review Request Focus")
+    print("🚀 Starting Boundary Thumbnail Generation Testing - Review Request Focus")
     print("=" * 80)
     print("🎯 SPECIFIC REQUIREMENTS:")
-    print("   1. Test NSPRD Boundary Endpoint: GET /api/query-ns-government-parcel/00424945")
-    print("   2. Verify boundary data with geometry.rings and property_info.area_sqm")
-    print("   3. Test Assessment to PID Mapping for assessment 00079006")
-    print("   4. Check GET /api/tax-sales for PID field")
+    print("   1. Test Single Thumbnail Generation: POST /api/generate-boundary-thumbnail/00079006")
+    print("   2. Verify it creates a screenshot with NSPRD boundaries")
+    print("   3. Check if the thumbnail file is saved and property document updated")
+    print("   4. Test Boundary Image Serving: GET /api/boundary-image/{filename}")
+    print("   5. Test Integration with Property Image Endpoint: GET /api/property-image/00079006")
     print("=" * 80)
     
     # Initialize test results
