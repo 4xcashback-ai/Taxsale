@@ -1678,6 +1678,26 @@ function MainApp() {
                           )}
                         </div>
                         
+                        <div className="mb-3">
+                          <Button
+                            onClick={() => scrapeIndividualMunicipality(muni.id, muni.name, muni.scraper_type)}
+                            disabled={loading}
+                            size="sm"
+                            className={`w-full ${
+                              muni.scraper_type === 'halifax' 
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                : 'bg-gray-600 hover:bg-gray-700 text-white'
+                            }`}
+                          >
+                            {loading ? (
+                              <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                            ) : (
+                              <Download className="h-3 w-3 mr-1" />
+                            )}
+                            {muni.scraper_type === 'halifax' ? 'Run Halifax Scraper' : 'Run Generic Scraper'}
+                          </Button>
+                        </div>
+                        
                         <div className="flex items-center justify-between text-xs text-slate-500">
                           <span>
                             {muni.last_scraped ? formatDate(muni.last_scraped) : "Never scraped"}
