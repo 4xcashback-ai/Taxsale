@@ -841,97 +841,103 @@ function PropertySearch() {
               {/* Property Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {taxSales.map((property, index) => (
-                  <div
-                    key={property.id || index}
-                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-slate-200"
-                  >
-                    {/* Property Image */}
-                    <div className="relative h-48 bg-gray-200">
-                      {property.boundary_screenshot ? (
-                        <img
-                          src={`${BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
-                          alt={`Property boundary map of ${property.property_address}`}
-                          className="w-full h-full object-cover rounded-t-lg"
-                          onError={(e) => {
-                            // Fallback to satellite image
-                            if (property.latitude && property.longitude) {
-                              e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
-                            } else {
+                  <React.Fragment key={property.id || index}>
+                    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-slate-200">
+                      {/* Property Image */}
+                      <div className="relative h-48 bg-gray-200">
+                        {property.boundary_screenshot ? (
+                          <img
+                            src={`${BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
+                            alt={`Property boundary map of ${property.property_address}`}
+                            className="w-full h-full object-cover rounded-t-lg"
+                            onError={(e) => {
+                              // Fallback to satellite image
+                              if (property.latitude && property.longitude) {
+                                e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
+                              } else {
+                                e.target.style.display = 'none';
+                                e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
+                              }
+                            }}
+                          />
+                        ) : property.latitude && property.longitude ? (
+                          <img
+                            src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`}
+                            alt={`Satellite view of ${property.property_address}`}
+                            className="w-full h-full object-cover rounded-t-lg"
+                            onError={(e) => {
                               e.target.style.display = 'none';
                               e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
-                            }
-                          }}
-                        />
-                      ) : property.latitude && property.longitude ? (
-                        <img
-                          src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`}
-                          alt={`Satellite view of ${property.property_address}`}
-                          className="w-full h-full object-cover rounded-t-lg"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg">
-                          <div className="text-center text-gray-600">
-                            <div className="text-2xl mb-1">🏠</div>
-                            <div className="text-sm">No Image Available</div>
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg">
+                            <div className="text-center text-gray-600">
+                              <div className="text-2xl mb-1">🏠</div>
+                              <div className="text-sm">No Image Available</div>
+                            </div>
                           </div>
+                        )}
+                        
+                        {/* Status Badge */}
+                        <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                          property.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {property.status || 'Unknown'}
                         </div>
-                      )}
-                      
-                      {/* Status Badge */}
-                      <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                        property.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {property.status || 'Unknown'}
                       </div>
-                    </div>
 
-                    {/* Property Content */}
-                    <div className="p-4">
-                      <div className="mb-3">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                          {property.property_address || 'Address not available'}
-                        </h3>
-                        <p className="text-sm text-slate-600">
-                          Assessment #: {property.assessment_number}
-                        </p>
-                        {property.pid_number && (
+                      {/* Property Content */}
+                      <div className="p-4">
+                        <div className="mb-3">
+                          <h3 className="text-lg font-semibold text-slate-900 mb-1">
+                            {property.property_address || 'Address not available'}
+                          </h3>
                           <p className="text-sm text-slate-600">
-                            PID: {property.pid_number}
+                            Assessment #: {property.assessment_number}
                           </p>
-                        )}
-                      </div>
+                          {property.pid_number && (
+                            <p className="text-sm text-slate-600">
+                              PID: {property.pid_number}
+                            </p>
+                          )}
+                        </div>
 
-                      {/* Price */}
-                      <div className="mb-3">
-                        <span className="text-xl font-bold text-green-600">
-                          ${parseFloat(property.opening_bid || 0).toLocaleString()}
-                        </span>
-                      </div>
+                        {/* Price */}
+                        <div className="mb-3">
+                          <span className="text-xl font-bold text-green-600">
+                            ${parseFloat(property.opening_bid || 0).toLocaleString()}
+                          </span>
+                        </div>
 
-                      {/* Details */}
-                      <div className="text-sm text-slate-600 space-y-1 mb-4">
-                        <div>Owner: {property.owner_name || 'Not available'}</div>
-                        <div>Municipality: {property.municipality_name || property.municipality || 'Halifax Regional Municipality'}</div>
-                        {property.sale_date && (
-                          <div>Sale Date: {formatDate(property.sale_date)}</div>
-                        )}
-                      </div>
+                        {/* Details */}
+                        <div className="text-sm text-slate-600 space-y-1 mb-4">
+                          <div>Owner: {property.owner_name || 'Not available'}</div>
+                          <div>Municipality: {property.municipality_name || property.municipality || 'Halifax Regional Municipality'}</div>
+                          {property.sale_date && (
+                            <div>Sale Date: {formatDate(property.sale_date)}</div>
+                          )}
+                        </div>
 
-                      {/* Action Button */}
-                      <Link
-                        to={`/property/${property.assessment_number}`}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 text-center block"
-                      >
-                        See More Details →
-                      </Link>
+                        {/* Action Button */}
+                        <Link
+                          to={`/property/${property.assessment_number}`}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 text-center block"
+                        >
+                          See More Details →
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Insert AdSense Ad after every 6th property */}
+                    {(index + 1) % 6 === 0 && index < taxSales.length - 1 && (
+                      <div className="md:col-span-2 lg:col-span-3">
+                        <SearchPageAd index={Math.floor((index + 1) / 6)} />
+                      </div>
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
               
