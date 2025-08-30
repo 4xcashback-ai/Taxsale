@@ -1297,6 +1297,9 @@ function MainApp() {
                                   <div className="font-semibold text-gray-800">{municipality.name}</div>
                                   <div className="text-sm text-gray-500">
                                     Type: {municipality.scraper_type} | 
+                                    Status: <span className={`font-semibold ${municipality.scrape_status === 'success' ? 'text-green-600' : municipality.scrape_status === 'pending' ? 'text-yellow-600' : 'text-red-600'}`}>
+                                      {municipality.scrape_status}
+                                    </span> |
                                     Last Scraped: {municipality.last_scraped ? formatDate(municipality.last_scraped) : 'Never'}
                                   </div>
                                   <div className="text-sm text-gray-500">
