@@ -309,7 +309,13 @@ const MapWrapper = ({ properties, onMarkerClick }) => {
   };
 
   return (
-    <Wrapper apiKey={GOOGLE_MAPS_API_KEY} render={render}>
+    <Wrapper 
+      apiKey={GOOGLE_MAPS_API_KEY} 
+      render={render}
+      libraries={['marker', 'geometry']}
+      version="weekly"
+      loading="async"
+    >
       <GoogleMapComponent properties={properties} onMarkerClick={onMarkerClick} />
     </Wrapper>
   );
