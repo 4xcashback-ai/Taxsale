@@ -347,7 +347,7 @@ const MapWrapper = ({ properties, onMarkerClick }) => {
   );
 };
 
-function App() {
+function MainApp() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
