@@ -58,13 +58,20 @@ const PropertyDetails = () => {
     }).format(amount || 0);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-CA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const getTaxSaleUrl = (municipality) => {
+    // Dynamic URL based on municipality
+    switch (municipality?.toLowerCase()) {
+      case 'halifax regional municipality':
+        return 'https://www.halifax.ca/home-property/property-taxes/tax-sales';
+      case 'cape breton regional municipality':
+        return 'https://www.cbrm.ns.ca/tax-sales';
+      case 'kentville':
+        return 'https://www.kentville.ca/tax-sales';
+      case 'truro':
+        return 'https://www.truro.ca/tax-sales';
+      default:
+        return '#'; // Fallback for unknown municipalities
+    }
   };
 
   if (loading) {
