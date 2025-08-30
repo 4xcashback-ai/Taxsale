@@ -1978,7 +1978,7 @@ async def scrape_all_municipalities():
             
             if scraper_type == "halifax":
                 # Use Halifax scraper for any municipality with scraper_type "halifax"
-                result = await scrape_halifax_tax_sales()
+                result = await scrape_halifax_tax_sales_for_municipality(municipality["id"])
             else:
                 # Use generic scraper for municipalities with scraper_type "generic"
                 result = await scrape_generic_municipality(municipality["id"])
