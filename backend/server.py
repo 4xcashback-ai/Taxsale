@@ -2584,6 +2584,7 @@ async def scrape_pvsc_details(assessment_number: str):
         
         # Look for assessment value
         assessment_text = soup.get_text()
+        logger.info(f"PVSC: Extracted {len(assessment_text)} characters of text for parsing")
         
         # Current Property Assessment
         assessment_match = re.search(r'Current Property Assessment\s*\$?([\d,]+)', assessment_text)
@@ -2665,29 +2666,17 @@ async def scrape_pvsc_details(assessment_number: str):
         else:
             logger.warning(f"PVSC: garage not found for {assessment_number}")
         
-        # Extract coordinates from Google Maps link if available
-        latitude, longitude = None, None
-        if google_maps_link:
-            # Try to extract address from Google Maps link and geocode it
-            try:
-                import urllib.parse
-                if '?q=' in google_maps_link:
-                    address_query = google_maps_link.split('?q=')[1]
-                    decoded_address = urllib.parse.unquote(address_query)
-                    
-                    # Use a simple geocoding approach with the address
-                    # For now, we'll store the Google Maps link and address
-                    property_details['google_maps_link'] = google_maps_link
-                    property_details['geocoded_address'] = decoded_address
-            except:
-                property_details['google_maps_link'] = google_maps_link
+        logger.info(f"PVSC: Final property_details object: {property_details}")
         
-        return {
+        result = {
             'civic_address': civic_address,
             'google_maps_link': google_maps_link,
             'property_details': property_details,
             'pvsc_url': pvsc_url
         }
+        
+        logger.info(f"PVSC: Returning result with keys: {list(result.keys())}")
+        return result
         
     except Exception as e:
         logger.error(f"Error scraping PVSC data for {assessment_number}: {e}")
