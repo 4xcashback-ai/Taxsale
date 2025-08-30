@@ -2529,6 +2529,271 @@ def test_comprehensive_municipality_overview():
         print(f"\n❌ COMPREHENSIVE OVERVIEW ERROR: {e}")
         return False, {"error": str(e)}
 
+def test_municipality_data_structure():
+    """Test municipality data structure to understand available URLs - Review Request Focus"""
+    print("\n🏛️ Testing Municipality Data Structure (Review Request)")
+    print("🎯 FOCUS: Check what URL fields are available, especially website_url and tax sale URLs")
+    print("📋 REQUIREMENTS: Understand municipality collection structure and property municipality data")
+    
+    try:
+        # Test 1: Check Municipality Collection - GET /api/municipalities
+        print(f"\n   🔧 TEST 1: GET /api/municipalities - Check available fields")
+        
+        municipalities_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        if municipalities_response.status_code == 200:
+            municipalities = municipalities_response.json()
+            print(f"   ✅ Municipality collection accessible - Found {len(municipalities)} municipalities")
+            
+            if municipalities:
+                # Analyze the first municipality to understand structure
+                sample_municipality = municipalities[0]
+                print(f"\n   📋 MUNICIPALITY DATA STRUCTURE ANALYSIS:")
+                print(f"      Sample Municipality: {sample_municipality.get('name', 'N/A')}")
+                
+                # Check all available fields
+                available_fields = list(sample_municipality.keys())
+                print(f"      Available Fields ({len(available_fields)}): {', '.join(available_fields)}")
+                
+                # Focus on URL-related fields
+                url_fields = {}
+                for field in available_fields:
+                    if 'url' in field.lower() or 'website' in field.lower() or 'link' in field.lower():
+                        url_fields[field] = sample_municipality.get(field)
+                
+                print(f"\n   🔗 URL-RELATED FIELDS FOUND:")
+                if url_fields:
+                    for field, value in url_fields.items():
+                        print(f"      {field}: {value}")
+                else:
+                    print(f"      No URL-related fields found")
+                
+                # Check specifically for website_url and tax_sale_url
+                website_url = sample_municipality.get('website_url')
+                tax_sale_url = sample_municipality.get('tax_sale_url')
+                
+                print(f"\n   🎯 SPECIFIC URL FIELDS:")
+                print(f"      website_url: {website_url}")
+                print(f"      tax_sale_url: {tax_sale_url}")
+                
+                # Check if tax sale specific URLs exist
+                tax_sale_fields = []
+                for field in available_fields:
+                    if 'tax' in field.lower() and 'url' in field.lower():
+                        tax_sale_fields.append(field)
+                
+                if tax_sale_fields:
+                    print(f"\n   📋 TAX SALE SPECIFIC URL FIELDS:")
+                    for field in tax_sale_fields:
+                        print(f"      {field}: {sample_municipality.get(field)}")
+                else:
+                    print(f"\n   ⚠️ NO TAX SALE SPECIFIC URL FIELDS FOUND")
+                
+                # Analyze all municipalities for URL patterns
+                print(f"\n   📊 URL FIELD ANALYSIS ACROSS ALL MUNICIPALITIES:")
+                
+                municipalities_with_website_url = 0
+                municipalities_with_tax_sale_url = 0
+                unique_website_domains = set()
+                unique_tax_sale_domains = set()
+                
+                for muni in municipalities:
+                    if muni.get('website_url'):
+                        municipalities_with_website_url += 1
+                        try:
+                            from urllib.parse import urlparse
+                            domain = urlparse(muni['website_url']).netloc
+                            unique_website_domains.add(domain)
+                        except:
+                            pass
+                    
+                    if muni.get('tax_sale_url'):
+                        municipalities_with_tax_sale_url += 1
+                        try:
+                            from urllib.parse import urlparse
+                            domain = urlparse(muni['tax_sale_url']).netloc
+                            unique_tax_sale_domains.add(domain)
+                        except:
+                            pass
+                
+                print(f"      Municipalities with website_url: {municipalities_with_website_url}/{len(municipalities)}")
+                print(f"      Municipalities with tax_sale_url: {municipalities_with_tax_sale_url}/{len(municipalities)}")
+                print(f"      Unique website domains: {len(unique_website_domains)}")
+                print(f"      Unique tax sale domains: {len(unique_tax_sale_domains)}")
+                
+                # Show sample URLs
+                print(f"\n   🌐 SAMPLE MUNICIPALITY URLs:")
+                for i, muni in enumerate(municipalities[:3]):
+                    print(f"      Municipality {i+1}: {muni.get('name', 'N/A')}")
+                    print(f"         website_url: {muni.get('website_url', 'N/A')}")
+                    print(f"         tax_sale_url: {muni.get('tax_sale_url', 'N/A')}")
+                
+            else:
+                print(f"   ❌ No municipalities found in collection")
+                return False, {"error": "No municipalities in collection"}
+                
+        else:
+            print(f"   ❌ Municipality collection failed with status {municipalities_response.status_code}")
+            return False, {"error": f"HTTP {municipalities_response.status_code}"}
+        
+        # Test 2: Check Property Data Structure - GET /api/tax-sales
+        print(f"\n   🔧 TEST 2: GET /api/tax-sales - Check municipality information in properties")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            properties = tax_sales_response.json()
+            print(f"   ✅ Tax sales data accessible - Found {len(properties)} properties")
+            
+            if properties:
+                # Analyze property structure for municipality information
+                sample_property = properties[0]
+                print(f"\n   📋 PROPERTY DATA STRUCTURE ANALYSIS:")
+                print(f"      Sample Property: Assessment {sample_property.get('assessment_number', 'N/A')}")
+                
+                # Check municipality-related fields in properties
+                municipality_fields = {}
+                for field in sample_property.keys():
+                    if 'municipality' in field.lower():
+                        municipality_fields[field] = sample_property.get(field)
+                
+                print(f"\n   🏛️ MUNICIPALITY FIELDS IN PROPERTIES:")
+                if municipality_fields:
+                    for field, value in municipality_fields.items():
+                        print(f"      {field}: {value}")
+                else:
+                    print(f"      No municipality fields found in properties")
+                
+                # Check specifically for municipality_name field
+                municipality_name = sample_property.get('municipality_name')
+                municipality_id = sample_property.get('municipality_id')
+                
+                print(f"\n   🎯 KEY MUNICIPALITY FIELDS:")
+                print(f"      municipality_name: {municipality_name}")
+                print(f"      municipality_id: {municipality_id}")
+                
+                # Analyze municipality names across all properties
+                municipality_names = set()
+                municipality_ids = set()
+                
+                for prop in properties:
+                    if prop.get('municipality_name'):
+                        municipality_names.add(prop['municipality_name'])
+                    if prop.get('municipality_id'):
+                        municipality_ids.add(prop['municipality_id'])
+                
+                print(f"\n   📊 MUNICIPALITY DATA IN PROPERTIES:")
+                print(f"      Unique municipality names: {len(municipality_names)}")
+                print(f"      Unique municipality IDs: {len(municipality_ids)}")
+                print(f"      Municipality names found: {list(municipality_names)}")
+                
+                # Check if property municipality data matches municipality collection
+                print(f"\n   🔗 MUNICIPALITY DATA CONSISTENCY CHECK:")
+                
+                if 'municipalities' in locals():
+                    collection_names = {muni.get('name') for muni in municipalities}
+                    collection_ids = {muni.get('id') for muni in municipalities}
+                    
+                    matching_names = municipality_names.intersection(collection_names)
+                    matching_ids = municipality_ids.intersection(collection_ids)
+                    
+                    print(f"      Matching municipality names: {len(matching_names)}/{len(municipality_names)}")
+                    print(f"      Matching municipality IDs: {len(matching_ids)}/{len(municipality_ids)}")
+                    
+                    if len(matching_names) == len(municipality_names):
+                        print(f"      ✅ All property municipality names match collection")
+                    else:
+                        print(f"      ⚠️ Some property municipality names don't match collection")
+                
+            else:
+                print(f"   ❌ No properties found")
+                return False, {"error": "No properties found"}
+                
+        else:
+            print(f"   ❌ Tax sales data failed with status {tax_sales_response.status_code}")
+            return False, {"error": f"Tax sales HTTP {tax_sales_response.status_code}"}
+        
+        # Test 3: Find Tax Sale URLs - Analysis and Recommendations
+        print(f"\n   🔧 TEST 3: Tax Sale URL Analysis and Recommendations")
+        
+        print(f"\n   📋 TAX SALE URL FINDINGS:")
+        
+        if 'municipalities' in locals() and municipalities:
+            # Check which municipalities have tax sale URLs
+            municipalities_needing_tax_urls = []
+            municipalities_with_tax_urls = []
+            
+            for muni in municipalities:
+                if muni.get('tax_sale_url'):
+                    municipalities_with_tax_urls.append(muni['name'])
+                else:
+                    municipalities_needing_tax_urls.append(muni['name'])
+            
+            print(f"      Municipalities WITH tax sale URLs: {len(municipalities_with_tax_urls)}")
+            print(f"      Municipalities NEEDING tax sale URLs: {len(municipalities_needing_tax_urls)}")
+            
+            if municipalities_with_tax_urls:
+                print(f"      ✅ Municipalities with tax URLs: {municipalities_with_tax_urls[:3]}...")
+            
+            if municipalities_needing_tax_urls:
+                print(f"      ⚠️ Municipalities needing tax URLs: {municipalities_needing_tax_urls[:3]}...")
+            
+            # Recommendations
+            print(f"\n   💡 RECOMMENDATIONS:")
+            
+            if len(municipalities_needing_tax_urls) > 0:
+                print(f"      1. Add tax_sale_url field to {len(municipalities_needing_tax_urls)} municipalities")
+                print(f"      2. Consider separate tax sale URL field for direct links to tax sale pages")
+                print(f"      3. website_url can be used as fallback for general municipality information")
+            
+            if len(municipalities_with_tax_urls) > 0:
+                print(f"      4. {len(municipalities_with_tax_urls)} municipalities already have tax_sale_url configured")
+                print(f"      5. Use tax_sale_url for direct tax sale page links in frontend")
+            
+            # Check URL patterns
+            print(f"\n   🔍 URL PATTERN ANALYSIS:")
+            
+            for muni in municipalities[:3]:  # Show first 3 as examples
+                name = muni.get('name', 'N/A')
+                website = muni.get('website_url', 'N/A')
+                tax_sale = muni.get('tax_sale_url', 'N/A')
+                
+                print(f"      {name}:")
+                print(f"         Website: {website}")
+                print(f"         Tax Sale: {tax_sale}")
+                
+                # Suggest tax sale URL if missing
+                if tax_sale == 'N/A' and website != 'N/A':
+                    suggested_url = f"{website.rstrip('/')}/tax-sales"
+                    print(f"         Suggested Tax Sale URL: {suggested_url}")
+        
+        print(f"\n   ✅ MUNICIPALITY DATA STRUCTURE ANALYSIS COMPLETED")
+        print(f"   🎯 KEY FINDINGS FOR REVIEW REQUEST:")
+        
+        findings = {
+            "municipality_collection_accessible": municipalities_response.status_code == 200,
+            "total_municipalities": len(municipalities) if 'municipalities' in locals() else 0,
+            "website_url_field_present": municipalities_with_website_url > 0 if 'municipalities_with_website_url' in locals() else False,
+            "tax_sale_url_field_present": municipalities_with_tax_sale_url > 0 if 'municipalities_with_tax_sale_url' in locals() else False,
+            "municipalities_with_website_urls": municipalities_with_website_url if 'municipalities_with_website_url' in locals() else 0,
+            "municipalities_with_tax_sale_urls": municipalities_with_tax_sale_url if 'municipalities_with_tax_sale_url' in locals() else 0,
+            "property_municipality_name_field": municipality_name is not None if 'municipality_name' in locals() else False,
+            "unique_municipality_names_in_properties": len(municipality_names) if 'municipality_names' in locals() else 0,
+            "data_consistency": len(matching_names) == len(municipality_names) if 'matching_names' in locals() and 'municipality_names' in locals() else False
+        }
+        
+        print(f"      ✅ Municipality collection: {findings['total_municipalities']} municipalities")
+        print(f"      ✅ website_url field: {findings['municipalities_with_website_urls']} municipalities have it")
+        print(f"      ✅ tax_sale_url field: {findings['municipalities_with_tax_sale_urls']} municipalities have it")
+        print(f"      ✅ Property municipality_name field: {'Present' if findings['property_municipality_name_field'] else 'Missing'}")
+        print(f"      ✅ Data consistency: {'Good' if findings['data_consistency'] else 'Issues found'}")
+        
+        return True, findings
+        
+    except Exception as e:
+        print(f"   ❌ Municipality data structure test error: {e}")
+        return False, {"error": str(e)}
+
 def run_comprehensive_test():
     """Run tests focused on review request requirements"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
