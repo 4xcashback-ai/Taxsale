@@ -625,10 +625,28 @@ const PropertyDetails = () => {
                       <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.building_style}</span>
                     </div>
                   )}
+                  {propertyDetails.property_details.quality_of_construction && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Quality of Construction</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.quality_of_construction}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.under_construction !== undefined && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Under Construction</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.under_construction}</span>
+                    </div>
+                  )}
                   {propertyDetails.property_details.year_built && (
                     <div>
                       <span className="block text-sm text-gray-500">Year Built</span>
                       <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.year_built}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.living_units && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Living Units</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.living_units}</span>
                     </div>
                   )}
                   {propertyDetails.property_details.living_area && (
@@ -649,6 +667,18 @@ const PropertyDetails = () => {
                       <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bathrooms}</span>
                     </div>
                   )}
+                  {propertyDetails.property_details.finished_basement !== undefined && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Finished Basement</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.finished_basement}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.garage && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Garage</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.garage}</span>
+                    </div>
+                  )}
                   {propertyDetails.property_details.land_size && (
                     <div>
                       <span className="block text-sm text-gray-500">Land Size</span>
@@ -659,9 +689,6 @@ const PropertyDetails = () => {
                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                   <p className="text-sm text-blue-800">
                     ℹ️ This enhanced information is sourced from the Property Valuation Services Corporation (PVSC) and provides official assessment details for this property.
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Note: Additional fields like Quality of Construction, Under Construction, Finished Basement, and Garage are not available in the current PVSC data source.
                   </p>
                 </div>
               </div>
