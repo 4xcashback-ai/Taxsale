@@ -4634,9 +4634,9 @@ def test_land_only_property_lot_size_data():
         return False, {"error": str(e)}
 
 def main():
-    """Main function to run land-only property lot size testing based on review request"""
-    print("🚀 Land-Only Property Lot Size Data Testing")
-    print("🎯 FOCUS: Assessment 00374059 lot size data availability issue")
+    """Main function to test fixed land size scraping for assessment 00374059"""
+    print("🚀 Testing Fixed Land Size Scraping for Assessment 00374059")
+    print("🎯 FOCUS: Verify regex fix for 'Land Size 28.44 Acres' format")
     print("=" * 80)
     
     # Test 1: Basic API Connection
@@ -4646,12 +4646,12 @@ def main():
         print("❌ Cannot proceed - API connection failed")
         return False
     
-    # Test 2: Land-Only Property Lot Size Analysis (Primary Focus)
-    print("\n🏞️ Testing Land-Only Property Lot Size Data...")
-    land_success, land_result = test_land_only_property_lot_size_data()
+    # Test 2: Land Size Regex Fix for Assessment 00374059 (Primary Focus)
+    print("\n🏞️ Testing Land Size Regex Fix for Assessment 00374059...")
+    land_fix_success, land_fix_result = test_land_size_scraping_fix_00374059()
     
-    # Test 3: Enhanced PVSC Scraping (Secondary - to verify enhanced endpoint works)
-    print("\n🏠 Testing Enhanced PVSC Scraping...")
+    # Test 3: Enhanced PVSC Scraping Verification (Secondary)
+    print("\n🏠 Testing Enhanced PVSC Scraping Endpoints...")
     try:
         pvsc_success, pvsc_result = test_enhanced_pvsc_scraping()
     except NameError:
@@ -4660,30 +4660,29 @@ def main():
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 LAND-ONLY PROPERTY LOT SIZE TESTING SUMMARY")
+    print("🏁 LAND SIZE REGEX FIX TESTING SUMMARY")
     print("=" * 80)
     
-    if land_success:
-        print("✅ Land-only property lot size analysis completed successfully")
-        if land_result and 'issue' in land_result:
-            print(f"   Issue identified: {land_result['issue']}")
-        if land_result and 'land_size_value' in land_result:
-            print(f"   Land property lot size: {land_result['land_size_value']}")
-        if land_result and 'dwelling_size_value' in land_result:
-            print(f"   Dwelling property lot size: {land_result['dwelling_size_value']}")
+    if land_fix_success:
+        print("✅ Land size regex fix verification completed successfully")
+        if land_fix_result and 'land_size_value' in land_fix_result:
+            print(f"   ✅ Assessment 00374059 land_size: '{land_fix_result['land_size_value']}'")
+        if land_fix_result and 'regex_fix_working' in land_fix_result:
+            print(f"   ✅ Regex fix working: {land_fix_result['regex_fix_working']}")
+        print("   🎯 SUCCESS: Enhanced endpoint now returns complete data with land_size field")
     else:
-        print("❌ Land-only property lot size analysis has issues")
-        if land_result and 'error' in land_result:
-            print(f"   Error: {land_result['error']}")
-        if land_result and 'issue' in land_result:
-            print(f"   Issue: {land_result['issue']}")
+        print("❌ Land size regex fix verification has issues")
+        if land_fix_result and 'error' in land_fix_result:
+            print(f"   ❌ Error: {land_fix_result['error']}")
+        if land_fix_result and 'land_size_value' in land_fix_result:
+            print(f"   📊 Current land_size value: {land_fix_result['land_size_value']}")
     
     print(f"\n🎯 REVIEW REQUEST STATUS:")
-    print(f"   Assessment 00374059 enhanced endpoint: {'✅ ACCESSIBLE' if land_success else '❌ FAILING'}")
-    print(f"   Land vs Dwelling data comparison: {'✅ COMPLETE' if land_success else '❌ INCOMPLETE'}")
-    print(f"   Root cause identification: {'✅ IDENTIFIED' if land_success and land_result else '❌ UNCLEAR'}")
+    print(f"   Enhanced endpoint for 00374059: {'✅ WORKING' if land_fix_success else '❌ FAILING'}")
+    print(f"   Land_size field captures '28.44 Acres': {'✅ YES' if land_fix_success and land_fix_result.get('regex_fix_working') else '❌ NO'}")
+    print(f"   Regex fix confirmed working: {'✅ CONFIRMED' if land_fix_success else '❌ NOT CONFIRMED'}")
     
-    return land_success
+    return land_fix_success
 
 if __name__ == "__main__":
     success = main()
