@@ -606,19 +606,7 @@ const PropertyDetails = () => {
             {propertyDetails?.property_details && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">📊 Detailed Assessment Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                  {propertyDetails.property_details.bedrooms !== undefined && (
-                    <div>
-                      <span className="block text-sm text-gray-500">Bedrooms</span>
-                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bedrooms}</span>
-                    </div>
-                  )}
-                  {propertyDetails.property_details.bathrooms !== undefined && (
-                    <div>
-                      <span className="block text-sm text-gray-500">Bathrooms</span>
-                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bathrooms}</span>
-                    </div>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-4">
                   {propertyDetails.property_details.current_assessment && (
                     <div>
                       <span className="block text-sm text-gray-500">Current Assessment</span>
@@ -631,10 +619,34 @@ const PropertyDetails = () => {
                       <span className="text-lg font-semibold text-blue-600">{formatCurrency(propertyDetails.property_details.taxable_assessment)}</span>
                     </div>
                   )}
+                  {propertyDetails.property_details.building_style && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Building Style</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.building_style}</span>
+                    </div>
+                  )}
                   {propertyDetails.property_details.year_built && (
                     <div>
                       <span className="block text-sm text-gray-500">Year Built</span>
                       <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.year_built}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.living_area && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Total Living Area</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.living_area} sq ft</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.bedrooms !== undefined && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Bedrooms</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bedrooms}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.bathrooms !== undefined && (
+                    <div>
+                      <span className="block text-sm text-gray-500"># of Baths</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bathrooms}</span>
                     </div>
                   )}
                   {propertyDetails.property_details.land_size && (
@@ -647,6 +659,9 @@ const PropertyDetails = () => {
                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                   <p className="text-sm text-blue-800">
                     ℹ️ This enhanced information is sourced from the Property Valuation Services Corporation (PVSC) and provides official assessment details for this property.
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Note: Additional fields like Quality of Construction, Under Construction, Finished Basement, and Garage are not available in the current PVSC data source.
                   </p>
                 </div>
               </div>
