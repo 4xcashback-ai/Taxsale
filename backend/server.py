@@ -2693,21 +2693,27 @@ async def scrape_pvsc_details(assessment_number: str):
 @api_router.get("/property/{assessment_number}/enhanced")
 async def get_enhanced_property_details(assessment_number: str):
     """Get property details enhanced with PVSC data"""
+    logger.info(f"ENHANCED ENDPOINT CALLED for assessment {assessment_number}")
     try:
         # Get basic property from database
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
         
         if not property_data:
+            logger.warning(f"Property {assessment_number} not found in database")
             raise HTTPException(status_code=404, detail="Property not found")
         
         # Convert ObjectId to string
         property_data["_id"] = str(property_data["_id"])
         
         # Get enhanced PVSC data
+        logger.info(f"Calling scrape_pvsc_details for {assessment_number}")
         pvsc_data = await scrape_pvsc_details(assessment_number)
         
         if pvsc_data:
+            logger.info(f"PVSC data received: {list(pvsc_data.keys())}")
             property_data.update(pvsc_data)
+        else:
+            logger.warning(f"No PVSC data returned for {assessment_number}")
         
         return property_data
         
