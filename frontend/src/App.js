@@ -47,20 +47,10 @@ const SearchPageAd = ({ index }) => {
   );
 };
 
-// Safely get environment variables with fallbacks
-const getEnvVar = (name, fallback = '') => {
-  if (typeof process !== 'undefined' && process.env && process.env[name]) {
-    return process.env[name];
-  }
-  if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env[name]) {
-    return import.meta.env[name];
-  }
-  return fallback;
-};
-
-const BACKEND_URL = getEnvVar('REACT_APP_BACKEND_URL', 'https://nova-taxmap.preview.emergentagent.com');
+// Environment variables with fallbacks
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://nova-taxmap.preview.emergentagent.com';
 const API = `${BACKEND_URL}/api`;
-const GOOGLE_MAPS_API_KEY = getEnvVar('REACT_APP_GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY');
+const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY';
 
 // Google Maps component with NSPRD boundary overlays
 const GoogleMapComponent = ({ properties, onMarkerClick }) => {
