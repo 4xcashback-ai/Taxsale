@@ -2216,7 +2216,7 @@ async def scrape_halifax():
 
 @api_router.post("/generate-boundary-thumbnail/{assessment_number}")
 async def generate_boundary_thumbnail(assessment_number: str):
-    """Generate a thumbnail screenshot of Google Maps with NSPRD boundaries for search page"""
+    """Generate a thumbnail screenshot with NSPRD boundaries using Google Maps Static API"""
     try:
         # Find property by assessment number
         property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
@@ -2226,148 +2226,86 @@ async def generate_boundary_thumbnail(assessment_number: str):
         if not property_doc.get('latitude') or not property_doc.get('longitude'):
             raise HTTPException(status_code=400, detail="Property coordinates not available")
         
-        # Import Playwright
-        from playwright.async_api import async_playwright
-        import asyncio
-        import base64
-        from datetime import datetime
+        # Get NSPRD boundary data
+        boundary_data = None
+        if property_doc.get('pid_number'):
+            try:
+                boundary_response = await query_ns_government_parcel(property_doc['pid_number'])
+                if boundary_response.get('found') and boundary_response.get('geometry'):
+                    boundary_data = boundary_response
+            except Exception as e:
+                logger.warning(f"Could not fetch boundary data for PID {property_doc['pid_number']}: {e}")
         
-        async def capture_boundary_thumbnail():
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                context = await browser.new_context(
-                    viewport={'width': 400, 'height': 300}
-                )
-                page = await context.new_page()
+        if not boundary_data or not boundary_data.get('geometry', {}).get('rings'):
+            raise HTTPException(status_code=400, detail="No boundary data available for this property")
+        
+        # Generate Google Maps Static API URL with boundary overlay
+        import urllib.parse
+        
+        lat = float(property_doc['latitude'])
+        lng = float(property_doc['longitude'])
+        google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY')
+        
+        # Convert boundary rings to path format for Google Maps Static API
+        rings = boundary_data['geometry']['rings']
+        boundary_paths = []
+        
+        # Process each ring (usually just one for most properties)
+        for ring in rings:
+            if len(ring) > 0:
+                # Convert coordinates and create path
+                path_coords = []
+                for point in ring:
+                    # point[1] is latitude, point[0] is longitude
+                    path_coords.append(f"{point[1]},{point[0]}")
                 
-                try:
-                    # Create HTML page with Google Maps and NSPRD boundaries
-                    google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY')
-                    
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            #map {{ width: 100%; height: 100%; margin: 0; padding: 0; }}
-                            body {{ margin: 0; padding: 0; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div id="map"></div>
-                        <script async defer
-                            src="https://maps.googleapis.com/maps/api/js?key={google_maps_api_key}&libraries=geometry&callback=initMap">
-                        </script>
-                        <script>
-                            let map;
-                            let marker;
-                            let boundaryPolygon;
-                            
-                            function initMap() {{
-                                const propertyLocation = {{ lat: {property_doc['latitude']}, lng: {property_doc['longitude']} }};
-                                
-                                map = new google.maps.Map(document.getElementById("map"), {{
-                                    zoom: 18,
-                                    center: propertyLocation,
-                                    mapTypeId: 'satellite',
-                                    disableDefaultUI: true,
-                                    gestureHandling: 'none',
-                                    keyboardShortcuts: false,
-                                    scrollwheel: false,
-                                    zoomControl: false
-                                }});
-                                
-                                // Add property marker
-                                marker = new google.maps.Marker({{
-                                    position: propertyLocation,
-                                    map: map,
-                                    title: "Property Location"
-                                }});
-                                
-                                // Fetch and draw NSPRD boundaries
-                                fetchAndDrawBoundaries();
-                            }}
-                            
-                            async function fetchAndDrawBoundaries() {{
-                                try {{
-                                    const pidNumber = '{property_doc.get("pid_number", "")}';
-                                    if (!pidNumber) {{
-                                        console.log('No PID number available');
-                                        return;
-                                    }}
-                                    
-                                    const response = await fetch('/api/query-ns-government-parcel/' + pidNumber);
-                                    const data = await response.json();
-                                    
-                                    if (data.found && data.geometry && data.geometry.rings) {{
-                                        drawBoundaryPolygon(data.geometry.rings);
-                                    }}
-                                }} catch (error) {{
-                                    console.error('Error fetching boundary data:', error);
-                                }}
-                            }}
-                            
-                            function drawBoundaryPolygon(rings) {{
-                                try {{
-                                    // Convert rings to Google Maps format
-                                    const paths = rings.map(ring => 
-                                        ring.map(point => ({{
-                                            lat: point[1], // Latitude is second element
-                                            lng: point[0]  // Longitude is first element
-                                        }}))
-                                    );
-                                    
-                                    // Create and display polygon
-                                    boundaryPolygon = new google.maps.Polygon({{
-                                        paths: paths,
-                                        strokeColor: '#FF0000',
-                                        strokeOpacity: 0.9,
-                                        strokeWeight: 3,
-                                        fillColor: '#FF0000',
-                                        fillOpacity: 0.2
-                                    }});
-                                    
-                                    boundaryPolygon.setMap(map);
-                                    console.log('NSPRD boundary polygon drawn for thumbnail');
-                                }} catch (error) {{
-                                    console.error('Error drawing boundary polygon:', error);
-                                }}
-                            }}
-                        </script>
-                    </body>
-                    </html>
-                    """
-                    
-                    # Load the HTML content
-                    await page.set_content(html_content)
-                    
-                    # Wait for map to load and boundaries to be drawn
-                    await page.wait_for_timeout(5000)
-                    
-                    # Take screenshot
-                    screenshot = await page.screenshot(
-                        type='png',
-                        full_page=True,
-                        quality=90
-                    )
-                    
-                    return screenshot
-                    
-                finally:
-                    await browser.close()
+                # Create path string for Google Maps Static API
+                # Use red color with 50% transparency
+                path_str = "color:0xff0000|weight:3|fillcolor:0xff000040|" + "|".join(path_coords)
+                boundary_paths.append(path_str)
         
-        # Generate the thumbnail screenshot
-        screenshot_bytes = await capture_boundary_thumbnail()
+        # Build Google Maps Static API URL
+        base_url = "https://maps.googleapis.com/maps/api/staticmap"
+        params = {
+            'center': f"{lat},{lng}",
+            'zoom': '18',
+            'size': '400x300',
+            'maptype': 'satellite',
+            'key': google_maps_api_key
+        }
         
-        # Save screenshot to file
+        # Add property marker
+        params['markers'] = f"color:blue|size:mid|{lat},{lng}"
+        
+        # Add boundary path(s)
+        if boundary_paths:
+            params['path'] = boundary_paths[0]  # Use first (main) boundary ring
+        
+        # Build URL
+        url_parts = [f"{base_url}?"]
+        for key, value in params.items():
+            url_parts.append(f"{key}={urllib.parse.quote(str(value))}&")
+        
+        static_map_url = "".join(url_parts).rstrip('&')
+        
+        # Fetch the image from Google Maps Static API
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(static_map_url) as response:
+                if response.status != 200:
+                    raise HTTPException(status_code=500, detail=f"Google Maps Static API error: {response.status}")
+                
+                image_data = await response.read()
+        
+        # Save image to file
         screenshots_dir = "/app/backend/static/property_screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
         
-        thumbnail_filename = f"thumbnail_{assessment_number}_{property_doc.get('pid_number', 'unknown')}.png"
+        thumbnail_filename = f"boundary_{property_doc.get('pid_number', 'unknown')}_{assessment_number}.png"
         thumbnail_path = os.path.join(screenshots_dir, thumbnail_filename)
         
         with open(thumbnail_path, 'wb') as f:
-            f.write(screenshot_bytes)
+            f.write(image_data)
         
         # Update property document with thumbnail filename
         await db.tax_sales.update_one(
@@ -2375,14 +2313,15 @@ async def generate_boundary_thumbnail(assessment_number: str):
             {"$set": {"boundary_screenshot": thumbnail_filename}}
         )
         
-        logger.info(f"Generated boundary thumbnail for assessment {assessment_number}: {thumbnail_filename}")
+        logger.info(f"Generated boundary thumbnail using Static API for assessment {assessment_number}: {thumbnail_filename}")
         
         return {
             "status": "success",
             "assessment_number": assessment_number,
             "thumbnail_filename": thumbnail_filename,
             "thumbnail_path": f"/api/boundary-image/{thumbnail_filename}",
-            "message": "Boundary thumbnail generated successfully"
+            "static_map_url": static_map_url,
+            "message": "Boundary thumbnail generated successfully using Google Maps Static API"
         }
         
     except Exception as e:
