@@ -1097,11 +1097,12 @@ def test_nsprd_boundary_endpoint():
         print(f"   ❌ NSPRD boundary endpoint test error: {e}")
         return False, {"error": str(e)}
 
-def test_enhanced_pvsc_scraping():
-    """Test Enhanced PVSC Scraping with New Fields - Review Request Focus"""
-    print("\n🏠 Testing Enhanced PVSC Scraping with New Fields...")
-    print("🎯 FOCUS: GET /api/property/00079006/enhanced with new PVSC fields")
-    print("📋 REQUIREMENTS: quality_of_construction, under_construction, living_units, finished_basement, garage")
+def test_pvsc_data_structure_and_lot_size():
+    """Test PVSC Data Structure and Lot Size Field Location - Review Request Focus"""
+    print("\n🏠 Testing PVSC Data Structure and Lot Size Field Location...")
+    print("🎯 FOCUS: Examine lot_size vs land_size fields in PVSC response")
+    print("📋 REQUIREMENTS: Test assessment 00079006 to determine correct field path for lot size data")
+    print("🔍 GOAL: Fix bug where lot size shows 'Not specified' despite being available in PVSC data")
     
     try:
         # Test 1: Enhanced Property Endpoint with Assessment 00079006
