@@ -108,6 +108,30 @@ const PropertyDetails = () => {
     }
   }, [property, boundaryData]);
 
+  // Calculate polygon centroid
+  const calculatePolygonCentroid = (rings) => {
+    if (!rings || rings.length === 0) return null;
+    
+    // Use the first (main) ring
+    const ring = rings[0];
+    if (!ring || ring.length === 0) return null;
+    
+    let totalLat = 0;
+    let totalLng = 0;
+    let pointCount = 0;
+    
+    for (const point of ring) {
+      totalLat += point[1]; // Latitude is second element
+      totalLng += point[0]; // Longitude is first element
+      pointCount++;
+    }
+    
+    return {
+      lat: totalLat / pointCount,
+      lng: totalLng / pointCount
+    };
+  };
+
   // Draw NSPRD boundary polygon on the map
   const drawBoundaryPolygon = (map, rings) => {
     try {
@@ -136,6 +160,30 @@ const PropertyDetails = () => {
 
       polygon.setMap(map);
       setBoundaryPolygon(polygon);
+
+      // Calculate centroid and reposition marker
+      const centroid = calculatePolygonCentroid(rings);
+      if (centroid) {
+        // Create new marker at boundary centroid
+        const marker = new window.google.maps.Marker({
+          position: centroid,
+          map: map,
+          title: `${property.property_address} - ${formatCurrency(property.opening_bid)}`,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#FF0000',
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 2
+          }
+        });
+
+        // Center map on the boundary centroid
+        map.setCenter(centroid);
+        
+        console.log('Marker repositioned to boundary centroid:', centroid);
+      }
 
       console.log('NSPRD boundary polygon drawn successfully on map');
     } catch (error) {
