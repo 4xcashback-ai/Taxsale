@@ -3412,12 +3412,163 @@ def run_review_request_tests():
     # Return success status
     return passed_tests == total_tests
 
+def test_enhanced_property_endpoint():
+    """Test Enhanced Property Endpoint - SPECIFIC REVIEW REQUEST FOCUS"""
+    print("\n🔍 Testing Enhanced Property Endpoint...")
+    print("🎯 FOCUS: GET /api/property/00079006/enhanced - Complete field structure analysis")
+    print("📋 REQUIREMENTS: Show COMPLETE JSON response with all field names, especially assessment-related fields")
+    
+    try:
+        # Test the specific assessment number from review request
+        target_assessment = "00079006"
+        print(f"\n   🔧 TEST: GET /api/property/{target_assessment}/enhanced")
+        
+        response = requests.get(f"{BACKEND_URL}/property/{target_assessment}/enhanced", timeout=30)
+        
+        if response.status_code == 200:
+            enhanced_data = response.json()
+            print(f"   ✅ Enhanced property endpoint SUCCESS - HTTP 200")
+            
+            # Show COMPLETE JSON response as requested
+            print(f"\n   📋 COMPLETE JSON RESPONSE FOR ASSESSMENT {target_assessment}:")
+            print("   " + "="*70)
+            print(json.dumps(enhanced_data, indent=4, default=str))
+            print("   " + "="*70)
+            
+            # Analyze field structure specifically for assessment-related fields
+            print(f"\n   🔍 FIELD STRUCTURE ANALYSIS:")
+            
+            # Basic property fields
+            basic_fields = [
+                'assessment_number', 'owner_name', 'property_address', 'opening_bid',
+                'municipality_name', 'pid_number', 'redeemable', 'hst_applicable',
+                'sale_date', 'property_type', 'latitude', 'longitude'
+            ]
+            
+            print(f"   📊 BASIC PROPERTY FIELDS:")
+            for field in basic_fields:
+                value = enhanced_data.get(field)
+                field_type = type(value).__name__
+                print(f"      {field}: {value} ({field_type})")
+            
+            # Assessment-related fields (key focus of review request)
+            assessment_fields = [
+                'current_assessment', 'taxable_assessment', 'assessment_value',
+                'tax_owing', 'assessment_number'
+            ]
+            
+            print(f"\n   💰 ASSESSMENT-RELATED FIELDS (KEY FOCUS):")
+            found_assessment_fields = []
+            missing_assessment_fields = []
+            
+            for field in assessment_fields:
+                if field in enhanced_data:
+                    value = enhanced_data[field]
+                    field_type = type(value).__name__
+                    print(f"      ✅ {field}: {value} ({field_type})")
+                    found_assessment_fields.append(field)
+                else:
+                    print(f"      ❌ {field}: NOT FOUND")
+                    missing_assessment_fields.append(field)
+            
+            # PVSC enhanced fields
+            pvsc_fields = [
+                'civic_address', 'google_maps_link', 'property_details', 'pvsc_url'
+            ]
+            
+            print(f"\n   🏠 PVSC ENHANCED FIELDS:")
+            for field in pvsc_fields:
+                if field in enhanced_data:
+                    value = enhanced_data[field]
+                    if isinstance(value, dict):
+                        print(f"      ✅ {field}: {len(value)} sub-fields")
+                        # Show sub-fields for property_details
+                        if field == 'property_details' and value:
+                            for sub_field, sub_value in value.items():
+                                print(f"         - {sub_field}: {sub_value}")
+                    else:
+                        print(f"      ✅ {field}: {value}")
+                else:
+                    print(f"      ❌ {field}: NOT FOUND")
+            
+            # Check for any other fields not in our expected lists
+            all_expected_fields = set(basic_fields + assessment_fields + pvsc_fields)
+            actual_fields = set(enhanced_data.keys())
+            unexpected_fields = actual_fields - all_expected_fields
+            
+            if unexpected_fields:
+                print(f"\n   🔍 ADDITIONAL FIELDS FOUND:")
+                for field in sorted(unexpected_fields):
+                    value = enhanced_data[field]
+                    field_type = type(value).__name__
+                    if isinstance(value, (dict, list)):
+                        print(f"      + {field}: {field_type} with {len(value)} items")
+                    else:
+                        print(f"      + {field}: {value} ({field_type})")
+            
+            # Summary of findings
+            print(f"\n   📊 FIELD ANALYSIS SUMMARY:")
+            print(f"      Total fields in response: {len(enhanced_data)}")
+            print(f"      Assessment-related fields found: {len(found_assessment_fields)}")
+            print(f"      Assessment-related fields missing: {len(missing_assessment_fields)}")
+            print(f"      PVSC fields present: {sum(1 for f in pvsc_fields if f in enhanced_data)}")
+            
+            # Check data types and values for assessment fields
+            print(f"\n   🔍 ASSESSMENT VALUE DATA TYPE ANALYSIS:")
+            for field in found_assessment_fields:
+                value = enhanced_data[field]
+                print(f"      {field}:")
+                print(f"         Value: {value}")
+                print(f"         Type: {type(value).__name__}")
+                print(f"         Is numeric: {isinstance(value, (int, float))}")
+                if isinstance(value, str) and value.replace(',', '').replace('.', '').replace('$', '').isdigit():
+                    print(f"         Could be converted to numeric: Yes")
+                else:
+                    print(f"         Could be converted to numeric: No")
+            
+            # Specific check for what frontend might be looking for
+            print(f"\n   🎯 FRONTEND COMPATIBILITY CHECK:")
+            frontend_expected_fields = [
+                'current_assessment', 'taxable_assessment', 'assessment_value'
+            ]
+            
+            for field in frontend_expected_fields:
+                if field in enhanced_data:
+                    value = enhanced_data[field]
+                    print(f"      ✅ Frontend field '{field}' available: {value}")
+                else:
+                    print(f"      ❌ Frontend field '{field}' MISSING")
+            
+            return True, {
+                "endpoint_working": True,
+                "total_fields": len(enhanced_data),
+                "assessment_fields_found": found_assessment_fields,
+                "assessment_fields_missing": missing_assessment_fields,
+                "complete_response": enhanced_data
+            }
+            
+        elif response.status_code == 404:
+            print(f"   ❌ Assessment {target_assessment} not found")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {response.status_code}")
+            try:
+                error_detail = response.json()
+                print(f"      Error: {error_detail}")
+            except:
+                print(f"      Raw response: {response.text}")
+            return False, {"error": f"HTTP {response.status_code}"}
+            
+    except Exception as e:
+        print(f"   ❌ Enhanced property endpoint test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
-    """Main test execution function"""
+    """Main test execution function - FOCUSED ON ENHANCED PROPERTY ENDPOINT"""
     print("🚀 STARTING BACKEND API TESTING")
     print("=" * 80)
-    print("🎯 FOCUS: Boundary Thumbnail Generation using Google Maps Static API")
-    print("📋 TARGET: Assessment #00079006 boundary thumbnail with red boundary lines")
+    print("🎯 FOCUS: Enhanced Property Endpoint Field Structure Analysis")
+    print("📋 TARGET: Assessment #00079006 complete JSON response with assessment fields")
     print("=" * 80)
     
     # Track overall results
