@@ -2372,7 +2372,7 @@ async def generate_boundary_thumbnail(assessment_number: str):
         # Update property document with thumbnail filename
         await db.tax_sales.update_one(
             {"assessment_number": assessment_number},
-            {"$set": {"boundary_thumbnail": thumbnail_filename}}
+            {"$set": {"boundary_screenshot": thumbnail_filename}}
         )
         
         logger.info(f"Generated boundary thumbnail for assessment {assessment_number}: {thumbnail_filename}")
