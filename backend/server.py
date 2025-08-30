@@ -2624,26 +2624,41 @@ async def scrape_pvsc_details(assessment_number: str):
         quality_match = re.search(r'Quality of Construction\s*([^\n]+)', assessment_text)
         if quality_match:
             property_details['quality_of_construction'] = quality_match.group(1).strip()
+            logger.info(f"PVSC: Found quality_of_construction: {property_details['quality_of_construction']}")
+        else:
+            logger.warning(f"PVSC: quality_of_construction not found for {assessment_number}")
         
         # Under Construction
         under_construction_match = re.search(r'Under Construction\s*([YN])', assessment_text)
         if under_construction_match:
             property_details['under_construction'] = under_construction_match.group(1)
+            logger.info(f"PVSC: Found under_construction: {property_details['under_construction']}")
+        else:
+            logger.warning(f"PVSC: under_construction not found for {assessment_number}")
         
         # Living Units
         living_units_match = re.search(r'Living Units\s*(\d+)', assessment_text)
         if living_units_match:
             property_details['living_units'] = int(living_units_match.group(1))
+            logger.info(f"PVSC: Found living_units: {property_details['living_units']}")
+        else:
+            logger.warning(f"PVSC: living_units not found for {assessment_number}")
         
         # Finished Basement
         finished_basement_match = re.search(r'Finished Basement\s*([YN])', assessment_text)
         if finished_basement_match:
             property_details['finished_basement'] = finished_basement_match.group(1)
+            logger.info(f"PVSC: Found finished_basement: {property_details['finished_basement']}")
+        else:
+            logger.warning(f"PVSC: finished_basement not found for {assessment_number}")
         
         # Garage
         garage_match = re.search(r'Garage\s*([YN]|[^\n]+)', assessment_text)
         if garage_match:
             property_details['garage'] = garage_match.group(1).strip()
+            logger.info(f"PVSC: Found garage: {property_details['garage']}")
+        else:
+            logger.warning(f"PVSC: garage not found for {assessment_number}")
         
         # Extract coordinates from Google Maps link if available
         latitude, longitude = None, None
