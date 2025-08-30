@@ -405,12 +405,12 @@ const PropertyDetails = () => {
                   View PVSC Assessment Details
                 </a>
                 <a
-                  href="https://www.halifax.ca/home-property/property-taxes/tax-sales"
+                  href={getTaxSaleUrl(property.municipality_name)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full bg-gray-600 text-white text-center py-3 px-4 rounded-md hover:bg-gray-700 transition-colors font-medium"
                 >
-                  Halifax Tax Sale Info
+                  {property.municipality_name || 'Municipality'} Tax Sale Info
                 </a>
               </div>
             </div>
