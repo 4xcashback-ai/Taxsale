@@ -1246,7 +1246,8 @@ def test_enhanced_pvsc_scraping():
             
             print(f"   📊 Testing {len(test_assessments)} additional properties")
             
-            consistent_failure = True
+            successful_enhancements = 0
+            failed_enhancements = 0
             
             for i, assessment in enumerate(test_assessments):
                 print(f"      Testing property {i+1}: Assessment {assessment}")
