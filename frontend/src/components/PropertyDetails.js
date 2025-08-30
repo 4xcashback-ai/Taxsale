@@ -576,10 +576,13 @@ const PropertyDetails = () => {
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Property Characteristics</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {(propertyDetails?.property_details?.land_size || property.lot_size) && (
+                    {(propertyDetails?.property_details?.land_size || property.lot_size || property.property_type === 'Land') && (
                       <div>
                         <span className="block text-sm text-gray-500">Lot Size</span>
-                        <span className="text-gray-900 font-medium">{propertyDetails?.property_details?.land_size || property.lot_size}</span>
+                        <span className="text-gray-900 font-medium">
+                          {propertyDetails?.property_details?.land_size || property.lot_size || 
+                           (property.property_type === 'Land' ? 'Not available for land-only properties' : 'Not specified')}
+                        </span>
                       </div>
                     )}
                     {property.zoning && (
