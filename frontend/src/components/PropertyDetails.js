@@ -107,7 +107,7 @@ const PropertyDetails = ({ property, onClose }) => {
               />
             ) : (
               <img
-                src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=800x300&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`}
+                src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=800x300&maptype=satellite&key=${(typeof window !== 'undefined' && window.REACT_APP_GOOGLE_MAPS_API_KEY) || process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}`}
                 alt="Satellite view"
                 className="w-full h-64 object-cover"
               />
