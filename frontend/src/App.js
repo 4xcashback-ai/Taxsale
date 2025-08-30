@@ -754,6 +754,91 @@ function PropertySearch() {
           <TabsContent value="search">
             <div>
               <h2 className="text-2xl font-bold mb-4">Tax Sale Properties</h2>
+              
+              {/* Search and Filters */}
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Search Input */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Search Properties
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="Search by address, assessment number, PID..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSearch();
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Municipality Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Municipality
+                    </label>
+                    <select
+                      value={selectedMunicipality}
+                      onChange={(e) => setSelectedMunicipality(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">All Municipalities</option>
+                      {municipalities.map((municipality) => (
+                        <option key={municipality.id} value={municipality.name}>
+                          {municipality.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Status Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="active">Active</option>
+                      <option value="sold">Sold</option>
+                      <option value="all">All Status</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Search Button */}
+                <div className="mt-4 flex justify-end">
+                  <Button 
+                    onClick={handleSearch}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={loading}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    {loading ? 'Searching...' : 'Search Properties'}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Results Count */}
+              {taxSales.length > 0 && (
+                <div className="mb-4 text-sm text-gray-600">
+                  Showing {taxSales.length} properties
+                  {searchQuery && ` matching "${searchQuery}"`}
+                  {selectedMunicipality && ` in ${selectedMunicipality}`}
+                </div>
+              )}
+              
+              {/* Property Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {taxSales.map((property, index) => (
                   <div
