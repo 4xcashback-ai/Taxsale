@@ -489,36 +489,6 @@ const PropertyDetails = () => {
                 </div>
               )}
               
-              {/* Satellite View */}
-              <div className="mb-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-3">Satellite Property View</h4>
-                <div className="border rounded-lg overflow-hidden">
-                  {property.boundary_screenshot ? (
-                    <img
-                      src={`${process.env.REACT_APP_BACKEND_URL || 'https://taxsale-ns.preview.emergentagent.com'}/api/boundary-image/${property.boundary_screenshot}`}
-                      alt={`Property boundary map of ${property.property_address}`}
-                      className="w-full h-96 object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                    />
-                  ) : property.latitude && property.longitude ? (
-                    <img
-                      src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=800x400&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}`}
-                      alt={`Satellite view of ${property.property_address}`}
-                      className="w-full h-96 object-cover"
-                    />
-                  ) : null}
-                  <div style={{display: 'none'}} className="w-full h-96 bg-gray-100 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <p>Satellite image not available</p>
-                      <p className="text-sm mt-2">URL: /api/boundary-image/{property.boundary_screenshot || 'not-available'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Address Information */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-medium text-blue-900 mb-2">📍 Official Civic Address:</h4>
