@@ -78,25 +78,14 @@ const PropertyDetails = ({ property, onClose }) => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading property details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !property) {
+  if (!property) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Property Not Found</h2>
-          <p className="text-gray-600 mb-6">{error || 'The requested property could not be found.'}</p>
+          <p className="text-gray-600 mb-6">The requested property could not be found.</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={onClose}
             className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             Return to Property Search
