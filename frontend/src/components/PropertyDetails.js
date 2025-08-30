@@ -276,20 +276,21 @@ const PropertyDetails = () => {
     });
   };
 
-  const getTaxSaleUrl = (municipality) => {
-    // Dynamic URL based on municipality
-    switch (municipality?.toLowerCase()) {
-      case 'halifax regional municipality':
-        return 'https://www.halifax.ca/home-property/property-taxes/tax-sales';
-      case 'cape breton regional municipality':
-        return 'https://www.cbrm.ns.ca/tax-sales';
-      case 'kentville':
-        return 'https://www.kentville.ca/tax-sales';
-      case 'truro':
-        return 'https://www.truro.ca/tax-sales';
-      default:
-        return '#'; // Fallback for unknown municipalities
+  const getTaxSaleUrl = () => {
+    // Use database municipality data for URLs
+    if (municipalityData) {
+      // Prefer tax_sale_url if available, otherwise use website_url
+      if (municipalityData.tax_sale_url) {
+        return municipalityData.tax_sale_url;
+      } else if (municipalityData.website_url) {
+        // If no specific tax sale URL, try common tax sale page patterns
+        const baseUrl = municipalityData.website_url.replace(/\/$/, ''); // Remove trailing slash
+        return `${baseUrl}/tax-sales`;
+      }
     }
+    
+    // Fallback to # if no municipality data available
+    return '#';
   };
 
   // Google Maps configuration
