@@ -3563,6 +3563,158 @@ def test_enhanced_property_endpoint():
         print(f"   ❌ Enhanced property endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_enhanced_property_endpoint_pvsc_fields():
+    """Test Enhanced Property Endpoint PVSC Fields - Review Request Focus"""
+    print("\n🔍 Testing Enhanced Property Endpoint PVSC Fields...")
+    print("🎯 FOCUS: GET /api/property/00079006/enhanced - Show ALL PVSC fields in property_details")
+    print("📋 REQUIREMENTS: Find building_style, quality_of_construction, under_construction, living_units, total_living_area, finished_basement, garage")
+    
+    try:
+        # Test the specific assessment from review request
+        target_assessment = "00079006"
+        print(f"\n   🔧 TEST: GET /api/property/{target_assessment}/enhanced")
+        
+        enhanced_response = requests.get(
+            f"{BACKEND_URL}/property/{target_assessment}/enhanced", 
+            timeout=30
+        )
+        
+        if enhanced_response.status_code == 200:
+            property_data = enhanced_response.json()
+            print(f"   ✅ Enhanced property endpoint SUCCESS - HTTP 200")
+            print(f"   📊 Total response fields: {len(property_data)}")
+            
+            # Show all root level fields
+            print(f"\n   📋 ROOT LEVEL FIELDS ({len(property_data)} total):")
+            for i, (key, value) in enumerate(property_data.items(), 1):
+                if isinstance(value, dict):
+                    print(f"      {i:2d}. {key}: <dict with {len(value)} fields>")
+                elif isinstance(value, list):
+                    print(f"      {i:2d}. {key}: <list with {len(value)} items>")
+                else:
+                    value_str = str(value)[:50] + "..." if len(str(value)) > 50 else str(value)
+                    print(f"      {i:2d}. {key}: {value_str}")
+            
+            # Focus on property_details object (main PVSC data)
+            property_details = property_data.get('property_details')
+            if property_details:
+                print(f"\n   🎯 PROPERTY_DETAILS OBJECT ({len(property_details)} fields):")
+                print(f"   📋 ALL PVSC FIELDS AVAILABLE:")
+                
+                # Show all property_details fields with values
+                for i, (key, value) in enumerate(property_details.items(), 1):
+                    value_str = str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
+                    print(f"      {i:2d}. {key}: {value_str}")
+                
+                # Check for specific fields requested in review
+                requested_fields = [
+                    'building_style',
+                    'quality_of_construction', 
+                    'under_construction',
+                    'living_units',
+                    'total_living_area',
+                    'finished_basement',
+                    'garage'
+                ]
+                
+                print(f"\n   🔍 CHECKING FOR REQUESTED FIELDS:")
+                found_fields = {}
+                missing_fields = []
+                
+                for field in requested_fields:
+                    if field in property_details:
+                        value = property_details[field]
+                        found_fields[field] = value
+                        print(f"      ✅ {field}: {value}")
+                    else:
+                        missing_fields.append(field)
+                        print(f"      ❌ {field}: NOT FOUND")
+                
+                # Check for similar/alternative field names
+                print(f"\n   🔍 CHECKING FOR SIMILAR FIELD NAMES:")
+                all_fields = list(property_details.keys())
+                
+                for missing_field in missing_fields:
+                    similar_fields = []
+                    for field in all_fields:
+                        # Check for partial matches
+                        if (missing_field.lower() in field.lower() or 
+                            field.lower() in missing_field.lower() or
+                            any(word in field.lower() for word in missing_field.split('_'))):
+                            similar_fields.append(field)
+                    
+                    if similar_fields:
+                        print(f"      🔍 Similar to '{missing_field}': {similar_fields}")
+                        for similar_field in similar_fields:
+                            value = property_details[similar_field]
+                            print(f"         - {similar_field}: {value}")
+                
+                # Show assessment and taxable assessment values
+                print(f"\n   💰 ASSESSMENT VALUES:")
+                current_assessment = property_details.get('current_assessment')
+                taxable_assessment = property_details.get('taxable_assessment')
+                
+                if current_assessment:
+                    print(f"      Current Assessment: ${current_assessment:,.2f}")
+                if taxable_assessment:
+                    print(f"      Taxable Assessment: ${taxable_assessment:,.2f}")
+                
+                # Show other important PVSC fields
+                print(f"\n   🏠 OTHER IMPORTANT PVSC FIELDS:")
+                important_fields = [
+                    'civic_address', 'year_built', 'bedrooms', 'bathrooms', 
+                    'living_area', 'land_size', 'building_style', 'property_type'
+                ]
+                
+                for field in important_fields:
+                    if field in property_details:
+                        value = property_details[field]
+                        print(f"      {field}: {value}")
+                
+                # Summary of findings
+                print(f"\n   📊 FIELD ANALYSIS SUMMARY:")
+                print(f"      Total property_details fields: {len(property_details)}")
+                print(f"      Requested fields found: {len(found_fields)}/{len(requested_fields)}")
+                print(f"      Missing fields: {len(missing_fields)}")
+                
+                if found_fields:
+                    print(f"\n   ✅ FOUND REQUESTED FIELDS:")
+                    for field, value in found_fields.items():
+                        print(f"      - {field}: {value}")
+                
+                if missing_fields:
+                    print(f"\n   ❌ MISSING REQUESTED FIELDS:")
+                    for field in missing_fields:
+                        print(f"      - {field}")
+                
+                return True, {
+                    "total_fields": len(property_data),
+                    "property_details_fields": len(property_details),
+                    "found_requested_fields": found_fields,
+                    "missing_requested_fields": missing_fields,
+                    "all_property_details": property_details
+                }
+                
+            else:
+                print(f"   ❌ property_details object not found in response")
+                return False, {"error": "property_details object missing"}
+                
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Assessment {target_assessment} not found")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {enhanced_response.text}")
+            return False, {"error": f"HTTP {enhanced_response.status_code}"}
+            
+    except Exception as e:
+        print(f"   ❌ Enhanced property endpoint test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
     """Main test execution function - FOCUSED ON ENHANCED PROPERTY ENDPOINT"""
     print("🚀 STARTING BACKEND API TESTING")
