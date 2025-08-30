@@ -4163,13 +4163,61 @@ def main():
     
     return critical_passed
 
-if __name__ == "__main__":
-    # Run the main test function focused on boundary thumbnail generation
-    success = main()
+def main():
+    """Main function to run enhanced PVSC testing based on review request"""
+    print("🚀 Enhanced PVSC Data Integration Testing")
+    print("🎯 FOCUS: Testing missing enhanced fields issue for assessment 00079006")
+    print("=" * 80)
     
-    if success:
-        print("🎉 All boundary thumbnail generation tests passed!")
-        sys.exit(0)
+    # Test 1: Basic API Connection
+    print("\n🔗 Testing API Connection...")
+    api_success = test_api_connection()
+    if not api_success:
+        print("❌ Cannot proceed - API connection failed")
+        return False
+    
+    # Test 2: Enhanced PVSC Scraping (Primary Focus)
+    print("\n🏠 Testing Enhanced PVSC Scraping...")
+    pvsc_success, pvsc_result = test_enhanced_pvsc_scraping()
+    
+    # Test 3: Check server logs for debugging
+    print("\n📋 Checking Server Logs for PVSC Errors...")
+    try:
+        import subprocess
+        log_result = subprocess.run(['tail', '-n', '50', '/var/log/supervisor/backend.out.log'], 
+                                  capture_output=True, text=True, timeout=10)
+        if log_result.returncode == 0:
+            print("   📊 Recent server logs:")
+            for line in log_result.stdout.split('\n')[-10:]:  # Show last 10 lines
+                if 'PVSC' in line or 'enhanced' in line or 'ERROR' in line:
+                    print(f"      {line}")
+        else:
+            print("   ⚠️ Could not access server logs")
+    except Exception as e:
+        print(f"   ⚠️ Error accessing logs: {e}")
+    
+    # Summary
+    print("\n" + "=" * 80)
+    print("🏁 ENHANCED PVSC TESTING SUMMARY")
+    print("=" * 80)
+    
+    if pvsc_success:
+        print("✅ Enhanced PVSC endpoint is working correctly")
+        print("   All 5 new fields are being returned in the API response")
     else:
-        print("⚠️ Some boundary thumbnail generation tests failed")
-        sys.exit(1)
+        print("❌ Enhanced PVSC endpoint has issues")
+        if pvsc_result and 'missing_fields' in pvsc_result:
+            missing = pvsc_result['missing_fields']
+            print(f"   Missing fields: {missing}")
+        if pvsc_result and 'error' in pvsc_result:
+            print(f"   Error: {pvsc_result['error']}")
+    
+    print(f"\n🎯 REVIEW REQUEST STATUS:")
+    print(f"   Assessment 00079006 enhanced endpoint: {'✅ WORKING' if pvsc_success else '❌ FAILING'}")
+    print(f"   New PVSC fields integration: {'✅ COMPLETE' if pvsc_success else '❌ INCOMPLETE'}")
+    
+    return pvsc_success
+
+if __name__ == "__main__":
+    success = main()
+    sys.exit(0 if success else 1)
