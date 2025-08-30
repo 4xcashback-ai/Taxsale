@@ -691,9 +691,29 @@ const PropertyDetails = () => {
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
               <h3 className="text-xl font-semibold text-green-900 mb-2">Minimum Bid</h3>
               <div className="flex items-baseline">
-                <span className="text-4xl font-bold text-green-800">{formatCurrency(property.opening_bid)}</span>
+                <span className="text-4xl font-bold text-green-800">
+                  {formatCurrency(property.tax_owing || property.opening_bid)}
+                </span>
                 <span className="text-lg text-green-600 ml-2">CAD</span>
               </div>
+              <p className="text-sm text-green-700 mt-2">Tax Owing Amount</p>
+            </div>
+
+            {/* AdSense Ad Block */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <div className="text-center text-sm text-gray-500 mb-2">Advertisement</div>
+              <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215"
+                   crossOrigin="anonymous"></script>
+              <ins className="adsbygoogle"
+                   style={{display:'block'}}
+                   data-ad-client="ca-pub-5947395928510215"
+                   data-ad-slot="3653544552"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true">
+              </ins>
+              <script>
+                   {`(adsbygoogle = window.adsbygoogle || []).push({});`}
+              </script>
             </div>
 
             {/* External Resources */}
