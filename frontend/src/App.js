@@ -757,40 +757,105 @@ function MainApp() {
                 {taxSales.map((property, index) => (
                   <div
                     key={property.id || index}
-                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-slate-200"
-                    onClick={() => setSelectedProperty(property)}
+                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-slate-200"
                   >
-                    <div className="p-6">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    {/* Property Image */}
+                    <div className="relative h-48 bg-gray-200">
+                      {property.boundary_screenshot ? (
+                        <img
+                          src={`${import.meta.env.REACT_APP_BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
+                          alt={`Property boundary map of ${property.property_address}`}
+                          className="w-full h-full object-cover rounded-t-lg"
+                          onError={(e) => {
+                            // Fallback to satellite image
+                            if (property.latitude && property.longitude) {
+                              e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`;
+                            } else {
+                              e.target.style.display = 'none';
+                              e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
+                            }
+                          }}
+                        />
+                      ) : property.latitude && property.longitude ? (
+                        <img
+                          src={`https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`}
+                          alt={`Satellite view of ${property.property_address}`}
+                          className="w-full h-full object-cover rounded-t-lg"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg">
+                          <div className="text-center text-gray-600">
+                            <div className="text-2xl mb-1">🏠</div>
+                            <div className="text-sm">No Image Available</div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Status Badge */}
+                      <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                        property.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {property.status || 'Unknown'}
+                      </div>
+                    </div>
+
+                    {/* Property Content */}
+                    <div className="p-4">
+                      <div className="mb-3">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-1">
                           {property.property_address || 'Address not available'}
                         </h3>
                         <p className="text-sm text-slate-600">
                           Assessment #: {property.assessment_number}
                         </p>
+                        {property.pid_number && (
+                          <p className="text-sm text-slate-600">
+                            PID: {property.pid_number}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-lg font-bold text-green-600">
+                      {/* Price */}
+                      <div className="mb-3">
+                        <span className="text-xl font-bold text-green-600">
                           ${parseFloat(property.opening_bid || 0).toLocaleString()}
                         </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          property.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-slate-100 text-slate-800'
-                        }`}>
-                          {property.status}
-                        </span>
                       </div>
 
-                      <div className="text-sm text-slate-600 space-y-1">
+                      {/* Details */}
+                      <div className="text-sm text-slate-600 space-y-1 mb-4">
                         <div>Owner: {property.owner_name || 'Not available'}</div>
-                        <div>Municipality: {property.municipality || 'Not available'}</div>
+                        <div>Municipality: {property.municipality_name || property.municipality || 'Halifax Regional Municipality'}</div>
+                        {property.sale_date && (
+                          <div>Sale Date: {formatDate(property.sale_date)}</div>
+                        )}
                       </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => setSelectedProperty(property)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200"
+                      >
+                        See More Details →
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
+              
+              {/* No Results */}
+              {taxSales.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-gray-500 text-lg">No tax sale properties found</div>
+                  <p className="text-gray-400 mt-2">Try scraping Halifax data to populate properties</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
