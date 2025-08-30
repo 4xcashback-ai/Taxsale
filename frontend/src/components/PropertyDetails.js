@@ -432,7 +432,7 @@ const PropertyDetails = () => {
                 </div>
                 <div>
                   <span className="block text-sm text-gray-500 mb-1">Tax Sale Municipality</span>
-                  <span className="text-gray-900">Halifax Regional Municipality</span>
+                  <span className="text-gray-900">{property.municipality_name || 'Not specified'}</span>
                 </div>
               </div>
             </div>
