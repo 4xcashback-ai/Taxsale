@@ -569,7 +569,7 @@ const PropertyDetails = () => {
               </div>
               
               {/* Additional Property Characteristics */}
-              {(property.lot_size || property.zoning || propertyDetails?.bedrooms || propertyDetails?.bathrooms) && (
+              {(property.lot_size || property.zoning || propertyDetails?.property_details?.bedrooms || propertyDetails?.property_details?.bathrooms) && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Property Characteristics</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -585,16 +585,16 @@ const PropertyDetails = () => {
                         <span className="text-gray-900">{property.zoning}</span>
                       </div>
                     )}
-                    {propertyDetails?.bedrooms && (
+                    {propertyDetails?.property_details?.bedrooms && (
                       <div>
                         <span className="block text-sm text-gray-500">Bedrooms</span>
-                        <span className="text-gray-900">{propertyDetails.bedrooms}</span>
+                        <span className="text-gray-900">{propertyDetails.property_details.bedrooms}</span>
                       </div>
                     )}
-                    {propertyDetails?.bathrooms && (
+                    {propertyDetails?.property_details?.bathrooms && (
                       <div>
                         <span className="block text-sm text-gray-500">Bathrooms</span>
-                        <span className="text-gray-900">{propertyDetails.bathrooms}</span>
+                        <span className="text-gray-900">{propertyDetails.property_details.bathrooms}</span>
                       </div>
                     )}
                   </div>
