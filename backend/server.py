@@ -2221,6 +2221,45 @@ async def initialize_municipalities():
     
     return {"message": f"Initialized {created_count} municipalities"}
 
+@api_router.post("/fix-halifax-municipality")
+async def fix_halifax_municipality():
+    """Fix Halifax municipality configuration for VPS deployment issues"""
+    try:
+        # Find Halifax municipality
+        halifax = await db.municipalities.find_one({"name": "Halifax Regional Municipality"})
+        
+        if not halifax:
+            return {"error": "Halifax municipality not found", "action": "needs_initialization"}
+        
+        # Check if Halifax has wrong scraper_type
+        current_scraper_type = halifax.get("scraper_type", "unknown")
+        
+        if current_scraper_type != "halifax":
+            # Update Halifax to have correct scraper_type
+            await db.municipalities.update_one(
+                {"name": "Halifax Regional Municipality"},
+                {"$set": {
+                    "scraper_type": "halifax",
+                    "updated_at": datetime.now(timezone.utc)
+                }}
+            )
+            
+            return {
+                "status": "fixed",
+                "message": f"Updated Halifax scraper_type from '{current_scraper_type}' to 'halifax'",
+                "municipality_id": halifax["id"]
+            }
+        else:
+            return {
+                "status": "already_correct", 
+                "message": "Halifax municipality already has correct scraper_type 'halifax'",
+                "municipality_id": halifax["id"]
+            }
+            
+    except Exception as e:
+        logger.error(f"Error fixing Halifax municipality: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fix Halifax municipality: {str(e)}")
+
 
 # Weekly scraping scheduler
 async def weekly_scrape_job():
