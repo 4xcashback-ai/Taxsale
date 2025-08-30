@@ -489,7 +489,7 @@ const PropertyDetails = () => {
                 <div>
                   <span className="block text-sm text-gray-500">Opening Bid</span>
                   <span className="text-2xl font-bold text-green-600">
-                    {formatCurrency(property.opening_bid)}
+                    {formatCurrency(property.tax_owing || property.opening_bid)}
                   </span>
                 </div>
                 <div>
