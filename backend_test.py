@@ -1477,6 +1477,281 @@ def test_vps_scraping_deployment_issues():
         print(f"   ❌ VPS deployment test error: {e}")
         return False, {"error": str(e)}
 
+def test_comprehensive_municipality_overview():
+    """Comprehensive test for review request - Municipality status, property counts, scraper types, API health"""
+    print("\n🎯 COMPREHENSIVE MUNICIPALITY OVERVIEW (Review Request)")
+    print("=" * 80)
+    print("🔍 TESTING: Municipality Status, Property Counts, Scraper Types, API Health")
+    
+    try:
+        overview_results = {
+            "municipalities": {},
+            "properties": {},
+            "scraper_types": {},
+            "api_health": {}
+        }
+        
+        # Test 1: Municipality Status - GET /api/municipalities
+        print(f"\n📋 1. MUNICIPALITY STATUS CHECK")
+        print(f"   Testing: GET /api/municipalities")
+        
+        muni_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        if muni_response.status_code == 200:
+            municipalities = muni_response.json()
+            print(f"   ✅ SUCCESS: Retrieved {len(municipalities)} municipalities")
+            
+            # Analyze municipality configurations
+            scraper_type_counts = {}
+            status_counts = {}
+            municipalities_by_scraper = {}
+            
+            for muni in municipalities:
+                name = muni.get('name', 'Unknown')
+                scraper_type = muni.get('scraper_type', 'unknown')
+                status = muni.get('scrape_status', 'unknown')
+                last_scraped = muni.get('last_scraped', 'never')
+                
+                # Count scraper types
+                scraper_type_counts[scraper_type] = scraper_type_counts.get(scraper_type, 0) + 1
+                
+                # Count statuses
+                status_counts[status] = status_counts.get(status, 0) + 1
+                
+                # Group by scraper type
+                if scraper_type not in municipalities_by_scraper:
+                    municipalities_by_scraper[scraper_type] = []
+                municipalities_by_scraper[scraper_type].append({
+                    'name': name,
+                    'status': status,
+                    'last_scraped': last_scraped
+                })
+            
+            print(f"\n   📊 MUNICIPALITY BREAKDOWN:")
+            print(f"      Total Municipalities: {len(municipalities)}")
+            
+            print(f"\n   🔧 SCRAPER TYPE DISTRIBUTION:")
+            for scraper_type, count in scraper_type_counts.items():
+                print(f"      {scraper_type}: {count} municipalities")
+            
+            print(f"\n   📈 SCRAPE STATUS DISTRIBUTION:")
+            for status, count in status_counts.items():
+                print(f"      {status}: {count} municipalities")
+            
+            print(f"\n   🏛️ DETAILED MUNICIPALITY CONFIGURATIONS:")
+            for scraper_type, munis in municipalities_by_scraper.items():
+                print(f"\n      {scraper_type.upper()} SCRAPER ({len(munis)} municipalities):")
+                for muni in munis[:5]:  # Show first 5 of each type
+                    print(f"         - {muni['name']}: {muni['status']} (last: {muni['last_scraped']})")
+                if len(munis) > 5:
+                    print(f"         ... and {len(munis) - 5} more")
+            
+            overview_results["municipalities"] = {
+                "total_count": len(municipalities),
+                "scraper_types": scraper_type_counts,
+                "status_distribution": status_counts,
+                "configurations": municipalities_by_scraper
+            }
+            
+        else:
+            print(f"   ❌ FAILED: GET /api/municipalities returned {muni_response.status_code}")
+            return False, {"error": f"Municipality endpoint failed: {muni_response.status_code}"}
+        
+        # Test 2: Current Property Count - GET /api/tax-sales
+        print(f"\n🏠 2. CURRENT PROPERTY COUNT CHECK")
+        print(f"   Testing: GET /api/tax-sales")
+        
+        properties_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if properties_response.status_code == 200:
+            properties = properties_response.json()
+            print(f"   ✅ SUCCESS: Retrieved {len(properties)} total properties")
+            
+            # Analyze property distribution by municipality
+            municipality_property_counts = {}
+            status_property_counts = {}
+            
+            for prop in properties:
+                muni_name = prop.get('municipality_name', 'Unknown')
+                prop_status = prop.get('status', 'unknown')
+                
+                # Count by municipality
+                municipality_property_counts[muni_name] = municipality_property_counts.get(muni_name, 0) + 1
+                
+                # Count by status
+                status_property_counts[prop_status] = status_property_counts.get(prop_status, 0) + 1
+            
+            print(f"\n   📊 PROPERTY DISTRIBUTION BY MUNICIPALITY:")
+            sorted_munis = sorted(municipality_property_counts.items(), key=lambda x: x[1], reverse=True)
+            for muni_name, count in sorted_munis:
+                print(f"      {muni_name}: {count} properties")
+            
+            print(f"\n   📈 PROPERTY STATUS DISTRIBUTION:")
+            for status, count in status_property_counts.items():
+                print(f"      {status}: {count} properties")
+            
+            # Check for Halifax specifically
+            halifax_properties = municipality_property_counts.get('Halifax Regional Municipality', 0)
+            if halifax_properties > 0:
+                print(f"\n   🎯 HALIFAX FOCUS: {halifax_properties} Halifax properties found")
+            else:
+                print(f"\n   ⚠️ HALIFAX FOCUS: No Halifax properties found")
+            
+            overview_results["properties"] = {
+                "total_count": len(properties),
+                "municipality_distribution": municipality_property_counts,
+                "status_distribution": status_property_counts,
+                "halifax_count": halifax_properties
+            }
+            
+        else:
+            print(f"   ❌ FAILED: GET /api/tax-sales returned {properties_response.status_code}")
+            return False, {"error": f"Tax sales endpoint failed: {properties_response.status_code}"}
+        
+        # Test 3: Scraper Types Analysis
+        print(f"\n🔧 3. SCRAPER TYPES ANALYSIS")
+        
+        halifax_scrapers = municipalities_by_scraper.get('halifax', [])
+        generic_scrapers = municipalities_by_scraper.get('generic', [])
+        other_scrapers = {k: v for k, v in municipalities_by_scraper.items() if k not in ['halifax', 'generic']}
+        
+        print(f"\n   📋 HALIFAX SCRAPER MUNICIPALITIES ({len(halifax_scrapers)}):")
+        for muni in halifax_scrapers:
+            print(f"      - {muni['name']}: {muni['status']}")
+        
+        print(f"\n   📋 GENERIC SCRAPER MUNICIPALITIES ({len(generic_scrapers)}):")
+        for muni in generic_scrapers[:10]:  # Show first 10
+            print(f"      - {muni['name']}: {muni['status']}")
+        if len(generic_scrapers) > 10:
+            print(f"      ... and {len(generic_scrapers) - 10} more")
+        
+        if other_scrapers:
+            print(f"\n   📋 OTHER SCRAPER TYPES:")
+            for scraper_type, munis in other_scrapers.items():
+                print(f"      {scraper_type} ({len(munis)} municipalities):")
+                for muni in munis[:3]:
+                    print(f"         - {muni['name']}: {muni['status']}")
+        
+        overview_results["scraper_types"] = {
+            "halifax_count": len(halifax_scrapers),
+            "generic_count": len(generic_scrapers),
+            "other_types": {k: len(v) for k, v in other_scrapers.items()},
+            "halifax_municipalities": halifax_scrapers,
+            "generic_municipalities": generic_scrapers[:5]  # Store first 5 for summary
+        }
+        
+        # Test 4: API Health Check - Key Endpoints
+        print(f"\n🏥 4. API HEALTH CHECK")
+        
+        api_endpoints = [
+            ("/", "Root endpoint"),
+            ("/municipalities", "Municipalities list"),
+            ("/tax-sales", "Tax sales list"),
+            ("/stats", "Statistics"),
+            ("/tax-sales/map-data", "Map data")
+        ]
+        
+        api_health_results = {}
+        
+        for endpoint, description in api_endpoints:
+            try:
+                health_response = requests.get(f"{BACKEND_URL}{endpoint}", timeout=15)
+                status_ok = health_response.status_code == 200
+                
+                if status_ok:
+                    print(f"   ✅ {description}: HTTP 200")
+                else:
+                    print(f"   ❌ {description}: HTTP {health_response.status_code}")
+                
+                api_health_results[endpoint] = {
+                    "status_code": health_response.status_code,
+                    "healthy": status_ok,
+                    "response_time": health_response.elapsed.total_seconds()
+                }
+                
+            except Exception as e:
+                print(f"   ❌ {description}: ERROR - {str(e)}")
+                api_health_results[endpoint] = {
+                    "status_code": None,
+                    "healthy": False,
+                    "error": str(e)
+                }
+        
+        # Test Halifax scraper endpoint specifically
+        try:
+            print(f"\n   🔧 Testing Halifax Scraper Endpoint...")
+            halifax_scraper_response = requests.post(f"{BACKEND_URL}/scrape/halifax", timeout=120)
+            
+            if halifax_scraper_response.status_code == 200:
+                scraper_result = halifax_scraper_response.json()
+                properties_scraped = scraper_result.get('properties_scraped', 0)
+                print(f"   ✅ Halifax Scraper: HTTP 200 ({properties_scraped} properties)")
+                
+                api_health_results["/scrape/halifax"] = {
+                    "status_code": 200,
+                    "healthy": True,
+                    "properties_scraped": properties_scraped
+                }
+            else:
+                print(f"   ❌ Halifax Scraper: HTTP {halifax_scraper_response.status_code}")
+                api_health_results["/scrape/halifax"] = {
+                    "status_code": halifax_scraper_response.status_code,
+                    "healthy": False
+                }
+                
+        except Exception as e:
+            print(f"   ❌ Halifax Scraper: ERROR - {str(e)}")
+            api_health_results["/scrape/halifax"] = {
+                "healthy": False,
+                "error": str(e)
+            }
+        
+        overview_results["api_health"] = api_health_results
+        
+        # Summary Report
+        print(f"\n" + "=" * 80)
+        print(f"📋 COMPREHENSIVE OVERVIEW SUMMARY")
+        print(f"=" * 80)
+        
+        print(f"\n🏛️ MUNICIPALITY STATUS:")
+        print(f"   Total Municipalities: {overview_results['municipalities']['total_count']}")
+        print(f"   Halifax Scrapers: {overview_results['scraper_types']['halifax_count']}")
+        print(f"   Generic Scrapers: {overview_results['scraper_types']['generic_count']}")
+        
+        print(f"\n🏠 PROPERTY STATUS:")
+        print(f"   Total Properties: {overview_results['properties']['total_count']}")
+        print(f"   Halifax Properties: {overview_results['properties']['halifax_count']}")
+        
+        print(f"\n🔧 SCRAPER TYPE BREAKDOWN:")
+        for scraper_type, count in overview_results['municipalities']['scraper_types'].items():
+            print(f"   {scraper_type}: {count} municipalities")
+        
+        print(f"\n🏥 API HEALTH STATUS:")
+        healthy_endpoints = sum(1 for ep in api_health_results.values() if ep.get('healthy', False))
+        total_endpoints = len(api_health_results)
+        print(f"   Healthy Endpoints: {healthy_endpoints}/{total_endpoints}")
+        
+        # Determine overall success
+        critical_checks = [
+            overview_results['municipalities']['total_count'] > 0,
+            overview_results['properties']['total_count'] > 0,
+            overview_results['scraper_types']['halifax_count'] > 0,
+            healthy_endpoints >= total_endpoints * 0.8
+        ]
+        
+        overall_success = all(critical_checks)
+        
+        if overall_success:
+            print(f"\n✅ OVERALL STATUS: SYSTEM HEALTHY AND OPERATIONAL")
+        else:
+            print(f"\n⚠️ OVERALL STATUS: SOME ISSUES DETECTED - REVIEW NEEDED")
+        
+        return overall_success, overview_results
+        
+    except Exception as e:
+        print(f"\n❌ COMPREHENSIVE OVERVIEW ERROR: {e}")
+        return False, {"error": str(e)}
+
 def run_comprehensive_test():
     """Run all tests in sequence"""
     print("🚀 Starting Comprehensive Backend API Tests")
