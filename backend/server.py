@@ -2700,13 +2700,19 @@ async def get_enhanced_property_details(assessment_number: str):
         
         # Get enhanced PVSC data
         logger.info(f"Calling scrape_pvsc_details for {assessment_number}")
+        print(f"DEBUG: About to call scrape_pvsc_details for {assessment_number}")
         pvsc_data = await scrape_pvsc_details(assessment_number)
+        print(f"DEBUG: PVSC data returned: {pvsc_data}")
         
         if pvsc_data:
             logger.info(f"PVSC data received: {list(pvsc_data.keys())}")
+            print(f"DEBUG: PVSC data keys: {list(pvsc_data.keys())}")
+            if 'property_details' in pvsc_data:
+                print(f"DEBUG: property_details keys: {list(pvsc_data['property_details'].keys())}")
             property_data.update(pvsc_data)
         else:
             logger.warning(f"No PVSC data returned for {assessment_number}")
+            print(f"DEBUG: No PVSC data returned")
         
         return property_data
         
