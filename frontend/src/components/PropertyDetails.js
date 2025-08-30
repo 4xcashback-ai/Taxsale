@@ -84,7 +84,7 @@ const PropertyDetails = ({ property, onClose }) => {
       if (!response.ok) throw new Error('Failed to fetch properties');
       
       const properties = await response.json();
-      const foundProperty = properties.find(p => p.assessment_number === assessmentNumber);
+      const foundProperty = properties.find(p => p.assessment_number === property.assessment_number);
       
       if (foundProperty) {
         setProperty(foundProperty);
