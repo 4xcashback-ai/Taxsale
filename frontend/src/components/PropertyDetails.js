@@ -263,7 +263,7 @@ const PropertyDetails = () => {
   const fetchPropertyDetails = async () => {
     try {
       setLoading(true);
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://taxsale-ns.preview.emergentagent.com';
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://taxsalecompass.ca';
       
       // Find the property by assessment number
       const response = await fetch(`${backendUrl}/api/tax-sales`);
