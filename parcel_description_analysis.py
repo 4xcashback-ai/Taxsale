@@ -8,7 +8,7 @@ import requests
 import json
 import re
 
-BACKEND_URL = "https://nova-taxmap.preview.emergentagent.com/api"
+BACKEND_URL = "https://taxsale-ns.preview.emergentagent.com/api"
 
 def analyze_user_concern():
     """

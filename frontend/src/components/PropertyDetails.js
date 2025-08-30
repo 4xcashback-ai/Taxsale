@@ -16,7 +16,7 @@ const PropertyDetails = () => {
   const fetchPropertyDetails = async () => {
     try {
       setLoading(true);
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://nova-taxmap.preview.emergentagent.com';
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://taxsale-ns.preview.emergentagent.com';
       
       // Find the property by assessment number
       const response = await fetch(`${backendUrl}/api/tax-sales`);
@@ -257,7 +257,7 @@ const PropertyDetails = () => {
                 <div className="border rounded-lg overflow-hidden">
                   {property.boundary_screenshot ? (
                     <img
-                      src={`${process.env.REACT_APP_BACKEND_URL || 'https://nova-taxmap.preview.emergentagent.com'}/api/boundary-image/${property.boundary_screenshot}`}
+                      src={`${process.env.REACT_APP_BACKEND_URL || 'https://taxsale-ns.preview.emergentagent.com'}/api/boundary-image/${property.boundary_screenshot}`}
                       alt={`Property boundary map of ${property.property_address}`}
                       className="w-full h-96 object-cover"
                       onError={(e) => {
