@@ -102,6 +102,28 @@ const PropertyDetails = () => {
       }
     }, [boundaryPolygon]);
 
+    useEffect(() => {
+      if (!window.google) return;
+
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: {
+          lat: parseFloat(property.latitude),
+          lng: parseFloat(property.longitude)
+        },
+        zoom: 17,
+        mapTypeId: 'satellite',
+        disableDefaultUI: false,
+        zoomControl: true,
+        streetViewControl: true,
+        mapTypeControl: true,
+        fullscreenControl: true
+      });
+
+      onLoad(map);
+
+      return () => onUnmount();
+    }, [property, onLoad, onUnmount]);
+
     return (
       <div 
         ref={mapRef}
