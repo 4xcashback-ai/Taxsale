@@ -2596,10 +2596,13 @@ async def scrape_pvsc_details(assessment_number: str):
         if taxable_match:
             property_details['taxable_assessment'] = float(taxable_match.group(1).replace(',', ''))
         
-        # Land Size
-        land_size_match = re.search(r'Land Size\s*([\d,]+)\s*Sq\.\s*Ft\.', assessment_text)
+        # Land Size (handle both Sq. Ft. and Acres)
+        land_size_match = re.search(r'Land Size\s*([\d,\.]+)\s*(Sq\.\s*Ft\.|Acres)', assessment_text)
         if land_size_match:
-            property_details['land_size'] = land_size_match.group(1).replace(',', '') + ' Sq. Ft.'
+            size_value = land_size_match.group(1).replace(',', '')
+            size_unit = land_size_match.group(2)
+            property_details['land_size'] = f"{size_value} {size_unit}"
+            logger.info(f"PVSC: Found land_size: {property_details['land_size']}")
         
         # Building Style
         style_match = re.search(r'Building Style\s*([^\n]+)', assessment_text)
