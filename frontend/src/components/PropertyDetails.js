@@ -572,12 +572,19 @@ const PropertyDetails = () => {
                   View PVSC Assessment Details
                 </a>
                 <a
-                  href={getTaxSaleUrl(property.municipality_name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-gray-600 text-white text-center py-3 px-4 rounded-md hover:bg-gray-700 transition-colors font-medium"
+                  href={getTaxSaleUrl()}
+                  target={getTaxSaleUrl() !== '#' ? "_blank" : "_self"}
+                  rel={getTaxSaleUrl() !== '#' ? "noopener noreferrer" : undefined}
+                  className={`block w-full text-white text-center py-3 px-4 rounded-md transition-colors font-medium ${
+                    getTaxSaleUrl() !== '#' 
+                      ? 'bg-gray-600 hover:bg-gray-700 cursor-pointer' 
+                      : 'bg-gray-400 cursor-not-allowed'
+                  }`}
+                  onClick={getTaxSaleUrl() === '#' ? (e) => e.preventDefault() : undefined}
                 >
                   {property.municipality_name || 'Municipality'} Tax Sale Info
+                  {!municipalityData && ' (Loading...)'}
+                  {municipalityData && getTaxSaleUrl() === '#' && ' (Not Available)'}
                 </a>
               </div>
             </div>
