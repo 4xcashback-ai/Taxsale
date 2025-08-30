@@ -283,6 +283,41 @@ const PropertyDetails = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Location & Property Boundaries</h3>
               
+              {/* Interactive Map */}
+              {property.latitude && property.longitude && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    <LoadScript 
+                      googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}
+                      onLoad={() => setMapLoaded(true)}
+                      onError={(e) => console.error('Google Maps load error:', e)}
+                    >
+                      <GoogleMap
+                        mapContainerStyle={mapContainerStyle}
+                        center={{
+                          lat: parseFloat(property.latitude),
+                          lng: parseFloat(property.longitude)
+                        }}
+                        zoom={17}
+                        options={mapOptions}
+                      >
+                        <Marker
+                          position={{
+                            lat: parseFloat(property.latitude),
+                            lng: parseFloat(property.longitude)
+                          }}
+                          title={`${property.property_address} - ${formatCurrency(property.opening_bid)}`}
+                        />
+                      </GoogleMap>
+                    </LoadScript>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    📍 Property Location: {property.latitude}, {property.longitude}
+                  </p>
+                </div>
+              )}
+              
               {/* Satellite View */}
               <div className="mb-6">
                 <h4 className="text-lg font-medium text-gray-900 mb-3">Satellite Property View</h4>
