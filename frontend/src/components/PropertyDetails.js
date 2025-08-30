@@ -1,38 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix for default markers
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// AdSense Component
-const AdSenseAd = () => {
-  useEffect(() => {
-    try {
-      if (window.adsbygoogle) {
-        window.adsbygoogle.push({});
-      }
-    } catch (err) {
-      console.log('AdSense error:', err);
-    }
-  }, []);
-
-  return (
-    <ins className="adsbygoogle"
-         style={{display:'block'}}
-         data-ad-client="ca-pub-5947395928510215"
-         data-ad-slot="3653544552"
-         data-ad-format="auto"
-         data-full-width-responsive="true">
-    </ins>
-  );
-};
+import React from 'react';
 
 const PropertyDetails = ({ property, onClose }) => {
   if (!property) {
