@@ -1206,10 +1206,281 @@ def test_nsprd_boundary_api():
         print(f"   ❌ NSPRD boundary test error: {e}")
         return False, {"error": str(e)}
 
+def test_vps_scraping_deployment_issues():
+    """Test VPS deployment specific scraping issues - Review Request Focus"""
+    print("\n🚨 Testing VPS Deployment Scraping Issues...")
+    print("🎯 FOCUS: Scraping status updates, Halifax Live button, API connectivity")
+    print("📋 USER REPORTS: 1) Scraping status not updating after 'Scrape All', 2) Halifax Live button failing")
+    
+    try:
+        # Test 1: Halifax Scraper Endpoint - Core functionality
+        print(f"\n   🔧 TEST 1: Halifax Scraper Endpoint (/api/scrape/halifax)")
+        
+        scrape_start_time = time.time()
+        halifax_response = requests.post(f"{BACKEND_URL}/scrape/halifax", timeout=180)
+        scrape_end_time = time.time()
+        scrape_duration = scrape_end_time - scrape_start_time
+        
+        if halifax_response.status_code == 200:
+            scrape_result = halifax_response.json()
+            print(f"   ✅ Halifax scraper executed successfully")
+            print(f"   📊 Status: {scrape_result.get('status', 'unknown')}")
+            print(f"   🏠 Properties scraped: {scrape_result.get('properties_scraped', 0)}")
+            print(f"   ⏱️ Scrape duration: {scrape_duration:.2f} seconds")
+            
+            # Verify expected property count (should be ~62 based on preview environment)
+            properties_count = scrape_result.get('properties_scraped', 0)
+            if properties_count >= 60:
+                print(f"   ✅ Property count matches preview environment expectations (~62)")
+            elif properties_count > 0:
+                print(f"   ⚠️ Property count lower than expected (got {properties_count}, expected ~62)")
+            else:
+                print(f"   ❌ No properties scraped - critical failure")
+                return False, {"error": "Halifax scraper returned 0 properties"}
+                
+        else:
+            print(f"   ❌ Halifax scraper failed with status {halifax_response.status_code}")
+            try:
+                error_detail = halifax_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Raw response: {halifax_response.text[:300]}...")
+            return False, {"error": f"Halifax scraper HTTP {halifax_response.status_code}"}
+        
+        # Test 2: Scrape-All Endpoint - User reported issue
+        print(f"\n   🔧 TEST 2: Scrape-All Endpoint (/api/scrape-all)")
+        
+        scrape_all_response = requests.post(f"{BACKEND_URL}/scrape-all", timeout=180)
+        
+        if scrape_all_response.status_code == 200:
+            scrape_all_result = scrape_all_response.json()
+            print(f"   ✅ Scrape-all executed successfully")
+            print(f"   📊 Status: {scrape_all_result.get('status', 'unknown')}")
+            print(f"   🏛️ Municipalities processed: {scrape_all_result.get('municipalities_processed', 0)}")
+            print(f"   🏠 Total properties: {scrape_all_result.get('total_properties', 0)}")
+        elif scrape_all_response.status_code == 404:
+            print(f"   ⚠️ Scrape-all endpoint not found (404) - may not be implemented")
+            # This is not critical as the main issue is with Halifax scraper
+        else:
+            print(f"   ❌ Scrape-all failed with status {scrape_all_response.status_code}")
+            try:
+                error_detail = scrape_all_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Raw response: {scrape_all_response.text[:300]}...")
+        
+        # Test 3: Municipality Status Updates - Critical for frontend status display
+        print(f"\n   🔧 TEST 3: Municipality Status Updates After Scraping")
+        
+        # Get Halifax municipality status before and after scraping
+        muni_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        if muni_response.status_code == 200:
+            municipalities = muni_response.json()
+            halifax_muni = None
+            
+            for muni in municipalities:
+                if "Halifax" in muni.get("name", ""):
+                    halifax_muni = muni
+                    break
+            
+            if halifax_muni:
+                print(f"   ✅ Halifax municipality found in status")
+                print(f"   📊 Current scrape status: {halifax_muni.get('scrape_status', 'unknown')}")
+                print(f"   🕒 Last scraped: {halifax_muni.get('last_scraped', 'never')}")
+                
+                # Verify status was updated to 'success' after scraping
+                if halifax_muni.get('scrape_status') == 'success':
+                    print(f"   ✅ Scrape status correctly updated to 'success'")
+                elif halifax_muni.get('scrape_status') == 'in_progress':
+                    print(f"   ⚠️ Scrape status still 'in_progress' - may indicate async issue")
+                else:
+                    print(f"   ❌ Scrape status not updated correctly: {halifax_muni.get('scrape_status')}")
+                    return False, {"error": "Municipality status not updated after scraping"}
+                
+                # Verify last_scraped timestamp is recent
+                last_scraped = halifax_muni.get('last_scraped')
+                if last_scraped:
+                    print(f"   ✅ Last scraped timestamp updated: {last_scraped}")
+                else:
+                    print(f"   ❌ Last scraped timestamp not updated")
+                    return False, {"error": "Last scraped timestamp not updated"}
+                    
+            else:
+                print(f"   ❌ Halifax municipality not found in status list")
+                return False, {"error": "Halifax municipality not found"}
+        else:
+            print(f"   ❌ Municipality status check failed: {muni_response.status_code}")
+            return False, {"error": f"Municipality status HTTP {muni_response.status_code}"}
+        
+        # Test 4: Tax Sales Data Verification - Ensure scraped data is accessible
+        print(f"\n   🔧 TEST 4: Tax Sales Data Verification After Scraping")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            properties = tax_sales_response.json()
+            print(f"   ✅ Tax sales data accessible - {len(properties)} Halifax properties")
+            
+            # Verify we have the expected properties from scraping
+            if len(properties) >= 60:
+                print(f"   ✅ Property count matches scraper result")
+                
+                # Check a few sample properties for data quality
+                sample_properties = properties[:3]
+                for i, prop in enumerate(sample_properties):
+                    print(f"   📋 Sample Property {i+1}:")
+                    print(f"      Assessment: {prop.get('assessment_number', 'N/A')}")
+                    print(f"      Owner: {prop.get('owner_name', 'N/A')}")
+                    print(f"      Address: {prop.get('property_address', 'N/A')}")
+                    print(f"      Opening Bid: ${prop.get('opening_bid', 0)}")
+                    
+            else:
+                print(f"   ⚠️ Property count mismatch (expected ~62, got {len(properties)})")
+        else:
+            print(f"   ❌ Tax sales data not accessible: {tax_sales_response.status_code}")
+            return False, {"error": f"Tax sales data HTTP {tax_sales_response.status_code}"}
+        
+        # Test 5: API Response Times - VPS performance check
+        print(f"\n   🔧 TEST 5: API Response Times (VPS Performance)")
+        
+        endpoints_to_test = [
+            ("/municipalities", "GET"),
+            ("/tax-sales", "GET"),
+            ("/stats", "GET"),
+            ("/tax-sales/map-data", "GET")
+        ]
+        
+        response_times = {}
+        
+        for endpoint, method in endpoints_to_test:
+            start_time = time.time()
+            
+            if method == "GET":
+                response = requests.get(f"{BACKEND_URL}{endpoint}", timeout=30)
+            
+            end_time = time.time()
+            response_time = end_time - start_time
+            response_times[endpoint] = {
+                "time": response_time,
+                "status": response.status_code,
+                "success": response.status_code == 200
+            }
+            
+            print(f"   📊 {method} {endpoint}: {response_time:.2f}s (HTTP {response.status_code})")
+        
+        # Check for performance issues
+        slow_endpoints = [ep for ep, data in response_times.items() if data["time"] > 10]
+        failed_endpoints = [ep for ep, data in response_times.items() if not data["success"]]
+        
+        if slow_endpoints:
+            print(f"   ⚠️ Slow endpoints detected: {slow_endpoints}")
+        if failed_endpoints:
+            print(f"   ❌ Failed endpoints detected: {failed_endpoints}")
+            return False, {"error": f"Failed endpoints: {failed_endpoints}"}
+        else:
+            print(f"   ✅ All endpoints responding within acceptable time")
+        
+        # Test 6: CORS and Headers Check - VPS deployment specific
+        print(f"\n   🔧 TEST 6: CORS and Headers Check (VPS Deployment)")
+        
+        # Test with different origins to simulate frontend requests
+        test_origins = [
+            "https://nova-taxmap.preview.emergentagent.com",
+            "http://localhost:3000",
+            "null"
+        ]
+        
+        cors_results = {}
+        
+        for origin in test_origins:
+            headers = {
+                "Origin": origin,
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type"
+            }
+            
+            # Test preflight request
+            options_response = requests.options(f"{BACKEND_URL}/scrape/halifax", headers=headers, timeout=10)
+            
+            cors_results[origin] = {
+                "preflight_status": options_response.status_code,
+                "cors_headers": {
+                    "access_control_allow_origin": options_response.headers.get("Access-Control-Allow-Origin"),
+                    "access_control_allow_methods": options_response.headers.get("Access-Control-Allow-Methods"),
+                    "access_control_allow_headers": options_response.headers.get("Access-Control-Allow-Headers")
+                }
+            }
+            
+            print(f"   🌐 Origin {origin}:")
+            print(f"      Preflight: HTTP {options_response.status_code}")
+            print(f"      CORS Origin: {options_response.headers.get('Access-Control-Allow-Origin', 'Not set')}")
+        
+        # Test 7: Environment Variables Check
+        print(f"\n   🔧 TEST 7: Environment Configuration Check")
+        
+        print(f"   🔧 Backend URL being tested: {BACKEND_URL}")
+        print(f"   🔧 Expected frontend URL: https://nova-taxmap.preview.emergentagent.com")
+        
+        # Verify the backend URL matches what frontend should be using
+        expected_backend = "https://nova-taxmap.preview.emergentagent.com/api"
+        if BACKEND_URL == expected_backend:
+            print(f"   ✅ Backend URL matches expected frontend configuration")
+        else:
+            print(f"   ⚠️ Backend URL mismatch - Frontend may be configured differently")
+            print(f"      Testing: {BACKEND_URL}")
+            print(f"      Expected: {expected_backend}")
+        
+        print(f"\n   ✅ VPS DEPLOYMENT SCRAPING TESTS COMPLETED")
+        print(f"   🎯 KEY FINDINGS:")
+        print(f"      - Halifax scraper endpoint: {'✅ WORKING' if halifax_response.status_code == 200 else '❌ FAILED'}")
+        print(f"      - Municipality status updates: {'✅ WORKING' if halifax_muni and halifax_muni.get('scrape_status') == 'success' else '❌ FAILED'}")
+        print(f"      - Tax sales data accessibility: {'✅ WORKING' if tax_sales_response.status_code == 200 else '❌ FAILED'}")
+        print(f"      - API response times: {'✅ ACCEPTABLE' if not slow_endpoints else '⚠️ SLOW'}")
+        print(f"      - CORS configuration: {'✅ CONFIGURED' if any(r['cors_headers']['access_control_allow_origin'] for r in cors_results.values()) else '⚠️ CHECK NEEDED'}")
+        
+        # Determine overall success
+        critical_failures = []
+        if halifax_response.status_code != 200:
+            critical_failures.append("Halifax scraper failed")
+        if not halifax_muni or halifax_muni.get('scrape_status') != 'success':
+            critical_failures.append("Municipality status not updated")
+        if tax_sales_response.status_code != 200:
+            critical_failures.append("Tax sales data not accessible")
+        if failed_endpoints:
+            critical_failures.append("Critical endpoints failed")
+        
+        if critical_failures:
+            print(f"\n   ❌ CRITICAL FAILURES DETECTED:")
+            for failure in critical_failures:
+                print(f"      - {failure}")
+            return False, {
+                "critical_failures": critical_failures,
+                "halifax_scraper_status": halifax_response.status_code,
+                "municipality_status_updated": halifax_muni.get('scrape_status') if halifax_muni else None,
+                "tax_sales_accessible": tax_sales_response.status_code == 200,
+                "response_times": response_times,
+                "cors_results": cors_results
+            }
+        else:
+            print(f"\n   ✅ ALL CRITICAL TESTS PASSED - VPS DEPLOYMENT APPEARS FUNCTIONAL")
+            return True, {
+                "halifax_scraper_status": halifax_response.status_code,
+                "properties_scraped": scrape_result.get('properties_scraped', 0),
+                "municipality_status_updated": halifax_muni.get('scrape_status') if halifax_muni else None,
+                "tax_sales_accessible": tax_sales_response.status_code == 200,
+                "response_times": response_times,
+                "cors_results": cors_results
+            }
+        
+    except Exception as e:
+        print(f"   ❌ VPS deployment test error: {e}")
+        return False, {"error": str(e)}
+
 def run_comprehensive_test():
     """Run all tests in sequence"""
     print("🚀 Starting Comprehensive Backend API Tests")
-    print("🎯 FOCUS: NSPRD Boundary Overlay System & Municipality Management")
+    print("🎯 FOCUS: VPS Deployment Scraping Issues")
     print("=" * 70)
     
     test_results = {
