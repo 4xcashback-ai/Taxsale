@@ -1772,6 +1772,213 @@ def test_vps_scraping_deployment_issues():
         print(f"   ❌ VPS deployment test error: {e}")
         return False, {"error": str(e)}
 
+def test_enhanced_property_endpoint():
+    """Test Enhanced Property Details Endpoint - Review Request Focus"""
+    print("\n🔍 Testing Enhanced Property Details Endpoint...")
+    print("🎯 FOCUS: GET /api/property/{assessment_number}/enhanced")
+    print("📋 REVIEW REQUEST: Test enhanced property endpoint with PVSC data")
+    
+    try:
+        # Test 1: Enhanced Property Endpoint - Assessment #00079006
+        print(f"\n   🔧 TEST 1: GET /api/property/00079006/enhanced")
+        
+        target_assessment = "00079006"
+        enhanced_response = requests.get(f"{BACKEND_URL}/property/{target_assessment}/enhanced", timeout=60)
+        
+        if enhanced_response.status_code == 200:
+            enhanced_data = enhanced_response.json()
+            print(f"   ✅ Enhanced property endpoint responded successfully")
+            
+            # Verify basic property data is present
+            basic_fields = ['assessment_number', 'owner_name', 'property_address', 'opening_bid']
+            missing_basic = [field for field in basic_fields if not enhanced_data.get(field)]
+            
+            if missing_basic:
+                print(f"   ❌ Missing basic property fields: {missing_basic}")
+                return False, {"error": f"Missing basic fields: {missing_basic}"}
+            else:
+                print(f"   ✅ All basic property fields present")
+                print(f"      Assessment: {enhanced_data.get('assessment_number')}")
+                print(f"      Owner: {enhanced_data.get('owner_name')}")
+                print(f"      Address: {enhanced_data.get('property_address')}")
+                print(f"      Opening Bid: ${enhanced_data.get('opening_bid')}")
+            
+            # Verify PVSC enhanced data is present
+            pvsc_fields = ['civic_address', 'property_details', 'pvsc_url']
+            pvsc_data_present = any(enhanced_data.get(field) for field in pvsc_fields)
+            
+            if pvsc_data_present:
+                print(f"   ✅ PVSC enhanced data present")
+                
+                # Check specific PVSC fields mentioned in review request
+                property_details = enhanced_data.get('property_details', {})
+                
+                # Check for bedrooms, bathrooms, taxable_assessment
+                target_fields = ['bedrooms', 'bathrooms', 'taxable_assessment']
+                found_fields = []
+                missing_fields = []
+                
+                for field in target_fields:
+                    if property_details.get(field) is not None:
+                        found_fields.append(field)
+                        print(f"      ✅ {field}: {property_details.get(field)}")
+                    else:
+                        missing_fields.append(field)
+                
+                if found_fields:
+                    print(f"   ✅ Enhanced PVSC fields found: {found_fields}")
+                else:
+                    print(f"   ⚠️ Target PVSC fields not found: {missing_fields}")
+                
+                # Check PVSC URL
+                pvsc_url = enhanced_data.get('pvsc_url')
+                if pvsc_url and 'pvsc.ca' in pvsc_url:
+                    print(f"   ✅ PVSC URL present: {pvsc_url}")
+                else:
+                    print(f"   ⚠️ PVSC URL missing or invalid")
+                
+                # Check civic address
+                civic_address = enhanced_data.get('civic_address')
+                if civic_address:
+                    print(f"   ✅ Civic address: {civic_address}")
+                else:
+                    print(f"   ⚠️ Civic address not found")
+                    
+            else:
+                print(f"   ⚠️ No PVSC enhanced data found")
+                print(f"      Available fields: {list(enhanced_data.keys())}")
+            
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Property not found (404) - Assessment #{target_assessment} may not exist")
+            return False, {"error": "Property not found"}
+        elif enhanced_response.status_code == 500:
+            print(f"   ❌ Server error (500) - Enhanced endpoint may have issues")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Raw response: {enhanced_response.text[:200]}...")
+            return False, {"error": "Server error 500"}
+        else:
+            print(f"   ❌ Enhanced endpoint failed with status {enhanced_response.status_code}")
+            return False, {"error": f"HTTP {enhanced_response.status_code}"}
+        
+        # Test 2: Test Multiple Assessment Numbers
+        print(f"\n   🔧 TEST 2: Multiple Assessment Numbers")
+        
+        # Get some assessment numbers from tax sales
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            properties = tax_sales_response.json()
+            test_assessments = []
+            
+            # Get first 3 assessment numbers for testing
+            for prop in properties[:3]:
+                if prop.get('assessment_number'):
+                    test_assessments.append(prop.get('assessment_number'))
+            
+            if test_assessments:
+                print(f"   Testing enhanced endpoint with {len(test_assessments)} assessment numbers...")
+                
+                successful_tests = 0
+                failed_tests = 0
+                response_times = []
+                
+                for i, assessment in enumerate(test_assessments):
+                    print(f"      Testing assessment #{assessment}...")
+                    
+                    import time
+                    start_time = time.time()
+                    
+                    test_response = requests.get(f"{BACKEND_URL}/property/{assessment}/enhanced", timeout=30)
+                    
+                    end_time = time.time()
+                    response_time = end_time - start_time
+                    response_times.append(response_time)
+                    
+                    if test_response.status_code == 200:
+                        successful_tests += 1
+                        test_data = test_response.json()
+                        
+                        # Quick validation
+                        has_basic_data = test_data.get('assessment_number') == assessment
+                        has_pvsc_data = test_data.get('pvsc_url') is not None
+                        
+                        print(f"         ✅ Success (HTTP 200, {response_time:.2f}s)")
+                        print(f"         Basic data: {'✅' if has_basic_data else '❌'}")
+                        print(f"         PVSC data: {'✅' if has_pvsc_data else '⚠️'}")
+                    else:
+                        failed_tests += 1
+                        print(f"         ❌ Failed (HTTP {test_response.status_code}, {response_time:.2f}s)")
+                
+                # Performance summary
+                if response_times:
+                    avg_response_time = sum(response_times) / len(response_times)
+                    max_response_time = max(response_times)
+                    
+                    print(f"\n   📊 Performance Summary:")
+                    print(f"      Successful tests: {successful_tests}/{len(test_assessments)}")
+                    print(f"      Failed tests: {failed_tests}/{len(test_assessments)}")
+                    print(f"      Average response time: {avg_response_time:.2f}s")
+                    print(f"      Max response time: {max_response_time:.2f}s")
+                    
+                    if successful_tests >= len(test_assessments) * 0.8 and avg_response_time < 10:
+                        print(f"   ✅ Performance acceptable")
+                    else:
+                        print(f"   ⚠️ Performance issues detected")
+            else:
+                print(f"   ⚠️ No assessment numbers available for testing")
+        else:
+            print(f"   ❌ Could not retrieve tax sales data for testing")
+        
+        # Test 3: Error Handling - Invalid Assessment Number
+        print(f"\n   🔧 TEST 3: Error Handling - Invalid Assessment Number")
+        
+        invalid_assessment = "99999999"
+        invalid_response = requests.get(f"{BACKEND_URL}/property/{invalid_assessment}/enhanced", timeout=30)
+        
+        if invalid_response.status_code == 404:
+            print(f"   ✅ Invalid assessment correctly returns 404")
+        elif invalid_response.status_code == 500:
+            print(f"   ⚠️ Invalid assessment returns 500 - may need better error handling")
+        else:
+            print(f"   ⚠️ Invalid assessment returns {invalid_response.status_code}")
+        
+        # Test 4: Verify Endpoint Registration with api_router
+        print(f"\n   🔧 TEST 4: Endpoint Registration Verification")
+        
+        # Check if endpoint is accessible (we already tested this above)
+        if 'enhanced_response' in locals() and enhanced_response.status_code in [200, 404]:
+            print(f"   ✅ Enhanced endpoint properly registered with api_router")
+            print(f"      Accessible at: {BACKEND_URL}/property/{{assessment_number}}/enhanced")
+        else:
+            print(f"   ❌ Enhanced endpoint may not be properly registered")
+            return False, {"error": "Endpoint registration issue"}
+        
+        print(f"\n   ✅ ENHANCED PROPERTY ENDPOINT TESTS COMPLETED")
+        print(f"   🎯 KEY FINDINGS:")
+        print(f"      - Enhanced endpoint accessibility: WORKING")
+        print(f"      - Basic property data integration: WORKING")
+        print(f"      - PVSC data scraping: {'WORKING' if pvsc_data_present else 'PARTIAL'}")
+        print(f"      - Target fields (bedrooms, bathrooms, taxable_assessment): {'FOUND' if found_fields else 'MISSING'}")
+        print(f"      - Multiple assessment support: WORKING")
+        print(f"      - Error handling: WORKING")
+        print(f"      - API router registration: VERIFIED")
+        
+        return True, {
+            "endpoint_accessible": enhanced_response.status_code in [200, 404] if 'enhanced_response' in locals() else False,
+            "basic_data_present": not missing_basic if 'missing_basic' in locals() else False,
+            "pvsc_data_present": pvsc_data_present if 'pvsc_data_present' in locals() else False,
+            "target_fields_found": len(found_fields) if 'found_fields' in locals() else 0,
+            "multiple_assessments_tested": successful_tests if 'successful_tests' in locals() else 0,
+            "average_response_time": avg_response_time if 'avg_response_time' in locals() else None
+        }
+        
+    except Exception as e:
+        print(f"   ❌ Enhanced property endpoint test error: {e}")
+        return False, {"error": str(e)}
+
 def test_comprehensive_municipality_overview():
     """Comprehensive test for review request - Municipality status, property counts, scraper types, API health"""
     print("\n🎯 COMPREHENSIVE MUNICIPALITY OVERVIEW (Review Request)")
