@@ -2191,7 +2191,7 @@ def test_vps_scraping_deployment_issues():
         
         # Test with different origins to simulate frontend requests
         test_origins = [
-            "https://taxsale-ns.preview.emergentagent.com",
+            "https://nstaxmap-1.preview.emergentagent.com",
             "http://localhost:3000",
             "null"
         ]
@@ -2225,10 +2225,10 @@ def test_vps_scraping_deployment_issues():
         print(f"\n   🔧 TEST 7: Environment Configuration Check")
         
         print(f"   🔧 Backend URL being tested: {BACKEND_URL}")
-        print(f"   🔧 Expected frontend URL: https://taxsale-ns.preview.emergentagent.com")
+        print(f"   🔧 Expected frontend URL: https://nstaxmap-1.preview.emergentagent.com")
         
         # Verify the backend URL matches what frontend should be using
-        expected_backend = "https://taxsale-ns.preview.emergentagent.com/api"
+        expected_backend = "https://nstaxmap-1.preview.emergentagent.com/api"
         if BACKEND_URL == expected_backend:
             print(f"   ✅ Backend URL matches expected frontend configuration")
         else:

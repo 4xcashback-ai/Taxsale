@@ -1,16 +1,18 @@
 <analysis>
-The trajectory details the evolution of the Nova Scotia Tax Sale Aggregator, spanning from core feature development to complex deployment. The previous AI engineer focused on enhancing Halifax PDF scraping, integrating Google Maps with precise NSPRD property boundaries, and developing robust municipality management. Key challenges included debugging map overlays, ensuring accurate marker alignment, and addressing deployment-specific issues like Node.js compatibility and Nginx configuration on a VPS. AdSense integration for revenue generation was also implemented across multiple pages. The work has transitioned to ongoing debugging on a VPS, specifically regarding scraping status updates and the Halifax Live button functionality.
+The AI engineer successfully transformed the Nova Scotia Tax Sale Aggregator from an MVP to a more robust application. Initial development focused on core features like PDF scraping, Google Maps integration, and municipality management, addressing several deployment and PM2 configuration issues. A significant portion of the work involved meticulously refining the frontend UI/UX, particularly the property details page layout with a right sidebar, and re-implementing the interactive map with NSPRD boundaries after several debugging iterations. Multi-municipality scraping was introduced, and critical deployment-related backend URL and CORS issues were resolved. The latest efforts focused on displaying comprehensive PVSC assessment data on the property details page, which led to debugging persistent server-side integration problems where scraped data wasn't fully propagating to the API response. The engineer demonstrated a systematic approach to identifying and resolving complex, multi-layered bugs across the stack.
 </analysis>
 
 <product_requirements>
-The application's core goal is to aggregate Nova Scotia tax sale information, presenting it in a searchable, map-based format with weekly updates.
-**Implemented Features & Enhancements:**
-*   **Halifax Scraper:** Robust PDF scraping extracts property details (Owner, PIDs, Bids, etc.).
-*   **Interactive Mapping (Google Maps):** Displays properties with custom markers, info windows, precise locations via Google Geocoding, and official Nova Scotia Government ArcGIS (NSPRD) property boundaries as overlays. Markers are aligned with boundary centers for accuracy.
-*   **Property Details Page:** Shows comprehensive property data, PVSC links, and a satellite boundary image.
-*   **Property Status Management:** Active/inactive status with frontend filtering.
-*   **Admin Panel:** CRUD for municipalities, including setting scraping schedules (frequency, day, time, scraper type).
-*   **Google AdSense Integration:** Ads displayed on property detail pages (below bid box) and search results (after every 5 properties).
+The Nova Scotia Tax Sale Aggregator aims to centralize and display weekly Nova Scotia tax sale information on an interactive map. Key features include a robust Halifax PDF scraper, Google Maps integration showing properties with custom markers and precise NSPRD boundaries, and detailed property pages. Users can filter properties, and administrators can manage municipalities, setting scraping schedules and types. Monetization is achieved via Google AdSense.
+
+So far, the application has been enhanced to:
+1.  **Display comprehensive property details**: Includes status, sale type, dates, address, AAN, PID, property size, and detailed PVSC assessment data (Building Style, Year Built, Total Living Area, Bedrooms, Baths, Land Size).
+2.  **Provide an interactive map**: On property details pages, showing NSPRD boundary polygons with dynamically centered markers.
+3.  **Offer enhanced search functionality**: With filters and boundary thumbnails displayed on search results.
+4.  **Integrate dynamic external links**: Tax sale buttons fetch municipality-specific URLs from the database.
+5.  **Restore Google AdSense**: On both search and property detail pages.
+6.  **Support multi-municipality scraping**: For Cape Breton and Kentville.
+7.  **Ensure robust deployment**: By fixing backend URL references and CORS policies.
 </product_requirements>
 
 <key_technical_concepts>
@@ -43,89 +45,53 @@ options:
   --laparams LAPARAMS
   --precision PRECISION
   --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing., , .
--   **Mapping & Geocoding**: Google Maps JS API, Static API, Geocoding API.
--   **GIS Integration**: ArcGIS REST API (Nova Scotia Government NSPRD).
--   **Process Management**: PM2 (VPS),  (backend).
--   **Web Server**: Nginx (VPS).
--   **Deployment**: Git, GitHub, VPS (Ubuntu, Node.js 20+, Python 3.9+, MongoDB 7.0+).
+  --indent INDENT       Indent level for JSON pretty-printing., , Google Maps Static API, .
+-   **Mapping & Geocoding**: Google Maps JS API, Embed API, ArcGIS REST API.
+-   **Process Management**: PM2, .
+-   **Deployment**: Kubernetes, environment variables, CORS.
+-   **Ad Integration**: Google AdSense.
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Summary**: Core FastAPI application, handles API routes, MongoDB, web scraping, and scheduling. Defines  and  models.
-    -   **Changes Made**:  updated with .  model enhanced with scraping fields. CRUD for  updated.  uses Google Geocoding.  for ArcGIS.  endpoint added.  generates static map URLs.  and  for batch processing. PM2 configuration was adjusted to start with  instead of . Environment variables in  were expanded to include , ,  for robust database connection.
+    -   **Summary**: Core FastAPI application for API routes, MongoDB interaction, web scraping, and task scheduling. Manages  and  models.
+    -   **Changes Made**: Enhanced models, updated CRUD, integrated Google Geocoding/ArcGIS, added image/boundary endpoints. Scraper dispatch logic now respects . Added specific scrapers and endpoints for Cape Breton and Kentville. Implemented Google Maps Static API for boundary thumbnail generation. Fixed  endpoint routing. Updated CORS to include production domains.  was modified to capture additional fields (building_style, living_area, quality_of_construction, under_construction, living_units, finished_basement, garage), but data return remains an issue.
 
 -   ****:
-    -   **Summary**: Main React component for layout, routing, global state, and data fetching. Displays properties, filters, and municipality management.
-    -   **Changes Made**: Municipality state updated for new scheduling fields.  implemented.  replaced with  component. Fixed Google Maps  infinite loop. Map data fetching uses . Thumbnail display integrated. Implemented NSPRD boundary overlays, ensuring properties with  fetch boundary data and using boundary center for marker alignment. Added  after scrape calls and improved municipality status display with color coding. Implemented  component and integrated ads after every 5 properties in search results. The environment variable for backend URL was updated to consistently use  for consistency.
+    -   **Summary**: Main React component managing layout, routing, global state, and data fetching for property display and municipality administration.
+    -   **Changes Made**: Updated municipality state, , and integrated . Refactored routing for dedicated pages. Re-added search functionality (input, filters) to the UI. Confirmed and utilized  for search page thumbnails. Updated  in  and hardcoded fallbacks in the code. Re-integrated  into the search results grid.
 
 -   ****:
     -   **Summary**: Displays detailed information for a single property.
-    -   **Changes Made**: Added  state and  function. Integrated satellite boundary image display. Google AdSense code (, slot ) added below the minimum bid box using  for proper script loading.
+    -   **Changes Made**: Major layout redesign for a right sidebar. Re-implemented interactive Google Maps with NSPRD boundaries multiple times to ensure functionality and polygon drawing. Fixed marker positioning to boundary centroid. Removed duplicate Satellite Property View. Made tax sale button dynamic, fetching URLs from the database. Added comprehensive property details (Status, Sale Type, Dates, Address, AAN, PID, Property Size, etc.). Re-positioned AdSense under the Minimum Bid in the right sidebar. Fixed minimum bid logic (using ). Corrected PVSC assessment value access to nested  object and added PVSC fields (Building Style, Total Living Area). Removed Property Characteristics section due to duplication. Additional PVSC fields for display were added to match backend scraping.
 
 -   ****:
-    -   **Summary**: Frontend environment variables.
-    -   **Changes Made**:  added.  points to .
+    -   **Summary**: Stores frontend environment variables.
+    -   **Changes Made**:  added.  updated to point to the production domain.
 
 -   ****:
-    -   **Summary**: Backend environment variables.
-    -   **Changes Made**:  for geocoding. , , ,  were explicitly defined to resolve  during backend startup.
+    -   **Summary**: Stores backend environment variables.
+    -   **Changes Made**: , , , , , and  were explicitly defined or updated.
 
 -   ****:
-    -   **Summary**: Python dependencies for FastAPI.
-    -   **Changes Made**: , , usage: pdfplumber [-h] [--structure | --structure-text]
-                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
-                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
-                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
-                  [--laparams LAPARAMS] [--precision PRECISION]
-                  [--pages PAGES [PAGES ...]] [--indent INDENT]
-                  [infile]
+    -   **Summary**: Manages Node.js dependencies for React.
+    -   **Changes Made**: , ,  added. Node.js engine requirement updated.
 
-positional arguments:
-  infile
-
-options:
-  -h, --help            show this help message and exit
-  --structure           Write the structure tree as JSON. All other arguments
-                        except --pages, --laparams, and --indent will be
-                        ignored
-  --structure-text      Write the structure tree as JSON including text
-                        contents. All other arguments except --pages,
-                        --laparams, and --indent will be ignored
-  --format {csv,json,text}
-  --types TYPES [TYPES ...]
-  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
-                        Include *only* these object attributes in output.
-  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
-                        Exclude these object attributes from output.
-  --laparams LAPARAMS
-  --precision PRECISION
-  --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing. included. Updated as necessary during deployment to VPS.
-
--   ****:
-    -   **Summary**: Node.js dependencies for React.
-    -   **Changes Made**: ,  added. Node.js engine requirement updated to .  is used for custom Create React App configuration.
 </code_architecture>
 
 <pending_tasks>
--   Complete the implementation of NSPRD property boundary overlays on the main live Google Map view in  (this was done and verified in preview, but needs verification on VPS).
--   Implement scraping for other Nova Scotia municipalities using the established generic scraper framework.
 -   Implement email alerts for new tax sales.
 -   Implement property history tracking and analytics.
+-   Fix the Kubernetes ingress/proxy routing issue to expose boundary generation endpoints externally for dynamic thumbnail generation in production.
+-   Debug and fix the server-side integration issue preventing all enhanced PVSC scraped fields (Quality of Construction, Under Construction, Living Units, Finished Basement, Garage) from being returned in the backend API response.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the focus was on debugging issues encountered during the deployment of the application to a VPS. The main problems reported by the user are:
-1.  **Scraping status not updating on the frontend after clicking Scrape All** on the VPS. While the backend scraping itself was confirmed to work in the Emergent preview environment (and produces 62 properties for Halifax), the frontend UI on the VPS does not reflect the success status for municipalities.
-2.  **Halifax Live button failing on the VPS.** This suggests a specific issue with triggering the Halifax scraper through the frontend UI on the VPS, even though a direct  command to  works.
-
-The previous actions involved verifying backend logs, manually testing scraping endpoints via  on the VPS (which indicated the backend logic is sound), and checking frontend environment variables and build status. The core issue seems to lie in the communication or state updates between the frontend and backend on the deployed VPS environment.
+The AI engineer is currently debugging a persistent server-side integration issue with the PVSC data. The  function in  was enhanced to capture additional fields (Quality of Construction, Under Construction, Living Units, Finished Basement, Garage) from the PVSC website. Backend testing confirmed that the scraping function *successfully finds and extracts* these new fields. However, these fields are *not* being included in the final API response from . The engineer attempted to fix a suspected async/await issue in the backend's data handling. The last backend test after this fix () still reported No PVSC data returned for these specific fields, indicating the issue persists despite the scraping logic itself working. The user's last input was go, signaling to continue troubleshooting this problem.
 </current_work>
 
 <optional_next_step>
-I will start by re-verifying the VPS frontend build and backend logs during a frontend-triggered scrape.
+Debug the backend to ensure all PVSC fields scraped by  are returned in the enhanced property API response.
 </optional_next_step>
