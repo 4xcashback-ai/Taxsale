@@ -603,27 +603,44 @@ const PropertyDetails = () => {
             </div>
 
             {/* Enhanced Assessment Information */}
-            {propertyDetails && (
+            {propertyDetails?.property_details && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">📊 Detailed Assessment Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                  {propertyDetails.bedrooms !== undefined && (
+                  {propertyDetails.property_details.bedrooms !== undefined && (
                     <div>
-                      <span className="block text-sm text-gray-500 mb-1">Bedrooms</span>
-                      <span className="text-gray-900">{propertyDetails.bedrooms}</span>
+                      <span className="block text-sm text-gray-500">Bedrooms</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bedrooms}</span>
                     </div>
                   )}
-                  {propertyDetails.bathrooms !== undefined && (
+                  {propertyDetails.property_details.bathrooms !== undefined && (
                     <div>
-                      <span className="block text-sm text-gray-500 mb-1">Bathrooms</span>
-                      <span className="text-gray-900">{propertyDetails.bathrooms}</span>
+                      <span className="block text-sm text-gray-500">Bathrooms</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.bathrooms}</span>
                     </div>
                   )}
-                  {propertyDetails.taxable_assessment && (
+                  {propertyDetails.property_details.current_assessment && (
                     <div>
-                      <span className="block text-sm text-gray-500 mb-1">Taxable Assessment</span>
-                      <span className="text-gray-900">{formatCurrency(propertyDetails.taxable_assessment)}</span>
-                      <span className="block text-xs text-gray-400">Used for tax calculation</span>
+                      <span className="block text-sm text-gray-500">Current Assessment</span>
+                      <span className="text-lg font-semibold text-green-600">{formatCurrency(propertyDetails.property_details.current_assessment)}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.taxable_assessment && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Taxable Assessment</span>
+                      <span className="text-lg font-semibold text-blue-600">{formatCurrency(propertyDetails.property_details.taxable_assessment)}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.year_built && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Year Built</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.year_built}</span>
+                    </div>
+                  )}
+                  {propertyDetails.property_details.land_size && (
+                    <div>
+                      <span className="block text-sm text-gray-500">Land Size</span>
+                      <span className="text-lg font-semibold text-gray-900">{propertyDetails.property_details.land_size}</span>
                     </div>
                   )}
                 </div>
