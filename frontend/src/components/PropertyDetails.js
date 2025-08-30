@@ -412,13 +412,36 @@ const PropertyDetails = () => {
               {property.latitude && property.longitude && (
                 <div className="mb-6">
                   <h4 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h4>
-                  <div className="border rounded-lg overflow-hidden">
-                    <Wrapper 
-                      apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}
-                      libraries={['geometry']}
-                    >
-                      <PropertyMap property={property} boundaryData={boundaryData} />
-                    </Wrapper>
+                  <div className="border rounded-lg overflow-hidden relative">
+                    {/* Base Interactive Map */}
+                    <iframe
+                      src={`https://www.google.com/maps/embed/v1/place?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY'}&q=${property.latitude},${property.longitude}&zoom=17&maptype=satellite`}
+                      width="100%"
+                      height="400"
+                      style={{ border: 0 }}
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Property Location Map"
+                    ></iframe>
+                    
+                    {/* NSPRD Boundary Overlay Info */}
+                    {boundaryData && (
+                      <div className="absolute top-2 right-2 bg-white bg-opacity-90 rounded-lg p-2 shadow-lg">
+                        <div className="text-xs text-gray-700">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-red-500 border border-red-700 mr-2 opacity-80"></div>
+                            <span className="font-semibold">NSPRD Boundary</span>
+                          </div>
+                          <div className="mt-1">
+                            Area: {Math.round(boundaryData.property_info?.area_sqm || 0).toLocaleString()} sqm
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Nova Scotia Government Data
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
                     📍 Property Location: {property.latitude}, {property.longitude}
