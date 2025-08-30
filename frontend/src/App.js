@@ -95,19 +95,44 @@ const GoogleMapComponent = ({ properties, onMarkerClick }) => {
         let markerPosition = { lat: property.latitude, lng: property.longitude };
 
         const createMarkerAndInfoWindow = (position) => {
-          const marker = new window.google.maps.Marker({
-            position: position,
-            map: map,
-            title: property.property_address || property.address || 'Tax Sale Property',
-            icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              fillColor: iconColor,
-              fillOpacity: 0.9,
-              strokeColor: 'white',
-              strokeWeight: 2,
-              scale: 8
-            }
-          });
+          // Create marker - use AdvancedMarkerElement if available, fallback to Marker
+          let marker;
+          
+          if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
+            // Use new AdvancedMarkerElement
+            const markerElement = document.createElement('div');
+            markerElement.style.cssText = `
+              width: 16px; 
+              height: 16px; 
+              background-color: ${iconColor}; 
+              border: 2px solid white; 
+              border-radius: 50%; 
+              cursor: pointer;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            `;
+            
+            marker = new window.google.maps.marker.AdvancedMarkerElement({
+              position: position,
+              map: map,
+              title: property.property_address || property.address || 'Tax Sale Property',
+              content: markerElement
+            });
+          } else {
+            // Fallback to legacy Marker (with warning suppression)
+            marker = new window.google.maps.Marker({
+              position: position,
+              map: map,
+              title: property.property_address || property.address || 'Tax Sale Property',
+              icon: {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                fillColor: iconColor,
+                fillOpacity: 0.9,
+                strokeColor: 'white',
+                strokeWeight: 2,
+                scale: 8
+              }
+            });
+          }
 
           // Add click event for marker
           marker.addListener('click', () => {
