@@ -1311,17 +1311,130 @@ function MainApp() {
                         {municipalities.map((municipality) => (
                           <div key={municipality.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                             {editingMunicipality?.id === municipality.id ? (
-                              <div className="flex-1 space-y-2">
+                              <div className="flex-1 space-y-3">
+                                {/* Municipality Name */}
                                 <Input
                                   value={editingMunicipality.name}
                                   onChange={(e) => setEditingMunicipality({...editingMunicipality, name: e.target.value})}
+                                  placeholder="Municipality Name"
                                   className="mb-2"
                                 />
+                                
+                                {/* Tax Sale URL */}
                                 <Input
                                   value={editingMunicipality.tax_sale_url || ''}
                                   onChange={(e) => setEditingMunicipality({...editingMunicipality, tax_sale_url: e.target.value})}
                                   placeholder="Tax Sale URL"
                                 />
+                                
+                                {/* Scraper Type */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Scraper Type</label>
+                                  <select
+                                    value={editingMunicipality.scraper_type || 'manual'}
+                                    onChange={(e) => setEditingMunicipality({...editingMunicipality, scraper_type: e.target.value})}
+                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                  >
+                                    <option value="manual">Manual</option>
+                                    <option value="halifax">Halifax (Live)</option>
+                                    <option value="generic">Generic PDF</option>
+                                    <option value="placeholder">Placeholder</option>
+                                  </select>
+                                </div>
+                                
+                                {/* Scraping Enabled */}
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`scrape-enabled-${editingMunicipality.id}`}
+                                    checked={editingMunicipality.scrape_enabled || false}
+                                    onChange={(e) => setEditingMunicipality({...editingMunicipality, scrape_enabled: e.target.checked})}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`scrape-enabled-${editingMunicipality.id}`} className="text-sm font-medium text-gray-700">
+                                    Enable Automatic Scraping
+                                  </label>
+                                </div>
+                                
+                                {editingMunicipality.scrape_enabled && (
+                                  <>
+                                    {/* Scrape Frequency */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Scrape Frequency</label>
+                                      <select
+                                        value={editingMunicipality.scrape_frequency || 'weekly'}
+                                        onChange={(e) => setEditingMunicipality({...editingMunicipality, scrape_frequency: e.target.value})}
+                                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                      >
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                      </select>
+                                    </div>
+                                    
+                                    {/* Time Settings */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hour (24h)</label>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="23"
+                                          value={editingMunicipality.scrape_time_hour || 2}
+                                          onChange={(e) => setEditingMunicipality({...editingMunicipality, scrape_time_hour: parseInt(e.target.value)})}
+                                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Minute</label>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="59"
+                                          value={editingMunicipality.scrape_time_minute || 0}
+                                          onChange={(e) => setEditingMunicipality({...editingMunicipality, scrape_time_minute: parseInt(e.target.value)})}
+                                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                        />
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Day Settings */}
+                                    {editingMunicipality.scrape_frequency === 'weekly' && (
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Day of Week</label>
+                                        <select
+                                          value={editingMunicipality.scrape_day_of_week || 0}
+                                          onChange={(e) => setEditingMunicipality({...editingMunicipality, scrape_day_of_week: parseInt(e.target.value)})}
+                                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                        >
+                                          <option value="0">Sunday</option>
+                                          <option value="1">Monday</option>
+                                          <option value="2">Tuesday</option>
+                                          <option value="3">Wednesday</option>
+                                          <option value="4">Thursday</option>
+                                          <option value="5">Friday</option>
+                                          <option value="6">Saturday</option>
+                                        </select>
+                                      </div>
+                                    )}
+                                    
+                                    {editingMunicipality.scrape_frequency === 'monthly' && (
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Day of Month</label>
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          max="31"
+                                          value={editingMunicipality.scrape_day_of_month || 1}
+                                          onChange={(e) => setEditingMunicipality({...editingMunicipality, scrape_day_of_month: parseInt(e.target.value)})}
+                                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                        />
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                                
+                                {/* Save/Cancel Buttons */}
                                 <div className="flex space-x-2">
                                   <Button 
                                     onClick={() => handleEditMunicipality(editingMunicipality)}
