@@ -2545,6 +2545,7 @@ async def scrape_pvsc_details(assessment_number: str):
     """
     Scrape additional property details from PVSC website
     """
+    logger.info(f"PVSC SCRAPING STARTED for assessment {assessment_number}")
     try:
         pvsc_url = f"https://webapi.pvsc.ca/Search/Property?ain={assessment_number}"
         headers = {
