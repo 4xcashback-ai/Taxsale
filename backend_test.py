@@ -460,17 +460,18 @@ def test_victoria_county_improved_parser():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Victoria County Final Parser Testing"""
+    """Main test execution function - Focus on Victoria County Improved Parser Testing"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County Final Parser with Enhanced Error Handling")
-    print("📋 REVIEW REQUEST: Final test of Victoria County parser with improved error handling")
+    print("🎯 FOCUS: Victoria County Parser with Improved Pattern Matching")
+    print("📋 REVIEW REQUEST: Test Victoria County parser with enhanced regex patterns for all property formats")
     print("🔍 REQUIREMENTS:")
-    print("   1. Test final parser POST /api/scrape/victoria-county with enhanced error handling")
-    print("   2. Check comprehensive logging - Should show detailed PDF parsing steps")
-    print("   3. Verify all 3 properties - Should extract all properties from entries 1, 2, and 8")
-    print("   4. Validate complete data - All properties should have correct AANs, owners, addresses, tax amounts")
-    print("   5. Confirm no fallback - Should use actual PDF data, not fallback sample data")
+    print("   1. Test improved parser POST /api/scrape/victoria-county with enhanced regex patterns")
+    print("   2. Verify all 3 properties extracted - Entry 1: AAN 00254118, Entry 2: AAN 00453706, Entry 8: AAN 09541209")
+    print("   3. Check pattern matching - Enhanced patterns should handle different property formats and multiple PIDs")
+    print("   4. Verify complete data - All properties should have correct owners, addresses, tax amounts, and property types")
+    print("   5. Confirm no fallback - Should extract actual PDF data, not use fallback sample data")
+    print("   6. Verify sale date correctly set to '2025-08-26'")
     print("=" * 80)
     
     # Track overall results
