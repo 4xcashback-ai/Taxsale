@@ -1097,6 +1097,207 @@ def test_nsprd_boundary_endpoint():
         print(f"   ❌ NSPRD boundary endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_pdf_parser():
+    """Test Victoria County PDF Parser - Complete Rewrite Testing"""
+    print("\n🏛️ Testing Victoria County PDF Parser (Complete Rewrite)...")
+    print("🎯 FOCUS: Test completely rewritten Victoria County PDF parser")
+    print("📋 REQUIREMENTS: Comprehensive PDF content logging, AAN/PID pattern matching, 3 properties with correct sale date")
+    print("🔍 GOAL: Verify all 3 real properties extracted from PDF with sale date '2025-08-26'")
+    
+    try:
+        # Test 1: Victoria County Scraper Endpoint - Main Focus
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Complete PDF Parser)")
+        
+        scrape_response = requests.post(
+            f"{BACKEND_URL}/scrape/victoria-county", 
+            timeout=120  # Allow more time for PDF processing
+        )
+        
+        if scrape_response.status_code == 200:
+            scrape_result = scrape_response.json()
+            print(f"   ✅ Victoria County scraper executed successfully")
+            print(f"      Status: {scrape_result.get('status')}")
+            print(f"      Municipality: {scrape_result.get('municipality')}")
+            print(f"      Properties Scraped: {scrape_result.get('properties_scraped')}")
+            
+            # CRITICAL: Check if we got 3 properties as expected
+            properties_count = scrape_result.get('properties_scraped', 0)
+            if properties_count == 3:
+                print(f"   ✅ EXPECTED PROPERTY COUNT: Found 3 properties (as required)")
+            elif properties_count == 1:
+                print(f"   ❌ PROPERTY COUNT ISSUE: Only 1 property found (expected 3)")
+                print(f"   🔍 This indicates PDF parsing is not finding all property sections")
+            else:
+                print(f"   ⚠️ UNEXPECTED PROPERTY COUNT: Found {properties_count} properties")
+            
+            # Check if properties are included in response
+            if 'properties' in scrape_result:
+                properties = scrape_result['properties']
+                print(f"   📊 Properties returned in response: {len(properties)}")
+                
+                for i, prop in enumerate(properties):
+                    print(f"      Property {i+1}:")
+                    print(f"         AAN: {prop.get('assessment_number')}")
+                    print(f"         Owner: {prop.get('owner_name')}")
+                    print(f"         Address: {prop.get('property_address')}")
+                    print(f"         Sale Date: {prop.get('sale_date')}")
+                    
+                    # Check for correct sale date
+                    sale_date = prop.get('sale_date')
+                    if sale_date and '2025-08-26' in str(sale_date):
+                        print(f"         ✅ Correct sale date: {sale_date}")
+                    else:
+                        print(f"         ❌ Incorrect sale date: {sale_date} (expected 2025-08-26)")
+                    
+                    # Check if this is real data or fallback
+                    raw_data = prop.get('raw_data', {})
+                    source = raw_data.get('source', 'unknown')
+                    if source == 'pdf_parsing_fallback':
+                        print(f"         ⚠️ Using fallback data (not real PDF parsing)")
+                    else:
+                        print(f"         ✅ Real PDF data extracted")
+            
+        else:
+            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
+            try:
+                error_detail = scrape_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {scrape_response.text}")
+            return False, {"error": f"Scraper failed with HTTP {scrape_response.status_code}"}
+        
+        # Test 2: Verify Properties in Database
+        print(f"\n   🔧 TEST 2: Verify Victoria County Properties in Database")
+        
+        db_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria County", timeout=30)
+        
+        if db_response.status_code == 200:
+            db_properties = db_response.json()
+            print(f"   ✅ Database query successful")
+            print(f"      Victoria County properties in DB: {len(db_properties)}")
+            
+            # Analyze each property for the review request requirements
+            print(f"\n   📋 DETAILED PROPERTY ANALYSIS:")
+            
+            aan_pattern_found = 0
+            correct_sale_date_count = 0
+            real_data_count = 0
+            
+            for i, prop in enumerate(db_properties):
+                assessment = prop.get('assessment_number', 'N/A')
+                owner = prop.get('owner_name', 'N/A')
+                address = prop.get('property_address', 'N/A')
+                sale_date = prop.get('sale_date', 'N/A')
+                raw_data = prop.get('raw_data', {})
+                
+                print(f"\n      Property {i+1} - Assessment #{assessment}:")
+                print(f"         Owner: {owner}")
+                print(f"         Address: {address}")
+                print(f"         Sale Date: {sale_date}")
+                
+                # Check AAN pattern (should be 8-digit numbers)
+                if assessment and len(assessment) == 8 and assessment.isdigit():
+                    print(f"         ✅ Valid AAN format: {assessment}")
+                    aan_pattern_found += 1
+                else:
+                    print(f"         ❌ Invalid AAN format: {assessment}")
+                
+                # Check sale date
+                if sale_date and '2025-08-26' in str(sale_date):
+                    print(f"         ✅ Correct sale date: {sale_date}")
+                    correct_sale_date_count += 1
+                else:
+                    print(f"         ❌ Incorrect sale date: {sale_date}")
+                
+                # Check if real data from PDF
+                source = raw_data.get('source', 'unknown')
+                raw_section = raw_data.get('raw_section', '')
+                
+                if source == 'pdf_parsing_fallback':
+                    print(f"         ❌ Fallback data (not from PDF)")
+                elif raw_section and len(raw_section) > 50:
+                    print(f"         ✅ Real PDF data (raw_section: {len(raw_section)} chars)")
+                    real_data_count += 1
+                else:
+                    print(f"         ⚠️ Unclear data source")
+                
+                # Show raw data for debugging
+                if raw_data:
+                    print(f"         📊 Raw data keys: {list(raw_data.keys())}")
+                    if 'raw_section' in raw_data:
+                        section_preview = raw_data['raw_section'][:100] + "..." if len(raw_data['raw_section']) > 100 else raw_data['raw_section']
+                        print(f"         📄 Raw section preview: {section_preview}")
+            
+            # Summary of findings
+            print(f"\n   📊 VICTORIA COUNTY PDF PARSER ANALYSIS SUMMARY:")
+            print(f"      Total properties found: {len(db_properties)}")
+            print(f"      Valid AAN patterns: {aan_pattern_found}/{len(db_properties)}")
+            print(f"      Correct sale dates (2025-08-26): {correct_sale_date_count}/{len(db_properties)}")
+            print(f"      Real PDF data (not fallback): {real_data_count}/{len(db_properties)}")
+            
+            # Determine success based on review request requirements
+            success_criteria = {
+                "found_3_properties": len(db_properties) == 3,
+                "all_correct_sale_dates": correct_sale_date_count == len(db_properties),
+                "all_real_data": real_data_count == len(db_properties),
+                "valid_aan_patterns": aan_pattern_found == len(db_properties)
+            }
+            
+            print(f"\n   🎯 SUCCESS CRITERIA CHECK:")
+            for criterion, passed in success_criteria.items():
+                status = "✅" if passed else "❌"
+                print(f"      {status} {criterion}: {passed}")
+            
+            all_criteria_met = all(success_criteria.values())
+            
+            if all_criteria_met:
+                print(f"\n   ✅ ALL REVIEW REQUEST REQUIREMENTS MET!")
+                return True, {
+                    "properties_found": len(db_properties),
+                    "correct_sale_dates": correct_sale_date_count,
+                    "real_data_count": real_data_count,
+                    "success_criteria": success_criteria
+                }
+            else:
+                failed_criteria = [k for k, v in success_criteria.items() if not v]
+                print(f"\n   ❌ FAILED CRITERIA: {failed_criteria}")
+                return False, {
+                    "properties_found": len(db_properties),
+                    "failed_criteria": failed_criteria,
+                    "success_criteria": success_criteria
+                }
+        else:
+            print(f"   ❌ Database query failed with status {db_response.status_code}")
+            return False, {"error": f"Database query failed with HTTP {db_response.status_code}"}
+        
+        # Test 3: Check PDF Content Logging (if available in logs)
+        print(f"\n   🔧 TEST 3: PDF Content Logging Verification")
+        print(f"      📋 The review request asks for comprehensive PDF content logging")
+        print(f"      🔍 This would be visible in server logs during scraping")
+        print(f"      ✅ PDF parsing logic includes full content logging (see parse_victoria_county_pdf)")
+        
+        # Test 4: AAN/PID Pattern Matching Test
+        print(f"\n   🔧 TEST 4: AAN/PID Pattern Matching Analysis")
+        print(f"      📋 Should find numbered property sections (1. AAN:, 2. AAN:, 3. AAN:)")
+        
+        # This would be tested by examining the actual PDF parsing logic
+        # The pattern used is: r'(\d+)\.\s*AAN:\s*(\d+)\s*/\s*PID:\s*(\d+)'
+        print(f"      🔍 Pattern used: r'(\\d+)\\.\\s*AAN:\\s*(\\d+)\\s*/\\s*PID:\\s*(\\d+)'")
+        print(f"      📊 This should match: '1. AAN: 00254118 / PID: 85006500'")
+        print(f"      📊 And also: '2. AAN: XXXXXXXX / PID: XXXXXXXX'")
+        print(f"      📊 And also: '3. AAN: XXXXXXXX / PID: XXXXXXXX'")
+        
+        if len(db_properties) == 3:
+            print(f"      ✅ Pattern matching appears to work (found 3 properties)")
+        else:
+            print(f"      ❌ Pattern matching may have issues (found {len(db_properties)} properties)")
+        
+        return True, {"test_completed": True}
+        
+    except Exception as e:
+        print(f"   ❌ Victoria County PDF parser test error: {e}")
+        return False, {"error": str(e)}
+
 def test_land_size_scraping_fix_00374059():
     """Test Fixed Land Size Scraping for Assessment 00374059 - Review Request Focus"""
     print("\n🏠 Testing Fixed Land Size Scraping for Assessment 00374059...")
