@@ -5604,6 +5604,187 @@ def test_victoria_county_enhanced_scraper():
         print(f"   ❌ Victoria County enhanced scraper test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_pdf_parsing_debug():
+    """Debug Victoria County PDF parsing issues - Review Request Focus"""
+    print("\n🔍 DEBUGGING VICTORIA COUNTY PDF PARSING ISSUES...")
+    print("🎯 FOCUS: Debug why only 1 property found instead of 3, check sale date extraction")
+    print("📋 REQUIREMENTS: Should find 3 properties, extract 'Tuesday, August 26TH, 2025 at 2:00PM'")
+    
+    try:
+        # Test 1: Current Victoria County Scraper - Check what's being parsed
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county - Current Scraper Analysis")
+        
+        scrape_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=120)
+        
+        if scrape_response.status_code == 200:
+            scrape_result = scrape_response.json()
+            print(f"   ✅ Victoria County scraper executed successfully")
+            print(f"      Status: {scrape_result.get('status')}")
+            print(f"      Properties Scraped: {scrape_result.get('properties_scraped', 0)}")
+            print(f"      Municipality: {scrape_result.get('municipality')}")
+            
+            # CRITICAL: Check property count - should be 3, not 1
+            properties_scraped = scrape_result.get('properties_scraped', 0)
+            if properties_scraped == 1:
+                print(f"   ❌ ISSUE CONFIRMED: Only 1 property found (expected 3)")
+                print(f"   🎯 This matches the review request - missing 2 properties")
+            elif properties_scraped == 3:
+                print(f"   ✅ EXPECTED COUNT: 3 properties found correctly")
+            else:
+                print(f"   ⚠️ UNEXPECTED COUNT: {properties_scraped} properties (expected 3)")
+            
+        else:
+            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
+            try:
+                error_detail = scrape_response.json()
+                print(f"      Error: {error_detail}")
+            except:
+                print(f"      Raw response: {scrape_response.text}")
+            return False, {"error": f"Scraper failed with HTTP {scrape_response.status_code}"}
+        
+        # Test 2: Check Victoria County Properties in Database
+        print(f"\n   🔧 TEST 2: GET /api/tax-sales - Check Victoria County Properties")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            all_properties = tax_sales_response.json()
+            victoria_properties = [p for p in all_properties if p.get("municipality_name") == "Victoria County"]
+            
+            print(f"   ✅ Tax sales data retrieved - {len(all_properties)} total properties")
+            print(f"   📊 Victoria County properties: {len(victoria_properties)}")
+            
+            if len(victoria_properties) == 1:
+                print(f"   ❌ CONFIRMED: Only 1 Victoria County property in database")
+                print(f"   🎯 Missing 2 properties as reported in review request")
+            elif len(victoria_properties) == 3:
+                print(f"   ✅ EXPECTED: 3 Victoria County properties found")
+            else:
+                print(f"   ⚠️ UNEXPECTED: {len(victoria_properties)} Victoria County properties")
+            
+            # Analyze existing Victoria County properties
+            if victoria_properties:
+                print(f"\n   📋 EXISTING VICTORIA COUNTY PROPERTIES ANALYSIS:")
+                for i, prop in enumerate(victoria_properties):
+                    print(f"\n      Property {i+1}:")
+                    print(f"         Assessment: {prop.get('assessment_number', 'N/A')}")
+                    print(f"         Owner: {prop.get('owner_name', 'N/A')}")
+                    print(f"         Address: {prop.get('property_address', 'N/A')}")
+                    print(f"         PID: {prop.get('pid_number', 'N/A')}")
+                    print(f"         Opening Bid: ${prop.get('opening_bid', 'N/A')}")
+                    print(f"         Sale Date: {prop.get('sale_date', 'N/A')}")
+                    print(f"         Property Type: {prop.get('property_type', 'N/A')}")
+                    print(f"         Lot Size: {prop.get('lot_size', 'N/A')}")
+                    
+                    # Check sale date extraction - should be August 26, 2025
+                    sale_date = prop.get('sale_date')
+                    if sale_date:
+                        if "2025-08-26" in str(sale_date) or "August 26" in str(sale_date):
+                            print(f"         ✅ Sale Date: Correct August 26, 2025 format")
+                        else:
+                            print(f"         ❌ Sale Date: Wrong date - expected August 26, 2025")
+                            print(f"         🎯 Should extract 'Tuesday, August 26TH, 2025 at 2:00PM'")
+                    else:
+                        print(f"         ❌ Sale Date: Missing")
+                    
+                    # Check raw data for debugging
+                    raw_data = prop.get('raw_data', {})
+                    if raw_data:
+                        print(f"         📊 Raw Data Available:")
+                        for key, value in raw_data.items():
+                            print(f"            {key}: {value}")
+            else:
+                print(f"   ❌ NO Victoria County properties found in database")
+                
+        else:
+            print(f"   ❌ Tax sales endpoint failed: {tax_sales_response.status_code}")
+            return False, {"error": "Tax sales endpoint failed"}
+        
+        # Test 3: Check Victoria County Municipality Configuration
+        print(f"\n   🔧 TEST 3: Victoria County Municipality Configuration Check")
+        
+        municipalities_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        if municipalities_response.status_code == 200:
+            municipalities = municipalities_response.json()
+            victoria_county = None
+            
+            for muni in municipalities:
+                if muni.get("name") == "Victoria County":
+                    victoria_county = muni
+                    break
+            
+            if victoria_county:
+                print(f"   ✅ Victoria County municipality found")
+                print(f"      Municipality ID: {victoria_county.get('id')}")
+                print(f"      Scraper Type: {victoria_county.get('scraper_type')}")
+                print(f"      Tax Sale URL: {victoria_county.get('tax_sale_url')}")
+                print(f"      Scrape Status: {victoria_county.get('scrape_status')}")
+                print(f"      Last Scraped: {victoria_county.get('last_scraped')}")
+                
+                # Check if tax_sale_url points to actual PDF
+                tax_sale_url = victoria_county.get('tax_sale_url')
+                if tax_sale_url:
+                    if '.pdf' in tax_sale_url.lower():
+                        print(f"      ✅ Tax Sale URL points to PDF: {tax_sale_url}")
+                    else:
+                        print(f"      ⚠️ Tax Sale URL is general page, not direct PDF: {tax_sale_url}")
+                        print(f"      🎯 May need direct PDF URL for proper parsing")
+                else:
+                    print(f"      ❌ Tax Sale URL missing")
+                
+            else:
+                print(f"   ❌ Victoria County municipality not found")
+                return False, {"error": "Victoria County municipality not found"}
+        
+        # Test 4: Summary and Recommendations
+        print(f"\n   📋 VICTORIA COUNTY PDF PARSING DEBUG SUMMARY:")
+        
+        issues_found = []
+        recommendations = []
+        
+        if 'properties_scraped' in locals() and properties_scraped == 1:
+            issues_found.append("Only 1 property found instead of expected 3")
+            recommendations.append("Check PDF property splitting regex patterns")
+            recommendations.append("Verify PDF parsing logic handles multiple property sections")
+        
+        if 'victoria_properties' in locals() and victoria_properties:
+            sample_prop = victoria_properties[0]
+            sale_date = sample_prop.get('sale_date')
+            if sale_date and "2025-08-26" not in str(sale_date):
+                issues_found.append("Sale date not extracted as August 26, 2025")
+                recommendations.append("Fix sale date extraction to parse 'Tuesday, August 26TH, 2025 at 2:00PM'")
+        
+        print(f"\n   🎯 ISSUES IDENTIFIED ({len(issues_found)}):")
+        for i, issue in enumerate(issues_found, 1):
+            print(f"      {i}. {issue}")
+        
+        print(f"\n   💡 RECOMMENDATIONS ({len(recommendations)}):")
+        for i, rec in enumerate(recommendations, 1):
+            print(f"      {i}. {rec}")
+        
+        # Determine overall result
+        if len(issues_found) == 0:
+            print(f"\n   ✅ NO CRITICAL ISSUES FOUND - Victoria County parsing working correctly")
+            return True, {
+                "properties_found": properties_scraped if 'properties_scraped' in locals() else 0,
+                "expected_properties": 3,
+                "issues": issues_found,
+                "recommendations": recommendations
+            }
+        else:
+            print(f"\n   ❌ {len(issues_found)} CRITICAL ISSUES FOUND - Needs debugging")
+            return False, {
+                "properties_found": properties_scraped if 'properties_scraped' in locals() else 0,
+                "expected_properties": 3,
+                "issues": issues_found,
+                "recommendations": recommendations
+            }
+        
+    except Exception as e:
+        print(f"   ❌ Victoria County PDF parsing debug error: {e}")
+        return False, {"error": str(e)}
+
 def main():
     """Run Victoria County Enhanced Scraper Testing - Review Request Focus"""
     print("🚀 Starting Victoria County Enhanced Scraper Testing")
