@@ -125,23 +125,25 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_victoria_county_improved_parser():
-    """Test Victoria County Parser with Improved Pattern Matching - Review Request Focus"""
-    print("\n🔍 Testing Victoria County Parser with Improved Pattern Matching...")
-    print("🎯 FOCUS: Test improved parser with enhanced regex patterns for all property formats")
+def test_victoria_county_data_extraction_debug():
+    """Debug Victoria County data extraction issues - minimum bid and missing images"""
+    print("\n🔍 Testing Victoria County Data Extraction Issues...")
+    print("🎯 FOCUS: Debug minimum bid calculations and missing boundary images")
     print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Test improved parser POST /api/scrape/victoria-county with enhanced regex patterns")
-    print("   2. Verify all 3 properties extracted from PDF entries 1, 2, and 8")
-    print("   3. Check pattern matching - Enhanced patterns should handle different property formats and multiple PIDs")
-    print("   4. Verify complete data - All properties should have correct owners, addresses, tax amounts, and property types")
-    print("   5. Confirm no fallback - Should extract actual PDF data, not use fallback sample data")
-    print("   6. Verify sale date correctly set to '2025-08-26'")
+    print("   1. Test current Victoria County properties - Check actual data being extracted for all 3 properties")
+    print("   2. Verify minimum bid calculations - Compare extracted opening_bid values against PDF tax amounts:")
+    print("      - Entry 1: Should be $2,009.03")
+    print("      - Entry 2: Should be $1,599.71") 
+    print("      - Entry 8: Should be $5,031.96 + HST")
+    print("   3. Check boundary screenshot generation - Verify if boundary_screenshot field is being generated")
+    print("   4. Debug tax amount extraction - Check if regex patterns correctly extract from 'Taxes, Interest and Expenses owing: $X,XXX.XX'")
+    print("   5. Verify property images - Check if Google Maps static API is generating boundary thumbnails")
     print("")
-    print("🔍 EXPECTED PROPERTIES (from PDF entries 1, 2, 8):")
-    print("   - Entry 1: AAN 00254118, Donald John Beaton, Land/Dwelling")
-    print("   - Entry 2: AAN 00453706, Kenneth Ferneyhough, Land/Dwelling (with multiple PIDs)")
-    print("   - Entry 8: AAN 09541209, Florance Debra Cleaves, Land only")
-    print("🔍 EXPECTED SALE DATE: Tuesday, August 26TH, 2025 at 2:00PM (should be 2025-08-26)")
+    print("🔍 EXPECTED MINIMUM BIDS (from PDF tax amounts):")
+    print("   - Entry 1 (AAN 00254118): $2,009.03")
+    print("   - Entry 2 (AAN 00453706): $1,599.71")
+    print("   - Entry 8 (AAN 09541209): $5,031.96 + HST")
+    print("🔍 EXPECTED BOUNDARY IMAGES: All properties should have boundary_screenshot URLs")
     
     try:
         # Test 1: Victoria County Improved Parser with Enhanced Regex Patterns
