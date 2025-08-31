@@ -63,8 +63,8 @@ copy_scripts() {
     chmod +x "$SCRIPT_DIR"/*.sh
     
     # Create symlinks in /usr/local/bin for easy access
-    ln -sf "$SCRIPT_DIR/deployment.sh" /usr/local/bin/tax-sale-deploy
-    ln -sf "$SCRIPT_DIR/system-health.sh" /usr/local/bin/tax-sale-health
+    ln -sf "$SCRIPT_DIR/deployment.sh" /usr/local/bin/nstaxsales-deploy
+    ln -sf "$SCRIPT_DIR/system-health.sh" /usr/local/bin/nstaxsales-health
     
     log "Scripts installed successfully"
 }
