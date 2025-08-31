@@ -596,17 +596,17 @@ def test_municipality_descriptions():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Victoria County coordinate precision fixes"""
+    """Main test execution function - Focus on Municipality Descriptions"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Test both fixes - updated site branding and improved Victoria County thumbnail coordinates")
-    print("📋 REVIEW REQUEST: Test Victoria County coordinate precision fixes and improved thumbnail quality")
+    print("🎯 FOCUS: Test municipality descriptions for property detail pages")
+    print("📋 REVIEW REQUEST: Test municipality-specific descriptions for Halifax, Cape Breton, Kentville, and Victoria County")
     print("🔍 REQUIREMENTS:")
-    print("   1. Re-scrape Victoria County POST /api/scrape/victoria-county to update properties with new precise coordinates")
-    print("   2. Verify coordinate precision - Check that properties now have 5 decimal places (±1m accuracy) instead of 3")
-    print("   3. Test boundary image quality - Check if AAN 00254118 thumbnail now shows actual building/dwelling at 198 Little Narrows Rd")
-    print("   4. Verify all 3 properties - Ensure all Victoria County properties have improved coordinate precision")
-    print("   5. Check property data accuracy - Confirm opening bids and HST detection still working correctly")
+    print("   1. Add descriptions to existing municipalities - Update Halifax, Cape Breton, Kentville, and Victoria County")
+    print("   2. Halifax description - Include SEALED TENDER process, HRM website submission, bid form requirements")
+    print("   3. Victoria County description - Include tender process, submission location at 495 Chebucto St., Baddeck, contact info")
+    print("   4. Cape Breton description - Include CBRM-specific tax sale process and contact information")
+    print("   5. Kentville description - Include Kentville-specific tax sale process and contact information")
     print("=" * 80)
     
     # Track overall results
@@ -620,10 +620,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Coordinate Precision Fixes (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Victoria County Coordinate Precision Fixes Testing")
-    coordinate_fixes_successful, coordinate_data = test_victoria_county_coordinate_precision_fixes()
-    test_results['victoria_county_coordinate_precision_fixes'] = coordinate_fixes_successful
+    # Test 2: Municipality Descriptions (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Municipality Descriptions Testing")
+    descriptions_successful, descriptions_data = test_municipality_descriptions()
+    test_results['municipality_descriptions'] = descriptions_successful
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
