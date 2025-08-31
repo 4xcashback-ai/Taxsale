@@ -123,9 +123,9 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 7
+    stuck_count: 8
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
