@@ -1714,6 +1714,158 @@ function PropertySearch() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Deployment Management */}
+              <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <RefreshCw className="h-5 w-5 text-green-600" />
+                    <span>Deployment Management</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Manage application updates and deployments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Deployment Status Messages */}
+                  {deploymentMessage && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <RefreshCw className={`h-4 w-4 text-blue-600 ${deploymentLoading ? 'animate-spin' : ''}`} />
+                        <span className="text-blue-800">{deploymentMessage}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deployment Status Overview */}
+                  {deploymentStatus && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                      <h4 className="font-semibold text-gray-800 mb-3">Current Status</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Status:</span>
+                          <div className={`font-medium ${
+                            deploymentStatus.status === 'idle' ? 'text-green-600' : 
+                            deploymentStatus.status === 'error' ? 'text-red-600' : 'text-yellow-600'
+                          }`}>
+                            {deploymentStatus.status.charAt(0).toUpperCase() + deploymentStatus.status.slice(1)}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Updates Available:</span>
+                          <div className={`font-medium ${deploymentStatus.updates_available ? 'text-orange-600' : 'text-green-600'}`}>
+                            {deploymentStatus.updates_available ? 'Yes' : 'No'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Last Deployment:</span>
+                          <div className="font-medium text-gray-800">
+                            {deploymentStatus.last_deployment ? formatDate(deploymentStatus.last_deployment) : 'Never'}
+                          </div>
+                        </div>
+                      </div>
+                      {deploymentStatus.current_commit && (
+                        <div className="mt-3 pt-3 border-t text-xs">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-gray-600">Current:</span>
+                              <code className="ml-2 px-2 py-1 bg-gray-200 rounded">{deploymentStatus.current_commit}</code>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Latest:</span>
+                              <code className="ml-2 px-2 py-1 bg-gray-200 rounded">{deploymentStatus.remote_commit}</code>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* System Health */}
+                  {systemHealth && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                      <h4 className="font-semibold text-gray-800 mb-3">System Health</h4>
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          systemHealth.health_status === 'excellent' ? 'bg-green-500' :
+                          systemHealth.health_status === 'good' ? 'bg-yellow-500' :
+                          systemHealth.health_status === 'poor' ? 'bg-red-500' : 'bg-gray-500'
+                        }`}></div>
+                        <span className="font-medium capitalize">{systemHealth.health_status}</span>
+                        <span className="text-gray-600 text-sm">
+                          (checked {systemHealth.checked_at ? formatDate(systemHealth.checked_at) : 'unknown'})
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* GitHub Repository Input */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      GitHub Repository URL (Optional)
+                    </label>
+                    <Input
+                      value={githubRepo}
+                      onChange={(e) => setGithubRepo(e.target.value)}
+                      placeholder="https://github.com/username/tax-sale-compass.git"
+                      className="w-full"
+                      type="url"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Leave empty to use the current repository configuration
+                    </p>
+                  </div>
+
+                  {/* Deployment Actions */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <Button
+                      onClick={checkForUpdates}
+                      disabled={deploymentLoading}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${deploymentLoading ? 'animate-spin' : ''}`} />
+                      Check Updates
+                    </Button>
+                    
+                    <Button
+                      onClick={deployApplication}
+                      disabled={deploymentLoading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Deploy Latest
+                    </Button>
+                    
+                    <Button
+                      onClick={verifyDeployment}
+                      disabled={deploymentLoading}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Verify Status
+                    </Button>
+                    
+                    <Button
+                      onClick={fetchSystemHealth}
+                      disabled={deploymentLoading}
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Health Check
+                    </Button>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-4 h-4 rounded-full bg-yellow-500 mt-0.5 flex-shrink-0"></div>
+                      <div className="text-sm text-yellow-800">
+                        <strong>Important:</strong> Deployment will restart all services and may cause brief downtime.
+                        Always verify the deployment after completion.
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
