@@ -4859,7 +4859,7 @@ def main():
     
     # Test 1: Basic API Connection
     print("\n🔗 Testing API Connection...")
-    api_success, _ = test_api_connection()
+    api_success = test_api_connection()
     if not api_success:
         print("❌ Cannot proceed - API connection failed")
         return False
