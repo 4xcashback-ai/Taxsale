@@ -719,6 +719,13 @@ function PropertySearch() {
       setSystemHealth(response.data);
     } catch (error) {
       console.error("Error fetching system health:", error);
+      // Set a default error state for system health
+      setSystemHealth({
+        health_status: 'unknown',
+        output: 'Unable to fetch health status',
+        errors: [error.message],
+        checked_at: new Date().toISOString()
+      });
     }
   };
 
