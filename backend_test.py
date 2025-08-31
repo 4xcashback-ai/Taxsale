@@ -352,38 +352,73 @@ def test_victoria_county_fixed_scraper():
             print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {properties_response.status_code}"}
         
-        # Test 3: Debug Tax Amount Extraction Patterns
-        print(f"\n   🔧 TEST 3: Debug Tax Amount Extraction Patterns")
+        # Test 3: Test Enhanced Tax Amount Extraction Patterns
+        print(f"\n   🔧 TEST 3: Test Enhanced Tax Amount Extraction Patterns")
         
         debug_response = requests.get(f"{BACKEND_URL}/debug/victoria-county-pdf", timeout=30)
         
+        enhanced_patterns_working = False
+        
         if debug_response.status_code == 200:
             debug_data = debug_response.json()
-            print(f"   ✅ Debug endpoint available for tax amount pattern analysis")
+            print(f"   ✅ Debug endpoint available for enhanced pattern analysis")
             
-            # Analyze PDF content for tax amount patterns
+            # Analyze PDF content for enhanced tax amount patterns
             pdf_content = debug_data.get('pdf_content_preview', '')
             analysis = debug_data.get('analysis', {})
             
             print(f"      PDF Content Length: {len(pdf_content)} characters")
             
-            # Check for the specific tax amount pattern mentioned in review request
-            tax_pattern = r"Taxes, Interest and Expenses owing:\s*\$[\d,]+\.?\d*"
-            import re
-            tax_matches = re.findall(tax_pattern, pdf_content)
+            # Check for enhanced tax amount extraction patterns
+            enhanced_patterns = [
+                r"Taxes, Interest and Expenses owing:\s*\$[\d,]+\.?\d*",
+                r"owing:\s*\$[\d,]+\.?\d*",
+                r"\$[\d,]+\.\d{2}",  # General dollar amounts
+                r"[\d,]+\.\d{2}"     # Numeric amounts
+            ]
             
-            if tax_matches:
-                print(f"   ✅ TAX AMOUNT PATTERN FOUND: {len(tax_matches)} matches")
-                for i, match in enumerate(tax_matches):
-                    print(f"      Match {i+1}: {match}")
-                    # Extract the dollar amount
-                    amount_match = re.search(r'\$[\d,]+\.?\d*', match)
-                    if amount_match:
-                        amount = amount_match.group().replace('$', '').replace(',', '')
-                        print(f"         Extracted amount: ${amount}")
-            else:
-                print(f"   ❌ TAX AMOUNT PATTERN NOT FOUND: 'Taxes, Interest and Expenses owing: $X,XXX.XX' pattern missing")
-                print(f"   🔍 DEBUG: Regex patterns may not be correctly extracting tax amounts")
+            print(f"   🔍 TESTING ENHANCED TAX AMOUNT PATTERNS:")
+            
+            for i, pattern in enumerate(enhanced_patterns):
+                matches = re.findall(pattern, pdf_content)
+                print(f"      Pattern {i+1}: {pattern}")
+                print(f"         Matches found: {len(matches)}")
+                
+                if matches:
+                    enhanced_patterns_working = True
+                    for j, match in enumerate(matches[:3]):  # Show first 3 matches
+                        print(f"         Match {j+1}: {match}")
+                        
+                        # Extract numeric value
+                        numeric_match = re.search(r'[\d,]+\.?\d*', match.replace('$', ''))
+                        if numeric_match:
+                            amount = numeric_match.group().replace(',', '')
+                            try:
+                                amount_float = float(amount)
+                                if 1000 <= amount_float <= 10000:  # Expected range for Victoria County
+                                    print(f"            ✅ Valid tax amount: ${amount}")
+                                else:
+                                    print(f"            ⚠️ Amount outside expected range: ${amount}")
+                            except:
+                                print(f"            ❌ Could not parse amount: {amount}")
+            
+            # Check for HST indicators
+            hst_patterns = [r"\+\s*HST", r"plus HST", r"HST applicable"]
+            hst_found = False
+            
+            print(f"\n   🔍 TESTING HST DETECTION PATTERNS:")
+            for pattern in hst_patterns:
+                hst_matches = re.findall(pattern, pdf_content, re.IGNORECASE)
+                if hst_matches:
+                    hst_found = True
+                    print(f"      ✅ HST pattern found: {pattern} - {len(hst_matches)} matches")
+                    for match in hst_matches[:2]:
+                        print(f"         Match: {match}")
+                else:
+                    print(f"      ❌ HST pattern not found: {pattern}")
+            
+            if not hst_found:
+                print(f"   ❌ NO HST INDICATORS FOUND: Entry 8 HST detection may fail")
                 
             # Check for AAN occurrences
             aan_count = analysis.get('aan_occurrences', 0)
@@ -394,7 +429,7 @@ def test_victoria_county_fixed_scraper():
                 
         else:
             print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
-            print(f"   ℹ️ Cannot verify tax amount extraction patterns without debug endpoint")
+            print(f"   ℹ️ Cannot verify enhanced tax amount extraction patterns without debug endpoint")
         
         # Test 4: Google Maps API and Boundary Image Generation
         print(f"\n   🔧 TEST 4: Google Maps API and Boundary Image Generation")
