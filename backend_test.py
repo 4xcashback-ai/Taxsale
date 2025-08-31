@@ -417,36 +417,42 @@ def test_victoria_county_improved_parser():
         else:
             requirements_failed.append("6. Correct sale date (2025-08-26)")
         
-        print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/5):")
+        print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/6):")
         for req in requirements_met:
             print(f"      ✅ {req}")
         
         if requirements_failed:
-            print(f"\n   ❌ REQUIREMENTS FAILED ({len(requirements_failed)}/5):")
+            print(f"\n   ❌ REQUIREMENTS FAILED ({len(requirements_failed)}/6):")
             for req in requirements_failed:
                 print(f"      ❌ {req}")
         
         # Overall result
         if len(requirements_failed) == 0:
-            print(f"\n   🎉 VICTORIA COUNTY FINAL PARSER: ALL REQUIREMENTS MET!")
-            print(f"   ✅ Final verification successful - Victoria County PDF parser working correctly")
+            print(f"\n   🎉 VICTORIA COUNTY IMPROVED PARSER: ALL REQUIREMENTS MET!")
+            print(f"   ✅ Enhanced regex patterns successfully extract all 3 properties")
+            print(f"   ✅ Pattern matching handles different property formats and multiple PIDs")
+            print(f"   ✅ All properties have correct owners, addresses, tax amounts, and property types")
+            print(f"   ✅ Using actual PDF data, not fallback sample data")
+            print(f"   ✅ Sale date correctly set to 2025-08-26")
             return True, {
                 "requirements_met": len(requirements_met),
                 "requirements_failed": len(requirements_failed),
                 "properties_found": properties_count,
                 "all_data_complete": all_data_complete,
                 "fallback_detected": fallback_detected,
-                "expected_aans_found": found_aans
+                "expected_aans_found": found_aans,
+                "sale_date_correct": sale_date_correct
             }
         else:
-            print(f"\n   ❌ VICTORIA COUNTY FINAL PARSER: {len(requirements_failed)} REQUIREMENTS FAILED")
+            print(f"\n   ❌ VICTORIA COUNTY IMPROVED PARSER: {len(requirements_failed)} REQUIREMENTS FAILED")
             return False, {
                 "requirements_met": len(requirements_met),
                 "requirements_failed": len(requirements_failed),
                 "failed_requirements": requirements_failed,
                 "properties_found": properties_count,
                 "all_data_complete": all_data_complete,
-                "fallback_detected": fallback_detected
+                "fallback_detected": fallback_detected,
+                "sale_date_correct": sale_date_correct
             }
             
     except Exception as e:
