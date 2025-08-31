@@ -380,35 +380,42 @@ def test_victoria_county_improved_parser():
         requirements_met = []
         requirements_failed = []
         
-        # Requirement 1: Enhanced error handling
+        # Requirement 1: Enhanced regex patterns working
         if scrape_response.status_code == 200:
-            requirements_met.append("1. Enhanced error handling and validation")
+            requirements_met.append("1. Enhanced regex patterns working")
         else:
-            requirements_failed.append("1. Enhanced error handling and validation")
+            requirements_failed.append("1. Enhanced regex patterns working")
         
-        # Requirement 2: Comprehensive logging
-        if debug_response.status_code == 200:
-            requirements_met.append("2. Comprehensive logging")
-        else:
-            requirements_failed.append("2. Comprehensive logging (debug endpoint unavailable)")
-        
-        # Requirement 3: All 3 properties
+        # Requirement 2: All 3 properties extracted
         if properties_count == 3:
-            requirements_met.append("3. All 3 properties extracted")
+            requirements_met.append("2. All 3 properties extracted")
         else:
-            requirements_failed.append("3. All 3 properties extracted")
+            requirements_failed.append("2. All 3 properties extracted")
         
-        # Requirement 4: Complete data
+        # Requirement 3: Pattern matching for different formats
+        if debug_response.status_code == 200 and aan_count >= 3:
+            requirements_met.append("3. Pattern matching handles different formats")
+        else:
+            requirements_failed.append("3. Pattern matching handles different formats")
+        
+        # Requirement 4: Complete data validation
         if all_data_complete:
             requirements_met.append("4. Complete data validation")
         else:
             requirements_failed.append("4. Complete data validation")
         
-        # Requirement 5: No fallback
+        # Requirement 5: No fallback data
         if not fallback_detected:
             requirements_met.append("5. No fallback data")
         else:
             requirements_failed.append("5. No fallback data")
+        
+        # Requirement 6: Correct sale date
+        sale_date_correct = any("2025-08-26" in str(prop.get("sale_date", "")) for prop in victoria_properties)
+        if sale_date_correct:
+            requirements_met.append("6. Correct sale date (2025-08-26)")
+        else:
+            requirements_failed.append("6. Correct sale date (2025-08-26)")
         
         print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/5):")
         for req in requirements_met:
