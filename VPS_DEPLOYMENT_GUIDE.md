@@ -28,9 +28,9 @@ This guide covers deploying Tax Sale Compass to your VPS and updating the existi
 2. **Clone to VPS**
    ```bash
    cd /var/www
-   sudo git clone https://github.com/yourusername/tax-sale-compass.git
-   sudo chown -R $USER:$USER tax-sale-compass
-   cd tax-sale-compass
+   sudo git clone https://github.com/yourusername/nstaxsales.git
+   sudo chown -R $USER:$USER nstaxsales
+   cd nstaxsales
    ```
 
 ## Step 2: Install Dependencies
