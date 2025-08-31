@@ -199,82 +199,61 @@ def test_victoria_county_scraper_with_pdf_extraction():
         else:
             print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
-        # Test 3: Compare Victoria County Property Thumbnails
-        print(f"\n   🔧 TEST 3: Test Victoria County Property Thumbnails")
+        # Test 3: Verify Correct Minimum Bid Amounts from PDF Extraction
+        print(f"\n   🔧 TEST 3: Verify Correct Minimum Bid Amounts from PDF Extraction")
         
-        victoria_thumbnail_results = {
-            "properties_with_coordinates": 0,
-            "properties_with_boundary_screenshots": 0,
-            "working_thumbnail_endpoints": 0,
-            "thumbnail_sizes": [],
-            "coordinate_accuracy": True,
-            "sample_properties": []
+        expected_bids = {
+            "00254118": 2009.03,  # Entry 1
+            "00453706": 1599.71,  # Entry 2  
+            "09541209": 5031.96   # Entry 8
         }
         
-        if victoria_properties:
-            print(f"   📊 Analyzing {len(victoria_properties)} Victoria County properties...")
-            
-            # Test all Victoria County properties for thumbnail generation
-            for i, prop in enumerate(victoria_properties):
-                aan = prop.get("assessment_number")
-                owner = prop.get("owner_name")
-                address = prop.get("property_address")
-                latitude = prop.get("latitude")
-                longitude = prop.get("longitude")
-                boundary_screenshot = prop.get("boundary_screenshot")
-                
-                print(f"\n   📋 Victoria County Property {i+1}:")
-                print(f"      AAN: {aan}")
-                print(f"      Owner: {owner}")
-                print(f"      Address: {address}")
-                print(f"      Coordinates: {latitude}, {longitude}")
-                print(f"      Boundary Screenshot: {boundary_screenshot}")
-                
-                # Check coordinates
-                if latitude and longitude:
-                    victoria_thumbnail_results["properties_with_coordinates"] += 1
-                    print(f"      ✅ Has coordinates for thumbnail generation")
-                    
-                    # Verify Victoria County coordinates are in Cape Breton region
-                    if 45.5 <= latitude <= 47.0 and -61.5 <= longitude <= -59.5:
-                        print(f"      ✅ Coordinates within Cape Breton region")
-                    else:
-                        print(f"      ⚠️ Coordinates may be outside Cape Breton region")
-                        victoria_thumbnail_results["coordinate_accuracy"] = False
-                else:
-                    print(f"      ❌ Missing coordinates - cannot generate thumbnails")
-                
-                # Check boundary screenshot
-                if boundary_screenshot:
-                    victoria_thumbnail_results["properties_with_boundary_screenshots"] += 1
-                    print(f"      ✅ Has boundary screenshot: {boundary_screenshot}")
-                else:
-                    print(f"      ❌ No boundary screenshot generated")
-                
-                # Test property image endpoint
-                if aan:
-                    try:
-                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
-                        if image_response.status_code == 200:
-                            image_size = len(image_response.content)
-                            victoria_thumbnail_results["working_thumbnail_endpoints"] += 1
-                            victoria_thumbnail_results["thumbnail_sizes"].append(image_size)
-                            print(f"      ✅ Thumbnail endpoint working - Size: {image_size} bytes")
-                            print(f"      📷 Content-Type: {image_response.headers.get('content-type', 'unknown')}")
-                        else:
-                            print(f"      ❌ Thumbnail endpoint failed - HTTP {image_response.status_code}")
-                    except Exception as e:
-                        print(f"      ❌ Thumbnail endpoint error: {e}")
-                
-                victoria_thumbnail_results["sample_properties"].append({
-                    "aan": aan,
-                    "has_coordinates": bool(latitude and longitude),
-                    "has_boundary_screenshot": bool(boundary_screenshot),
-                    "thumbnail_working": False  # Will be updated above
-                })
+        bid_verification_results = {
+            "correct_bids": 0,
+            "incorrect_bids": 0,
+            "bid_details": []
+        }
         
-        else:
-            print(f"   ⚠️ No Victoria County properties available for thumbnail comparison")
+        print(f"   📊 Verifying minimum bid amounts for all 3 properties...")
+        
+        for i, prop in enumerate(victoria_properties):
+            aan = prop.get("assessment_number")
+            opening_bid = prop.get("opening_bid")
+            owner = prop.get("owner_name")
+            
+            print(f"\n   📋 Property {i+1} - AAN {aan}:")
+            print(f"      Owner: {owner}")
+            print(f"      Opening Bid: ${opening_bid}")
+            
+            if aan in expected_bids:
+                expected_bid = expected_bids[aan]
+                print(f"      Expected Bid: ${expected_bid}")
+                
+                # Check if bid is correct (allow small floating point differences)
+                if abs(opening_bid - expected_bid) < 0.01:
+                    print(f"      ✅ Opening bid is CORRECT: ${opening_bid}")
+                    bid_verification_results["correct_bids"] += 1
+                else:
+                    print(f"      ❌ Opening bid is INCORRECT: Got ${opening_bid}, expected ${expected_bid}")
+                    bid_verification_results["incorrect_bids"] += 1
+                
+                bid_verification_results["bid_details"].append({
+                    "aan": aan,
+                    "actual_bid": opening_bid,
+                    "expected_bid": expected_bid,
+                    "correct": abs(opening_bid - expected_bid) < 0.01
+                })
+            else:
+                print(f"      ⚠️ Unexpected AAN {aan} - not in expected list")
+                bid_verification_results["incorrect_bids"] += 1
+        
+        print(f"\n   📊 Bid Verification Summary:")
+        print(f"      Correct bids: {bid_verification_results['correct_bids']}/3")
+        print(f"      Incorrect bids: {bid_verification_results['incorrect_bids']}/3")
+        
+        if bid_verification_results["correct_bids"] != 3:
+            print(f"   ❌ CRITICAL: Not all minimum bid amounts are correct!")
+            return False, {"error": "Minimum bid amounts are incorrect", "details": bid_verification_results}
         # Test 4: Compare Boundary Data Availability
         print(f"\n   🔧 TEST 4: Compare Boundary Data Availability Between Municipalities")
         
