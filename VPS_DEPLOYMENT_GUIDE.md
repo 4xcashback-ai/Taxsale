@@ -149,7 +149,7 @@ REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 Create PM2 ecosystem file:
 ```bash
-cd /var/www/tax-sale-compass
+cd /var/www/nstaxsales
 nano ecosystem.config.js
 ```
 
