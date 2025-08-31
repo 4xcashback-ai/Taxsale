@@ -259,6 +259,19 @@ def test_victoria_county_improved_parser():
                     print(f"      ❌ PID not in expected list: {expected_pids}")
                     all_data_complete = False
                 
+                # Verify property type matches expected format
+                property_type_match = False
+                for expected_type in expected_property_types:
+                    if expected_type.lower() in property_type.lower() if property_type else False:
+                        property_type_match = True
+                        break
+                
+                if property_type_match:
+                    print(f"      ✅ Property type matches expected format")
+                else:
+                    print(f"      ❌ Property type doesn't match expected: {expected_property_types}")
+                    all_data_complete = False
+                
                 # Verify sale date is correct (should be 2025-08-26 from "Tuesday, August 26TH, 2025")
                 if sale_date and "2025-08-26" in str(sale_date):
                     print(f"      ✅ Sale date correct: extracted from 'Tuesday, August 26TH, 2025 at 2:00PM'")
