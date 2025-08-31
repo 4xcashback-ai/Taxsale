@@ -1392,7 +1392,8 @@ def test_victoria_county_final_parser():
     except Exception as e:
         print(f"   ❌ Victoria County final parser test error: {e}")
         return False, {"error": str(e)}
-                    if "2025-08-26" in str(found_prop['sale_date']):
+
+def main():
                         print(f"      Sale Date: {found_prop['sale_date']} ✅")
                     else:
                         print(f"      Sale Date: {found_prop['sale_date']} ❌ (Expected: 2025-08-26)")
