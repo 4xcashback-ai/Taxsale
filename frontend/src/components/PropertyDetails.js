@@ -762,19 +762,27 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Property Description */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Description</h3>
-              <div className="prose max-w-none">
-                <p className="mb-4">SEALED TENDERS are to be submitted:</p>
-                <ul className="list-disc pl-6 space-y-2 mb-4">
-                  <li>In digital format via submission to Halifax Regional Municipality's website</li>
-                  <li>On the Halifax Regional Municipality's bid form in a plain envelope marked "Halifax Regional Municipality Tax Sale Property Tender"</li>
-                </ul>
-                <p>These bids will only be accepted until the specified deadline. HRM will not accept bids submitted by any other method, including by facsimile or email.</p>
-                <p className="mt-4">The Halifax Regional Municipality reserves the right to reject any or all tenders or to accept any tender or part thereof considered to be in its best interest.</p>
+            {/* Municipality-Specific Information */}
+            {municipalityData?.description && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">{property.municipality_name} Tax Sale Information</h3>
+                <div className="prose max-w-none text-gray-700">
+                  <div className="whitespace-pre-line">{municipalityData.description}</div>
+                </div>
               </div>
-            </div>
+            )}
+            
+            {/* Default Description if no municipality-specific description */}
+            {!municipalityData?.description && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Tax Sale Information</h3>
+                <div className="prose max-w-none text-gray-700">
+                  <p className="mb-4">This property is available for tax sale by tender.</p>
+                  <p className="mb-4">Please contact {property.municipality_name || 'the municipality'} directly for specific bidding instructions, submission methods, and deadlines.</p>
+                  <p>The municipality reserves the right to reject any or all tenders or to accept any tender considered to be in its best interest.</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar */}
