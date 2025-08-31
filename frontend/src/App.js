@@ -693,8 +693,8 @@ function PropertySearch() {
                 <Building2 className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">NS Tax Sales</h1>
-                <p className="text-sm text-slate-600">Nova Scotia Municipality Tax Sale Aggregator - Live Data</p>
+                <h1 className="text-2xl font-bold text-slate-900">Tax Sale Compass</h1>
+                <p className="text-sm text-slate-600">Tax Sale Aggregator - Live Data</p>
               </div>
             </div>
             
