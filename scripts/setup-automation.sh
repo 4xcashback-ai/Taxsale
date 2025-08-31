@@ -73,13 +73,13 @@ copy_scripts() {
 setup_sudoers() {
     log "Setting up sudoers for deployment automation..."
     
-    # Create sudoers file for tax-sale-compass
-    cat > /etc/sudoers.d/tax-sale-compass << 'EOF'
+    # Create sudoers file for nstaxsales
+    cat > /etc/sudoers.d/nstaxsales << 'EOF'
 # Allow www-data to run deployment and health scripts
-www-data ALL=(root) NOPASSWD: /opt/tax-sale-compass/scripts/deployment.sh
-www-data ALL=(root) NOPASSWD: /opt/tax-sale-compass/scripts/system-health.sh
-www-data ALL=(root) NOPASSWD: /usr/local/bin/tax-sale-deploy
-www-data ALL=(root) NOPASSWD: /usr/local/bin/tax-sale-health
+www-data ALL=(root) NOPASSWD: /var/www/nstaxsales/scripts/deployment.sh
+www-data ALL=(root) NOPASSWD: /var/www/nstaxsales/scripts/system-health.sh
+www-data ALL=(root) NOPASSWD: /usr/local/bin/nstaxsales-deploy
+www-data ALL=(root) NOPASSWD: /usr/local/bin/nstaxsales-health
 www-data ALL=(root) NOPASSWD: /usr/bin/systemctl restart nginx
 www-data ALL=(root) NOPASSWD: /usr/bin/systemctl reload nginx
 www-data ALL=(root) NOPASSWD: /usr/bin/pm2 restart *
@@ -88,14 +88,14 @@ www-data ALL=(root) NOPASSWD: /usr/bin/pm2 stop *
 EOF
 
     # Set proper permissions
-    chmod 440 /etc/sudoers.d/tax-sale-compass
+    chmod 440 /etc/sudoers.d/nstaxsales
     
     # Validate sudoers file
-    if visudo -c -f /etc/sudoers.d/tax-sale-compass; then
+    if visudo -c -f /etc/sudoers.d/nstaxsales; then
         log "Sudoers configuration created successfully"
     else
         error "Sudoers configuration validation failed"
-        rm -f /etc/sudoers.d/tax-sale-compass
+        rm -f /etc/sudoers.d/nstaxsales
         exit 1
     fi
 }
