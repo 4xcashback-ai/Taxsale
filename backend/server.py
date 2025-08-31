@@ -2208,6 +2208,16 @@ async def scrape_kentville():
         logger.error(f"Kentville scraping endpoint failed: {e}")
         raise HTTPException(status_code=500, detail=f"Kentville scraping failed: {str(e)}")
 
+@api_router.post("/scrape/victoria-county")
+async def scrape_victoria_county():
+    """Scrape Victoria County tax sales directly"""
+    try:
+        result = await scrape_victoria_county_tax_sales()
+        return result
+    except Exception as e:
+        logger.error(f"Victoria County scraping endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
+
 @api_router.post("/scrape/halifax")
 async def scrape_halifax():
     """Trigger Halifax-specific scraping"""
