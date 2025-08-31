@@ -6073,51 +6073,6 @@ def main():
         print("   - Property field extraction for AAN, PID, owner, address, tax amounts")
     
     return fixes_success
-            print(f"   ❌ Issues found:")
-            for issue in victoria_result['issues']:
-                print(f"      - {issue}")
-    
-    print(f"\n🎯 REVIEW REQUEST ANALYSIS:")
-    
-    # Analyze the results based on review request requirements
-    if victoria_result:
-        scraper_working = victoria_result.get('scraper_working', False)
-        properties_found = victoria_result.get('properties_found', 0)
-        sample_property_found = victoria_result.get('sample_property_found', False)
-        expected_values_correct = victoria_result.get('expected_values_correct', False)
-        
-        print(f"\n   📋 REVIEW REQUEST REQUIREMENTS CHECK:")
-        
-        # 1. Test enhanced scraper POST /api/scrape/victoria-county
-        if scraper_working:
-            print(f"   ✅ 1. Enhanced scraper POST /api/scrape/victoria-county: WORKING")
-        else:
-            print(f"   ❌ 1. Enhanced scraper POST /api/scrape/victoria-county: FAILED")
-        
-        # 2. Check PDF discovery
-        if properties_found > 0:
-            print(f"   ✅ 2. PDF discovery: WORKING - Found {properties_found} properties")
-        else:
-            print(f"   ❌ 2. PDF discovery: FAILED - No properties found")
-        
-        # 3. Test parsing logic
-        if sample_property_found and expected_values_correct:
-            print(f"   ✅ 3. PDF parsing patterns: WORKING - Correctly extracting AAN, PID, owner, address, tax amounts")
-        elif sample_property_found:
-            print(f"   ⚠️ 3. PDF parsing patterns: PARTIAL - Sample property found but some values incorrect")
-        else:
-            print(f"   ❌ 3. PDF parsing patterns: FAILED - Sample property not found")
-        
-        # 4. Verify properties structure
-        if properties_found > 0:
-            print(f"   ✅ 4. Property data structure: WORKING - Properties have correct structure")
-        else:
-            print(f"   ❌ 4. Property data structure: FAILED - No properties to verify")
-        
-        # 5. Test fallback
-        if properties_found > 0:
-            print(f"   ✅ 5. Fallback to demo data: WORKING - At least demo data available")
-        else:
             print(f"   ❌ 5. Fallback to demo data: FAILED - No fallback data available")
         
         # Overall assessment
