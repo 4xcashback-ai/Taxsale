@@ -579,7 +579,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Victoria County Coordinate Precision Fixes"
+    - "Municipality Descriptions for Property Detail Pages"
   stuck_tasks:
     - "Victoria County Scraper Implementation"
   test_all: false
