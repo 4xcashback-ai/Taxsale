@@ -3771,7 +3771,7 @@ async def deploy_application(github_repo: str = None):
         import asyncio
         
         # Build the deployment command
-        cmd = ['sudo', '/opt/tax-sale-compass/scripts/deployment.sh', 'deploy']
+        cmd = ['sudo', '/var/www/nstaxsales/scripts/deployment.sh', 'deploy']
         if github_repo:
             cmd.append(github_repo)
         
