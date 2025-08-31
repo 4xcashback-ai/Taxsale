@@ -173,7 +173,7 @@ module.exports = {
     },
     {
       name: 'tax-sale-frontend',
-      cwd: '/var/www/tax-sale-compass/frontend',
+      cwd: '/var/www/nstaxsales/frontend',
       script: 'npx',
       args: 'serve -s build -l 3000',
       env: {
