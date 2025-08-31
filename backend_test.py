@@ -639,7 +639,7 @@ def main():
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Coordinate Precision Fixes Testing")
+    print("📊 FINAL TEST RESULTS SUMMARY - Municipality Descriptions Testing")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
@@ -653,46 +653,45 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Victoria County Coordinate Precision Fixes Analysis
-    print(f"\n🎯 VICTORIA COUNTY COORDINATE PRECISION FIXES ANALYSIS:")
+    # Municipality Descriptions Analysis
+    print(f"\n🎯 MUNICIPALITY DESCRIPTIONS ANALYSIS:")
     
-    if coordinate_fixes_successful and coordinate_data:
-        print(f"   ✅ VICTORIA COUNTY COORDINATE PRECISION FIXES: SUCCESSFUL!")
+    if descriptions_successful and descriptions_data:
+        print(f"   ✅ MUNICIPALITY DESCRIPTIONS: SUCCESSFUL!")
         
-        final_assessment = coordinate_data.get('final_assessment', {})
+        final_assessment = descriptions_data.get('final_assessment', {})
         successes = final_assessment.get('successes', [])
         
-        print(f"      ✅ Coordinate precision fixes implemented successfully")
-        print(f"      ✅ Victoria County properties updated with improved coordinates")
-        print(f"      ✅ Thumbnail quality improvements verified")
+        print(f"      ✅ Municipality descriptions implemented successfully")
+        print(f"      ✅ Target municipalities updated with appropriate descriptions")
+        print(f"      ✅ Descriptions contain required municipality-specific information")
         
-        print(f"\n   🎉 SUCCESS: Victoria County coordinate precision fixes working!")
+        print(f"\n   🎉 SUCCESS: Municipality descriptions working!")
         for success in successes:
             print(f"   ✅ {success}")
         
     else:
-        print(f"   ❌ VICTORIA COUNTY COORDINATE PRECISION FIXES: ISSUES IDENTIFIED")
+        print(f"   ❌ MUNICIPALITY DESCRIPTIONS: ISSUES IDENTIFIED")
         
-        if coordinate_data:
-            final_assessment = coordinate_data.get('final_assessment', {})
+        if descriptions_data:
+            final_assessment = descriptions_data.get('final_assessment', {})
             issues = final_assessment.get('issues_found', [])
             
-            coordinate_precision = coordinate_data.get('coordinate_precision', {})
-            boundary_quality = coordinate_data.get('boundary_image_quality', {})
-            all_properties = coordinate_data.get('all_properties_precision', {})
-            data_accuracy = coordinate_data.get('property_data_accuracy', {})
+            description_analysis = descriptions_data.get('description_analysis', {})
+            individual_endpoints = descriptions_data.get('individual_endpoints', {})
+            property_detail_pages = descriptions_data.get('property_detail_pages', {})
             
-            print(f"      Scraper executed: {coordinate_data.get('scraper_executed', False)}")
-            print(f"      Coordinate precision adequate: {coordinate_precision.get('all_properties_have_5_decimal_precision', False)}")
-            print(f"      Boundary image quality: {boundary_quality.get('coordinate_precision_adequate', False)}")
-            print(f"      All properties improved: {all_properties.get('all_properties_meet_5_decimal_requirement', False)}")
-            print(f"      Data accuracy maintained: {data_accuracy.get('opening_bids_correct', False) and data_accuracy.get('hst_detection_working', False)}")
+            print(f"      Municipalities found: {descriptions_data.get('municipalities_found', False)}")
+            print(f"      All have descriptions: {description_analysis.get('all_municipalities_have_descriptions', False)}")
+            print(f"      Required keywords present: {description_analysis.get('all_descriptions_contain_required_keywords', False)}")
+            print(f"      Individual endpoints working: {individual_endpoints.get('all_endpoints_accessible', False)}")
+            print(f"      Property pages accessible: {property_detail_pages.get('descriptions_appear_on_property_pages', False)}")
             
-            print(f"\n   ❌ COORDINATE PRECISION ISSUES IDENTIFIED:")
+            print(f"\n   ❌ MUNICIPALITY DESCRIPTIONS ISSUES IDENTIFIED:")
             for issue in issues:
                 print(f"      - {issue}")
         else:
-            print(f"      - Coordinate precision fixes test execution failed or returned no data")
+            print(f"      - Municipality descriptions test execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
