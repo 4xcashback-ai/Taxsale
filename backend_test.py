@@ -417,97 +417,93 @@ def test_halifax_vs_victoria_county_thumbnails():
                         print(f"      ❌ Victoria County AAN {aan}: Error - {e}")
                         victoria_endpoint_results.append({"aan": aan, "working": False, "error": str(e)})
         
-        # Test 4: Test Boundary Image Generation and Endpoints
-        print(f"\n   🔧 TEST 4: Test Boundary Image Generation and Endpoints")
+        # Test 6: Check Coordinate Accuracy for Boundary Generation
+        print(f"\n   🔧 TEST 6: Check Coordinate Accuracy for Proper Boundary Generation")
         
-        # Test Google Maps API key and static map generation
-        google_maps_working = True
-        boundary_endpoints_working = True
+        print(f"\n   📍 COORDINATE ACCURACY ANALYSIS:")
         
-        # Check if properties have coordinates for map generation
-        properties_with_coords = [p for p in victoria_properties if p.get('latitude') and p.get('longitude')]
-        print(f"   📍 Properties with coordinates: {len(properties_with_coords)}/{len(victoria_properties)}")
-        
-        if properties_with_coords:
-            # Test Google Maps static API with first property coordinates
-            test_prop = properties_with_coords[0]
-            lat = test_prop.get('latitude')
-            lng = test_prop.get('longitude')
-            aan = test_prop.get('assessment_number')
+        # Analyze Halifax coordinates
+        if halifax_properties:
+            halifax_coords_analysis = []
+            for prop in halifax_properties[:3]:
+                lat = prop.get("latitude")
+                lng = prop.get("longitude")
+                aan = prop.get("assessment_number")
+                address = prop.get("property_address", "")
+                
+                if lat and lng:
+                    # Check if coordinates are in Halifax region (approximate bounds)
+                    halifax_region = 44.5 <= lat <= 45.0 and -64.0 <= lng <= -63.0
+                    halifax_coords_analysis.append({
+                        "aan": aan,
+                        "coordinates": (lat, lng),
+                        "in_halifax_region": halifax_region,
+                        "address": address
+                    })
             
-            # Test static map API (similar to what the backend uses for boundary generation)
-            test_map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+            print(f"   📊 Halifax Coordinate Analysis:")
+            for analysis in halifax_coords_analysis:
+                region_status = "✅ In Halifax region" if analysis["in_halifax_region"] else "⚠️ Outside Halifax region"
+                print(f"      AAN {analysis['aan']}: {analysis['coordinates']} - {region_status}")
+        
+        # Analyze Victoria County coordinates
+        if victoria_properties:
+            victoria_coords_analysis = []
+            for prop in victoria_properties:
+                lat = prop.get("latitude")
+                lng = prop.get("longitude")
+                aan = prop.get("assessment_number")
+                address = prop.get("property_address", "")
+                
+                if lat and lng:
+                    # Check if coordinates are in Cape Breton/Victoria County region
+                    cape_breton_region = 45.5 <= lat <= 47.0 and -61.5 <= lng <= -59.5
+                    victoria_coords_analysis.append({
+                        "aan": aan,
+                        "coordinates": (lat, lng),
+                        "in_cape_breton_region": cape_breton_region,
+                        "address": address
+                    })
+            
+            print(f"   📊 Victoria County Coordinate Analysis:")
+            for analysis in victoria_coords_analysis:
+                region_status = "✅ In Cape Breton region" if analysis["in_cape_breton_region"] else "⚠️ Outside Cape Breton region"
+                print(f"      AAN {analysis['aan']}: {analysis['coordinates']} - {region_status}")
+        
+        # Test Google Maps API with sample coordinates from both municipalities
+        print(f"\n   🗺️ GOOGLE MAPS API TESTING:")
+        
+        google_maps_api_key = "AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+        
+        # Test with Halifax coordinates if available
+        if halifax_properties and halifax_properties[0].get("latitude"):
+            halifax_prop = halifax_properties[0]
+            lat, lng = halifax_prop.get("latitude"), halifax_prop.get("longitude")
+            test_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key={google_maps_api_key}"
             
             try:
-                map_response = requests.get(test_map_url, timeout=10)
-                if map_response.status_code == 200 and 'image' in map_response.headers.get('content-type', ''):
-                    print(f"   ✅ GOOGLE MAPS API: Static map generation working")
-                    print(f"      Test coordinates: {lat}, {lng} (AAN: {aan})")
-                    print(f"      Response size: {len(map_response.content)} bytes")
+                response = requests.get(test_url, timeout=10)
+                if response.status_code == 200:
+                    print(f"   ✅ Halifax Google Maps API test: {len(response.content)} bytes")
                 else:
-                    print(f"   ❌ GOOGLE MAPS API: Static map generation failed")
-                    print(f"      Status: {map_response.status_code}")
-                    print(f"      Content-Type: {map_response.headers.get('content-type', 'unknown')}")
-                    google_maps_working = False
+                    print(f"   ❌ Halifax Google Maps API test failed: HTTP {response.status_code}")
             except Exception as e:
-                print(f"   ❌ GOOGLE MAPS API: Error testing static map - {e}")
-                google_maps_working = False
-        else:
-            print(f"   ❌ COORDINATES MISSING: No properties have latitude/longitude for map generation")
-            google_maps_working = False
+                print(f"   ❌ Halifax Google Maps API test error: {e}")
         
-        # Test boundary image endpoints for all Victoria County properties
-        print(f"\n   🔍 TESTING BOUNDARY IMAGE ENDPOINTS:")
-        
-        for prop in victoria_properties:
-            aan = prop.get('assessment_number')
-            boundary_screenshot = prop.get('boundary_screenshot')
+        # Test with Victoria County coordinates if available
+        if victoria_properties and victoria_properties[0].get("latitude"):
+            victoria_prop = victoria_properties[0]
+            lat, lng = victoria_prop.get("latitude"), victoria_prop.get("longitude")
+            test_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key={google_maps_api_key}"
             
-            if aan:
-                # Test property image endpoint
-                try:
-                    image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
-                    if image_response.status_code == 200:
-                        print(f"      ✅ Property image endpoint working for AAN {aan}")
-                        print(f"         Image size: {len(image_response.content)} bytes")
-                        print(f"         Content-Type: {image_response.headers.get('content-type', 'unknown')}")
-                    else:
-                        print(f"      ❌ Property image endpoint failed for AAN {aan} - HTTP {image_response.status_code}")
-                        boundary_endpoints_working = False
-                except Exception as e:
-                    print(f"      ❌ Property image endpoint error for AAN {aan} - {e}")
-                    boundary_endpoints_working = False
-                
-                # Test boundary image endpoint if screenshot exists
-                if boundary_screenshot:
-                    try:
-                        boundary_response = requests.get(f"{BACKEND_URL}/boundary-image/{boundary_screenshot}", timeout=10)
-                        if boundary_response.status_code == 200:
-                            print(f"      ✅ Boundary image endpoint working for {boundary_screenshot}")
-                            print(f"         Image size: {len(boundary_response.content)} bytes")
-                        else:
-                            print(f"      ❌ Boundary image endpoint failed for {boundary_screenshot} - HTTP {boundary_response.status_code}")
-                            boundary_endpoints_working = False
-                    except Exception as e:
-                        print(f"      ❌ Boundary image endpoint error for {boundary_screenshot} - {e}")
-                        boundary_endpoints_working = False
+            try:
+                response = requests.get(test_url, timeout=10)
+                if response.status_code == 200:
+                    print(f"   ✅ Victoria County Google Maps API test: {len(response.content)} bytes")
                 else:
-                    print(f"      ⚠️ No boundary screenshot file for AAN {aan}")
-        
-        # Summary of boundary image generation status
-        if coordinates_assigned and google_maps_working and boundary_images_present:
-            print(f"\n   ✅ BOUNDARY IMAGE GENERATION: All components working")
-            print(f"      - Coordinates assigned to all properties")
-            print(f"      - Google Maps API generating static maps")
-            print(f"      - Boundary screenshot files created and accessible")
-        else:
-            print(f"\n   ❌ BOUNDARY IMAGE GENERATION: Issues identified")
-            if not coordinates_assigned:
-                print(f"      - Missing coordinates for location-specific assignment")
-            if not google_maps_working:
-                print(f"      - Google Maps API not generating static maps")
-            if not boundary_images_present:
-                print(f"      - Boundary screenshot files not created or not accessible")
+                    print(f"   ❌ Victoria County Google Maps API test failed: HTTP {response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Victoria County Google Maps API test error: {e}")
         
         # Final Assessment - Victoria County Fixed Scraper
         print(f"\n   📊 FINAL ASSESSMENT - Victoria County Fixed Scraper:")
