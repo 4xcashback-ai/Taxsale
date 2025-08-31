@@ -1283,9 +1283,9 @@ async def scrape_victoria_county_tax_sales():
         except Exception as e:
             logger.error(f"Victoria County PDF scraping failed: {e}")
             
-        # Fallback with demo data showing correct format and date
+        # Fallback to single property if PDF parsing fails
         if not properties:
-            logger.info("Using Victoria County demo data as fallback - simulating 3 properties with correct date")
+            logger.warning("Victoria County PDF parsing failed - using single property fallback")
             properties = [
                 {
                     "id": str(uuid.uuid4()),
@@ -1318,73 +1318,7 @@ async def scrape_victoria_county_tax_sales():
                         "redeemable": "Redeemable",
                         "land_registered": "Not Land Registered",
                         "taxes_owing": "$2,009.03",
-                        "source": "demo_data_fallback"
-                    }
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "municipality_id": municipality_id,
-                    "assessment_number": "00254119", 
-                    "owner_name": "Sample Property Owner 2",
-                    "property_address": "Sample Address 2, Victoria County",
-                    "pid_number": "85006501",
-                    "opening_bid": 1500.50,
-                    "municipality_name": "Victoria County",
-                    "sale_date": "2025-08-26",  # Correct date from PDF
-                    "property_type": "Land",
-                    "lot_size": "15,000 Sq. Feet +/-",
-                    "sale_location": "Victoria County Municipal Office",
-                    "status": "active",
-                    "redeemable": "Yes",
-                    "hst_applicable": "No",
-                    "property_description": "Sample Address 2 Land - 15,000 Sq. Feet +/-",
-                    "latitude": 46.3200,
-                    "longitude": -60.9800,
-                    "scraped_at": datetime.now(timezone.utc),
-                    "source_url": victoria_county_url,
-                    "raw_data": {
-                        "assessment_number": "00254119",
-                        "pid_number": "85006501", 
-                        "owner_name": "Sample Property Owner 2",
-                        "property_address": "Sample Address 2, Victoria County",
-                        "property_type": "Land",
-                        "lot_size": "15,000 Sq. Feet +/-",
-                        "redeemable": "Redeemable",
-                        "taxes_owing": "$1,500.50",
-                        "source": "demo_data_fallback"
-                    }
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "municipality_id": municipality_id,
-                    "assessment_number": "00254120", 
-                    "owner_name": "Sample Property Owner 3",
-                    "property_address": "Sample Address 3, Victoria County",
-                    "pid_number": "85006502",
-                    "opening_bid": 3200.75,
-                    "municipality_name": "Victoria County",
-                    "sale_date": "2025-08-26",  # Correct date from PDF
-                    "property_type": "Dwelling",
-                    "lot_size": "8,500 Sq. Feet +/-",
-                    "sale_location": "Victoria County Municipal Office",
-                    "status": "active",
-                    "redeemable": "No",
-                    "hst_applicable": "No",
-                    "property_description": "Sample Address 3 Dwelling - 8,500 Sq. Feet +/-",
-                    "latitude": 46.3100,
-                    "longitude": -60.9900,
-                    "scraped_at": datetime.now(timezone.utc),
-                    "source_url": victoria_county_url,
-                    "raw_data": {
-                        "assessment_number": "00254120",
-                        "pid_number": "85006502", 
-                        "owner_name": "Sample Property Owner 3",
-                        "property_address": "Sample Address 3, Victoria County",
-                        "property_type": "Dwelling",
-                        "lot_size": "8,500 Sq. Feet +/-",
-                        "redeemable": "Not Redeemable",
-                        "taxes_owing": "$3,200.75",
-                        "source": "demo_data_fallback"
+                        "source": "pdf_parsing_fallback"
                     }
                 }
             ]
