@@ -298,34 +298,49 @@ def test_victoria_county_data_extraction_debug():
             print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {properties_response.status_code}"}
         
-        # Test 3: Check Enhanced Pattern Matching (if debug endpoint exists)
-        print(f"\n   🔧 TEST 3: Check Enhanced Pattern Matching (Debug Analysis)")
+        # Test 3: Debug Tax Amount Extraction Patterns
+        print(f"\n   🔧 TEST 3: Debug Tax Amount Extraction Patterns")
         
         debug_response = requests.get(f"{BACKEND_URL}/debug/victoria-county-pdf", timeout=30)
         
         if debug_response.status_code == 200:
             debug_data = debug_response.json()
-            print(f"   ✅ Debug endpoint available for comprehensive logging analysis")
+            print(f"   ✅ Debug endpoint available for tax amount pattern analysis")
             
-            # Analyze PDF content and parsing details
-            pdf_size = debug_data.get('pdf_size_bytes', 0)
-            pdf_chars = debug_data.get('extracted_text_length', 0)
+            # Analyze PDF content for tax amount patterns
+            pdf_content = debug_data.get('pdf_content_preview', '')
             analysis = debug_data.get('analysis', {})
-            aan_count = analysis.get('aan_occurrences', 0)
-            numbered_sections = analysis.get('numbered_sections', 0)
             
-            print(f"      PDF Size: {pdf_size} bytes")
-            print(f"      PDF Text Length: {pdf_chars} characters")
-            print(f"      AAN Occurrences: {aan_count}")
-            print(f"      Numbered Sections: {numbered_sections}")
+            print(f"      PDF Content Length: {len(pdf_content)} characters")
             
-            if aan_count >= 3 and numbered_sections >= 3:
-                print(f"   ✅ ENHANCED PATTERN MATCHING: Parser correctly identifies all 3 AAN occurrences and numbered sections")
+            # Check for the specific tax amount pattern mentioned in review request
+            tax_pattern = r"Taxes, Interest and Expenses owing:\s*\$[\d,]+\.?\d*"
+            import re
+            tax_matches = re.findall(tax_pattern, pdf_content)
+            
+            if tax_matches:
+                print(f"   ✅ TAX AMOUNT PATTERN FOUND: {len(tax_matches)} matches")
+                for i, match in enumerate(tax_matches):
+                    print(f"      Match {i+1}: {match}")
+                    # Extract the dollar amount
+                    amount_match = re.search(r'\$[\d,]+\.?\d*', match)
+                    if amount_match:
+                        amount = amount_match.group().replace('$', '').replace(',', '')
+                        print(f"         Extracted amount: ${amount}")
             else:
-                print(f"   ⚠️ PATTERN MATCHING ISSUE: Limited AAN/section detection - may indicate regex pattern problems")
+                print(f"   ❌ TAX AMOUNT PATTERN NOT FOUND: 'Taxes, Interest and Expenses owing: $X,XXX.XX' pattern missing")
+                print(f"   🔍 DEBUG: Regex patterns may not be correctly extracting tax amounts")
+                
+            # Check for AAN occurrences
+            aan_count = analysis.get('aan_occurrences', 0)
+            if aan_count >= 3:
+                print(f"   ✅ AAN DETECTION: Found {aan_count} AAN occurrences in PDF")
+            else:
+                print(f"   ❌ AAN DETECTION ISSUE: Only {aan_count} AAN occurrences found (expected 3)")
+                
         else:
             print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
-            print(f"   ℹ️ REQUIREMENT 2: Cannot verify comprehensive logging without debug endpoint")
+            print(f"   ℹ️ Cannot verify tax amount extraction patterns without debug endpoint")
         
         # Test 4: Multiple PID Handling Verification
         print(f"\n   🔧 TEST 4: Multiple PID Handling Verification")
