@@ -1223,6 +1223,14 @@ async def scrape_victoria_county_tax_sales():
                                 continue
                     
                     if pdf_url:
+                        logger.info(f"Found PDF link from page discovery: {pdf_url}")
+                        
+                    # Always try the direct PDF URL provided by user as well
+                    if not pdf_url:
+                        pdf_url = direct_pdf_url
+                        logger.info(f"Using direct PDF URL: {pdf_url}")
+                    
+                    if pdf_url:
                         # Download and parse the PDF
                         logger.info(f"Downloading Victoria County PDF: {pdf_url}")
                         
