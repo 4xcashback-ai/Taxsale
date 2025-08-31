@@ -143,44 +143,31 @@ def test_halifax_vs_victoria_county_thumbnails():
     print("   - Is boundary image generation using the same process for both municipalities?")
     
     try:
-        # Test 1: Victoria County Fixed Scraper - Enhanced Tax Amount Extraction
-        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Fixed Scraper with Enhanced Tax Amount Extraction)")
+        # Test 1: Get Halifax Properties for Comparison
+        print(f"\n   🔧 TEST 1: GET Halifax Properties for Thumbnail Comparison")
         
-        scrape_response = requests.post(
-            f"{BACKEND_URL}/scrape/victoria-county", 
-            timeout=120  # Allow time for PDF download and processing
-        )
+        halifax_properties = []
+        victoria_properties = []
         
-        properties_count = 0
-        all_data_complete = False
-        fallback_detected = False
-        found_aans = []
-        
-        if scrape_response.status_code == 200:
-            scrape_result = scrape_response.json()
-            print(f"   ✅ Victoria County fixed scraper executed successfully")
-            print(f"      Status: {scrape_result.get('status')}")
-            print(f"      Municipality: {scrape_result.get('municipality', 'N/A')}")
-            print(f"      Properties scraped: {scrape_result.get('properties_scraped', 0)}")
+        # Get all tax sales and filter by municipality
+        response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        if response.status_code == 200:
+            all_properties = response.json()
+            halifax_properties = [p for p in all_properties if "Halifax" in p.get("municipality_name", "")]
+            victoria_properties = [p for p in all_properties if "Victoria County" in p.get("municipality_name", "")]
             
-            # Check property count - expecting 3 properties
-            properties_count = scrape_result.get('properties_scraped', 0)
-            if properties_count == 3:
-                print(f"   ✅ PROPERTY COUNT: Found all 3 properties (entries 1, 2, 8)")
-            elif properties_count == 1:
-                print(f"   ❌ PROPERTY COUNT ISSUE: Only 1 property found (expected 3)")
-                print(f"   🔍 DEBUG: PDF parsing may not be finding all numbered sections")
-            else:
-                print(f"   ⚠️ UNEXPECTED PROPERTY COUNT: Found {properties_count} properties (expected 3)")
+            print(f"   ✅ Retrieved properties for comparison")
+            print(f"      Halifax properties: {len(halifax_properties)}")
+            print(f"      Victoria County properties: {len(victoria_properties)}")
             
+            if not halifax_properties:
+                print(f"   ⚠️ No Halifax properties found - may need to run Halifax scraper first")
+            if not victoria_properties:
+                print(f"   ⚠️ No Victoria County properties found - may need to run Victoria County scraper first")
+                
         else:
-            print(f"   ❌ Victoria County fixed scraper failed with status {scrape_response.status_code}")
-            try:
-                error_detail = scrape_response.json()
-                print(f"      Error details: {error_detail}")
-            except:
-                print(f"      Raw response: {scrape_response.text[:200]}...")
-            return False, {"error": f"Fixed scraper failed with HTTP {scrape_response.status_code}"}
+            print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
+            return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
         
         # Test 2: Verify Fixed Minimum Bid Calculations
         print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Fixed Minimum Bid Calculations)")
