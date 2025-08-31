@@ -515,8 +515,10 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
+  current_focus:
+    - "Victoria County Scraper Implementation"
+  stuck_tasks:
+    - "Victoria County Scraper Implementation"
   test_all: false
   test_priority: "high_first"
 
