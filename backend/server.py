@@ -1406,22 +1406,30 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
         logger.info(f"Victoria County PDF FULL CONTENT:\n{pdf_text}")
         logger.info(f"Victoria County PDF content length: {len(pdf_text)} characters")
         
-        # Simple approach: Find all occurrences of numbered property sections
+        # Fixed approach: Handle non-sequential numbering (PDF uses 1, 2, 8 not 1, 2, 3)
         property_sections = []
         
-        # Look for the pattern: number followed by period, then AAN
-        # This should match: "1. AAN:", "2. AAN:", "3. AAN:", etc.
+        # Look for the pattern: ANY number followed by period, then AAN
+        # This should match: "1. AAN:", "2. AAN:", "8. AAN:", etc. (any number)
         aan_pattern = r'(\d+)\.\s*AAN:\s*(\d+)\s*/\s*PID:\s*(\d+)'
         aan_matches = list(re.finditer(aan_pattern, pdf_text, re.IGNORECASE))
         
         logger.info(f"Victoria County: Found {len(aan_matches)} AAN/PID matches using pattern: {aan_pattern}")
+        logger.info(f"Victoria County PDF FULL CONTENT:\n{pdf_text}")
         
+        # Log each match found
         for i, match in enumerate(aan_matches):
             property_number = match.group(1)
             assessment_number = match.group(2)
             pid_number = match.group(3)
             
-            logger.info(f"Match {i+1}: Property {property_number}, AAN {assessment_number}, PID {pid_number}")
+            logger.info(f"Match {i+1}: Property #{property_number}, AAN {assessment_number}, PID {pid_number} at position {match.start()}-{match.end()}")
+            
+        # Create property sections for all matches (handles non-sequential numbering)
+        for i, match in enumerate(aan_matches):
+            property_number = match.group(1)
+            assessment_number = match.group(2)
+            pid_number = match.group(3)
             
             # Extract the full property section
             start_pos = match.start()
@@ -1435,9 +1443,10 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
             section = pdf_text[start_pos:end_pos].strip()
             property_sections.append(section)
             
-            logger.info(f"Extracted section {i+1} ({len(section)} chars): {section[:300]}...")
+            logger.info(f"Extracted section {i+1} - Property #{property_number} ({len(section)} chars):")
+            logger.info(f"Section content: {section}")
         
-        logger.info(f"Victoria County: Total property sections extracted: {len(property_sections)}")
+        logger.info(f"Victoria County: Successfully extracted {len(property_sections)} property sections from PDF")
         
         for i, section in enumerate(property_sections):
             if not section.strip() or "AAN:" not in section:
