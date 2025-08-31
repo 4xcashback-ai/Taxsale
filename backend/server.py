@@ -142,6 +142,7 @@ class Municipality(BaseModel):
     scrape_time_hour: int = 2  # 24-hour format
     scrape_time_minute: int = 0
     next_scrape_time: Optional[datetime] = None
+    description: Optional[str] = None  # Municipality-specific description for property detail pages
 
 class MunicipalityCreate(BaseModel):
     name: str
