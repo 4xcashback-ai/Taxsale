@@ -395,6 +395,13 @@ function PropertySearch() {
   const [deploymentMessage, setDeploymentMessage] = useState("");
   const [systemHealth, setSystemHealth] = useState(null);
   const [githubRepo, setGithubRepo] = useState("");
+  const [buttonStates, setButtonStates] = useState({
+    checkUpdates: false,
+    deploy: false,
+    verify: false,
+    health: false,
+    refresh: false
+  });
 
   // Fetch initial data and refresh when filters change
   useEffect(() => {
