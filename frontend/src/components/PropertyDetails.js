@@ -590,8 +590,18 @@ const PropertyDetails = () => {
                       <div>
                         <span className="block text-sm text-gray-500">Lot Size</span>
                         <span className="text-gray-900 font-medium">
-                          {propertyDetails?.property_details?.land_size || property.lot_size || 
-                           (property.property_type === 'Land' ? 'Not available for land-only properties' : 'Not specified')}
+                          {(() => {
+                            const landSize = propertyDetails?.property_details?.land_size || property.lot_size;
+                            if (landSize && !landSize.startsWith('.00') && !landSize.startsWith('0.00')) {
+                              return landSize;
+                            } else if (landSize && (landSize.startsWith('.00') || landSize.startsWith('0.00'))) {
+                              return 'Not available in PVSC database';
+                            } else if (property.property_type === 'Land') {
+                              return 'Not available for land-only properties';
+                            } else {
+                              return 'Not specified';
+                            }
+                          })()}
                         </span>
                       </div>
                     )}
