@@ -1273,8 +1273,8 @@ async def scrape_victoria_county_tax_sales():
                                                     "redeemable": "No",
                                                     "hst_applicable": "Yes",  # Property 8 has + HST
                                                     "property_description": "Washabuck Rd., Washabuck Centre Land only - 2.5 Acres +/-",
-                                                    "latitude": 46.1205,
-                                                    "longitude": -60.7650,
+                                                    "latitude": 46.12058,
+                                                    "longitude": -60.76498,
                                                     "boundary_screenshot": f"https://nstaxmap-1.preview.emergentagent.com/api/property-image/09541209",
                                                     "scraped_at": datetime.now(timezone.utc),
                                                     "source_url": "https://victoriacounty.com",
