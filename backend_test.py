@@ -316,25 +316,37 @@ def test_victoria_county_fixed_scraper():
                 else:
                     print(f"      ⚠️ No raw data available for tax amount analysis")
             
-            # Summary of findings
-            print(f"\n   📊 MINIMUM BID ANALYSIS SUMMARY:")
+            # Summary of fixed scraper findings
+            print(f"\n   📊 FIXED SCRAPER ANALYSIS SUMMARY:")
             print(f"      Properties found: {len(victoria_properties)}")
-            print(f"      Bid calculations correct: {bid_calculations_correct}")
+            print(f"      Fixed bid calculations correct: {bid_calculations_correct}")
+            print(f"      Coordinates assigned: {coordinates_assigned}")
             print(f"      Boundary images present: {boundary_images_present}")
+            print(f"      HST detection correct: {hst_detection_correct}")
             print(f"      AANs found: {found_aans}")
             
             # Critical issues identified
             if not bid_calculations_correct:
-                print(f"\n   🚨 CRITICAL ISSUE: Minimum bid calculations are incorrect")
-                print(f"      - All opening_bid values are extremely low ($0-$2)")
-                print(f"      - Expected values are in thousands ($1,599-$5,031)")
-                print(f"      - This indicates tax amount extraction is failing")
+                print(f"\n   🚨 CRITICAL ISSUE: Fixed minimum bid calculations still incorrect")
+                print(f"      - Enhanced tax amount extraction patterns not working")
+                print(f"      - Opening bid values still showing low amounts instead of correct PDF tax amounts")
+                print(f"      - Expected: Entry 1=$2,009.03, Entry 2=$1,599.71, Entry 8=$5,031.96")
+            
+            if not coordinates_assigned:
+                print(f"\n   🚨 CRITICAL ISSUE: Coordinates not assigned")
+                print(f"      - Properties missing latitude/longitude for boundary image generation")
+                print(f"      - Location-specific coordinates for Little Narrows, Middle River, Washabuck not working")
             
             if not boundary_images_present:
-                print(f"\n   🚨 CRITICAL ISSUE: Boundary images are missing")
-                print(f"      - All boundary_screenshot fields are None/empty")
-                print(f"      - Image generation pipeline is not working")
-                print(f"      - May be related to coordinates or Google Maps API")
+                print(f"\n   🚨 CRITICAL ISSUE: Boundary images still missing")
+                print(f"      - boundary_screenshot fields still None/empty")
+                print(f"      - Image generation pipeline still not working")
+                print(f"      - May be related to coordinates or Google Maps API integration")
+            
+            if not hst_detection_correct:
+                print(f"\n   🚨 CRITICAL ISSUE: HST detection not working")
+                print(f"      - Entry 8 should show hst_applicable: 'Yes' due to '+ HST' in PDF")
+                print(f"      - Enhanced patterns not detecting HST indicators correctly")
             
         else:
             print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
