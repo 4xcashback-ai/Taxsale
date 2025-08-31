@@ -326,8 +326,8 @@ def test_victoria_county_improved_parser():
             print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {properties_response.status_code}"}
         
-        # Test 3: Check Comprehensive Logging (if debug endpoint exists)
-        print(f"\n   🔧 TEST 3: Check Comprehensive Logging (Debug Analysis)")
+        # Test 3: Check Enhanced Pattern Matching (if debug endpoint exists)
+        print(f"\n   🔧 TEST 3: Check Enhanced Pattern Matching (Debug Analysis)")
         
         debug_response = requests.get(f"{BACKEND_URL}/debug/victoria-county-pdf", timeout=30)
         
