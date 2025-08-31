@@ -172,7 +172,7 @@ rollback_deployment() {
     
     # Restore files
     rm -rf "$APP_DIR"
-    cp -r "$backup_path/tax-sale-compass" "$APP_DIR"
+    cp -r "$backup_path/nstaxsales" "$APP_DIR"
     
     # Restart services
     restart_services
