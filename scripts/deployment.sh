@@ -270,7 +270,7 @@ usage() {
     echo "  verify              - Verify current deployment"
     echo ""
     echo "Examples:"
-    echo "  $0 deploy https://github.com/user/tax-sale-compass.git"
+    echo "  $0 deploy https://github.com/user/nstaxsales.git"
     echo "  $0 check-updates"
     echo "  $0 verify"
 }
