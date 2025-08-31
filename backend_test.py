@@ -125,21 +125,22 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_victoria_county_final_parser():
-    """Test Victoria County Final Parser with Enhanced Error Handling - Review Request Focus"""
-    print("\n🔍 Testing Victoria County Final Parser with Enhanced Error Handling...")
-    print("🎯 FOCUS: Final test of Victoria County parser with improved error handling and validation")
+def test_victoria_county_improved_parser():
+    """Test Victoria County Parser with Improved Pattern Matching - Review Request Focus"""
+    print("\n🔍 Testing Victoria County Parser with Improved Pattern Matching...")
+    print("🎯 FOCUS: Test improved parser with enhanced regex patterns for all property formats")
     print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Test final parser POST /api/scrape/victoria-county with enhanced error handling")
-    print("   2. Check comprehensive logging - Should show detailed PDF parsing steps and results")
-    print("   3. Verify all 3 properties - Should extract all properties from entries 1, 2, and 8")
-    print("   4. Validate complete data - All properties should have correct AANs, owners, addresses, tax amounts")
-    print("   5. Confirm no fallback - Should use actual PDF data, not fallback sample data")
+    print("   1. Test improved parser POST /api/scrape/victoria-county with enhanced regex patterns")
+    print("   2. Verify all 3 properties extracted from PDF entries 1, 2, and 8")
+    print("   3. Check pattern matching - Enhanced patterns should handle different property formats and multiple PIDs")
+    print("   4. Verify complete data - All properties should have correct owners, addresses, tax amounts, and property types")
+    print("   5. Confirm no fallback - Should extract actual PDF data, not use fallback sample data")
+    print("   6. Verify sale date correctly set to '2025-08-26'")
     print("")
     print("🔍 EXPECTED PROPERTIES (from PDF entries 1, 2, 8):")
-    print("   - Entry 1: AAN 00254118, Donald John Beaton, 198 Little Narrows Rd, Little Narrows")
-    print("   - Entry 2: AAN 00453706, Kenneth Ferneyhough, [address from PDF]")
-    print("   - Entry 8: AAN 09541209, Florance Debra Cleaves/Debra Cleaves, [address from PDF]")
+    print("   - Entry 1: AAN 00254118, Donald John Beaton, Land/Dwelling")
+    print("   - Entry 2: AAN 00453706, Kenneth Ferneyhough, Land/Dwelling (with multiple PIDs)")
+    print("   - Entry 8: AAN 09541209, Florance Debra Cleaves, Land only")
     print("🔍 EXPECTED SALE DATE: Tuesday, August 26TH, 2025 at 2:00PM (should be 2025-08-26)")
     
     try:
