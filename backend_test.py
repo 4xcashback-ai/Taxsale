@@ -144,34 +144,61 @@ def test_municipality_descriptions():
     print("   - Do descriptions appear correctly on property detail pages?")
     
     try:
-        # Test 1: Re-scrape Victoria County with New Precise Coordinates
-        print(f"\n   🔧 TEST 1: Re-scrape Victoria County to Update Properties with New Precise Coordinates")
+        # Test 1: Get All Municipalities and Check for Target Municipalities
+        print(f"\n   🔧 TEST 1: Get All Municipalities and Check for Target Municipalities")
         
-        scraper_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=60)
+        municipalities_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
         
-        if scraper_response.status_code == 200:
-            scraper_result = scraper_response.json()
-            print(f"   ✅ Victoria County scraper executed successfully")
-            print(f"      Status: {scraper_result.get('status', 'unknown')}")
-            print(f"      Properties scraped: {scraper_result.get('properties_scraped', 0)}")
-            print(f"      Municipality: {scraper_result.get('municipality', 'unknown')}")
+        if municipalities_response.status_code == 200:
+            municipalities = municipalities_response.json()
+            print(f"   ✅ Municipalities endpoint accessible")
+            print(f"      Total municipalities found: {len(municipalities)}")
             
-            if scraper_result.get('status') != 'success':
-                print(f"   ❌ Scraper status not successful: {scraper_result.get('status')}")
-                return False, {"error": f"Scraper failed with status: {scraper_result.get('status')}"}
+            # Target municipalities we need to check
+            target_municipalities = {
+                "Halifax Regional Municipality": {
+                    "expected_keywords": ["SEALED TENDER", "HRM", "website submission", "bid form"],
+                    "found": False,
+                    "data": None
+                },
+                "Cape Breton Regional Municipality": {
+                    "expected_keywords": ["CBRM", "tax sale process", "contact"],
+                    "found": False,
+                    "data": None
+                },
+                "Kentville": {
+                    "expected_keywords": ["Kentville", "tax sale process", "contact"],
+                    "found": False,
+                    "data": None
+                },
+                "Victoria County": {
+                    "expected_keywords": ["tender process", "495 Chebucto St", "Baddeck", "contact"],
+                    "found": False,
+                    "data": None
+                }
+            }
             
-            if scraper_result.get('properties_scraped', 0) != 3:
-                print(f"   ❌ Expected 3 properties, got {scraper_result.get('properties_scraped', 0)}")
-                return False, {"error": f"Expected 3 properties, got {scraper_result.get('properties_scraped', 0)}"}
+            # Find target municipalities
+            for municipality in municipalities:
+                muni_name = municipality.get('name', '')
+                for target_name in target_municipalities.keys():
+                    if target_name in muni_name or muni_name in target_name:
+                        target_municipalities[target_name]["found"] = True
+                        target_municipalities[target_name]["data"] = municipality
+                        print(f"      📍 Found {target_name}: {muni_name}")
+                        break
+            
+            # Check which municipalities were found
+            found_count = sum(1 for target in target_municipalities.values() if target["found"])
+            print(f"      ✅ Target municipalities found: {found_count}/4")
+            
+            if found_count < 4:
+                missing = [name for name, data in target_municipalities.items() if not data["found"]]
+                print(f"      ⚠️ Missing municipalities: {missing}")
                 
         else:
-            print(f"   ❌ Victoria County scraper failed: HTTP {scraper_response.status_code}")
-            try:
-                error_detail = scraper_response.json()
-                print(f"      Error details: {error_detail}")
-            except:
-                print(f"      Error response: {scraper_response.text}")
-            return False, {"error": f"Scraper failed with HTTP {scraper_response.status_code}"}
+            print(f"   ❌ Municipalities endpoint failed: HTTP {municipalities_response.status_code}")
+            return False, {"error": f"Municipalities endpoint failed: HTTP {municipalities_response.status_code}"}
         
         # Test 2: Verify Coordinate Precision - Check 5 Decimal Places (±1m Accuracy)
         print(f"\n   🔧 TEST 2: Verify Coordinate Precision - Check 5 Decimal Places (±1m Accuracy)")
