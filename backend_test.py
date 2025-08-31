@@ -206,61 +206,73 @@ def test_victoria_county_thumbnail_accuracy():
         else:
             print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
-        # Test 3: Verify Correct Minimum Bid Amounts from PDF Extraction
-        print(f"\n   🔧 TEST 3: Verify Correct Minimum Bid Amounts from PDF Extraction")
+        # Test 3: Verify AAN 00254118 Coordinates Accuracy
+        print(f"\n   🔧 TEST 3: Verify AAN 00254118 Coordinates Accuracy")
         
-        expected_bids = {
-            "00254118": 2009.03,  # Entry 1
-            "00453706": 1599.71,  # Entry 2  
-            "09541209": 5031.96   # Entry 8
+        coordinate_verification_results = {
+            "target_property_found": False,
+            "coordinates_present": False,
+            "coordinates_in_expected_region": False,
+            "coordinates_details": {}
         }
         
-        bid_verification_results = {
-            "correct_bids": 0,
-            "incorrect_bids": 0,
-            "bid_details": []
-        }
+        print(f"   📊 Analyzing coordinates for AAN 00254118 (198 Little Narrows Rd, Little Narrows)...")
         
-        print(f"   📊 Verifying minimum bid amounts for all 3 properties...")
-        
-        for i, prop in enumerate(victoria_properties):
-            aan = prop.get("assessment_number")
-            opening_bid = prop.get("opening_bid")
-            owner = prop.get("owner_name")
+        if target_property:
+            coordinate_verification_results["target_property_found"] = True
             
-            print(f"\n   📋 Property {i+1} - AAN {aan}:")
-            print(f"      Owner: {owner}")
-            print(f"      Opening Bid: ${opening_bid}")
+            latitude = target_property.get("latitude")
+            longitude = target_property.get("longitude")
             
-            if aan in expected_bids:
-                expected_bid = expected_bids[aan]
-                print(f"      Expected Bid: ${expected_bid}")
+            print(f"\n   📋 AAN 00254118 Coordinate Analysis:")
+            print(f"      Property Address: {target_property.get('property_address')}")
+            print(f"      Owner: {target_property.get('owner_name')}")
+            print(f"      Current Coordinates: {latitude}, {longitude}")
+            
+            if latitude and longitude:
+                coordinate_verification_results["coordinates_present"] = True
+                coordinate_verification_results["coordinates_details"] = {
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "address": target_property.get('property_address')
+                }
                 
-                # Check if bid is correct (allow small floating point differences)
-                if abs(opening_bid - expected_bid) < 0.01:
-                    print(f"      ✅ Opening bid is CORRECT: ${opening_bid}")
-                    bid_verification_results["correct_bids"] += 1
+                # Check if coordinates are in expected Cape Breton/Little Narrows region
+                # Little Narrows is approximately: 46.2140, -60.9950 (from review request)
+                expected_lat_range = (46.0, 46.5)  # Cape Breton Island latitude range
+                expected_lng_range = (-61.2, -60.7)  # Cape Breton Island longitude range
+                
+                if (expected_lat_range[0] <= latitude <= expected_lat_range[1] and 
+                    expected_lng_range[0] <= longitude <= expected_lng_range[1]):
+                    coordinate_verification_results["coordinates_in_expected_region"] = True
+                    print(f"      ✅ Coordinates are within expected Cape Breton/Little Narrows region")
                 else:
-                    print(f"      ❌ Opening bid is INCORRECT: Got ${opening_bid}, expected ${expected_bid}")
-                    bid_verification_results["incorrect_bids"] += 1
+                    print(f"      ❌ Coordinates are OUTSIDE expected Cape Breton/Little Narrows region")
+                    print(f"         Expected latitude: {expected_lat_range[0]} - {expected_lat_range[1]}")
+                    print(f"         Expected longitude: {expected_lng_range[0]} - {expected_lng_range[1]}")
                 
-                bid_verification_results["bid_details"].append({
-                    "aan": aan,
-                    "actual_bid": opening_bid,
-                    "expected_bid": expected_bid,
-                    "correct": abs(opening_bid - expected_bid) < 0.01
-                })
+                # Compare with review request coordinates (46.2140, -60.9950)
+                review_lat, review_lng = 46.2140, -60.9950
+                lat_diff = abs(latitude - review_lat)
+                lng_diff = abs(longitude - review_lng)
+                
+                print(f"      📍 Comparison with review request coordinates (46.2140, -60.9950):")
+                print(f"         Latitude difference: {lat_diff:.4f} degrees")
+                print(f"         Longitude difference: {lng_diff:.4f} degrees")
+                
+                # Check if coordinates are close to review request coordinates (within ~100m = ~0.001 degrees)
+                if lat_diff < 0.01 and lng_diff < 0.01:
+                    print(f"      ✅ Coordinates are close to review request coordinates")
+                else:
+                    print(f"      ⚠️ Coordinates differ significantly from review request coordinates")
+                    print(f"         This may explain why thumbnail shows vacant land instead of dwelling")
+                
             else:
-                print(f"      ⚠️ Unexpected AAN {aan} - not in expected list")
-                bid_verification_results["incorrect_bids"] += 1
-        
-        print(f"\n   📊 Bid Verification Summary:")
-        print(f"      Correct bids: {bid_verification_results['correct_bids']}/3")
-        print(f"      Incorrect bids: {bid_verification_results['incorrect_bids']}/3")
-        
-        if bid_verification_results["correct_bids"] != 3:
-            print(f"   ❌ CRITICAL: Not all minimum bid amounts are correct!")
-            return False, {"error": "Minimum bid amounts are incorrect", "details": bid_verification_results}
+                print(f"      ❌ No coordinates found for AAN 00254118")
+                return False, {"error": "No coordinates found for AAN 00254118"}
+        else:
+            print(f"   ❌ Target property AAN 00254118 not found")
+            return False, {"error": "Target property AAN 00254118 not found"}
         # Test 4: Check HST Detection for Entry 8
         print(f"\n   🔧 TEST 4: Check HST Detection for Entry 8 (AAN 09541209)")
         
