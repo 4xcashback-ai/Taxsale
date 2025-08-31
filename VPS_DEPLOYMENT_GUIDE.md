@@ -403,7 +403,7 @@ pm2 logs --lines 50
 1. **Port conflicts**: Ensure ports 3000 and 8001 are available
 2. **Permission issues**: 
    ```bash
-   sudo chown -R $USER:$USER /var/www/tax-sale-compass
+   sudo chown -R $USER:$USER /var/www/nstaxsales
    ```
 3. **MongoDB connection**: Check MongoDB status
    ```bash
