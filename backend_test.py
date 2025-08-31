@@ -491,17 +491,21 @@ def test_deployment_management_endpoints():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Municipality Descriptions"""
+    """Main test execution function - Focus on Deployment Management Endpoints"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Test municipality descriptions for property detail pages")
-    print("📋 REVIEW REQUEST: Test municipality-specific descriptions for Halifax, Cape Breton, Kentville, and Victoria County")
-    print("🔍 REQUIREMENTS:")
-    print("   1. Add descriptions to existing municipalities - Update Halifax, Cape Breton, Kentville, and Victoria County")
-    print("   2. Halifax description - Include SEALED TENDER process, HRM website submission, bid form requirements")
-    print("   3. Victoria County description - Include tender process, submission location at 495 Chebucto St., Baddeck, contact info")
-    print("   4. Cape Breton description - Include CBRM-specific tax sale process and contact information")
-    print("   5. Kentville description - Include Kentville-specific tax sale process and contact information")
+    print("🎯 FOCUS: Test deployment management API endpoints")
+    print("📋 REVIEW REQUEST: Test new deployment management API endpoints")
+    print("🔍 ENDPOINTS TO TEST:")
+    print("   1. GET /api/deployment/status - should return deployment status info")
+    print("   2. POST /api/deployment/check-updates - should check for GitHub updates")
+    print("   3. GET /api/deployment/health - should return system health status")
+    print("   4. POST /api/deployment/verify - should verify current deployment")
+    print("🎯 REQUIREMENTS:")
+    print("   - Endpoints are accessible and return proper HTTP status codes")
+    print("   - Error handling is working (since automation scripts don't exist here)")
+    print("   - Response format is JSON and contains expected fields")
+    print("   - No server crashes or unhandled exceptions")
     print("=" * 80)
     
     # Track overall results
@@ -515,10 +519,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Municipality Descriptions (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Municipality Descriptions Testing")
-    descriptions_successful, descriptions_data = test_municipality_descriptions()
-    test_results['municipality_descriptions'] = descriptions_successful
+    # Test 2: Deployment Management Endpoints (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Deployment Management Endpoints Testing")
+    deployment_successful, deployment_data = test_deployment_management_endpoints()
+    test_results['deployment_endpoints'] = deployment_successful
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
