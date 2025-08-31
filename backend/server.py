@@ -1524,10 +1524,14 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 property_address = "Address not specified"
                 lot_size = None
                 
-                # Extract property type (before first comma)
-                type_match = re.search(r'([^,]+),\s*located at', section, re.IGNORECASE)
+                # Extract property type (after the owner name, before "located at")
+                # Look for patterns like "Land/Dwelling, located at" or "Land only, located at"
+                type_match = re.search(r'(?:Property assessed to [^.]+\.\s*)?([^,]+),\s*located at', section, re.IGNORECASE)
                 if type_match:
                     property_type = type_match.group(1).strip()
+                    # Clean up property type - remove any leading numbers or AAN references
+                    property_type = re.sub(r'^\d+\.\s*AAN:[^–]*–\s*Property assessed to [^.]+\.\s*', '', property_type)
+                    property_type = re.sub(r'^\d+\.\s*AAN:[^-]*-\s*Property assessed to [^.]+\.\s*', '', property_type)
                 
                 # Extract address and lot size with flexible patterns
                 location_patterns = [
