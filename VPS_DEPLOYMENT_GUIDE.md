@@ -109,7 +109,7 @@ yarn build
 
 ### Backend Environment
 ```bash
-cd /var/www/tax-sale-compass/backend
+cd /var/www/nstaxsales/backend
 nano .env
 ```
 
