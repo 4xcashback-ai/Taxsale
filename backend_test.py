@@ -624,7 +624,7 @@ def main():
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Fixed Scraper Focus")
+    print("📊 FINAL TEST RESULTS SUMMARY - Halifax vs Victoria County Thumbnail Comparison")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
@@ -638,60 +638,49 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Victoria County Specific Analysis
-    print(f"\n🎯 VICTORIA COUNTY FIXED SCRAPER ANALYSIS:")
+    # Halifax vs Victoria County Comparison Analysis
+    print(f"\n🎯 HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON ANALYSIS:")
     
-    if victoria_county_working and victoria_county_data:
-        print(f"   ✅ VICTORIA COUNTY FIXED SCRAPER: ALL REQUIREMENTS MET!")
-        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
-        print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)}")
-        print(f"      Bid Calculations Correct: {victoria_county_data.get('bid_calculations_correct', False)}")
-        print(f"      Coordinates Assigned: {victoria_county_data.get('coordinates_assigned', False)}")
-        print(f"      Boundary Images Present: {victoria_county_data.get('boundary_images_present', False)}")
-        print(f"      HST Detection Correct: {victoria_county_data.get('hst_detection_correct', False)}")
-        print(f"      Boundary Endpoints Working: {victoria_county_data.get('boundary_endpoints_working', False)}")
+    if comparison_successful and comparison_data:
+        print(f"   ✅ THUMBNAIL COMPARISON: BOTH MUNICIPALITIES WORKING PROPERLY!")
+        print(f"      Halifax thumbnail success rate: {comparison_data.get('halifax_success_rate', 0):.1f}%")
+        print(f"      Victoria County thumbnail success rate: {comparison_data.get('victoria_success_rate', 0):.1f}%")
+        print(f"      Halifax thumbnails working: {comparison_data.get('halifax_thumbnails_working', False)}")
+        print(f"      Victoria County thumbnails working: {comparison_data.get('victoria_thumbnails_working', False)}")
         
-        if victoria_county_data.get('expected_aans_found'):
-            print(f"      Expected AANs Found: {victoria_county_data['expected_aans_found']}")
+        if comparison_data.get('differences_found'):
+            print(f"\n   🔍 Key differences identified:")
+            for diff in comparison_data['differences_found']:
+                print(f"      • {diff}")
         
-        print(f"\n   🎉 SUCCESS: Victoria County fixed scraper working correctly!")
-        print(f"   ✅ Enhanced tax amount extraction patterns working")
-        print(f"   ✅ All 3 properties show correct minimum bids from PDF tax amounts")
-        print(f"   ✅ Boundary image generation working with proper coordinates")
-        print(f"   ✅ Location-specific coordinates for Little Narrows, Middle River, Washabuck")
-        print(f"   ✅ HST detection working for Entry 8")
-        print(f"   ✅ Boundary image endpoints accessible")
+        print(f"\n   🎉 SUCCESS: Both Halifax and Victoria County thumbnails working properly!")
+        print(f"   ✅ Halifax properties show proper boundary thumbnails with property boundaries")
+        print(f"   ✅ Victoria County properties show same quality boundary thumbnails")
+        print(f"   ✅ Victoria County coordinates are accurate enough for proper boundary generation")
+        print(f"   ✅ Boundary image generation using same process for both municipalities")
         
-    elif not victoria_county_working and victoria_county_data:
-        print(f"   ❌ VICTORIA COUNTY FIXED SCRAPER: REQUIREMENTS NOT MET")
-        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
-        print(f"      Requirements Failed: {victoria_county_data.get('requirements_failed', 5)}/5")
+    elif not comparison_successful and comparison_data:
+        print(f"   ❌ THUMBNAIL COMPARISON: ISSUES IDENTIFIED BETWEEN MUNICIPALITIES")
+        print(f"      Halifax thumbnail success rate: {comparison_data.get('halifax_success_rate', 0):.1f}%")
+        print(f"      Victoria County thumbnail success rate: {comparison_data.get('victoria_success_rate', 0):.1f}%")
+        print(f"      Halifax thumbnails working: {comparison_data.get('halifax_thumbnails_working', False)}")
+        print(f"      Victoria County thumbnails working: {comparison_data.get('victoria_thumbnails_working', False)}")
         
-        if victoria_county_data.get('failed_requirements'):
-            print(f"      Failed Requirements:")
-            for req in victoria_county_data['failed_requirements']:
-                print(f"         ❌ {req}")
-        
-        print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)} (expected 3)")
-        print(f"      Bid Calculations Correct: {victoria_county_data.get('bid_calculations_correct', False)}")
-        print(f"      Coordinates Assigned: {victoria_county_data.get('coordinates_assigned', False)}")
-        print(f"      Boundary Images Present: {victoria_county_data.get('boundary_images_present', False)}")
-        print(f"      HST Detection Correct: {victoria_county_data.get('hst_detection_correct', False)}")
+        if comparison_data.get('differences_found'):
+            print(f"\n   🔍 Key differences identified:")
+            for diff in comparison_data['differences_found']:
+                print(f"      • {diff}")
         
         print(f"\n   ❌ ISSUES IDENTIFIED:")
-        if victoria_county_data.get('properties_found', 0) != 3:
-            print(f"      - Fixed scraper not finding all 3 properties from PDF entries 1, 2, 8")
-        if not victoria_county_data.get('bid_calculations_correct', False):
-            print(f"      - Enhanced tax amount extraction patterns not working correctly")
-        if not victoria_county_data.get('coordinates_assigned', False):
-            print(f"      - Location-specific coordinates not assigned properly")
-        if not victoria_county_data.get('boundary_images_present', False):
-            print(f"      - Boundary image generation still not working")
-        if not victoria_county_data.get('hst_detection_correct', False):
-            print(f"      - HST detection for Entry 8 not working")
+        if not comparison_data.get('halifax_thumbnails_working', False):
+            print(f"      - Halifax properties not showing proper boundary thumbnails")
+        if not comparison_data.get('victoria_thumbnails_working', False):
+            print(f"      - Victoria County properties not showing same quality boundary thumbnails")
+        if comparison_data.get('halifax_success_rate', 0) != comparison_data.get('victoria_success_rate', 0):
+            print(f"      - Different success rates between municipalities indicate process differences")
     else:
-        print(f"   ❌ VICTORIA COUNTY FIXED SCRAPER: CRITICAL ERROR")
-        print(f"      - Fixed scraper execution failed or returned no data")
+        print(f"   ❌ THUMBNAIL COMPARISON: CRITICAL ERROR")
+        print(f"      - Comparison test execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
