@@ -7047,159 +7047,108 @@ def test_victoria_county_direct_pdf_scraper():
         return False, {"error": str(e)}
 
 def main():
-    """Run Victoria County PDF Parsing Fixes Testing - Review Request Focus"""
-    print("🚀 Starting Victoria County PDF Parsing Fixes Testing")
-    print("🎯 FOCUS: Test improved Victoria County PDF parsing with fixes")
-    print("📋 REVIEW REQUEST REQUIREMENTS:")
-    print("   1. Should now find all 3 properties from PDF (not just 1)")
-    print("   2. Should extract sale date '2025-08-26' from 'Tuesday, August 26TH, 2025 at 2:00PM'")
-    print("   3. All 3 properties should have correct AAN, PID, owner, address, tax amounts")
-    print("   4. Multiple split patterns should handle different PDF formats")
+    """Main test execution function"""
+    print("🚀 Starting Nova Scotia Tax Sale Aggregator Backend Testing")
     print("=" * 80)
-    print(f"🌐 Backend URL: {BACKEND_URL}")
+    print("🎯 FOCUS: Victoria County PDF parser with non-sequential numbering support")
+    print("📋 TESTING: Fixed parser should find all 3 properties (AANs: 00254118, 00453706, 09541209)")
     print("=" * 80)
     
-    # Test 1: Basic API Connection
-    print("\n🔗 Testing API Connection...")
+    # Track overall test results
+    test_results = {}
+    
+    # Initialize municipalities if needed
+    init_success = initialize_municipalities_if_needed()
+    test_results["initialization"] = init_success
+    
+    # Test 1: Basic API connectivity
     api_success = test_api_connection()
+    test_results["api_connection"] = api_success
+    
     if not api_success:
-        print("❌ Cannot proceed - API connection failed")
+        print("\n❌ API connection failed - cannot continue with other tests")
         return False
     
-    # Test 2: Victoria County Debug PDF Endpoint (Primary Focus - Review Request)
-    print("\n🔍 Testing Victoria County Debug PDF Endpoint...")
-    debug_success, debug_result = test_victoria_county_debug_pdf()
+    # Test 2: Victoria County Fixed Parser (MAIN FOCUS)
+    victoria_parser_success, victoria_parser_results = test_victoria_county_fixed_parser()
+    test_results["victoria_county_fixed_parser"] = victoria_parser_success
     
-    # Test 3: Victoria County Direct PDF Scraper (Secondary Focus)
-    print("\n🔍 Testing Victoria County Direct PDF Scraper...")
-    direct_pdf_success, direct_pdf_result = test_victoria_county_direct_pdf_scraper()
+    # Test 3: Municipalities endpoint
+    municipalities_success, halifax_data = test_municipalities_endpoint()
+    test_results["municipalities_endpoint"] = municipalities_success
     
-    # Test 4: Victoria County Enhanced PDF Parsing (Tertiary Test)
-    print("\n🔍 Testing Victoria County Enhanced PDF Parsing...")
-    enhanced_success, enhanced_result = test_victoria_county_enhanced_parsing()
+    # Test 4: Tax sales endpoint and data verification
+    tax_sales_success, halifax_properties = test_tax_sales_endpoint()
+    test_results["tax_sales_endpoint"] = tax_sales_success
     
-    # Test 5: Victoria County PDF Parsing Fixes (Quaternary Test)
-    print("\n🔍 Testing Victoria County PDF Parsing Fixes...")
-    fixes_success, fixes_result = test_victoria_county_pdf_parsing_fixes()
+    # Test 5: Statistics endpoint
+    stats_success, stats_data = test_stats_endpoint()
+    test_results["stats_endpoint"] = stats_success
     
-    # Summary
+    # Print comprehensive test summary
     print("\n" + "=" * 80)
-    print("🏁 VICTORIA COUNTY PDF DEBUG AND PARSING TEST SUMMARY")
+    print("📊 COMPREHENSIVE TEST RESULTS SUMMARY")
     print("=" * 80)
     
-    # Debug PDF Test Results (Primary Focus)
-    if debug_success:
-        print("✅ Victoria County PDF Debug Analysis completed successfully!")
-        print("🎯 PDF Content Analysis Results:")
-        if debug_result:
-            print(f"   ✅ PDF Accessible: {debug_result.get('pdf_accessible', False)}")
-            print(f"   📊 PDF Size: {debug_result.get('pdf_size', 0):,} bytes")
-            print(f"   📊 Text Length: {debug_result.get('text_length', 0):,} characters")
-            print(f"   🔍 AAN Occurrences: {debug_result.get('aan_occurrences', 0)}")
-            print(f"   🔢 Numbered Sections: {debug_result.get('numbered_sections', 0)}")
-            print(f"   👤 Property Assessed Occurrences: {debug_result.get('property_assessed_occurrences', 0)}")
-    else:
-        print("❌ Victoria County PDF Debug Analysis failed")
-        print("🔍 Debug analysis issues:")
-        if debug_result:
-            print(f"   📊 Error: {debug_result.get('error', 'Unknown error')}")
+    passed_tests = sum(1 for result in test_results.values() if result)
+    total_tests = len(test_results)
     
-    # Direct PDF Scraper Test Results (Secondary Focus)
-    if direct_pdf_success:
-        print("\n✅ Victoria County Direct PDF Scraper is working correctly!")
-        print("🎯 Direct PDF URL requirements met:")
-        if direct_pdf_result:
-            print(f"   ✅ Properties Found: {direct_pdf_result.get('properties_count', 0)}")
-            print(f"   ✅ Real PDF Indicators: {direct_pdf_result.get('real_pdf_indicators', 0)}")
-            print(f"   ✅ Correct Sale Dates: {direct_pdf_result.get('correct_sale_dates', 0)}")
-    else:
-        print("\n❌ Victoria County Direct PDF Scraper needs improvement")
-        print("🔍 Direct PDF URL requirements not fully met:")
-        if direct_pdf_result:
-            print(f"   📊 Properties found: {direct_pdf_result.get('properties_count', 0)}")
-            print(f"   📊 Error: {direct_pdf_result.get('error', 'Unknown error')}")
-            print(f"   📊 Fallback indicators: {direct_pdf_result.get('fallback_indicators', 0)}")
+    print(f"📈 Overall Success Rate: {passed_tests}/{total_tests} ({(passed_tests/total_tests)*100:.1f}%)")
+    print(f"\n📋 Individual Test Results:")
     
-    print("\n" + "-" * 80)
-    print("🔧 VICTORIA COUNTY ENHANCED PDF PARSING TEST RESULTS")
-    print("-" * 80)
+    for test_name, success in test_results.items():
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"   {status} {test_name.replace('_', ' ').title()}")
     
-    # Enhanced Parsing Test Results
-    if enhanced_success:
-        print("✅ Victoria County Enhanced PDF Parsing is working correctly!")
-        print("🎯 Enhanced multi-pattern detection requirements met:")
-        if enhanced_result:
-            print(f"   ✅ Properties Scraped: {enhanced_result.get('properties_scraped', 0)}")
-            print(f"   ✅ Success Criteria Met: {enhanced_result.get('success_criteria', 0)}")
-            print(f"   ✅ Issues Found: {enhanced_result.get('issues_found', 0)}")
-            print(f"   ✅ Parsing Patterns Working: {enhanced_result.get('parsing_patterns_working', False)}")
-    else:
-        print("❌ Victoria County Enhanced PDF Parsing needs improvement")
-        print("🔍 Enhanced parsing requirements not fully met:")
-        if enhanced_result:
-            print(f"   📊 Properties scraped: {enhanced_result.get('properties_scraped', 0)}")
-            print(f"   📊 Success criteria met: {enhanced_result.get('success_criteria', 0)}")
-            print(f"   📊 Issues found: {enhanced_result.get('issues_found', 0)}")
+    # Detailed findings for Victoria County parser
+    print(f"\n🎯 VICTORIA COUNTY FIXED PARSER RESULTS:")
     
-    print("\n" + "-" * 80)
-    print("🔧 VICTORIA COUNTY PDF PARSING FIXES TEST RESULTS")
-    print("-" * 80)
+    if victoria_parser_results and isinstance(victoria_parser_results, dict):
+        print(f"   📊 Parser Performance:")
+        print(f"      - Properties Found: {victoria_parser_results.get('properties_found', 0)}/3")
+        print(f"      - All Data Correct: {'✅' if victoria_parser_results.get('all_data_correct', False) else '❌'}")
+        print(f"      - No Fallback Data: {'✅' if victoria_parser_results.get('no_fallback_data', False) else '❌'}")
+        print(f"      - Non-Sequential Fix Working: {'✅' if victoria_parser_results.get('non_sequential_fix_working', False) else '❌'}")
+        
+        # Show found properties
+        found_properties = victoria_parser_results.get('properties', [])
+        if found_properties:
+            print(f"\n   📋 Found Properties:")
+            for i, prop in enumerate(found_properties):
+                print(f"      {i+1}. AAN: {prop.get('aan')}, Owner: {prop.get('owner')}, PID: {prop.get('pid')}")
+        
+        # Show missing properties
+        missing_properties = victoria_parser_results.get('missing_properties', [])
+        if missing_properties:
+            print(f"\n   ❌ Missing Properties:")
+            for missing in missing_properties:
+                print(f"      - AAN: {missing.get('aan')}, Owner: {missing.get('owner')}, PID: {missing.get('pid')}")
+        
+        # Overall assessment
+        if (victoria_parser_results.get('properties_found', 0) == 3 and 
+            victoria_parser_results.get('all_data_correct', False) and 
+            victoria_parser_results.get('no_fallback_data', False) and 
+            victoria_parser_results.get('non_sequential_fix_working', False)):
+            print(f"\n   ✅ VICTORIA COUNTY PARSER FIX: COMPLETELY SUCCESSFUL")
+            print(f"      - All 3 properties found with correct data")
+            print(f"      - Non-sequential numbering (1, 2, 8) handled correctly")
+            print(f"      - All expected AANs, owners, and PIDs verified")
+            print(f"      - Sale date 2025-08-26 extracted correctly")
+        else:
+            print(f"\n   ❌ VICTORIA COUNTY PARSER FIX: NEEDS ADDITIONAL WORK")
+            if victoria_parser_results.get('properties_found', 0) < 3:
+                print(f"      - Still not finding all 3 properties from PDF")
+            if not victoria_parser_results.get('all_data_correct', False):
+                print(f"      - Property data not matching expected values")
+            if not victoria_parser_results.get('no_fallback_data', False):
+                print(f"      - Still using fallback data instead of PDF parsing")
+            if not victoria_parser_results.get('non_sequential_fix_working', False):
+                print(f"      - Non-sequential numbering fix not working")
     
-    # Fixes Test Results
-    if fixes_success:
-        print("✅ Victoria County PDF parsing fixes are working correctly!")
-        print("🎯 All review request requirements have been met:")
-        if fixes_result:
-            print(f"   ✅ Property Count: {fixes_result.get('properties_found', 0)}/3 properties found")
-            print(f"   ✅ Sale Date Extraction: {fixes_result.get('properties_with_correct_sale_date', 0)} properties with correct date")
-            print(f"   ✅ Complete Data: {fixes_result.get('properties_with_complete_data', 0)} properties with all required fields")
-            print(f"   ✅ Property Count Fixed: {fixes_result.get('property_count_fixed', False)}")
-            print(f"   ✅ Sale Date Extraction Working: {fixes_result.get('sale_date_extraction_working', False)}")
-    else:
-        print("❌ Victoria County PDF parsing fixes need more work")
-        print("🔍 Review request requirements not fully met:")
-        if fixes_result:
-            print(f"   📊 Properties found: {fixes_result.get('properties_found', 0)}/3 (expected 3)")
-            print(f"   📊 Properties with correct sale date: {fixes_result.get('properties_with_correct_sale_date', 0)}")
-            print(f"   📊 Properties with complete data: {fixes_result.get('properties_with_complete_data', 0)}")
-            
-            # Identify specific issues
-            issues = []
-            if not fixes_result.get('property_count_fixed', False):
-                issues.append("Property count issue - not finding all 3 properties from PDF")
-            if not fixes_result.get('sale_date_extraction_working', False):
-                issues.append("Sale date extraction issue - not parsing 'Tuesday, August 26TH, 2025 at 2:00PM' correctly")
-            if fixes_result.get('properties_with_complete_data', 0) < fixes_result.get('properties_found', 0):
-                issues.append("Property data completeness issue - missing required fields")
-            
-            if issues:
-                print(f"\n   ❌ SPECIFIC ISSUES IDENTIFIED:")
-                for issue in issues:
-                    print(f"      - {issue}")
-            
-            if 'error' in fixes_result:
-                print(f"   ❌ Error: {fixes_result['error']}")
+    print(f"\n🏁 Testing completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Final recommendation
-    print(f"\n🎯 FINAL ASSESSMENT:")
-    if direct_pdf_success:
-        print("✅ Victoria County Direct PDF Scraper is working correctly")
-        print("✅ All review request requirements have been successfully implemented")
-        print("✅ The scraper successfully downloads and parses the actual PDF")
-        print("✅ All 3 properties are extracted with correct sale dates (2025-08-26)")
-        print("✅ No fallback data is being used - real PDF parsing confirmed")
-    elif fixes_success:
-        print("⚠️ Victoria County PDF parsing fixes are working but direct PDF test failed")
-        print("🔧 The enhanced parsing logic works but may not be using the direct PDF URL")
-    else:
-        print("❌ Victoria County PDF parsing improvements need additional work")
-        print("🔧 Recommend reviewing the PDF parsing logic for:")
-        print("   - Direct PDF URL access and download")
-        print("   - Property splitting patterns to find all 3 properties")
-        print("   - Sale date extraction from 'Tuesday, August 26TH, 2025 at 2:00PM' format")
-        print("   - Property field extraction for AAN, PID, owner, address, tax amounts")
-    
-    return direct_pdf_success
+    # Return success based on Victoria County parser working
+    return victoria_parser_success
 
 if __name__ == "__main__":
     success = main()
