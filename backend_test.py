@@ -776,41 +776,42 @@ def main():
     
     print(f"\n🎯 OVERALL ASSESSMENT:")
     
-    if thumbnail_accurate:
-        print(f"🎉 VICTORIA COUNTY THUMBNAIL ACCURACY: VERIFIED!")
-        print(f"   ✅ All review request requirements met")
-        print(f"   ✅ AAN 00254118 coordinates verified for 198 Little Narrows Rd, Little Narrows")
-        print(f"   ✅ Boundary image generation working with /api/property-image/00254118")
-        print(f"   ✅ Google Maps satellite view parameters appropriate for building visibility")
-        print(f"   ✅ Coordinate accuracy adequate for property boundaries")
-        print(f"   🚀 Victoria County thumbnails are showing accurate property locations!")
+    if coordinate_fixes_successful:
+        print(f"🎉 VICTORIA COUNTY COORDINATE PRECISION FIXES: SUCCESSFUL!")
+        print(f"   ✅ Review request requirements met")
+        print(f"   ✅ Victoria County re-scraping successful")
+        print(f"   ✅ Coordinate precision improvements verified")
+        print(f"   ✅ Boundary image quality enhanced")
+        print(f"   ✅ Property data accuracy maintained")
+        print(f"   🚀 Victoria County thumbnails now show buildings instead of vacant land!")
     else:
-        print(f"❌ VICTORIA COUNTY THUMBNAIL ACCURACY: ISSUES FOUND")
+        print(f"❌ VICTORIA COUNTY COORDINATE PRECISION FIXES: ISSUES FOUND")
         print(f"   ❌ Review request requirements not fully met")
-        print(f"   🔧 Victoria County thumbnail accuracy needs fixes")
+        print(f"   🔧 Victoria County coordinate precision fixes need additional work")
         
-        if thumbnail_data:
-            issues = thumbnail_data.get('thumbnail_accuracy_issues', [])
-            refinement_results = thumbnail_data.get('refinement_analysis', {})
+        if coordinate_data:
+            final_assessment = coordinate_data.get('final_assessment', {})
+            issues = final_assessment.get('issues_found', [])
             
-            print(f"\n   📋 THUMBNAIL ACCURACY ISSUES:")
+            print(f"\n   📋 COORDINATE PRECISION ISSUES:")
             for issue in issues:
                 print(f"       - {issue}")
             
-            if refinement_results.get('recommendations'):
-                print(f"\n   🔧 RECOMMENDED FIXES:")
-                for i, rec in enumerate(refinement_results['recommendations'][:3], 1):  # Show top 3 recommendations
-                    print(f"       {i}. {rec}")
+            print(f"\n   🔧 RECOMMENDED ACTIONS:")
+            print(f"       1. Increase coordinate precision to 5+ decimal places for all properties")
+            print(f"       2. Verify coordinates point to actual building locations, not property centers")
+            print(f"       3. Test thumbnail generation with improved coordinates")
+            print(f"       4. Ensure opening bids and HST detection remain accurate")
             
             print(f"\n   💡 ROOT CAUSE ANALYSIS:")
-            print(f"       - Current coordinates may be showing property center instead of building location")
-            print(f"       - Property at 198 Little Narrows Rd may have building in different area than coordinates indicate")
-            print(f"       - Coordinate precision or geocoding accuracy may need improvement for building-level detail")
+            print(f"       - Coordinate precision may still be insufficient (need 5+ decimal places)")
+            print(f"       - Properties may still use property center coordinates instead of building-specific locations")
+            print(f"       - Thumbnail generation may need additional coordinate accuracy improvements")
     
     print(f"\n📊 System Success Rate: {success_rate:.1f}%")
     print("=" * 80)
     
-    return thumbnail_accurate
+    return coordinate_fixes_successful
 
 if __name__ == "__main__":
     success = main()
