@@ -290,7 +290,7 @@ def test_municipality_descriptions():
                 "municipality_name": target_name,
                 "has_description": bool(description),
                 "description_length": len(description) if description else 0,
-                "found_keywords": found_keywords if description else [],
+                "found_keywords": found_keywords,
                 "missing_keywords": missing_keywords if description else expected_keywords
             })
         # Test 3: Test Individual Municipality Endpoints
