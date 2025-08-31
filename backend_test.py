@@ -360,84 +360,62 @@ def test_halifax_vs_victoria_county_thumbnails():
         else:
             print(f"      No Victoria County properties available for analysis")
         
-        # Test 3: Test Enhanced Tax Amount Extraction Patterns
-        print(f"\n   🔧 TEST 3: Test Enhanced Tax Amount Extraction Patterns")
+        # Test 5: Verify Boundary Generation Process Comparison
+        print(f"\n   🔧 TEST 5: Verify Boundary Generation Process for Both Municipality Types")
         
-        debug_response = requests.get(f"{BACKEND_URL}/debug/victoria-county-pdf", timeout=30)
+        print(f"\n   🔍 TESTING /api/property-image ENDPOINT FOR BOTH MUNICIPALITIES:")
         
-        enhanced_patterns_working = False
-        
-        if debug_response.status_code == 200:
-            debug_data = debug_response.json()
-            print(f"   ✅ Debug endpoint available for enhanced pattern analysis")
-            
-            # Analyze PDF content for enhanced tax amount patterns
-            pdf_content = debug_data.get('pdf_content_preview', '')
-            analysis = debug_data.get('analysis', {})
-            
-            print(f"      PDF Content Length: {len(pdf_content)} characters")
-            
-            # Check for enhanced tax amount extraction patterns
-            enhanced_patterns = [
-                r"Taxes, Interest and Expenses owing:\s*\$[\d,]+\.?\d*",
-                r"owing:\s*\$[\d,]+\.?\d*",
-                r"\$[\d,]+\.\d{2}",  # General dollar amounts
-                r"[\d,]+\.\d{2}"     # Numeric amounts
-            ]
-            
-            print(f"   🔍 TESTING ENHANCED TAX AMOUNT PATTERNS:")
-            
-            for i, pattern in enumerate(enhanced_patterns):
-                matches = re.findall(pattern, pdf_content)
-                print(f"      Pattern {i+1}: {pattern}")
-                print(f"         Matches found: {len(matches)}")
-                
-                if matches:
-                    enhanced_patterns_working = True
-                    for j, match in enumerate(matches[:3]):  # Show first 3 matches
-                        print(f"         Match {j+1}: {match}")
+        # Test Halifax property image endpoints
+        halifax_endpoint_results = []
+        if halifax_properties:
+            print(f"\n   📍 Testing Halifax Property Image Endpoints:")
+            for i, prop in enumerate(halifax_properties[:3]):  # Test first 3
+                aan = prop.get("assessment_number")
+                if aan:
+                    try:
+                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
+                        result = {
+                            "aan": aan,
+                            "status_code": image_response.status_code,
+                            "content_type": image_response.headers.get('content-type', 'unknown'),
+                            "size": len(image_response.content) if image_response.status_code == 200 else 0,
+                            "working": image_response.status_code == 200
+                        }
+                        halifax_endpoint_results.append(result)
                         
-                        # Extract numeric value
-                        numeric_match = re.search(r'[\d,]+\.?\d*', match.replace('$', ''))
-                        if numeric_match:
-                            amount = numeric_match.group().replace(',', '')
-                            try:
-                                amount_float = float(amount)
-                                if 1000 <= amount_float <= 10000:  # Expected range for Victoria County
-                                    print(f"            ✅ Valid tax amount: ${amount}")
-                                else:
-                                    print(f"            ⚠️ Amount outside expected range: ${amount}")
-                            except:
-                                print(f"            ❌ Could not parse amount: {amount}")
-            
-            # Check for HST indicators
-            hst_patterns = [r"\+\s*HST", r"plus HST", r"HST applicable"]
-            hst_found = False
-            
-            print(f"\n   🔍 TESTING HST DETECTION PATTERNS:")
-            for pattern in hst_patterns:
-                hst_matches = re.findall(pattern, pdf_content, re.IGNORECASE)
-                if hst_matches:
-                    hst_found = True
-                    print(f"      ✅ HST pattern found: {pattern} - {len(hst_matches)} matches")
-                    for match in hst_matches[:2]:
-                        print(f"         Match: {match}")
-                else:
-                    print(f"      ❌ HST pattern not found: {pattern}")
-            
-            if not hst_found:
-                print(f"   ❌ NO HST INDICATORS FOUND: Entry 8 HST detection may fail")
-                
-            # Check for AAN occurrences
-            aan_count = analysis.get('aan_occurrences', 0)
-            if aan_count >= 3:
-                print(f"   ✅ AAN DETECTION: Found {aan_count} AAN occurrences in PDF")
-            else:
-                print(f"   ❌ AAN DETECTION ISSUE: Only {aan_count} AAN occurrences found (expected 3)")
-                
-        else:
-            print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
-            print(f"   ℹ️ Cannot verify enhanced tax amount extraction patterns without debug endpoint")
+                        if result["working"]:
+                            print(f"      ✅ Halifax AAN {aan}: {result['size']} bytes, {result['content_type']}")
+                        else:
+                            print(f"      ❌ Halifax AAN {aan}: HTTP {result['status_code']}")
+                    except Exception as e:
+                        print(f"      ❌ Halifax AAN {aan}: Error - {e}")
+                        halifax_endpoint_results.append({"aan": aan, "working": False, "error": str(e)})
+        
+        # Test Victoria County property image endpoints
+        victoria_endpoint_results = []
+        if victoria_properties:
+            print(f"\n   📍 Testing Victoria County Property Image Endpoints:")
+            for i, prop in enumerate(victoria_properties):
+                aan = prop.get("assessment_number")
+                if aan:
+                    try:
+                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
+                        result = {
+                            "aan": aan,
+                            "status_code": image_response.status_code,
+                            "content_type": image_response.headers.get('content-type', 'unknown'),
+                            "size": len(image_response.content) if image_response.status_code == 200 else 0,
+                            "working": image_response.status_code == 200
+                        }
+                        victoria_endpoint_results.append(result)
+                        
+                        if result["working"]:
+                            print(f"      ✅ Victoria County AAN {aan}: {result['size']} bytes, {result['content_type']}")
+                        else:
+                            print(f"      ❌ Victoria County AAN {aan}: HTTP {result['status_code']}")
+                    except Exception as e:
+                        print(f"      ❌ Victoria County AAN {aan}: Error - {e}")
+                        victoria_endpoint_results.append({"aan": aan, "working": False, "error": str(e)})
         
         # Test 4: Test Boundary Image Generation and Endpoints
         print(f"\n   🔧 TEST 4: Test Boundary Image Generation and Endpoints")
