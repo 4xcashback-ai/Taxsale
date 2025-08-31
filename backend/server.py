@@ -159,6 +159,7 @@ class MunicipalityCreate(BaseModel):
     scrape_day_of_month: Optional[int] = 1  # 1-28 (for monthly)
     scrape_time_hour: int = 2  # 24-hour format
     scrape_time_minute: int = 0
+    description: Optional[str] = None  # Municipality-specific description for property detail pages
 
 class MunicipalityUpdate(BaseModel):
     name: Optional[str] = None
