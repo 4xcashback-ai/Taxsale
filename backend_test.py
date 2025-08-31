@@ -1395,55 +1395,6 @@ def test_victoria_county_rewritten_parser():
     except Exception as e:
         print(f"   ❌ Victoria County rewritten parser test error: {e}")
         return False, {"error": str(e)}
-                
-                if non_sequential_fix_working:
-                    print(f"   ✅ NON-SEQUENTIAL NUMBERING FIX VERIFIED: All expected AANs found")
-                    print(f"      Parser successfully handles non-sequential numbering (1, 2, 8)")
-                else:
-                    print(f"   ❌ NON-SEQUENTIAL NUMBERING FIX NOT WORKING: Missing expected AANs")
-                    all_correct = False
-                
-                # Final assessment
-                print(f"\n   📋 VICTORIA COUNTY FIXED PARSER TEST SUMMARY:")
-                print(f"      Properties found: {len(victoria_properties)}/3")
-                print(f"      All expected AANs: {'✅' if non_sequential_fix_working else '❌'}")
-                print(f"      All data correct: {'✅' if all_correct else '❌'}")
-                print(f"      No fallback data: {'✅' if not fallback_detected else '❌'}")
-                print(f"      Sale date correct: {'✅' if any('2025-08-26' in str(p.get('sale_date', '')) for p in victoria_properties) else '❌'}")
-                
-                if len(victoria_properties) == 3 and all_correct and not fallback_detected and non_sequential_fix_working:
-                    print(f"   ✅ VICTORIA COUNTY FIXED PARSER: ALL TESTS PASSED")
-                    return True, {
-                        "properties_found": len(victoria_properties),
-                        "all_data_correct": all_correct,
-                        "no_fallback_data": not fallback_detected,
-                        "non_sequential_fix_working": non_sequential_fix_working,
-                        "properties": found_properties
-                    }
-                else:
-                    print(f"   ❌ VICTORIA COUNTY FIXED PARSER: SOME TESTS FAILED")
-                    return False, {
-                        "properties_found": len(victoria_properties),
-                        "all_data_correct": all_correct,
-                        "no_fallback_data": not fallback_detected,
-                        "non_sequential_fix_working": non_sequential_fix_working,
-                        "missing_properties": missing_properties
-                    }
-            else:
-                print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
-                return False, {"error": f"Failed to retrieve properties: {properties_response.status_code}"}
-        else:
-            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
-            try:
-                error_detail = scrape_response.json()
-                print(f"      Error details: {error_detail}")
-            except:
-                print(f"      Raw response: {scrape_response.text[:200]}...")
-            return False, {"error": f"Scraper failed with status {scrape_response.status_code}"}
-        
-    except Exception as e:
-        print(f"   ❌ Victoria County fixed parser test error: {e}")
-        return False, {"error": str(e)}
 
 def test_victoria_county_debug_pdf():
     """Test Victoria County Debug PDF Endpoint - Examine Actual PDF Content"""
