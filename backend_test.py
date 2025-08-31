@@ -6254,8 +6254,29 @@ def main():
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 VICTORIA COUNTY PDF PARSING FIXES TEST SUMMARY")
+    print("🏁 VICTORIA COUNTY ENHANCED PDF PARSING TEST SUMMARY")
     print("=" * 80)
+    
+    # Enhanced Parsing Test Results
+    if enhanced_success:
+        print("✅ Victoria County Enhanced PDF Parsing is working correctly!")
+        print("🎯 Enhanced multi-pattern detection requirements met:")
+        if enhanced_result:
+            print(f"   ✅ Properties Scraped: {enhanced_result.get('properties_scraped', 0)}")
+            print(f"   ✅ Success Criteria Met: {enhanced_result.get('success_criteria', 0)}")
+            print(f"   ✅ Issues Found: {enhanced_result.get('issues_found', 0)}")
+            print(f"   ✅ Parsing Patterns Working: {enhanced_result.get('parsing_patterns_working', False)}")
+    else:
+        print("❌ Victoria County Enhanced PDF Parsing needs improvement")
+        print("🔍 Enhanced parsing requirements not fully met:")
+        if enhanced_result:
+            print(f"   📊 Properties scraped: {enhanced_result.get('properties_scraped', 0)}")
+            print(f"   📊 Success criteria met: {enhanced_result.get('success_criteria', 0)}")
+            print(f"   📊 Issues found: {enhanced_result.get('issues_found', 0)}")
+    
+    print("\n" + "-" * 80)
+    print("🔧 VICTORIA COUNTY PDF PARSING FIXES TEST RESULTS")
+    print("-" * 80)
     
     # Fixes Test Results
     if fixes_success:
