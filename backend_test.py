@@ -431,11 +431,12 @@ def test_victoria_county_fixed_scraper():
             print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
             print(f"   ℹ️ Cannot verify enhanced tax amount extraction patterns without debug endpoint")
         
-        # Test 4: Google Maps API and Boundary Image Generation
-        print(f"\n   🔧 TEST 4: Google Maps API and Boundary Image Generation")
+        # Test 4: Test Boundary Image Generation and Endpoints
+        print(f"\n   🔧 TEST 4: Test Boundary Image Generation and Endpoints")
         
         # Test Google Maps API key and static map generation
         google_maps_working = True
+        boundary_endpoints_working = True
         
         # Check if properties have coordinates for map generation
         properties_with_coords = [p for p in victoria_properties if p.get('latitude') and p.get('longitude')]
@@ -446,15 +447,16 @@ def test_victoria_county_fixed_scraper():
             test_prop = properties_with_coords[0]
             lat = test_prop.get('latitude')
             lng = test_prop.get('longitude')
+            aan = test_prop.get('assessment_number')
             
-            # Test static map API (similar to what the backend uses)
+            # Test static map API (similar to what the backend uses for boundary generation)
             test_map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
             
             try:
                 map_response = requests.get(test_map_url, timeout=10)
                 if map_response.status_code == 200 and 'image' in map_response.headers.get('content-type', ''):
                     print(f"   ✅ GOOGLE MAPS API: Static map generation working")
-                    print(f"      Test coordinates: {lat}, {lng}")
+                    print(f"      Test coordinates: {lat}, {lng} (AAN: {aan})")
                     print(f"      Response size: {len(map_response.content)} bytes")
                 else:
                     print(f"   ❌ GOOGLE MAPS API: Static map generation failed")
@@ -468,26 +470,58 @@ def test_victoria_county_fixed_scraper():
             print(f"   ❌ COORDINATES MISSING: No properties have latitude/longitude for map generation")
             google_maps_working = False
         
-        # Test property image endpoint
-        if victoria_properties:
-            test_aan = victoria_properties[0].get('assessment_number')
-            if test_aan:
-                try:
-                    image_response = requests.get(f"{BACKEND_URL}/property-image/{test_aan}", timeout=10)
-                    if image_response.status_code == 200:
-                        print(f"   ✅ PROPERTY IMAGE ENDPOINT: Working for AAN {test_aan}")
-                        print(f"      Image size: {len(image_response.content)} bytes")
-                    else:
-                        print(f"   ❌ PROPERTY IMAGE ENDPOINT: Failed for AAN {test_aan} - HTTP {image_response.status_code}")
-                except Exception as e:
-                    print(f"   ❌ PROPERTY IMAGE ENDPOINT: Error - {e}")
+        # Test boundary image endpoints for all Victoria County properties
+        print(f"\n   🔍 TESTING BOUNDARY IMAGE ENDPOINTS:")
         
-        # Summary of boundary image issues
-        if not boundary_images_present:
-            print(f"\n   🔍 BOUNDARY IMAGE ISSUES IDENTIFIED:")
-            print(f"      - boundary_screenshot field missing or empty for Victoria County properties")
-            print(f"      - This indicates the boundary screenshot generation process is not working")
-            print(f"      - May be related to coordinates, Google Maps API, or image processing pipeline")
+        for prop in victoria_properties:
+            aan = prop.get('assessment_number')
+            boundary_screenshot = prop.get('boundary_screenshot')
+            
+            if aan:
+                # Test property image endpoint
+                try:
+                    image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
+                    if image_response.status_code == 200:
+                        print(f"      ✅ Property image endpoint working for AAN {aan}")
+                        print(f"         Image size: {len(image_response.content)} bytes")
+                        print(f"         Content-Type: {image_response.headers.get('content-type', 'unknown')}")
+                    else:
+                        print(f"      ❌ Property image endpoint failed for AAN {aan} - HTTP {image_response.status_code}")
+                        boundary_endpoints_working = False
+                except Exception as e:
+                    print(f"      ❌ Property image endpoint error for AAN {aan} - {e}")
+                    boundary_endpoints_working = False
+                
+                # Test boundary image endpoint if screenshot exists
+                if boundary_screenshot:
+                    try:
+                        boundary_response = requests.get(f"{BACKEND_URL}/boundary-image/{boundary_screenshot}", timeout=10)
+                        if boundary_response.status_code == 200:
+                            print(f"      ✅ Boundary image endpoint working for {boundary_screenshot}")
+                            print(f"         Image size: {len(boundary_response.content)} bytes")
+                        else:
+                            print(f"      ❌ Boundary image endpoint failed for {boundary_screenshot} - HTTP {boundary_response.status_code}")
+                            boundary_endpoints_working = False
+                    except Exception as e:
+                        print(f"      ❌ Boundary image endpoint error for {boundary_screenshot} - {e}")
+                        boundary_endpoints_working = False
+                else:
+                    print(f"      ⚠️ No boundary screenshot file for AAN {aan}")
+        
+        # Summary of boundary image generation status
+        if coordinates_assigned and google_maps_working and boundary_images_present:
+            print(f"\n   ✅ BOUNDARY IMAGE GENERATION: All components working")
+            print(f"      - Coordinates assigned to all properties")
+            print(f"      - Google Maps API generating static maps")
+            print(f"      - Boundary screenshot files created and accessible")
+        else:
+            print(f"\n   ❌ BOUNDARY IMAGE GENERATION: Issues identified")
+            if not coordinates_assigned:
+                print(f"      - Missing coordinates for location-specific assignment")
+            if not google_maps_working:
+                print(f"      - Google Maps API not generating static maps")
+            if not boundary_images_present:
+                print(f"      - Boundary screenshot files not created or not accessible")
         
         # Final Assessment - Victoria County Data Extraction Debug
         print(f"\n   📊 FINAL ASSESSMENT - Victoria County Data Extraction Debug:")
