@@ -228,27 +228,58 @@ def test_victoria_county_fixed_scraper():
                 pid = prop.get("pid_number")
                 opening_bid = prop.get("opening_bid")
                 boundary_screenshot = prop.get("boundary_screenshot")
+                latitude = prop.get("latitude")
+                longitude = prop.get("longitude")
+                hst_applicable = prop.get("hst_applicable")
                 raw_data = prop.get("raw_data", {})
                 
-                print(f"\n   📋 Property {i+1} - Minimum Bid & Image Analysis:")
+                print(f"\n   📋 Property {i+1} - Fixed Scraper Analysis:")
                 print(f"      AAN: {aan}")
                 print(f"      Owner: '{owner}'")
                 print(f"      Address: '{address}'")
                 print(f"      Opening Bid: ${opening_bid}")
+                print(f"      Coordinates: {latitude}, {longitude}")
+                print(f"      HST Applicable: {hst_applicable}")
                 print(f"      Boundary Screenshot: {boundary_screenshot}")
                 
-                # Verify minimum bid calculation against expected PDF tax amounts
+                # Verify fixed minimum bid calculation
                 if aan in expected_bids:
                     expected_bid = expected_bids[aan]
                     if opening_bid and abs(float(opening_bid) - expected_bid) < 0.01:
-                        print(f"      ✅ MINIMUM BID CORRECT: ${opening_bid} matches expected ${expected_bid}")
+                        print(f"      ✅ FIXED MINIMUM BID CORRECT: ${opening_bid} matches expected ${expected_bid}")
                     else:
-                        print(f"      ❌ MINIMUM BID INCORRECT: Got ${opening_bid}, expected ${expected_bid}")
-                        print(f"         🔍 DEBUG: Tax amount extraction may be failing")
+                        print(f"      ❌ FIXED MINIMUM BID STILL INCORRECT: Got ${opening_bid}, expected ${expected_bid}")
+                        print(f"         🔍 DEBUG: Enhanced tax amount extraction patterns may still be failing")
                         bid_calculations_correct = False
                     found_aans.append(aan)
                 else:
                     print(f"      ⚠️ AAN {aan} not in expected list for bid verification")
+                
+                # Check coordinate assignment for boundary image generation
+                if latitude and longitude:
+                    print(f"      ✅ COORDINATES ASSIGNED: {latitude}, {longitude}")
+                    
+                    # Verify location-specific coordinates
+                    if aan in expected_locations:
+                        expected_location = expected_locations[aan]
+                        print(f"         📍 Expected location: {expected_location}")
+                        
+                        # Basic coordinate validation for Nova Scotia Cape Breton area
+                        if 45.5 <= latitude <= 47.0 and -61.5 <= longitude <= -59.5:
+                            print(f"         ✅ Coordinates within Cape Breton region")
+                        else:
+                            print(f"         ⚠️ Coordinates may not be accurate for Cape Breton region")
+                else:
+                    print(f"      ❌ COORDINATES MISSING: No latitude/longitude for boundary image generation")
+                    coordinates_assigned = False
+                
+                # Check HST detection for Entry 8
+                if aan == "09541209":
+                    if hst_applicable and hst_applicable.lower() == "yes":
+                        print(f"      ✅ HST DETECTION CORRECT: Entry 8 shows HST applicable due to '+ HST' in PDF")
+                    else:
+                        print(f"      ❌ HST DETECTION INCORRECT: Entry 8 should show HST applicable, got '{hst_applicable}'")
+                        hst_detection_correct = False
                 
                 # Check boundary screenshot generation
                 if boundary_screenshot:
@@ -259,6 +290,7 @@ def test_victoria_county_fixed_scraper():
                         image_response = requests.get(f"{BACKEND_URL}/boundary-image/{boundary_screenshot}", timeout=10)
                         if image_response.status_code == 200:
                             print(f"         ✅ Image accessible via API endpoint")
+                            print(f"         📏 Image size: {len(image_response.content)} bytes")
                         else:
                             print(f"         ❌ Image not accessible: HTTP {image_response.status_code}")
                             boundary_images_present = False
@@ -266,7 +298,7 @@ def test_victoria_county_fixed_scraper():
                         print(f"         ❌ Error accessing image: {e}")
                         boundary_images_present = False
                 else:
-                    print(f"      ❌ BOUNDARY IMAGE: No screenshot field - missing image generation")
+                    print(f"      ❌ BOUNDARY IMAGE: No screenshot field - image generation still not working")
                     boundary_images_present = False
                 
                 # Check raw_data for tax amount extraction patterns
