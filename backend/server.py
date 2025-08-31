@@ -1424,63 +1424,67 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
         
         logger.info(f"Victoria County PDF FULL CONTENT:\n{pdf_text}")
         
-        # Find all numbered entries first
-        all_numbered_entries = re.finditer(r'(\d+)\.\s*([^\n]+)', pdf_text)
+        # Step 1: Find all numbered entries in the PDF
+        all_numbered_entries = list(re.finditer(r'(\d+)\.\s*([^\n]+)', pdf_text))
+        logger.info(f"Victoria County: Found {len(all_numbered_entries)} total numbered entries")
         
-        logger.info(f"Victoria County: Analyzing all numbered entries...")
-        
-        valid_properties = []
+        # Step 2: Identify which entries contain property data (have AAN)
+        property_entries = []
         for entry_match in all_numbered_entries:
             entry_number = entry_match.group(1)
             entry_content = entry_match.group(2).strip()
             
-            logger.info(f"Entry {entry_number}: {entry_content}")
+            logger.info(f"Entry {entry_number}: {entry_content[:100]}...")
             
-            # Check if this entry contains actual property data (has AAN)
             if "AAN:" in entry_content:
-                logger.info(f"Entry {entry_number} contains property data - extracting full section")
-                
-                # Extract the full property section from this entry to the next numbered entry
-                start_pos = entry_match.start()
-                
-                # Find the next numbered entry to determine where this property section ends
-                next_entry_pattern = rf'{int(entry_number) + 1}\.\s*'
-                next_entry_match = re.search(next_entry_pattern, pdf_text[start_pos + 10:])
-                
-                if next_entry_match:
-                    end_pos = start_pos + 10 + next_entry_match.start()
-                else:
-                    # If no next entry found, look for any next numbered entry
-                    any_next_entry = re.search(r'\d+\.\s*', pdf_text[start_pos + 10:])
-                    if any_next_entry:
-                        end_pos = start_pos + 10 + any_next_entry.start()
-                    else:
-                        end_pos = len(pdf_text)
-                
-                section = pdf_text[start_pos:end_pos].strip()
-                property_sections.append(section)
-                
-                # Extract AAN, PID from the section
-                aan_match = re.search(r'AAN:\s*(\d+)', section)
-                pid_match = re.search(r'PID:\s*([\d/]+)', section)
-                
-                valid_properties.append({
-                    'entry_number': entry_number,
-                    'aan': aan_match.group(1) if aan_match else 'Unknown',
-                    'pid': pid_match.group(1) if pid_match else 'Unknown',
-                    'section': section
+                property_entries.append({
+                    'number': entry_number,
+                    'match': entry_match,
+                    'content': entry_content
                 })
-                
-                logger.info(f"Property {entry_number}: AAN={valid_properties[-1]['aan']}, PID={valid_properties[-1]['pid']}")
-                logger.info(f"Full section: {section}")
+                logger.info(f"✅ Entry {entry_number} contains property data (AAN found)")
             else:
-                logger.info(f"Entry {entry_number} is not a property: {entry_content}")
+                logger.info(f"❌ Entry {entry_number} skipped: {entry_content}")
         
-        logger.info(f"Victoria County: Found {len(property_sections)} actual property sections out of all numbered entries")
+        logger.info(f"Victoria County: Found {len(property_entries)} property entries: {[p['number'] for p in property_entries]}")
         
-        # Log the valid properties found
-        for prop in valid_properties:
-            logger.info(f"Valid Property: Entry #{prop['entry_number']}, AAN {prop['aan']}, PID {prop['pid']}")
+        # Step 3: Extract full sections for each property entry
+        for i, prop_entry in enumerate(property_entries):
+            entry_number = prop_entry['number']
+            entry_match = prop_entry['match']
+            
+            logger.info(f"Extracting section for property entry {entry_number}...")
+            
+            # Determine section boundaries
+            start_pos = entry_match.start()
+            
+            # Find the next numbered entry (any number) to determine where this section ends
+            remaining_text = pdf_text[start_pos + 10:]  # Skip current entry start
+            next_entry_match = re.search(r'\d+\.\s*', remaining_text)
+            
+            if next_entry_match:
+                end_pos = start_pos + 10 + next_entry_match.start()
+                logger.info(f"Entry {entry_number}: Found next entry at position {end_pos}")
+            else:
+                end_pos = len(pdf_text)
+                logger.info(f"Entry {entry_number}: No next entry found, using end of document")
+            
+            # Extract the full section
+            section = pdf_text[start_pos:end_pos].strip()
+            property_sections.append(section)
+            
+            logger.info(f"Entry {entry_number}: Extracted section ({len(section)} chars)")
+            logger.info(f"Entry {entry_number}: Section content: {section[:200]}...")
+            
+            # Verify AAN/PID extraction from section
+            aan_match = re.search(r'AAN:\s*(\d+)', section)
+            pid_match = re.search(r'PID:\s*([\d/]+)', section)
+            
+            logger.info(f"Entry {entry_number}: AAN={aan_match.group(1) if aan_match else 'NOT FOUND'}")
+            logger.info(f"Entry {entry_number}: PID={pid_match.group(1) if pid_match else 'NOT FOUND'}")
+        
+        logger.info(f"Victoria County: Successfully extracted {len(property_sections)} property sections")
+        logger.info(f"Expected: 3 sections (entries 1, 2, 8), Got: {len(property_sections)} sections")
         
         for i, section in enumerate(property_sections):
             if not section.strip() or "AAN:" not in section:
