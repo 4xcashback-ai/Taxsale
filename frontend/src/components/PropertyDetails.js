@@ -82,7 +82,7 @@ const PropertyDetails = () => {
   // Fetch NSPRD boundary data
   const fetchBoundaryData = async (pidNumber) => {
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://taxsalecompass.ca';
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/query-ns-government-parcel/${pidNumber}`);
       const data = await response.json();
       
