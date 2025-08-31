@@ -1097,6 +1097,188 @@ def test_nsprd_boundary_endpoint():
         print(f"   ❌ NSPRD boundary endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_debug_pdf():
+    """Test Victoria County Debug PDF Endpoint - Examine Actual PDF Content"""
+    print("\n🔍 Testing Victoria County Debug PDF Endpoint...")
+    print("🎯 FOCUS: Use debug endpoint to examine actual Victoria County PDF content")
+    print("📋 REQUIREMENTS: Analyze PDF structure, check pattern matches, identify parsing issues")
+    print("🔍 GOAL: Understand why parser finds only 1 property instead of 3")
+    
+    try:
+        # Test 1: Debug PDF Content Endpoint
+        print(f"\n   🔧 TEST 1: GET /api/debug/victoria-county-pdf")
+        
+        debug_response = requests.get(
+            f"{BACKEND_URL}/debug/victoria-county-pdf", 
+            timeout=60  # Allow time for PDF download and processing
+        )
+        
+        if debug_response.status_code == 200:
+            debug_data = debug_response.json()
+            print(f"   ✅ Debug endpoint responded successfully")
+            
+            # Check PDF accessibility
+            if debug_data.get('pdf_accessible'):
+                print(f"   ✅ PDF is accessible")
+                print(f"      PDF size: {debug_data.get('pdf_size_bytes', 0):,} bytes")
+                print(f"      Extracted text length: {debug_data.get('extracted_text_length', 0):,} characters")
+                
+                # Analyze the PDF content structure
+                analysis = debug_data.get('analysis', {})
+                full_text = debug_data.get('full_text', '')
+                
+                print(f"\n   📊 PDF CONTENT ANALYSIS:")
+                print(f"      AAN occurrences: {analysis.get('aan_occurrences', 0)}")
+                print(f"      Numbered sections (1. AAN:, 2. AAN:, etc.): {analysis.get('numbered_sections', 0)}")
+                print(f"      'Property assessed to' occurrences: {analysis.get('property_assessed_occurrences', 0)}")
+                
+                # Show AAN positions for debugging
+                aan_positions = analysis.get('aan_positions', [])
+                if aan_positions:
+                    print(f"\n   🎯 AAN OCCURRENCE POSITIONS:")
+                    for i, pos in enumerate(aan_positions[:10]):  # Show first 10
+                        start, end = pos
+                        context = full_text[max(0, start-20):end+20]
+                        print(f"      {i+1}. Position {start}-{end}: '{context}'")
+                
+                # Show numbered section positions
+                numbered_positions = analysis.get('numbered_section_positions', [])
+                if numbered_positions:
+                    print(f"\n   🔢 NUMBERED SECTION POSITIONS:")
+                    for i, pos in enumerate(numbered_positions):
+                        start, end = pos
+                        context = full_text[max(0, start-10):end+50]
+                        print(f"      {i+1}. Position {start}-{end}: '{context}'")
+                
+                # Analyze the actual PDF structure to understand parsing issues
+                print(f"\n   🔍 PDF STRUCTURE ANALYSIS:")
+                
+                # Look for property sections manually
+                import re
+                
+                # Check for different AAN patterns
+                aan_patterns = [
+                    r'AAN:\s*(\d+)',
+                    r'AAN\s*(\d+)',
+                    r'(\d+)\.\s*AAN',
+                    r'Assessment\s*(?:Account\s*)?(?:Number\s*)?:?\s*(\d+)',
+                ]
+                
+                print(f"      Testing different AAN patterns:")
+                for i, pattern in enumerate(aan_patterns):
+                    matches = re.findall(pattern, full_text, re.IGNORECASE)
+                    print(f"         Pattern {i+1} '{pattern}': {len(matches)} matches")
+                    if matches:
+                        print(f"            Found AANs: {matches[:5]}")  # Show first 5
+                
+                # Check for PID patterns
+                pid_patterns = [
+                    r'PID:\s*(\d+)',
+                    r'PID\s*(\d+)',
+                    r'Property\s*(?:Identification\s*)?(?:Number\s*)?:?\s*(\d+)',
+                ]
+                
+                print(f"\n      Testing PID patterns:")
+                for i, pattern in enumerate(pid_patterns):
+                    matches = re.findall(pattern, full_text, re.IGNORECASE)
+                    print(f"         Pattern {i+1} '{pattern}': {len(matches)} matches")
+                    if matches:
+                        print(f"            Found PIDs: {matches[:5]}")
+                
+                # Look for property owner patterns
+                owner_patterns = [
+                    r'Property assessed to\s+([^.]+)',
+                    r'assessed to\s+([^.]+)',
+                    r'Owner:\s*([^.\n]+)',
+                ]
+                
+                print(f"\n      Testing owner name patterns:")
+                for i, pattern in enumerate(owner_patterns):
+                    matches = re.findall(pattern, full_text, re.IGNORECASE)
+                    print(f"         Pattern {i+1} '{pattern}': {len(matches)} matches")
+                    if matches:
+                        print(f"            Found owners: {matches[:3]}")
+                
+                # Look for sale date patterns
+                date_patterns = [
+                    r'Tuesday,?\s*August\s*26[tT][hH],?\s*2025',
+                    r'August\s*26[tT][hH]?,?\s*2025',
+                    r'2025.*August.*26',
+                    r'26.*August.*2025',
+                ]
+                
+                print(f"\n      Testing sale date patterns:")
+                for i, pattern in enumerate(date_patterns):
+                    matches = re.findall(pattern, full_text, re.IGNORECASE)
+                    print(f"         Pattern {i+1} '{pattern}': {len(matches)} matches")
+                    if matches:
+                        print(f"            Found dates: {matches}")
+                
+                # Show a sample of the PDF text for manual inspection
+                print(f"\n   📄 PDF TEXT SAMPLE (First 1000 characters):")
+                print(f"      '{full_text[:1000]}...'")
+                
+                # Show text around AAN occurrences
+                if aan_positions:
+                    print(f"\n   📄 TEXT AROUND FIRST AAN OCCURRENCE:")
+                    first_aan_pos = aan_positions[0]
+                    start_pos = max(0, first_aan_pos[0] - 200)
+                    end_pos = min(len(full_text), first_aan_pos[1] + 200)
+                    context_text = full_text[start_pos:end_pos]
+                    print(f"      '{context_text}'")
+                
+                # Determine parsing issues based on analysis
+                print(f"\n   🚨 PARSING ISSUE ANALYSIS:")
+                
+                if analysis.get('aan_occurrences', 0) < 3:
+                    print(f"      ❌ ISSUE: Only {analysis.get('aan_occurrences', 0)} AAN occurrences found (expected 3+)")
+                    print(f"         - PDF may not contain 3 separate properties")
+                    print(f"         - AAN pattern may not match PDF format")
+                
+                if analysis.get('numbered_sections', 0) == 0:
+                    print(f"      ❌ ISSUE: No numbered sections (1. AAN:, 2. AAN:) found")
+                    print(f"         - PDF may not use numbered property format")
+                    print(f"         - Parser expects numbered sections but PDF uses different structure")
+                
+                if analysis.get('property_assessed_occurrences', 0) < 3:
+                    print(f"      ❌ ISSUE: Only {analysis.get('property_assessed_occurrences', 0)} 'Property assessed to' occurrences")
+                    print(f"         - PDF may use different owner designation format")
+                
+                # Provide recommendations
+                print(f"\n   💡 RECOMMENDATIONS:")
+                print(f"      1. Check if PDF actually contains 3 properties or just 1")
+                print(f"      2. Verify the actual format used in Victoria County PDF")
+                print(f"      3. Update regex patterns to match actual PDF structure")
+                print(f"      4. Consider alternative property splitting methods")
+                
+                return True, {
+                    "pdf_accessible": True,
+                    "pdf_size": debug_data.get('pdf_size_bytes', 0),
+                    "text_length": debug_data.get('extracted_text_length', 0),
+                    "aan_occurrences": analysis.get('aan_occurrences', 0),
+                    "numbered_sections": analysis.get('numbered_sections', 0),
+                    "property_assessed_occurrences": analysis.get('property_assessed_occurrences', 0),
+                    "full_text_sample": full_text[:500] if full_text else ""
+                }
+                
+            else:
+                print(f"   ❌ PDF is not accessible")
+                print(f"      Error: {debug_data.get('error', 'Unknown error')}")
+                return False, {"error": "PDF not accessible", "details": debug_data.get('error')}
+                
+        else:
+            print(f"   ❌ Debug endpoint failed with status {debug_response.status_code}")
+            try:
+                error_detail = debug_response.json()
+                print(f"      Error: {error_detail}")
+            except:
+                print(f"      Raw response: {debug_response.text}")
+            return False, {"error": f"Debug endpoint failed with HTTP {debug_response.status_code}"}
+            
+    except Exception as e:
+        print(f"   ❌ Victoria County debug test error: {e}")
+        return False, {"error": str(e)}
+
 def test_victoria_county_pdf_parser():
     """Test Victoria County PDF Parser - Complete Rewrite Testing"""
     print("\n🏛️ Testing Victoria County PDF Parser (Complete Rewrite)...")
