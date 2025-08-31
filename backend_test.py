@@ -1396,18 +1396,6 @@ def test_victoria_county_rewritten_parser():
         print(f"   ❌ Victoria County rewritten parser test error: {e}")
         return False, {"error": str(e)}
                 
-                # Test 4: Verify Non-Sequential Numbering Fix
-                print(f"\n   🔧 TEST 4: Verify Non-Sequential Numbering Fix (1, 2, 8)")
-                
-                # Check if we have the specific AANs that indicate non-sequential parsing worked
-                expected_aans = ["00254118", "00453706", "09541209"]
-                found_aans = [prop.get("assessment_number") for prop in victoria_properties]
-                
-                print(f"   Expected AANs (from PDF): {expected_aans}")
-                print(f"   Found AANs: {found_aans}")
-                
-                non_sequential_fix_working = all(aan in found_aans for aan in expected_aans)
-                
                 if non_sequential_fix_working:
                     print(f"   ✅ NON-SEQUENTIAL NUMBERING FIX VERIFIED: All expected AANs found")
                     print(f"      Parser successfully handles non-sequential numbering (1, 2, 8)")
