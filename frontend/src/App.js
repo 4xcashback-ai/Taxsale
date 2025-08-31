@@ -1884,40 +1884,49 @@ function PropertySearch() {
                   </div>
 
                   {/* Deployment Actions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <Button
+                      onClick={refreshDeploymentStatus}
+                      disabled={buttonStates.refresh}
+                      className="bg-gray-600 hover:bg-gray-700"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${buttonStates.refresh ? 'animate-spin' : ''}`} />
+                      Refresh Status
+                    </Button>
+                    
                     <Button
                       onClick={checkForUpdates}
-                      disabled={deploymentLoading}
+                      disabled={buttonStates.checkUpdates}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${deploymentLoading ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`h-4 w-4 mr-2 ${buttonStates.checkUpdates ? 'animate-spin' : ''}`} />
                       Check Updates
                     </Button>
                     
                     <Button
                       onClick={deployApplication}
-                      disabled={deploymentLoading}
+                      disabled={buttonStates.deploy}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      <Download className="h-4 w-4 mr-2" />
+                      <Download className={`h-4 w-4 mr-2 ${buttonStates.deploy ? 'animate-pulse' : ''}`} />
                       Deploy Latest
                     </Button>
                     
                     <Button
                       onClick={verifyDeployment}
-                      disabled={deploymentLoading}
+                      disabled={buttonStates.verify}
                       className="bg-purple-600 hover:bg-purple-700"
                     >
-                      <Check className="h-4 w-4 mr-2" />
+                      <Check className={`h-4 w-4 mr-2 ${buttonStates.verify ? 'animate-pulse' : ''}`} />
                       Verify Status
                     </Button>
                     
                     <Button
-                      onClick={fetchSystemHealth}
-                      disabled={deploymentLoading}
+                      onClick={handleHealthCheck}
+                      disabled={buttonStates.health}
                       className="bg-orange-600 hover:bg-orange-700"
                     >
-                      <BarChart3 className="h-4 w-4 mr-2" />
+                      <BarChart3 className={`h-4 w-4 mr-2 ${buttonStates.health ? 'animate-pulse' : ''}`} />
                       Health Check
                     </Button>
                   </div>
