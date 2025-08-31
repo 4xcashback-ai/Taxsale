@@ -400,48 +400,41 @@ def test_victoria_county_data_extraction_debug():
             print(f"      - This indicates the boundary screenshot generation process is not working")
             print(f"      - May be related to coordinates, Google Maps API, or image processing pipeline")
         
-        # Final Assessment
-        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Improved Parser:")
+        # Final Assessment - Victoria County Data Extraction Debug
+        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Data Extraction Debug:")
         
         requirements_met = []
         requirements_failed = []
         
-        # Requirement 1: Enhanced regex patterns working
+        # Requirement 1: Current Victoria County properties data extraction
         if scrape_response.status_code == 200:
-            requirements_met.append("1. Enhanced regex patterns working")
+            requirements_met.append("1. Victoria County scraper execution")
         else:
-            requirements_failed.append("1. Enhanced regex patterns working")
+            requirements_failed.append("1. Victoria County scraper execution")
         
-        # Requirement 2: All 3 properties extracted
-        if properties_count == 3:
-            requirements_met.append("2. All 3 properties extracted")
+        # Requirement 2: Minimum bid calculations correct
+        if bid_calculations_correct:
+            requirements_met.append("2. Minimum bid calculations correct")
         else:
-            requirements_failed.append("2. All 3 properties extracted")
+            requirements_failed.append("2. Minimum bid calculations correct")
         
-        # Requirement 3: Pattern matching for different formats
-        if debug_response.status_code == 200 and aan_count >= 3:
-            requirements_met.append("3. Pattern matching handles different formats")
+        # Requirement 3: Boundary screenshot generation
+        if boundary_images_present:
+            requirements_met.append("3. Boundary screenshot generation")
         else:
-            requirements_failed.append("3. Pattern matching handles different formats")
+            requirements_failed.append("3. Boundary screenshot generation")
         
-        # Requirement 4: Complete data validation
-        if all_data_complete:
-            requirements_met.append("4. Complete data validation")
+        # Requirement 4: Tax amount extraction patterns
+        if debug_response.status_code == 200 and tax_matches:
+            requirements_met.append("4. Tax amount extraction patterns")
         else:
-            requirements_failed.append("4. Complete data validation")
+            requirements_failed.append("4. Tax amount extraction patterns")
         
-        # Requirement 5: No fallback data
-        if not fallback_detected:
-            requirements_met.append("5. No fallback data")
+        # Requirement 5: Google Maps API and property images
+        if google_maps_working:
+            requirements_met.append("5. Google Maps API and property images")
         else:
-            requirements_failed.append("5. No fallback data")
-        
-        # Requirement 6: Correct sale date
-        sale_date_correct = any("2025-08-26" in str(prop.get("sale_date", "")) for prop in victoria_properties)
-        if sale_date_correct:
-            requirements_met.append("6. Correct sale date (2025-08-26)")
-        else:
-            requirements_failed.append("6. Correct sale date (2025-08-26)")
+            requirements_failed.append("5. Google Maps API and property images")
         
         print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/6):")
         for req in requirements_met:
