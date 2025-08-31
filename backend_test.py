@@ -4859,48 +4859,81 @@ def main():
     
     # Test 1: Basic API Connection
     print("\n🔗 Testing API Connection...")
-    api_success = test_api_connection()
+    api_success, _ = test_api_connection()
     if not api_success:
         print("❌ Cannot proceed - API connection failed")
         return False
     
-    # Test 2: Land Size Regex Fix for Assessment 00374059 (Primary Focus)
-    print("\n🏞️ Testing Land Size Regex Fix for Assessment 00374059...")
-    land_fix_success, land_fix_result = test_land_size_scraping_fix_00374059()
+    # Test 2: PVSC Data Availability for Assessment 00554596 (Primary Focus)
+    print("\n🏠 Testing PVSC Data Availability for Assessment 00554596...")
+    pvsc_00554596_success, pvsc_00554596_result = test_pvsc_data_availability_00554596()
     
-    # Test 3: Enhanced PVSC Scraping Verification (Secondary)
-    print("\n🏠 Testing Enhanced PVSC Scraping Endpoints...")
-    try:
-        pvsc_success, pvsc_result = test_enhanced_pvsc_scraping()
-    except NameError:
-        print("   ⚠️ Enhanced PVSC scraping test not available - skipping")
-        pvsc_success, pvsc_result = True, {"note": "Test skipped"}
+    # Test 3: Compare with Working Property 00374059 (Secondary)
+    print("\n🏞️ Testing Working Property 00374059 for Comparison...")
+    land_fix_success, land_fix_result = test_land_size_scraping_fix_00374059()
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 LAND SIZE REGEX FIX TESTING SUMMARY")
+    print("🏁 PVSC DATA AVAILABILITY TESTING SUMMARY")
     print("=" * 80)
     
-    if land_fix_success:
-        print("✅ Land size regex fix verification completed successfully")
-        if land_fix_result and 'land_size_value' in land_fix_result:
-            print(f"   ✅ Assessment 00374059 land_size: '{land_fix_result['land_size_value']}'")
-        if land_fix_result and 'regex_fix_working' in land_fix_result:
-            print(f"   ✅ Regex fix working: {land_fix_result['regex_fix_working']}")
-        print("   🎯 SUCCESS: Enhanced endpoint now returns complete data with land_size field")
+    if pvsc_00554596_success:
+        print("✅ Assessment 00554596 testing completed successfully")
+        if pvsc_00554596_result:
+            print(f"   📊 Assessment: {pvsc_00554596_result.get('assessment', 'N/A')}")
+            print(f"   📊 Has land_size: {pvsc_00554596_result.get('has_land_size', False)}")
+            print(f"   📊 Land_size value: '{pvsc_00554596_result.get('land_size_value', 'N/A')}'")
+            print(f"   📊 Shows .00 Acres: {pvsc_00554596_result.get('shows_zero_acres', False)}")
+            print(f"   📊 PVSC fields populated: {pvsc_00554596_result.get('pvsc_fields_populated', 0)}")
+            print(f"   📊 Needs regex investigation: {pvsc_00554596_result.get('needs_regex_investigation', False)}")
+            
+            if pvsc_00554596_result.get('working_property_comparison'):
+                print(f"   📊 Working property (00374059) land_size: '{pvsc_00554596_result['working_property_comparison']}'")
     else:
-        print("❌ Land size regex fix verification has issues")
-        if land_fix_result and 'error' in land_fix_result:
-            print(f"   ❌ Error: {land_fix_result['error']}")
-        if land_fix_result and 'land_size_value' in land_fix_result:
-            print(f"   📊 Current land_size value: {land_fix_result['land_size_value']}")
+        print("❌ Assessment 00554596 testing has issues")
+        if pvsc_00554596_result and 'error' in pvsc_00554596_result:
+            print(f"   ❌ Error: {pvsc_00554596_result['error']}")
     
-    print(f"\n🎯 REVIEW REQUEST STATUS:")
-    print(f"   Enhanced endpoint for 00374059: {'✅ WORKING' if land_fix_success else '❌ FAILING'}")
-    print(f"   Land_size field captures '28.44 Acres': {'✅ YES' if land_fix_success and land_fix_result.get('regex_fix_working') else '❌ NO'}")
-    print(f"   Regex fix confirmed working: {'✅ CONFIRMED' if land_fix_success else '❌ NOT CONFIRMED'}")
+    print(f"\n🎯 REVIEW REQUEST ANALYSIS:")
     
-    return land_fix_success
+    # Determine the issue type
+    if pvsc_00554596_result:
+        shows_zero_acres = pvsc_00554596_result.get('shows_zero_acres', False)
+        has_land_size = pvsc_00554596_result.get('has_land_size', False)
+        pvsc_fields = pvsc_00554596_result.get('pvsc_fields_populated', 0)
+        
+        if shows_zero_acres:
+            print(f"   ❌ PROBLEM CONFIRMED: Assessment 00554596 shows '.00 Acres' instead of actual land size")
+            print(f"   🔍 ROOT CAUSE: PVSC website likely has land size data but regex pattern isn't capturing it")
+            print(f"   💡 SOLUTION NEEDED: Check PVSC website for different land size formats and update regex")
+        elif not has_land_size and pvsc_fields > 2:
+            print(f"   ❌ PROBLEM: Assessment 00554596 has no land_size but PVSC has other data ({pvsc_fields} fields)")
+            print(f"   🔍 ROOT CAUSE: PVSC website may have land size in different format not captured by regex")
+            print(f"   💡 SOLUTION NEEDED: Investigate PVSC website HTML structure for land size data")
+        elif not has_land_size and pvsc_fields <= 2:
+            print(f"   ⚠️ DATA LIMITATION: Assessment 00554596 has minimal PVSC data ({pvsc_fields} fields)")
+            print(f"   🔍 ROOT CAUSE: PVSC website may not have land size data for this property")
+            print(f"   💡 CONCLUSION: This may be a data availability issue, not a regex issue")
+        else:
+            print(f"   ✅ Assessment 00554596 land_size working correctly")
+    
+    print(f"\n🎯 COMPARISON WITH WORKING PROPERTY:")
+    if land_fix_success and land_fix_result:
+        print(f"   ✅ Assessment 00374059 working correctly")
+        print(f"   📊 Land_size: '{land_fix_result.get('land_size_value', 'N/A')}'")
+    else:
+        print(f"   ❌ Assessment 00374059 also has issues")
+    
+    print(f"\n🎯 RECOMMENDATIONS:")
+    if pvsc_00554596_result and pvsc_00554596_result.get('needs_regex_investigation'):
+        print(f"   🔧 1. Check PVSC website HTML for assessment 00554596 manually")
+        print(f"   🔧 2. Look for different land size formats (e.g., different units, spacing, labels)")
+        print(f"   🔧 3. Update regex pattern to capture additional formats")
+        print(f"   🔧 4. Test regex changes with both 00554596 and 00374059")
+    else:
+        print(f"   ✅ No immediate regex changes needed")
+    
+    return pvsc_00554596_success
 
 if __name__ == "__main__":
     success = main()
