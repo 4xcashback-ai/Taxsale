@@ -188,8 +188,8 @@ def test_victoria_county_fixed_scraper():
                 print(f"      Raw response: {scrape_response.text[:200]}...")
             return False, {"error": f"Fixed scraper failed with HTTP {scrape_response.status_code}"}
         
-        # Test 2: Verify Minimum Bid Calculations Against PDF Tax Amounts
-        print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Minimum Bid Calculations)")
+        # Test 2: Verify Fixed Minimum Bid Calculations
+        print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Fixed Minimum Bid Calculations)")
         
         properties_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria County", timeout=30)
         
@@ -199,18 +199,27 @@ def test_victoria_county_fixed_scraper():
             
             print(f"   ✅ Retrieved {len(victoria_properties)} Victoria County properties from database")
             
-            # Expected minimum bids from PDF tax amounts (from review request)
+            # Expected minimum bids from fixed tax amount extraction (from review request)
             expected_bids = {
-                "00254118": 2009.03,  # Entry 1: Should be $2,009.03
-                "00453706": 1599.71,  # Entry 2: Should be $1,599.71  
-                "09541209": 5031.96   # Entry 8: Should be $5,031.96 + HST
+                "00254118": 2009.03,  # Entry 1: Should be $2,009.03 (not $2.0)
+                "00453706": 1599.71,  # Entry 2: Should be $1,599.71 (not $1.0)  
+                "09541209": 5031.96   # Entry 8: Should be $5,031.96 (not $0.0)
             }
             
-            print(f"\n   🎯 VERIFYING MINIMUM BID CALCULATIONS:")
+            # Expected locations for coordinate verification
+            expected_locations = {
+                "00254118": "Little Narrows",
+                "00453706": "Middle River", 
+                "09541209": "Washabuck"
+            }
+            
+            print(f"\n   🎯 VERIFYING FIXED MINIMUM BID CALCULATIONS:")
             
             found_aans = []
             bid_calculations_correct = True
             boundary_images_present = True
+            coordinates_assigned = True
+            hst_detection_correct = True
             
             for i, prop in enumerate(victoria_properties):
                 aan = prop.get("assessment_number")
