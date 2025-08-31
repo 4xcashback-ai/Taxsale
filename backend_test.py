@@ -7263,49 +7263,54 @@ def main():
         print(f"   {status} {test_name.replace('_', ' ').title()}")
     
     # Detailed findings for Victoria County parser
-    print(f"\n🎯 VICTORIA COUNTY FIXED PARSER RESULTS:")
+    print(f"\n🎯 VICTORIA COUNTY REWRITTEN PARSER RESULTS:")
     
     if victoria_parser_results and isinstance(victoria_parser_results, dict):
         print(f"   📊 Parser Performance:")
         print(f"      - Properties Found: {victoria_parser_results.get('properties_found', 0)}/3")
-        print(f"      - All Data Correct: {'✅' if victoria_parser_results.get('all_data_correct', False) else '❌'}")
+        print(f"      - All Details Correct: {'✅' if victoria_parser_results.get('all_details_correct', False) else '❌'}")
         print(f"      - No Fallback Data: {'✅' if victoria_parser_results.get('no_fallback_data', False) else '❌'}")
-        print(f"      - Non-Sequential Fix Working: {'✅' if victoria_parser_results.get('non_sequential_fix_working', False) else '❌'}")
+        print(f"      - PDF Structure Understood: {'✅' if victoria_parser_results.get('pdf_structure_understood', False) else '❌'}")
         
         # Show found properties
         found_properties = victoria_parser_results.get('properties', [])
         if found_properties:
             print(f"\n   📋 Found Properties:")
             for i, prop in enumerate(found_properties):
-                print(f"      {i+1}. AAN: {prop.get('aan')}, Owner: {prop.get('owner')}, PID: {prop.get('pid')}")
+                print(f"      {i+1}. AAN: {prop.get('aan')}, Owner: {prop.get('owner')}")
+                print(f"          Address: {prop.get('address')}")
+                print(f"          PID: {prop.get('pid')}, Tax: ${prop.get('opening_bid', 0):.2f}")
         
         # Show missing properties
         missing_properties = victoria_parser_results.get('missing_properties', [])
         if missing_properties:
             print(f"\n   ❌ Missing Properties:")
             for missing in missing_properties:
-                print(f"      - AAN: {missing.get('aan')}, Owner: {missing.get('owner')}, PID: {missing.get('pid')}")
+                print(f"      - AAN: {missing.get('aan')}, Owner: {missing.get('owner')}")
+                print(f"        Address: {missing.get('address')}, Tax: ${missing.get('tax_amount', 0):.2f}")
         
         # Overall assessment
         if (victoria_parser_results.get('properties_found', 0) == 3 and 
-            victoria_parser_results.get('all_data_correct', False) and 
+            victoria_parser_results.get('all_details_correct', False) and 
             victoria_parser_results.get('no_fallback_data', False) and 
-            victoria_parser_results.get('non_sequential_fix_working', False)):
-            print(f"\n   ✅ VICTORIA COUNTY PARSER FIX: COMPLETELY SUCCESSFUL")
-            print(f"      - All 3 properties found with correct data")
-            print(f"      - Non-sequential numbering (1, 2, 8) handled correctly")
-            print(f"      - All expected AANs, owners, and PIDs verified")
-            print(f"      - Sale date 2025-08-26 extracted correctly")
+            victoria_parser_results.get('pdf_structure_understood', False)):
+            print(f"\n   ✅ VICTORIA COUNTY REWRITTEN PARSER: COMPLETELY SUCCESSFUL")
+            print(f"      - All 3 properties found with exact details")
+            print(f"      - PDF structure correctly understood (entries 1, 2, 8 only)")
+            print(f"      - Multiple PID handling working (85010866/85074276)")
+            print(f"      - Property types distinguished (Land/Dwelling vs Land only)")
+            print(f"      - Lot sizes in correct formats (Sq. Feet and Acres)")
+            print(f"      - Tax amounts correctly extracted")
         else:
-            print(f"\n   ❌ VICTORIA COUNTY PARSER FIX: NEEDS ADDITIONAL WORK")
+            print(f"\n   ❌ VICTORIA COUNTY REWRITTEN PARSER: NEEDS ADDITIONAL WORK")
             if victoria_parser_results.get('properties_found', 0) < 3:
                 print(f"      - Still not finding all 3 properties from PDF")
-            if not victoria_parser_results.get('all_data_correct', False):
-                print(f"      - Property data not matching expected values")
+            if not victoria_parser_results.get('all_details_correct', False):
+                print(f"      - Property details not matching expected values")
             if not victoria_parser_results.get('no_fallback_data', False):
                 print(f"      - Still using fallback data instead of PDF parsing")
-            if not victoria_parser_results.get('non_sequential_fix_working', False):
-                print(f"      - Non-sequential numbering fix not working")
+            if not victoria_parser_results.get('pdf_structure_understood', False):
+                print(f"      - PDF structure not correctly understood")
     
     print(f"\n🏁 Testing completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
