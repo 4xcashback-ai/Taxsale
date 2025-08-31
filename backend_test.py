@@ -523,87 +523,84 @@ def test_victoria_county_fixed_scraper():
             if not boundary_images_present:
                 print(f"      - Boundary screenshot files not created or not accessible")
         
-        # Final Assessment - Victoria County Data Extraction Debug
-        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Data Extraction Debug:")
+        # Final Assessment - Victoria County Fixed Scraper
+        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Fixed Scraper:")
         
         requirements_met = []
         requirements_failed = []
         
-        # Requirement 1: Current Victoria County properties data extraction
-        if scrape_response.status_code == 200:
-            requirements_met.append("1. Victoria County scraper execution")
+        # Requirement 1: Fixed scraper execution with enhanced tax amount extraction
+        if scrape_response.status_code == 200 and properties_count == 3:
+            requirements_met.append("1. Fixed scraper with enhanced tax amount extraction patterns")
         else:
-            requirements_failed.append("1. Victoria County scraper execution")
+            requirements_failed.append("1. Fixed scraper with enhanced tax amount extraction patterns")
         
-        # Requirement 2: Minimum bid calculations correct
+        # Requirement 2: Correct minimum bids (fixed calculations)
         if bid_calculations_correct:
-            requirements_met.append("2. Minimum bid calculations correct")
+            requirements_met.append("2. Correct minimum bids - Entry 1: $2,009.03, Entry 2: $1,599.71, Entry 8: $5,031.96")
         else:
-            requirements_failed.append("2. Minimum bid calculations correct")
+            requirements_failed.append("2. Correct minimum bids - Entry 1: $2,009.03, Entry 2: $1,599.71, Entry 8: $5,031.96")
         
-        # Requirement 3: Boundary screenshot generation
-        if boundary_images_present:
-            requirements_met.append("3. Boundary screenshot generation")
+        # Requirement 3: Boundary image generation with coordinates
+        if coordinates_assigned and boundary_images_present:
+            requirements_met.append("3. Boundary image generation - coordinates and screenshot URLs")
         else:
-            requirements_failed.append("3. Boundary screenshot generation")
+            requirements_failed.append("3. Boundary image generation - coordinates and screenshot URLs")
         
-        # Requirement 4: Tax amount extraction patterns  
-        tax_patterns_working = False
-        if 'debug_response' in locals() and debug_response.status_code == 200:
-            debug_data = debug_response.json()
-            pdf_content = debug_data.get('pdf_content_preview', '')
-            import re
-            tax_matches = re.findall(r"Taxes, Interest and Expenses owing:\s*\$[\d,]+\.?\d*", pdf_content)
-            if tax_matches:
-                tax_patterns_working = True
-        
-        if tax_patterns_working:
-            requirements_met.append("4. Tax amount extraction patterns")
+        # Requirement 4: HST detection for Entry 8
+        if hst_detection_correct:
+            requirements_met.append("4. HST detection - Entry 8 shows 'Yes' due to '+ HST' in PDF")
         else:
-            requirements_failed.append("4. Tax amount extraction patterns")
+            requirements_failed.append("4. HST detection - Entry 8 shows 'Yes' due to '+ HST' in PDF")
         
-        # Requirement 5: Google Maps API and property images
-        if google_maps_working:
-            requirements_met.append("5. Google Maps API and property images")
+        # Requirement 5: Boundary image endpoints accessible
+        if boundary_endpoints_working:
+            requirements_met.append("5. Boundary image endpoints accessible")
         else:
-            requirements_failed.append("5. Google Maps API and property images")
+            requirements_failed.append("5. Boundary image endpoints accessible")
         
-        print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/6):")
+        print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/5):")
         for req in requirements_met:
             print(f"      ✅ {req}")
         
         if requirements_failed:
-            print(f"\n   ❌ REQUIREMENTS FAILED ({len(requirements_failed)}/6):")
+            print(f"\n   ❌ REQUIREMENTS FAILED ({len(requirements_failed)}/5):")
             for req in requirements_failed:
                 print(f"      ❌ {req}")
         
         # Overall result
         if len(requirements_failed) == 0:
-            print(f"\n   🎉 VICTORIA COUNTY IMPROVED PARSER: ALL REQUIREMENTS MET!")
-            print(f"   ✅ Enhanced regex patterns successfully extract all 3 properties")
-            print(f"   ✅ Pattern matching handles different property formats and multiple PIDs")
-            print(f"   ✅ All properties have correct owners, addresses, tax amounts, and property types")
-            print(f"   ✅ Using actual PDF data, not fallback sample data")
-            print(f"   ✅ Sale date correctly set to 2025-08-26")
+            print(f"\n   🎉 VICTORIA COUNTY FIXED SCRAPER: ALL REQUIREMENTS MET!")
+            print(f"   ✅ Enhanced tax amount extraction patterns working correctly")
+            print(f"   ✅ All 3 properties show correct minimum bids from PDF tax amounts")
+            print(f"   ✅ Boundary image generation working with proper coordinates")
+            print(f"   ✅ Location-specific coordinates assigned for Little Narrows, Middle River, Washabuck")
+            print(f"   ✅ HST detection working for Entry 8 with '+ HST' indicator")
+            print(f"   ✅ Boundary image endpoints accessible for all properties")
             return True, {
                 "requirements_met": len(requirements_met),
                 "requirements_failed": len(requirements_failed),
                 "properties_found": properties_count,
-                "all_data_complete": all_data_complete,
-                "fallback_detected": fallback_detected,
-                "expected_aans_found": found_aans,
-                "sale_date_correct": sale_date_correct
+                "bid_calculations_correct": bid_calculations_correct,
+                "coordinates_assigned": coordinates_assigned,
+                "boundary_images_present": boundary_images_present,
+                "hst_detection_correct": hst_detection_correct,
+                "boundary_endpoints_working": boundary_endpoints_working,
+                "expected_aans_found": found_aans
             }
         else:
-            print(f"\n   ❌ VICTORIA COUNTY IMPROVED PARSER: {len(requirements_failed)} REQUIREMENTS FAILED")
+            print(f"\n   ❌ VICTORIA COUNTY FIXED SCRAPER: {len(requirements_failed)} REQUIREMENTS FAILED")
             return False, {
                 "requirements_met": len(requirements_met),
                 "requirements_failed": len(requirements_failed),
                 "failed_requirements": requirements_failed,
                 "properties_found": properties_count,
-                "all_data_complete": all_data_complete,
-                "fallback_detected": fallback_detected,
-                "sale_date_correct": sale_date_correct
+                "bid_calculations_correct": bid_calculations_correct,
+                "coordinates_assigned": coordinates_assigned,
+                "boundary_images_present": boundary_images_present,
+                "hst_detection_correct": hst_detection_correct,
+                "boundary_endpoints_working": boundary_endpoints_working,
+                "expected_aans_found": found_aans
             }
             
     except Exception as e:
