@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts
+Focus on Victoria County thumbnail accuracy issue - properties showing vacant land instead of dwellings
 """
 
 import requests
