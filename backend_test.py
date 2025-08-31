@@ -146,31 +146,34 @@ def test_victoria_county_scraper_with_pdf_extraction():
     print("   - Do boundary images continue to work properly?")
     
     try:
-        # Test 1: Get Halifax Properties for Comparison
-        print(f"\n   🔧 TEST 1: GET Halifax Properties for Thumbnail Comparison")
+        # Test 1: Execute Victoria County Scraper
+        print(f"\n   🔧 TEST 1: Execute Victoria County Scraper with Direct PDF Extraction")
         
-        halifax_properties = []
-        victoria_properties = []
+        scraper_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=60)
         
-        # Get all tax sales and filter by municipality
-        response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
-        if response.status_code == 200:
-            all_properties = response.json()
-            halifax_properties = [p for p in all_properties if "Halifax" in p.get("municipality_name", "")]
-            victoria_properties = [p for p in all_properties if "Victoria County" in p.get("municipality_name", "")]
+        if scraper_response.status_code == 200:
+            scraper_result = scraper_response.json()
+            print(f"   ✅ Victoria County scraper executed successfully")
+            print(f"      Status: {scraper_result.get('status', 'unknown')}")
+            print(f"      Properties scraped: {scraper_result.get('properties_scraped', 0)}")
+            print(f"      Municipality: {scraper_result.get('municipality', 'unknown')}")
             
-            print(f"   ✅ Retrieved properties for comparison")
-            print(f"      Halifax properties: {len(halifax_properties)}")
-            print(f"      Victoria County properties: {len(victoria_properties)}")
+            if scraper_result.get('status') != 'success':
+                print(f"   ❌ Scraper status not successful: {scraper_result.get('status')}")
+                return False, {"error": f"Scraper failed with status: {scraper_result.get('status')}"}
             
-            if not halifax_properties:
-                print(f"   ⚠️ No Halifax properties found - may need to run Halifax scraper first")
-            if not victoria_properties:
-                print(f"   ⚠️ No Victoria County properties found - may need to run Victoria County scraper first")
+            if scraper_result.get('properties_scraped', 0) != 3:
+                print(f"   ❌ Expected 3 properties, got {scraper_result.get('properties_scraped', 0)}")
+                return False, {"error": f"Expected 3 properties, got {scraper_result.get('properties_scraped', 0)}"}
                 
         else:
-            print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
-            return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
+            print(f"   ❌ Victoria County scraper failed: HTTP {scraper_response.status_code}")
+            try:
+                error_detail = scraper_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Error response: {scraper_response.text}")
+            return False, {"error": f"Scraper failed with HTTP {scraper_response.status_code}"}
         
         # Test 2: Compare Halifax Property Thumbnails
         print(f"\n   🔧 TEST 2: Test Halifax Property Thumbnails")
