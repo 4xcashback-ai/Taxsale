@@ -294,62 +294,92 @@ def test_victoria_county_scraper_with_pdf_extraction():
             print(f"   ❌ CRITICAL: HST detection for Entry 8 is incorrect!")
             return False, {"error": "HST detection incorrect for Entry 8", "details": hst_verification_results}
         
-        # Test 5: Verify Boundary Generation Process Comparison
-        print(f"\n   🔧 TEST 5: Verify Boundary Generation Process for Both Municipality Types")
+        # Test 5: Test Boundary Images - Confirm Boundary Screenshot URLs are Working
+        print(f"\n   🔧 TEST 5: Test Boundary Images - Confirm Boundary Screenshot URLs are Working")
         
-        print(f"\n   🔍 TESTING /api/property-image ENDPOINT FOR BOTH MUNICIPALITIES:")
+        boundary_image_results = {
+            "properties_with_coordinates": 0,
+            "properties_with_boundary_urls": 0,
+            "working_boundary_endpoints": 0,
+            "boundary_image_sizes": [],
+            "boundary_details": []
+        }
         
-        # Test Halifax property image endpoints
-        halifax_endpoint_results = []
-        if halifax_properties:
-            print(f"\n   📍 Testing Halifax Property Image Endpoints:")
-            for i, prop in enumerate(halifax_properties[:3]):  # Test first 3
-                aan = prop.get("assessment_number")
-                if aan:
-                    try:
-                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
-                        result = {
-                            "aan": aan,
-                            "status_code": image_response.status_code,
-                            "content_type": image_response.headers.get('content-type', 'unknown'),
-                            "size": len(image_response.content) if image_response.status_code == 200 else 0,
-                            "working": image_response.status_code == 200
-                        }
-                        halifax_endpoint_results.append(result)
+        print(f"   📊 Testing boundary images for all 3 Victoria County properties...")
+        
+        for i, prop in enumerate(victoria_properties):
+            aan = prop.get("assessment_number")
+            owner = prop.get("owner_name")
+            latitude = prop.get("latitude")
+            longitude = prop.get("longitude")
+            boundary_screenshot = prop.get("boundary_screenshot")
+            
+            print(f"\n   📋 Property {i+1} - AAN {aan}:")
+            print(f"      Owner: {owner}")
+            print(f"      Coordinates: {latitude}, {longitude}")
+            print(f"      Boundary Screenshot: {boundary_screenshot}")
+            
+            # Check coordinates
+            if latitude and longitude:
+                boundary_image_results["properties_with_coordinates"] += 1
+                print(f"      ✅ Has coordinates for boundary generation")
+                
+                # Verify coordinates are in Cape Breton region
+                if 45.5 <= latitude <= 47.0 and -61.5 <= longitude <= -59.5:
+                    print(f"      ✅ Coordinates within Cape Breton region")
+                else:
+                    print(f"      ⚠️ Coordinates outside expected Cape Breton region")
+            else:
+                print(f"      ❌ Missing coordinates - cannot generate boundary images")
+            
+            # Check boundary screenshot URL
+            if boundary_screenshot:
+                boundary_image_results["properties_with_boundary_urls"] += 1
+                print(f"      ✅ Has boundary screenshot URL")
+            else:
+                print(f"      ❌ No boundary screenshot URL")
+            
+            # Test property image endpoint
+            if aan:
+                try:
+                    image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
+                    if image_response.status_code == 200:
+                        image_size = len(image_response.content)
+                        content_type = image_response.headers.get('content-type', 'unknown')
+                        boundary_image_results["working_boundary_endpoints"] += 1
+                        boundary_image_results["boundary_image_sizes"].append(image_size)
+                        print(f"      ✅ Boundary image endpoint working - Size: {image_size} bytes")
+                        print(f"      📷 Content-Type: {content_type}")
                         
-                        if result["working"]:
-                            print(f"      ✅ Halifax AAN {aan}: {result['size']} bytes, {result['content_type']}")
+                        # Verify it's a valid image
+                        if 'image' in content_type and image_size > 1000:
+                            print(f"      ✅ Valid boundary image confirmed")
                         else:
-                            print(f"      ❌ Halifax AAN {aan}: HTTP {result['status_code']}")
-                    except Exception as e:
-                        print(f"      ❌ Halifax AAN {aan}: Error - {e}")
-                        halifax_endpoint_results.append({"aan": aan, "working": False, "error": str(e)})
+                            print(f"      ⚠️ Image may be invalid or too small")
+                    else:
+                        print(f"      ❌ Boundary image endpoint failed - HTTP {image_response.status_code}")
+                except Exception as e:
+                    print(f"      ❌ Boundary image endpoint error: {e}")
+            
+            boundary_image_results["boundary_details"].append({
+                "aan": aan,
+                "has_coordinates": bool(latitude and longitude),
+                "has_boundary_url": bool(boundary_screenshot),
+                "image_endpoint_working": False  # Will be updated above
+            })
         
-        # Test Victoria County property image endpoints
-        victoria_endpoint_results = []
-        if victoria_properties:
-            print(f"\n   📍 Testing Victoria County Property Image Endpoints:")
-            for i, prop in enumerate(victoria_properties):
-                aan = prop.get("assessment_number")
-                if aan:
-                    try:
-                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
-                        result = {
-                            "aan": aan,
-                            "status_code": image_response.status_code,
-                            "content_type": image_response.headers.get('content-type', 'unknown'),
-                            "size": len(image_response.content) if image_response.status_code == 200 else 0,
-                            "working": image_response.status_code == 200
-                        }
-                        victoria_endpoint_results.append(result)
-                        
-                        if result["working"]:
-                            print(f"      ✅ Victoria County AAN {aan}: {result['size']} bytes, {result['content_type']}")
-                        else:
-                            print(f"      ❌ Victoria County AAN {aan}: HTTP {result['status_code']}")
-                    except Exception as e:
-                        print(f"      ❌ Victoria County AAN {aan}: Error - {e}")
-                        victoria_endpoint_results.append({"aan": aan, "working": False, "error": str(e)})
+        print(f"\n   📊 Boundary Image Summary:")
+        print(f"      Properties with coordinates: {boundary_image_results['properties_with_coordinates']}/3")
+        print(f"      Properties with boundary URLs: {boundary_image_results['properties_with_boundary_urls']}/3")
+        print(f"      Working boundary endpoints: {boundary_image_results['working_boundary_endpoints']}/3")
+        
+        if boundary_image_results["boundary_image_sizes"]:
+            avg_size = sum(boundary_image_results["boundary_image_sizes"]) / len(boundary_image_results["boundary_image_sizes"])
+            print(f"      Average boundary image size: {avg_size:.0f} bytes")
+        
+        if boundary_image_results["working_boundary_endpoints"] != 3:
+            print(f"   ❌ CRITICAL: Not all boundary images are working!")
+            return False, {"error": "Boundary images not working for all properties", "details": boundary_image_results}
         
         # Test 6: Check Coordinate Accuracy for Boundary Generation
         print(f"\n   🔧 TEST 6: Check Coordinate Accuracy for Proper Boundary Generation")
