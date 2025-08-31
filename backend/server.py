@@ -1150,154 +1150,66 @@ async def scrape_victoria_county_tax_sales():
         properties = []
         
         try:
-            # Try to find and download the PDF from the tax sale page
-            logger.info(f"Scraping Victoria County tax sales from: {tax_sale_page_url}")
+            # Directly download the PDF using the known URL - bypass Playwright for reliability
+            logger.info(f"Downloading Victoria County PDF directly from: {direct_pdf_url}")
             
-            # Use playwright for dynamic content scraping
-            import asyncio
-            from playwright.async_api import async_playwright
+            import aiohttp
+            import tempfile
+            import pdfplumber
             
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
-                
-                # Set user agent to avoid blocking
-                await page.set_extra_http_headers({
+            async with aiohttp.ClientSession() as session:
+                async with session.get(direct_pdf_url, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                })
-                
-                try:
-                    # Navigate to tax sale page
-                    await page.goto(tax_sale_page_url, timeout=30000)
-                    await page.wait_for_timeout(3000)
-                    
-                    # Look for PDF links on the page - try multiple selectors
-                    pdf_links = await page.query_selector_all('a[href*=".pdf"], a:has-text("PDF"), a:has-text("Tax Sale"), a:has-text("tender"), a:has-text("bid")')
-                    
-                    pdf_url = None
-                    page_content = await page.content()
-                    
-                    # Log the page content to help debug
-                    logger.info(f"Victoria County page loaded, looking for PDF links...")
-                    
-                    for link in pdf_links:
-                        href = await link.get_attribute('href')
-                        text = await link.inner_text() if link else ""
+                }) as response:
+                    if response.status == 200:
+                        pdf_content = await response.read()
+                        logger.info(f"Downloaded Victoria County PDF successfully: {len(pdf_content)} bytes")
                         
-                        logger.info(f"Found link: href='{href}', text='{text}'")
-                        
-                        if href and ('.pdf' in href.lower() or 'tax' in text.lower() or 'tender' in text.lower()):
-                            if not href.startswith('http'):
-                                pdf_url = f"https://victoriacounty.com{href}" if href.startswith('/') else f"https://victoriacounty.com/{href}"
-                            else:
-                                pdf_url = href
-                            logger.info(f"Selected PDF link: {pdf_url}")
-                            break
-                    
-                    # If no PDF found, try to find direct PDF URL in page content
-                    if not pdf_url:
-                        pdf_match = re.search(r'href=["\']([^"\']*\.pdf[^"\']*)["\']', page_content, re.IGNORECASE)
-                        if pdf_match:
-                            pdf_url = pdf_match.group(1)
-                            if not pdf_url.startswith('http'):
-                                pdf_url = f"https://victoriacounty.com{pdf_url}" if pdf_url.startswith('/') else f"https://victoriacounty.com/{pdf_url}"
-                            logger.info(f"Found PDF URL in page content: {pdf_url}")
-                    
-                    # Try known Victoria County PDF paths as fallback
-                    if not pdf_url:
-                        potential_urls = [
-                            "https://victoriacounty.com/wp-content/uploads/2025/08/Tax-Sale-By-Tender.pdf",
-                            "https://victoriacounty.com/wp-content/uploads/Tax-Sale-2025.pdf",
-                            "https://victoriacounty.com/media/tax-sale.pdf",
-                            "https://victoriacounty.com/documents/tax-sale-2025.pdf"
-                        ]
-                        
-                        for test_url in potential_urls:
+                        # Save to temporary file and parse
+                        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                            tmp_file.write(pdf_content)
+                            tmp_file.flush()
+                            
                             try:
-                                test_response = await page.goto(test_url, timeout=10000)
-                                if test_response.status == 200:
-                                    pdf_url = test_url
-                                    logger.info(f"Found working PDF URL: {pdf_url}")
-                                    break
-                            except:
-                                continue
-                    
-                    if pdf_url:
-                        logger.info(f"Found PDF link from page discovery: {pdf_url}")
-                        
-                    # Always try the direct PDF URL provided by user as well
-                    if not pdf_url:
-                        pdf_url = direct_pdf_url
-                        logger.info(f"Using direct PDF URL: {pdf_url}")
-                    
-                    if pdf_url:
-                        # Download and parse the PDF
-                        logger.info(f"Downloading Victoria County PDF: {pdf_url}")
-                        
-                        import aiohttp
-                        import tempfile
-                        import pdfplumber
-                        
-                        async with aiohttp.ClientSession() as session:
-                            async with session.get(pdf_url, headers={
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                            }) as response:
-                                if response.status == 200:
-                                    pdf_content = await response.read()
-                                    logger.info(f"Downloaded PDF successfully: {len(pdf_content)} bytes")
+                                # Parse PDF with pdfplumber
+                                with pdfplumber.open(tmp_file.name) as pdf:
+                                    full_text = ""
+                                    for page_obj in pdf.pages:
+                                        page_text = page_obj.extract_text()
+                                        if page_text:
+                                            full_text += page_text + "\n"
                                     
-                                    # Save to temporary file and parse
-                                    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-                                        tmp_file.write(pdf_content)
-                                        tmp_file.flush()
+                                    logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
+                                    logger.info(f"Victoria County PDF content preview: {full_text[:1500]}...")
+                                    
+                                    if full_text.strip():
+                                        # Parse Victoria County format
+                                        properties = parse_victoria_county_pdf(full_text, municipality_id)
+                                        logger.info(f"Victoria County PDF parsing result: {len(properties)} properties found")
                                         
-                                        try:
-                                            # Parse PDF with pdfplumber
-                                            with pdfplumber.open(tmp_file.name) as pdf:
-                                                full_text = ""
-                                                for page_obj in pdf.pages:
-                                                    page_text = page_obj.extract_text()
-                                                    if page_text:
-                                                        full_text += page_text + "\n"
-                                                
-                                                logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
-                                                logger.info(f"Victoria County PDF content preview: {full_text[:1500]}...")
-                                                
-                                                if full_text.strip():
-                                                    # Parse Victoria County format
-                                                    properties = parse_victoria_county_pdf(full_text, municipality_id)
-                                                    logger.info(f"Victoria County PDF parsing result: {len(properties)} properties found")
-                                                    
-                                                    # Log each property for debugging
-                                                    for i, prop in enumerate(properties):
-                                                        logger.info(f"Property {i+1}: AAN={prop.get('assessment_number')}, Owner={prop.get('owner_name')}, Sale Date={prop.get('sale_date')}")
-                                                    
-                                                    if properties and len(properties) > 0:
-                                                        logger.info(f"Victoria County PDF parsing successful - using parsed properties")
-                                                    else:
-                                                        logger.warning(f"Victoria County PDF parsing returned empty results")
-                                                else:
-                                                    logger.error(f"Victoria County PDF text extraction failed - no text extracted")
-                                        except Exception as pdf_parse_error:
-                                            logger.error(f"Victoria County PDF parsing error: {pdf_parse_error}")
-                                            logger.error(f"PDF parsing failed, will use fallback data")
-                                    
-                                    # Clean up temp file
-                                    import os
-                                    try:
-                                        os.unlink(tmp_file.name)
-                                    except:
-                                        pass
-                                else:
-                                    logger.warning(f"Failed to download Victoria County PDF: {response.status}")
-                    else:
-                        logger.warning("No PDF URL available for Victoria County")
+                                        # Log each property for debugging
+                                        for i, prop in enumerate(properties):
+                                            logger.info(f"Property {i+1}: AAN={prop.get('assessment_number')}, Owner={prop.get('owner_name')}, Sale Date={prop.get('sale_date')}")
+                                        
+                                        if properties and len(properties) > 0:
+                                            logger.info(f"Victoria County PDF parsing successful - using parsed properties")
+                                        else:
+                                            logger.warning(f"Victoria County PDF parsing returned empty results")
+                                    else:
+                                        logger.error(f"Victoria County PDF text extraction failed - no text extracted")
+                            except Exception as pdf_parse_error:
+                                logger.error(f"Victoria County PDF parsing error: {pdf_parse_error}")
+                                logger.error(f"PDF parsing failed, will use fallback data")
                         
-                except Exception as e:
-                    logger.error(f"Error scraping Victoria County page: {e}")
-                    
-                await browser.close()
-                
+                        # Clean up temp file
+                        import os
+                        try:
+                            os.unlink(tmp_file.name)
+                        except:
+                            pass
+                    else:
+                        logger.warning(f"Failed to download Victoria County PDF: {response.status}")
+                        
         except Exception as e:
             logger.error(f"Victoria County PDF scraping failed: {e}")
             
