@@ -538,7 +538,7 @@ def main():
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Municipality Descriptions Testing")
+    print("📊 FINAL TEST RESULTS SUMMARY - Deployment Management Endpoints Testing")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
@@ -552,58 +552,74 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Municipality Descriptions Analysis
-    print(f"\n🎯 MUNICIPALITY DESCRIPTIONS ANALYSIS:")
+    # Deployment Endpoints Analysis
+    print(f"\n🎯 DEPLOYMENT ENDPOINTS ANALYSIS:")
     
-    if descriptions_successful and descriptions_data:
-        print(f"   ✅ MUNICIPALITY DESCRIPTIONS: SUCCESSFUL!")
+    if deployment_successful and deployment_data:
+        print(f"   ✅ DEPLOYMENT ENDPOINTS: SUCCESSFUL!")
         
-        final_assessment = descriptions_data.get('final_assessment', {})
+        final_assessment = deployment_data.get('final_assessment', {})
         successes = final_assessment.get('successes', [])
         
-        print(f"      ✅ Municipality descriptions implemented successfully")
-        print(f"      ✅ Target municipalities updated with appropriate descriptions")
-        print(f"      ✅ Descriptions contain required municipality-specific information")
+        print(f"      ✅ All deployment endpoints are accessible")
+        print(f"      ✅ Endpoints return proper JSON responses")
+        print(f"      ✅ Error handling works correctly")
+        print(f"      ✅ No server crashes or unhandled exceptions")
         
-        print(f"\n   🎉 SUCCESS: Municipality descriptions working!")
+        print(f"\n   🎉 SUCCESS: Deployment management endpoints working!")
         for success in successes:
             print(f"   ✅ {success}")
         
-    else:
-        print(f"   ❌ MUNICIPALITY DESCRIPTIONS: ISSUES IDENTIFIED")
+        # Show individual endpoint results
+        print(f"\n   📊 INDIVIDUAL ENDPOINT RESULTS:")
+        endpoints = ['deployment_status', 'check_updates', 'health', 'verify']
+        for endpoint in endpoints:
+            endpoint_data = deployment_data.get(endpoint, {})
+            status_code = endpoint_data.get('status_code', 'Unknown')
+            accessible = endpoint_data.get('endpoint_accessible', False)
+            returns_json = endpoint_data.get('returns_json', False)
+            
+            print(f"      📋 {endpoint.replace('_', ' ').title()}:")
+            print(f"         Status Code: {status_code}")
+            print(f"         Accessible: {'✅' if accessible else '❌'}")
+            print(f"         Returns JSON: {'✅' if returns_json else '❌'}")
         
-        if descriptions_data:
-            final_assessment = descriptions_data.get('final_assessment', {})
+    else:
+        print(f"   ❌ DEPLOYMENT ENDPOINTS: ISSUES IDENTIFIED")
+        
+        if deployment_data:
+            final_assessment = deployment_data.get('final_assessment', {})
             issues = final_assessment.get('issues_found', [])
             
-            description_analysis = descriptions_data.get('description_analysis', {})
-            individual_endpoints = descriptions_data.get('individual_endpoints', {})
-            property_detail_pages = descriptions_data.get('property_detail_pages', {})
-            
-            print(f"      Municipalities found: {descriptions_data.get('municipalities_found', False)}")
-            print(f"      All have descriptions: {description_analysis.get('all_municipalities_have_descriptions', False)}")
-            print(f"      Required keywords present: {description_analysis.get('all_descriptions_contain_required_keywords', False)}")
-            print(f"      Individual endpoints working: {individual_endpoints.get('all_endpoints_accessible', False)}")
-            print(f"      Property pages accessible: {property_detail_pages.get('descriptions_appear_on_property_pages', False)}")
-            
-            print(f"\n   ❌ MUNICIPALITY DESCRIPTIONS ISSUES IDENTIFIED:")
+            print(f"\n   ❌ DEPLOYMENT ENDPOINTS ISSUES IDENTIFIED:")
             for issue in issues:
                 print(f"      - {issue}")
+                
+            # Show individual endpoint issues
+            print(f"\n   📊 INDIVIDUAL ENDPOINT ISSUES:")
+            endpoints = ['deployment_status', 'check_updates', 'health', 'verify']
+            for endpoint in endpoints:
+                endpoint_data = deployment_data.get(endpoint, {})
+                status_code = endpoint_data.get('status_code', 'Unknown')
+                accessible = endpoint_data.get('endpoint_accessible', False)
+                
+                if not accessible:
+                    print(f"      ❌ {endpoint.replace('_', ' ').title()}: Not accessible (Status: {status_code})")
         else:
-            print(f"      - Municipality descriptions test execution failed or returned no data")
+            print(f"      - Deployment endpoints test execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
     
     if municipalities_working:
-        print(f"   ✅ Municipalities endpoint working - Victoria County municipality accessible")
+        print(f"   ✅ Municipalities endpoint working - System API functioning")
     else:
-        print(f"   ❌ Municipalities endpoint issues - May affect Victoria County scraper")
+        print(f"   ❌ Municipalities endpoint issues - May indicate broader API problems")
     
     if tax_sales_working:
-        print(f"   ✅ Tax sales endpoint working - Victoria County properties retrievable")
+        print(f"   ✅ Tax sales endpoint working - Core functionality operational")
     else:
-        print(f"   ❌ Tax sales endpoint issues - Victoria County properties may not be accessible")
+        print(f"   ❌ Tax sales endpoint issues - Core system may have problems")
     
     if stats_working:
         print(f"   ✅ Statistics endpoint working - System health good")
@@ -615,42 +631,42 @@ def main():
     
     print(f"\n🎯 OVERALL ASSESSMENT:")
     
-    if descriptions_successful:
-        print(f"🎉 MUNICIPALITY DESCRIPTIONS: SUCCESSFUL!")
-        print(f"   ✅ Review request requirements met")
-        print(f"   ✅ All target municipalities have descriptions")
-        print(f"   ✅ Descriptions contain required municipality-specific information")
-        print(f"   ✅ Individual municipality endpoints accessible")
-        print(f"   ✅ Descriptions available for property detail pages")
-        print(f"   🚀 Municipality descriptions system is production-ready!")
+    if deployment_successful:
+        print(f"🎉 DEPLOYMENT ENDPOINTS: SUCCESSFUL!")
+        print(f"   ✅ All 4 deployment endpoints are properly implemented")
+        print(f"   ✅ Endpoints are accessible and return proper HTTP status codes")
+        print(f"   ✅ Error handling is working (scripts don't exist in dev environment)")
+        print(f"   ✅ Response format is JSON and contains expected fields")
+        print(f"   ✅ No server crashes or unhandled exceptions")
+        print(f"   🚀 Deployment management system is production-ready!")
     else:
-        print(f"❌ MUNICIPALITY DESCRIPTIONS: ISSUES FOUND")
+        print(f"❌ DEPLOYMENT ENDPOINTS: ISSUES FOUND")
         print(f"   ❌ Review request requirements not fully met")
-        print(f"   🔧 Municipality descriptions need additional work")
+        print(f"   🔧 Deployment endpoints need additional work")
         
-        if descriptions_data:
-            final_assessment = descriptions_data.get('final_assessment', {})
+        if deployment_data:
+            final_assessment = deployment_data.get('final_assessment', {})
             issues = final_assessment.get('issues_found', [])
             
-            print(f"\n   📋 MUNICIPALITY DESCRIPTIONS ISSUES:")
+            print(f"\n   📋 DEPLOYMENT ENDPOINTS ISSUES:")
             for issue in issues:
                 print(f"       - {issue}")
             
             print(f"\n   🔧 RECOMMENDED ACTIONS:")
-            print(f"       1. Add descriptions to municipalities that are missing them")
-            print(f"       2. Include required keywords for each municipality type")
-            print(f"       3. Verify individual municipality endpoints are accessible")
-            print(f"       4. Ensure descriptions appear correctly on property detail pages")
+            print(f"       1. Fix any endpoints that are not accessible")
+            print(f"       2. Ensure all endpoints return valid JSON responses")
+            print(f"       3. Verify error handling works for missing scripts")
+            print(f"       4. Check that expected response fields are present")
             
             print(f"\n   💡 ROOT CAUSE ANALYSIS:")
-            print(f"       - Some municipalities may not have descriptions added yet")
-            print(f"       - Descriptions may be missing required municipality-specific information")
-            print(f"       - API endpoints may need updates to properly serve descriptions")
+            print(f"       - Some endpoints may have implementation issues")
+            print(f"       - Error handling may not be working correctly")
+            print(f"       - Response format may not match expected structure")
     
     print(f"\n📊 System Success Rate: {success_rate:.1f}%")
     print("=" * 80)
     
-    return descriptions_successful
+    return deployment_successful
 
 if __name__ == "__main__":
     success = main()
