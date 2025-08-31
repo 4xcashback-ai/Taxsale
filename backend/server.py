@@ -1421,7 +1421,7 @@ async def scrape_victoria_county_tax_sales():
                         "redeemable": "Non-Redeemable",
                         "land_registered": "Not Land Registered",
                         "taxes_owing": "$5,031.96 + HST",
-                        "coordinates_assigned": "lat:46.1205, lng:-60.7650",
+                        "coordinates_assigned": "lat:46.12058, lng:-60.76498",
                         "source": "accurate_fallback_data"
                     }
                 }
