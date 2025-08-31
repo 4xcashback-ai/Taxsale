@@ -372,85 +372,84 @@ def test_victoria_county_coordinate_precision_fixes():
         # Test 4: Verify All 3 Properties Have Improved Coordinate Precision
         print(f"\n   🔧 TEST 4: Verify All 3 Properties Have Improved Coordinate Precision")
         
-        boundary_image_results = {
-            "endpoint_accessible": False,
-            "image_size": 0,
-            "content_type": None,
-            "google_maps_url": None,
-            "image_analysis": {}
+        all_properties_precision_results = {
+            "all_properties_meet_5_decimal_requirement": True,
+            "properties_with_adequate_precision": 0,
+            "properties_needing_improvement": 0,
+            "detailed_analysis": []
         }
         
-        print(f"   📊 Testing /api/property-image/00254118 endpoint...")
+        print(f"   📊 Verifying all 3 Victoria County properties have improved coordinate precision...")
         
-        try:
-            # Test the property image endpoint
-            image_response = requests.get(f"{BACKEND_URL}/property-image/00254118", timeout=15)
+        expected_assessments = ['00254118', '00453706', '09541209']
+        
+        for expected_aan in expected_assessments:
+            prop = None
+            for p in victoria_properties:
+                if p.get('assessment_number') == expected_aan:
+                    prop = p
+                    break
             
-            if image_response.status_code == 200:
-                boundary_image_results["endpoint_accessible"] = True
-                boundary_image_results["image_size"] = len(image_response.content)
-                boundary_image_results["content_type"] = image_response.headers.get('content-type', 'unknown')
+            if not prop:
+                print(f"      ❌ Property AAN {expected_aan} not found")
+                all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
+                continue
+            
+            lat = prop.get('latitude')
+            lng = prop.get('longitude')
+            
+            print(f"\n      📋 Property AAN {expected_aan}:")
+            print(f"         Owner: {prop.get('owner_name', 'Unknown')}")
+            print(f"         Address: {prop.get('property_address', 'Unknown')}")
+            print(f"         Coordinates: {lat}, {lng}")
+            
+            if lat and lng:
+                # Check coordinate precision
+                lat_precision = len(str(lat).split('.')[-1]) if '.' in str(lat) else 0
+                lng_precision = len(str(lng).split('.')[-1]) if '.' in str(lng) else 0
                 
-                print(f"   ✅ Property image endpoint accessible")
-                print(f"      Image size: {boundary_image_results['image_size']} bytes")
-                print(f"      Content-Type: {boundary_image_results['content_type']}")
+                print(f"         Precision: {lat_precision} lat, {lng_precision} lng decimal places")
                 
-                # Verify it's a valid image
-                if 'image' in boundary_image_results['content_type'] and boundary_image_results['image_size'] > 1000:
-                    print(f"      ✅ Valid image returned")
-                    
-                    # Analyze if this is a Google Maps satellite image
-                    if target_property and target_property.get('latitude') and target_property.get('longitude'):
-                        lat = target_property.get('latitude')
-                        lng = target_property.get('longitude')
-                        
-                        # Construct expected Google Maps URL (similar to what backend should use)
-                        expected_google_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png"
-                        boundary_image_results["google_maps_url"] = expected_google_url
-                        
-                        print(f"      📍 Expected Google Maps URL structure:")
-                        print(f"         Center: {lat},{lng}")
-                        print(f"         Zoom: 17 (building-level detail)")
-                        print(f"         Size: 405x290 (standard thumbnail)")
-                        print(f"         Map Type: satellite (should show buildings)")
-                        
-                        # Check if coordinates should show dwelling vs vacant land
-                        print(f"\n      🏠 Dwelling vs Vacant Land Analysis:")
-                        print(f"         Property Type: {target_property.get('property_type', 'Unknown')}")
-                        print(f"         Address: 198 Little Narrows Rd, Little Narrows")
-                        print(f"         Expected: Should show dwelling/building, not vacant land")
-                        
-                        if target_property.get('property_type') == 'Land/Dwelling':
-                            print(f"         ✅ Property type indicates dwelling should be visible")
-                        else:
-                            print(f"         ⚠️ Property type: {target_property.get('property_type')}")
-                        
-                        # Analyze coordinate precision
-                        coord_precision = len(str(lat).split('.')[-1]) if '.' in str(lat) else 0
-                        print(f"         📐 Coordinate precision: {coord_precision} decimal places")
-                        
-                        if coord_precision >= 4:
-                            print(f"         ✅ Coordinate precision sufficient for building-level accuracy")
-                        else:
-                            print(f"         ⚠️ Coordinate precision may be too low for accurate building location")
-                            print(f"            Recommendation: Use more precise coordinates for property boundaries")
-                    
+                # Calculate accuracy
+                lat_accuracy_m = 111000 / (10 ** lat_precision) if lat_precision > 0 else 111000
+                lng_accuracy_m = 111000 / (10 ** lng_precision) * abs(math.cos(math.radians(lat))) if lng_precision > 0 else 111000
+                
+                print(f"         Accuracy: ±{lat_accuracy_m:.1f}m lat, ±{lng_accuracy_m:.1f}m lng")
+                
+                # Check if meets 5 decimal places requirement
+                meets_5_decimal = lat_precision >= 5 and lng_precision >= 5
+                meets_1m_accuracy = lat_accuracy_m <= 1.0 and lng_accuracy_m <= 1.0
+                
+                if meets_5_decimal and meets_1m_accuracy:
+                    print(f"         ✅ Meets 5 decimal places requirement (±1m accuracy)")
+                    all_properties_precision_results["properties_with_adequate_precision"] += 1
+                elif lat_precision >= 4 and lng_precision >= 4:
+                    print(f"         ⚠️ Good precision but not optimal (4 decimal places, ~±10m accuracy)")
+                    all_properties_precision_results["properties_needing_improvement"] += 1
+                    all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
                 else:
-                    print(f"      ❌ Invalid or too small image returned")
-                    boundary_image_results["image_analysis"]["valid"] = False
+                    print(f"         ❌ Insufficient precision (3 or fewer decimal places, >±50m accuracy)")
+                    all_properties_precision_results["properties_needing_improvement"] += 1
+                    all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
                 
+                all_properties_precision_results["detailed_analysis"].append({
+                    "assessment_number": expected_aan,
+                    "lat_precision": lat_precision,
+                    "lng_precision": lng_precision,
+                    "lat_accuracy_m": lat_accuracy_m,
+                    "lng_accuracy_m": lng_accuracy_m,
+                    "meets_5_decimal_requirement": meets_5_decimal,
+                    "meets_1m_accuracy": meets_1m_accuracy
+                })
             else:
-                print(f"   ❌ Property image endpoint failed: HTTP {image_response.status_code}")
-                try:
-                    error_detail = image_response.json()
-                    print(f"      Error details: {error_detail}")
-                except:
-                    print(f"      Error response: {image_response.text}")
-                return False, {"error": f"Property image endpoint failed: HTTP {image_response.status_code}"}
-                
-        except Exception as e:
-            print(f"   ❌ Property image endpoint error: {e}")
-            return False, {"error": f"Property image endpoint error: {e}"}
+                print(f"         ❌ No coordinates found")
+                all_properties_precision_results["properties_needing_improvement"] += 1
+                all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
+        
+        print(f"\n   📊 All Properties Precision Summary:")
+        print(f"      Properties with adequate precision (5+ decimals): {all_properties_precision_results['properties_with_adequate_precision']}/3")
+        print(f"      Properties needing improvement: {all_properties_precision_results['properties_needing_improvement']}/3")
+        print(f"      All properties meet 5 decimal requirement: {all_properties_precision_results['all_properties_meet_5_decimal_requirement']}")
         
         # Test 5: Verify Google Maps Satellite View Parameters
         print(f"\n   🔧 TEST 5: Verify Google Maps Satellite View Parameters")
