@@ -125,25 +125,28 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_victoria_county_data_extraction_debug():
-    """Debug Victoria County data extraction issues - minimum bid and missing images"""
-    print("\n🔍 Testing Victoria County Data Extraction Issues...")
-    print("🎯 FOCUS: Debug minimum bid calculations and missing boundary images")
+def test_victoria_county_fixed_scraper():
+    """Test Victoria County scraper with fixed minimum bid calculation and boundary image generation"""
+    print("\n🔍 Testing Victoria County Fixed Scraper...")
+    print("🎯 FOCUS: Fixed minimum bid calculation and boundary image generation")
     print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Test current Victoria County properties - Check actual data being extracted for all 3 properties")
-    print("   2. Verify minimum bid calculations - Compare extracted opening_bid values against PDF tax amounts:")
-    print("      - Entry 1: Should be $2,009.03")
-    print("      - Entry 2: Should be $1,599.71") 
-    print("      - Entry 8: Should be $5,031.96 + HST")
-    print("   3. Check boundary screenshot generation - Verify if boundary_screenshot field is being generated")
-    print("   4. Debug tax amount extraction - Check if regex patterns correctly extract from 'Taxes, Interest and Expenses owing: $X,XXX.XX'")
-    print("   5. Verify property images - Check if Google Maps static API is generating boundary thumbnails")
+    print("   1. Test fixed scraper POST /api/scrape/victoria-county with enhanced tax amount extraction patterns")
+    print("   2. Verify correct minimum bids - Should now show correct amounts:")
+    print("      - Entry 1 (AAN 00254118): $2,009.03 (not $2.0)")
+    print("      - Entry 2 (AAN 00453706): $1,599.71 (not $1.0)")
+    print("      - Entry 8 (AAN 09541209): $5,031.96 (not $0.0)")
+    print("   3. Check boundary image generation - All properties should now have:")
+    print("      - Proper latitude/longitude coordinates assigned")
+    print("      - boundary_screenshot URLs generated")
+    print("      - Location-specific coordinates for Little Narrows, Middle River, Washabuck")
+    print("   4. Verify HST detection - Entry 8 should have hst_applicable: 'Yes' due to '+ HST' in PDF")
+    print("   5. Test boundary image endpoints - Try accessing the generated boundary screenshot URLs")
     print("")
-    print("🔍 EXPECTED MINIMUM BIDS (from PDF tax amounts):")
+    print("🔍 EXPECTED MINIMUM BIDS (fixed calculations):")
     print("   - Entry 1 (AAN 00254118): $2,009.03")
     print("   - Entry 2 (AAN 00453706): $1,599.71")
-    print("   - Entry 8 (AAN 09541209): $5,031.96 + HST")
-    print("🔍 EXPECTED BOUNDARY IMAGES: All properties should have boundary_screenshot URLs")
+    print("   - Entry 8 (AAN 09541209): $5,031.96")
+    print("🔍 EXPECTED BOUNDARY IMAGES: All properties should have boundary_screenshot URLs and coordinates")
     
     try:
         # Test 1: Victoria County Scraper - Check Current Data Extraction
