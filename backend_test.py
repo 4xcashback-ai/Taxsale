@@ -682,43 +682,41 @@ def main():
     
     print(f"\n🎯 OVERALL ASSESSMENT:")
     
-    if scraper_successful:
-        print(f"🎉 VICTORIA COUNTY SCRAPER WITH DIRECT PDF EXTRACTION: SUCCESS!")
+    if thumbnail_accurate:
+        print(f"🎉 VICTORIA COUNTY THUMBNAIL ACCURACY: VERIFIED!")
         print(f"   ✅ All review request requirements met")
-        print(f"   ✅ Opening bid amounts now correct from actual PDF extraction ($2,009.03, $1,599.71, $5,031.96)")
-        print(f"   ✅ Entry 8 correctly shows HST as 'Yes'")
-        print(f"   ✅ All 3 properties extracted with complete and accurate data")
-        print(f"   ✅ Boundary images continue to work properly")
-        print(f"   🚀 Victoria County scraper is production-ready with direct PDF extraction!")
+        print(f"   ✅ AAN 00254118 coordinates verified for 198 Little Narrows Rd, Little Narrows")
+        print(f"   ✅ Boundary image generation working with /api/property-image/00254118")
+        print(f"   ✅ Google Maps satellite view parameters appropriate for building visibility")
+        print(f"   ✅ Coordinate accuracy adequate for property boundaries")
+        print(f"   🚀 Victoria County thumbnails are showing accurate property locations!")
     else:
-        print(f"❌ VICTORIA COUNTY SCRAPER WITH DIRECT PDF EXTRACTION: ISSUES FOUND")
+        print(f"❌ VICTORIA COUNTY THUMBNAIL ACCURACY: ISSUES FOUND")
         print(f"   ❌ Review request requirements not fully met")
-        print(f"   🔧 Victoria County scraper needs additional fixes")
+        print(f"   🔧 Victoria County thumbnail accuracy needs fixes")
         
-        if scraper_data:
-            bid_results = scraper_data.get('bid_verification', {})
-            hst_results = scraper_data.get('hst_verification', {})
-            boundary_results = scraper_data.get('boundary_images', {})
+        if thumbnail_data:
+            issues = thumbnail_data.get('thumbnail_accuracy_issues', [])
+            refinement_results = thumbnail_data.get('refinement_analysis', {})
             
-            if bid_results.get('correct_bids', 0) != 3:
-                print(f"   📋 Minimum bid amount extraction needs fixing:")
-                print(f"       - Tax amount extraction regex patterns not working correctly")
-                print(f"       - PDF parsing may be truncating tax amount sections")
+            print(f"\n   📋 THUMBNAIL ACCURACY ISSUES:")
+            for issue in issues:
+                print(f"       - {issue}")
             
-            if not hst_results.get('hst_correct', False):
-                print(f"   📋 HST detection needs fixing:")
-                print(f"       - HST detection patterns not finding '+ HST' indicator for Entry 8")
-                print(f"       - PDF section extraction may be incomplete")
+            if refinement_results.get('recommendations'):
+                print(f"\n   🔧 RECOMMENDED FIXES:")
+                for i, rec in enumerate(refinement_results['recommendations'][:3], 1):  # Show top 3 recommendations
+                    print(f"       {i}. {rec}")
             
-            if boundary_results.get('working_boundary_endpoints', 0) != 3:
-                print(f"   📋 Boundary image generation needs fixing:")
-                print(f"       - Property image endpoints not working for all properties")
-                print(f"       - Coordinate or image generation issues")
+            print(f"\n   💡 ROOT CAUSE ANALYSIS:")
+            print(f"       - Current coordinates may be showing property center instead of building location")
+            print(f"       - Property at 198 Little Narrows Rd may have building in different area than coordinates indicate")
+            print(f"       - Coordinate precision or geocoding accuracy may need improvement for building-level detail")
     
     print(f"\n📊 System Success Rate: {success_rate:.1f}%")
     print("=" * 80)
     
-    return scraper_successful
+    return thumbnail_accurate
 
 if __name__ == "__main__":
     success = main()
