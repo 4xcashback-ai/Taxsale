@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-APP_DIR="/var/www/tax-sale-compass"
+APP_DIR="/var/www/nstaxsales"
 LOG_FILE="/var/log/tax-sale-health.log"
 
 # Logging function
