@@ -1097,6 +1097,205 @@ def test_nsprd_boundary_endpoint():
         print(f"   ❌ NSPRD boundary endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_fixed_parser():
+    """Test Victoria County Fixed PDF Parser with Non-Sequential Numbering Support"""
+    print("\n🔍 Testing Victoria County Fixed PDF Parser...")
+    print("🎯 FOCUS: Test fixed parser with non-sequential numbering support (1, 2, 8)")
+    print("📋 REQUIREMENTS: Should find all 3 properties with correct AANs, owners, PIDs, and sale date")
+    print("🔍 EXPECTED: AANs 00254118, 00453706, 09541209 with owners Donald John Beaton, Kenneth Ferneyhough, Florance Debra Cleaves")
+    
+    try:
+        # Test 1: Victoria County Scraper with Fixed Parser
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Fixed Parser)")
+        
+        scrape_response = requests.post(
+            f"{BACKEND_URL}/scrape/victoria-county", 
+            timeout=120  # Allow time for PDF download and processing
+        )
+        
+        if scrape_response.status_code == 200:
+            scrape_result = scrape_response.json()
+            print(f"   ✅ Victoria County scraper executed successfully")
+            print(f"      Status: {scrape_result.get('status')}")
+            print(f"      Properties scraped: {scrape_result.get('properties_scraped', 0)}")
+            
+            # Verify we got 3 properties (not just 1)
+            properties_count = scrape_result.get('properties_scraped', 0)
+            if properties_count == 3:
+                print(f"   ✅ PROPERTY COUNT FIX VERIFIED: Found all 3 properties (was 1 before fix)")
+            elif properties_count == 1:
+                print(f"   ❌ PROPERTY COUNT ISSUE PERSISTS: Still only 1 property found (expected 3)")
+                return False, {"error": "Property count issue not fixed - still only 1 property"}
+            else:
+                print(f"   ⚠️ UNEXPECTED PROPERTY COUNT: Found {properties_count} properties (expected 3)")
+            
+            # Test 2: Verify Properties in Database
+            print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Properties in Database)")
+            
+            properties_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria County", timeout=30)
+            
+            if properties_response.status_code == 200:
+                properties = properties_response.json()
+                victoria_properties = [p for p in properties if p.get("municipality_name") == "Victoria County"]
+                
+                print(f"   ✅ Retrieved {len(victoria_properties)} Victoria County properties from database")
+                
+                # Expected properties from review request
+                expected_properties = [
+                    {"aan": "00254118", "owner": "Donald John Beaton", "pid": "85006500"},
+                    {"aan": "00453706", "owner": "Kenneth Ferneyhough", "pid": "85010866"},
+                    {"aan": "09541209", "owner": "Florance Debra Cleaves", "pid": "85142388"}
+                ]
+                
+                print(f"\n   🎯 VERIFYING EXPECTED PROPERTIES FROM REVIEW REQUEST:")
+                
+                found_properties = []
+                missing_properties = []
+                
+                for expected in expected_properties:
+                    found = False
+                    for prop in victoria_properties:
+                        if prop.get("assessment_number") == expected["aan"]:
+                            found = True
+                            found_properties.append({
+                                "aan": prop.get("assessment_number"),
+                                "owner": prop.get("owner_name"),
+                                "pid": prop.get("pid_number"),
+                                "sale_date": prop.get("sale_date"),
+                                "property": prop
+                            })
+                            break
+                    
+                    if not found:
+                        missing_properties.append(expected)
+                
+                print(f"\n   📊 PROPERTY VERIFICATION RESULTS:")
+                print(f"      Found properties: {len(found_properties)}/3")
+                print(f"      Missing properties: {len(missing_properties)}/3")
+                
+                # Verify each found property
+                all_correct = True
+                
+                for i, found_prop in enumerate(found_properties):
+                    expected_prop = expected_properties[i] if i < len(expected_properties) else None
+                    
+                    print(f"\n   📋 Property {i+1} Verification:")
+                    print(f"      AAN: {found_prop['aan']} (Expected: {expected_prop['aan'] if expected_prop else 'N/A'})")
+                    print(f"      Owner: '{found_prop['owner']}' (Expected: '{expected_prop['owner'] if expected_prop else 'N/A'}')")
+                    print(f"      PID: {found_prop['pid']} (Expected: {expected_prop['pid'] if expected_prop else 'N/A'})")
+                    print(f"      Sale Date: {found_prop['sale_date']}")
+                    
+                    # Verify AAN matches
+                    if expected_prop and found_prop['aan'] == expected_prop['aan']:
+                        print(f"      ✅ AAN matches expected value")
+                    else:
+                        print(f"      ❌ AAN mismatch")
+                        all_correct = False
+                    
+                    # Verify owner name (allow partial matches due to potential formatting differences)
+                    if expected_prop and expected_prop['owner'].lower() in found_prop['owner'].lower():
+                        print(f"      ✅ Owner name matches expected value")
+                    else:
+                        print(f"      ❌ Owner name mismatch")
+                        all_correct = False
+                    
+                    # Verify PID matches
+                    if expected_prop and found_prop['pid'] == expected_prop['pid']:
+                        print(f"      ✅ PID matches expected value")
+                    else:
+                        print(f"      ❌ PID mismatch")
+                        all_correct = False
+                    
+                    # Verify sale date is 2025-08-26
+                    if "2025-08-26" in str(found_prop['sale_date']):
+                        print(f"      ✅ Sale date is correct (2025-08-26)")
+                    else:
+                        print(f"      ❌ Sale date incorrect (expected 2025-08-26)")
+                        all_correct = False
+                
+                # Report missing properties
+                if missing_properties:
+                    print(f"\n   ❌ MISSING PROPERTIES:")
+                    for missing in missing_properties:
+                        print(f"      - AAN {missing['aan']}: {missing['owner']} (PID: {missing['pid']})")
+                    all_correct = False
+                
+                # Test 3: Verify No Fallback Data
+                print(f"\n   🔧 TEST 3: Verify Properties are Real PDF Data (Not Fallback)")
+                
+                fallback_detected = False
+                for prop in victoria_properties:
+                    raw_data = prop.get('raw_data', {})
+                    if raw_data.get('source') == 'pdf_parsing_fallback':
+                        print(f"   ❌ FALLBACK DATA DETECTED: Property {prop.get('assessment_number')} uses fallback data")
+                        fallback_detected = True
+                    else:
+                        print(f"   ✅ Property {prop.get('assessment_number')} appears to be real PDF data")
+                
+                if not fallback_detected:
+                    print(f"   ✅ NO FALLBACK DATA: All properties appear to be parsed from actual PDF")
+                
+                # Test 4: Verify Non-Sequential Numbering Fix
+                print(f"\n   🔧 TEST 4: Verify Non-Sequential Numbering Fix (1, 2, 8)")
+                
+                # Check if we have the specific AANs that indicate non-sequential parsing worked
+                expected_aans = ["00254118", "00453706", "09541209"]
+                found_aans = [prop.get("assessment_number") for prop in victoria_properties]
+                
+                print(f"   Expected AANs (from PDF): {expected_aans}")
+                print(f"   Found AANs: {found_aans}")
+                
+                non_sequential_fix_working = all(aan in found_aans for aan in expected_aans)
+                
+                if non_sequential_fix_working:
+                    print(f"   ✅ NON-SEQUENTIAL NUMBERING FIX VERIFIED: All expected AANs found")
+                    print(f"      Parser successfully handles non-sequential numbering (1, 2, 8)")
+                else:
+                    print(f"   ❌ NON-SEQUENTIAL NUMBERING FIX NOT WORKING: Missing expected AANs")
+                    all_correct = False
+                
+                # Final assessment
+                print(f"\n   📋 VICTORIA COUNTY FIXED PARSER TEST SUMMARY:")
+                print(f"      Properties found: {len(victoria_properties)}/3")
+                print(f"      All expected AANs: {'✅' if non_sequential_fix_working else '❌'}")
+                print(f"      All data correct: {'✅' if all_correct else '❌'}")
+                print(f"      No fallback data: {'✅' if not fallback_detected else '❌'}")
+                print(f"      Sale date correct: {'✅' if any('2025-08-26' in str(p.get('sale_date', '')) for p in victoria_properties) else '❌'}")
+                
+                if len(victoria_properties) == 3 and all_correct and not fallback_detected and non_sequential_fix_working:
+                    print(f"   ✅ VICTORIA COUNTY FIXED PARSER: ALL TESTS PASSED")
+                    return True, {
+                        "properties_found": len(victoria_properties),
+                        "all_data_correct": all_correct,
+                        "no_fallback_data": not fallback_detected,
+                        "non_sequential_fix_working": non_sequential_fix_working,
+                        "properties": found_properties
+                    }
+                else:
+                    print(f"   ❌ VICTORIA COUNTY FIXED PARSER: SOME TESTS FAILED")
+                    return False, {
+                        "properties_found": len(victoria_properties),
+                        "all_data_correct": all_correct,
+                        "no_fallback_data": not fallback_detected,
+                        "non_sequential_fix_working": non_sequential_fix_working,
+                        "missing_properties": missing_properties
+                    }
+            else:
+                print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
+                return False, {"error": f"Failed to retrieve properties: {properties_response.status_code}"}
+        else:
+            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
+            try:
+                error_detail = scrape_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Raw response: {scrape_response.text[:200]}...")
+            return False, {"error": f"Scraper failed with status {scrape_response.status_code}"}
+        
+    except Exception as e:
+        print(f"   ❌ Victoria County fixed parser test error: {e}")
+        return False, {"error": str(e)}
+
 def test_victoria_county_debug_pdf():
     """Test Victoria County Debug PDF Endpoint - Examine Actual PDF Content"""
     print("\n🔍 Testing Victoria County Debug PDF Endpoint...")
