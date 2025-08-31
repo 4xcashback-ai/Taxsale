@@ -698,7 +698,7 @@ def main():
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Thumbnail Accuracy Investigation")
+    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Coordinate Precision Fixes Testing")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
