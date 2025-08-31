@@ -212,14 +212,14 @@ test_setup() {
     log "Testing setup..."
     
     # Test deployment script access
-    if sudo -u www-data sudo /opt/tax-sale-compass/scripts/deployment.sh verify 2>/dev/null; then
+    if sudo -u www-data sudo /var/www/nstaxsales/scripts/deployment.sh verify 2>/dev/null; then
         log "✓ Deployment script access test passed"
     else
         warn "✗ Deployment script access test failed"
     fi
     
     # Test health script access
-    if sudo -u www-data sudo /opt/tax-sale-compass/scripts/system-health.sh summary 2>/dev/null; then
+    if sudo -u www-data sudo /var/www/nstaxsales/scripts/system-health.sh summary 2>/dev/null; then
         log "✓ Health script access test passed"
     else
         warn "✗ Health script access test failed"
