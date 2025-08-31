@@ -3053,7 +3053,7 @@ async def generate_boundary_thumbnail(assessment_number: str):
         
         lat = float(property_doc['latitude'])
         lng = float(property_doc['longitude'])
-        google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY')
+        google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
         
         # Convert boundary rings to path format for Google Maps Static API
         rings = boundary_data['geometry']['rings']
