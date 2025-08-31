@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Halifax vs Victoria County thumbnail generation comparison
+Focus on Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts
 """
 
 import requests
