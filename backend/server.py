@@ -1218,7 +1218,7 @@ async def scrape_victoria_county_tax_sales():
                                                     "property_description": "198 Little Narrows Rd, Little Narrows Land/Dwelling - 22,230 Sq. Feet +/-",
                                                     "latitude": 46.21398,
                                                     "longitude": -60.99485,
-                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/00254118",
+                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/00254118",
                                                     "scraped_at": datetime.now(timezone.utc),
                                                     "source_url": "https://victoriacounty.com",
                                                     "raw_data": {"source": "direct_pdf_extraction", "tax_amount": f"${prop1_tax}"}
@@ -1248,7 +1248,7 @@ async def scrape_victoria_county_tax_sales():
                                                     "property_description": "30 5413 (P) Rd., Middle River Land/Dwelling - 3,100 Sq. Feet +/-",
                                                     "latitude": 46.38261,
                                                     "longitude": -60.89387,
-                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/00453706",
+                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/00453706",
                                                     "scraped_at": datetime.now(timezone.utc),
                                                     "source_url": "https://victoriacounty.com",
                                                     "raw_data": {"source": "direct_pdf_extraction", "tax_amount": f"${prop2_tax}"}
@@ -1278,7 +1278,7 @@ async def scrape_victoria_county_tax_sales():
                                                     "property_description": "Washabuck Rd., Washabuck Centre Land only - 2.5 Acres +/-",
                                                     "latitude": 46.12058,
                                                     "longitude": -60.76498,
-                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/09541209",
+                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/09541209",
                                                     "scraped_at": datetime.now(timezone.utc),
                                                     "source_url": "https://victoriacounty.com",
                                                     "raw_data": {"source": "direct_pdf_extraction", "tax_amount": f"${prop8_tax}", "hst": "Yes"}
@@ -1337,7 +1337,7 @@ async def scrape_victoria_county_tax_sales():
                     "property_description": "198 Little Narrows Rd, Little Narrows Land/Dwelling - 22,230 Sq. Feet +/-",
                     "latitude": 46.21398,  # Little Narrows precise building coordinates
                     "longitude": -60.99485,
-                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/00254118",
+                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/00254118",
                     "scraped_at": datetime.now(timezone.utc),
                     "source_url": "https://victoriacounty.com",
                     "raw_data": {
@@ -1374,7 +1374,7 @@ async def scrape_victoria_county_tax_sales():
                     "property_description": "30 5413 (P) Rd., Middle River Land/Dwelling - 3,100 Sq. Feet +/-",
                     "latitude": 46.38261,  # Middle River precise building coordinates
                     "longitude": -60.89387,
-                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/00453706",
+                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/00453706",
                     "scraped_at": datetime.now(timezone.utc),
                     "source_url": "https://victoriacounty.com",
                     "raw_data": {
@@ -1411,7 +1411,7 @@ async def scrape_victoria_county_tax_sales():
                     "property_description": "Washabuck Rd., Washabuck Centre Land only - 2.5 Acres +/-",
                     "latitude": 46.12058,  # Washabuck precise coordinates
                     "longitude": -60.76498,
-                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/09541209",
+                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/09541209",
                     "scraped_at": datetime.now(timezone.utc),
                     "source_url": "https://victoriacounty.com",
                     "raw_data": {
@@ -1784,7 +1784,7 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 
                 # Generate boundary screenshot URL if coordinates are available
                 if latitude and longitude:
-                    boundary_screenshot = f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/{assessment_number}"
+                    boundary_screenshot = f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://propmap-ns.preview.emergentagent.com')}/api/property-image/{assessment_number}"
                     logger.info(f"✅ Boundary screenshot URL generated for {assessment_number}")
                 
                 # Create property object
