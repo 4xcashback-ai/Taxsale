@@ -1411,7 +1411,7 @@ async def scrape_victoria_county_tax_sales():
                     "property_description": "Washabuck Rd., Washabuck Centre Land only - 2.5 Acres +/-",
                     "latitude": 46.12058,  # Washabuck precise coordinates
                     "longitude": -60.76498,
-                    "boundary_screenshot": f"https://nstaxmap-1.preview.emergentagent.com/api/property-image/09541209",
+                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://nstaxmap-1.preview.emergentagent.com')}/api/property-image/09541209",
                     "scraped_at": datetime.now(timezone.utc),
                     "source_url": "https://victoriacounty.com",
                     "raw_data": {
