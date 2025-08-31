@@ -144,8 +144,8 @@ def test_victoria_county_coordinate_precision_fixes():
     print("   - Do all 3 Victoria County properties have proper precise coordinates?")
     
     try:
-        # Test 1: Execute Victoria County Scraper
-        print(f"\n   🔧 TEST 1: Execute Victoria County Scraper with Direct PDF Extraction")
+        # Test 1: Re-scrape Victoria County with New Precise Coordinates
+        print(f"\n   🔧 TEST 1: Re-scrape Victoria County to Update Properties with New Precise Coordinates")
         
         scraper_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=60)
         
