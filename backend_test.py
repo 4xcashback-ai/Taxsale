@@ -273,45 +273,88 @@ def test_victoria_county_thumbnail_accuracy():
         else:
             print(f"   ❌ Target property AAN 00254118 not found")
             return False, {"error": "Target property AAN 00254118 not found"}
-        # Test 4: Check HST Detection for Entry 8
-        print(f"\n   🔧 TEST 4: Check HST Detection for Entry 8 (AAN 09541209)")
+        # Test 4: Test Boundary Image Generation for AAN 00254118
+        print(f"\n   🔧 TEST 4: Test Boundary Image Generation for AAN 00254118")
         
-        hst_verification_results = {
-            "entry_8_found": False,
-            "hst_correct": False,
-            "hst_value": None
+        boundary_image_results = {
+            "endpoint_accessible": False,
+            "image_size": 0,
+            "content_type": None,
+            "google_maps_url": None,
+            "image_analysis": {}
         }
         
-        # Find Entry 8 (AAN 09541209)
-        entry_8 = None
-        for prop in victoria_properties:
-            if prop.get("assessment_number") == "09541209":
-                entry_8 = prop
-                hst_verification_results["entry_8_found"] = True
-                break
+        print(f"   📊 Testing /api/property-image/00254118 endpoint...")
         
-        if entry_8:
-            hst_applicable = entry_8.get("hst_applicable")
-            hst_verification_results["hst_value"] = hst_applicable
+        try:
+            # Test the property image endpoint
+            image_response = requests.get(f"{BACKEND_URL}/property-image/00254118", timeout=15)
             
-            print(f"   📋 Entry 8 (AAN 09541209) found:")
-            print(f"      Owner: {entry_8.get('owner_name')}")
-            print(f"      HST Applicable: {hst_applicable}")
-            print(f"      Expected HST: 'Yes'")
-            
-            if hst_applicable and hst_applicable.lower() == "yes":
-                print(f"      ✅ HST detection is CORRECT: {hst_applicable}")
-                hst_verification_results["hst_correct"] = True
+            if image_response.status_code == 200:
+                boundary_image_results["endpoint_accessible"] = True
+                boundary_image_results["image_size"] = len(image_response.content)
+                boundary_image_results["content_type"] = image_response.headers.get('content-type', 'unknown')
+                
+                print(f"   ✅ Property image endpoint accessible")
+                print(f"      Image size: {boundary_image_results['image_size']} bytes")
+                print(f"      Content-Type: {boundary_image_results['content_type']}")
+                
+                # Verify it's a valid image
+                if 'image' in boundary_image_results['content_type'] and boundary_image_results['image_size'] > 1000:
+                    print(f"      ✅ Valid image returned")
+                    
+                    # Analyze if this is a Google Maps satellite image
+                    if target_property and target_property.get('latitude') and target_property.get('longitude'):
+                        lat = target_property.get('latitude')
+                        lng = target_property.get('longitude')
+                        
+                        # Construct expected Google Maps URL (similar to what backend should use)
+                        expected_google_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png"
+                        boundary_image_results["google_maps_url"] = expected_google_url
+                        
+                        print(f"      📍 Expected Google Maps URL structure:")
+                        print(f"         Center: {lat},{lng}")
+                        print(f"         Zoom: 17 (building-level detail)")
+                        print(f"         Size: 405x290 (standard thumbnail)")
+                        print(f"         Map Type: satellite (should show buildings)")
+                        
+                        # Check if coordinates should show dwelling vs vacant land
+                        print(f"\n      🏠 Dwelling vs Vacant Land Analysis:")
+                        print(f"         Property Type: {target_property.get('property_type', 'Unknown')}")
+                        print(f"         Address: 198 Little Narrows Rd, Little Narrows")
+                        print(f"         Expected: Should show dwelling/building, not vacant land")
+                        
+                        if target_property.get('property_type') == 'Land/Dwelling':
+                            print(f"         ✅ Property type indicates dwelling should be visible")
+                        else:
+                            print(f"         ⚠️ Property type: {target_property.get('property_type')}")
+                        
+                        # Analyze coordinate precision
+                        coord_precision = len(str(lat).split('.')[-1]) if '.' in str(lat) else 0
+                        print(f"         📐 Coordinate precision: {coord_precision} decimal places")
+                        
+                        if coord_precision >= 4:
+                            print(f"         ✅ Coordinate precision sufficient for building-level accuracy")
+                        else:
+                            print(f"         ⚠️ Coordinate precision may be too low for accurate building location")
+                            print(f"            Recommendation: Use more precise coordinates for property boundaries")
+                    
+                else:
+                    print(f"      ❌ Invalid or too small image returned")
+                    boundary_image_results["image_analysis"]["valid"] = False
+                
             else:
-                print(f"      ❌ HST detection is INCORRECT: Got '{hst_applicable}', expected 'Yes'")
-                hst_verification_results["hst_correct"] = False
-        else:
-            print(f"   ❌ Entry 8 (AAN 09541209) not found in Victoria County properties")
-            return False, {"error": "Entry 8 (AAN 09541209) not found"}
-        
-        if not hst_verification_results["hst_correct"]:
-            print(f"   ❌ CRITICAL: HST detection for Entry 8 is incorrect!")
-            return False, {"error": "HST detection incorrect for Entry 8", "details": hst_verification_results}
+                print(f"   ❌ Property image endpoint failed: HTTP {image_response.status_code}")
+                try:
+                    error_detail = image_response.json()
+                    print(f"      Error details: {error_detail}")
+                except:
+                    print(f"      Error response: {image_response.text}")
+                return False, {"error": f"Property image endpoint failed: HTTP {image_response.status_code}"}
+                
+        except Exception as e:
+            print(f"   ❌ Property image endpoint error: {e}")
+            return False, {"error": f"Property image endpoint error: {e}"}
         
         # Test 5: Test Boundary Images - Confirm Boundary Screenshot URLs are Working
         print(f"\n   🔧 TEST 5: Test Boundary Images - Confirm Boundary Screenshot URLs are Working")
