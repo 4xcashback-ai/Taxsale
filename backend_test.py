@@ -175,82 +175,30 @@ def test_victoria_county_scraper_with_pdf_extraction():
                 print(f"      Error response: {scraper_response.text}")
             return False, {"error": f"Scraper failed with HTTP {scraper_response.status_code}"}
         
-        # Test 2: Compare Halifax Property Thumbnails
-        print(f"\n   🔧 TEST 2: Test Halifax Property Thumbnails")
+        # Test 2: Retrieve Victoria County Properties and Verify Data
+        print(f"\n   🔧 TEST 2: Retrieve Victoria County Properties and Verify Complete Data")
         
-        halifax_thumbnail_results = {
-            "properties_with_coordinates": 0,
-            "properties_with_boundary_screenshots": 0,
-            "working_thumbnail_endpoints": 0,
-            "thumbnail_sizes": [],
-            "coordinate_accuracy": True,
-            "sample_properties": []
-        }
-        
-        if halifax_properties:
-            print(f"   📊 Analyzing {len(halifax_properties)} Halifax properties...")
+        # Get all tax sales and filter for Victoria County
+        response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        if response.status_code == 200:
+            all_properties = response.json()
+            victoria_properties = [p for p in all_properties if "Victoria County" in p.get("municipality_name", "")]
             
-            # Test first 3 Halifax properties for thumbnail generation
-            for i, prop in enumerate(halifax_properties[:3]):
-                aan = prop.get("assessment_number")
-                owner = prop.get("owner_name")
-                address = prop.get("property_address")
-                latitude = prop.get("latitude")
-                longitude = prop.get("longitude")
-                boundary_screenshot = prop.get("boundary_screenshot")
-                
-                print(f"\n   📋 Halifax Property {i+1}:")
-                print(f"      AAN: {aan}")
-                print(f"      Owner: {owner}")
-                print(f"      Address: {address}")
-                print(f"      Coordinates: {latitude}, {longitude}")
-                print(f"      Boundary Screenshot: {boundary_screenshot}")
-                
-                # Check coordinates
-                if latitude and longitude:
-                    halifax_thumbnail_results["properties_with_coordinates"] += 1
-                    print(f"      ✅ Has coordinates for thumbnail generation")
-                    
-                    # Verify Halifax coordinates are in Nova Scotia region
-                    if 44.0 <= latitude <= 47.0 and -66.0 <= longitude <= -59.0:
-                        print(f"      ✅ Coordinates within Nova Scotia region")
-                    else:
-                        print(f"      ⚠️ Coordinates may be outside Nova Scotia region")
-                        halifax_thumbnail_results["coordinate_accuracy"] = False
-                else:
-                    print(f"      ❌ Missing coordinates - cannot generate thumbnails")
-                
-                # Check boundary screenshot
-                if boundary_screenshot:
-                    halifax_thumbnail_results["properties_with_boundary_screenshots"] += 1
-                    print(f"      ✅ Has boundary screenshot: {boundary_screenshot}")
-                else:
-                    print(f"      ❌ No boundary screenshot generated")
-                
-                # Test property image endpoint
-                if aan:
-                    try:
-                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
-                        if image_response.status_code == 200:
-                            image_size = len(image_response.content)
-                            halifax_thumbnail_results["working_thumbnail_endpoints"] += 1
-                            halifax_thumbnail_results["thumbnail_sizes"].append(image_size)
-                            print(f"      ✅ Thumbnail endpoint working - Size: {image_size} bytes")
-                            print(f"      📷 Content-Type: {image_response.headers.get('content-type', 'unknown')}")
-                        else:
-                            print(f"      ❌ Thumbnail endpoint failed - HTTP {image_response.status_code}")
-                    except Exception as e:
-                        print(f"      ❌ Thumbnail endpoint error: {e}")
-                
-                halifax_thumbnail_results["sample_properties"].append({
-                    "aan": aan,
-                    "has_coordinates": bool(latitude and longitude),
-                    "has_boundary_screenshot": bool(boundary_screenshot),
-                    "thumbnail_working": False  # Will be updated above
-                })
-        
+            print(f"   ✅ Retrieved properties from database")
+            print(f"      Victoria County properties found: {len(victoria_properties)}")
+            
+            if len(victoria_properties) != 3:
+                print(f"   ❌ Expected 3 Victoria County properties, found {len(victoria_properties)}")
+                return False, {"error": f"Expected 3 properties, found {len(victoria_properties)}"}
+            
+            # Sort properties by assessment number for consistent testing
+            victoria_properties.sort(key=lambda x: x.get('assessment_number', ''))
+            
+            print(f"   ✅ Found all 3 expected Victoria County properties")
+            
         else:
-            print(f"   ⚠️ No Halifax properties available for thumbnail comparison")
+            print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
+            return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
         # Test 3: Compare Victoria County Property Thumbnails
         print(f"\n   🔧 TEST 3: Test Victoria County Property Thumbnails")
         
