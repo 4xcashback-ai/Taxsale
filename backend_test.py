@@ -613,55 +613,51 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Victoria County Scraper Analysis
-    print(f"\n🎯 VICTORIA COUNTY SCRAPER WITH DIRECT PDF EXTRACTION ANALYSIS:")
+    # Victoria County Thumbnail Accuracy Analysis
+    print(f"\n🎯 VICTORIA COUNTY THUMBNAIL ACCURACY ANALYSIS:")
     
-    if scraper_successful and scraper_data:
-        print(f"   ✅ VICTORIA COUNTY SCRAPER: ALL REQUIREMENTS MET!")
+    if thumbnail_accurate and thumbnail_data:
+        print(f"   ✅ VICTORIA COUNTY THUMBNAILS: ACCURACY VERIFIED!")
         
-        bid_results = scraper_data.get('bid_verification', {})
-        hst_results = scraper_data.get('hst_verification', {})
-        boundary_results = scraper_data.get('boundary_images', {})
+        coord_results = thumbnail_data.get('coordinate_verification', {})
+        boundary_results = thumbnail_data.get('boundary_image_test', {})
+        satellite_results = thumbnail_data.get('satellite_params', {})
         
-        print(f"      ✅ Scraper executed successfully")
-        print(f"      ✅ Correct minimum bid amounts: {bid_results.get('correct_bids', 0)}/3")
-        print(f"      ✅ HST detection working: {hst_results.get('hst_correct', False)}")
-        print(f"      ✅ Boundary images working: {boundary_results.get('working_boundary_endpoints', 0)}/3")
-        print(f"      ✅ All properties have complete data")
+        print(f"      ✅ Property coordinates verified for AAN 00254118")
+        print(f"      ✅ Boundary image generation working")
+        print(f"      ✅ Google Maps satellite parameters appropriate")
+        print(f"      ✅ Coordinate accuracy adequate for building visibility")
         
-        print(f"\n   🎉 SUCCESS: Victoria County scraper with direct PDF extraction is working perfectly!")
-        print(f"   ✅ Opening bid amounts now correct from actual PDF extraction")
-        print(f"   ✅ Entry 8 correctly shows HST as 'Yes'")
-        print(f"   ✅ All 3 properties extracted with complete and accurate data")
-        print(f"   ✅ Boundary images continue to work properly")
+        print(f"\n   🎉 SUCCESS: Victoria County thumbnails are showing accurate property locations!")
+        print(f"   ✅ AAN 00254118 coordinates point to correct location")
+        print(f"   ✅ Satellite view parameters configured for building visibility")
+        print(f"   ✅ Coordinate precision sufficient for property boundaries")
         
     else:
-        print(f"   ❌ VICTORIA COUNTY SCRAPER: ISSUES IDENTIFIED")
+        print(f"   ❌ VICTORIA COUNTY THUMBNAILS: ACCURACY ISSUES IDENTIFIED")
         
-        if scraper_data:
-            bid_results = scraper_data.get('bid_verification', {})
-            hst_results = scraper_data.get('hst_verification', {})
-            boundary_results = scraper_data.get('boundary_images', {})
+        if thumbnail_data:
+            coord_results = thumbnail_data.get('coordinate_verification', {})
+            boundary_results = thumbnail_data.get('boundary_image_test', {})
+            satellite_results = thumbnail_data.get('satellite_params', {})
+            refinement_results = thumbnail_data.get('refinement_analysis', {})
+            issues = thumbnail_data.get('thumbnail_accuracy_issues', [])
             
-            print(f"      Scraper executed: {scraper_data.get('scraper_executed', False)}")
-            print(f"      Correct minimum bid amounts: {bid_results.get('correct_bids', 0)}/3")
-            print(f"      HST detection working: {hst_results.get('hst_correct', False)}")
-            print(f"      Boundary images working: {boundary_results.get('working_boundary_endpoints', 0)}/3")
+            print(f"      Property coordinates found: {coord_results.get('coordinates_present', False)}")
+            print(f"      Boundary image accessible: {boundary_results.get('endpoint_accessible', False)}")
+            print(f"      Satellite parameters correct: {satellite_results.get('zoom_level_appropriate', False)}")
+            print(f"      Coordinate refinement needed: {refinement_results.get('refinement_needed', False)}")
             
-            print(f"\n   ❌ ISSUES IDENTIFIED:")
-            if bid_results.get('correct_bids', 0) != 3:
-                print(f"      - Minimum bid amounts are incorrect")
-                for detail in bid_results.get('bid_details', []):
-                    if not detail.get('correct', False):
-                        print(f"        • AAN {detail['aan']}: Got ${detail['actual_bid']}, expected ${detail['expected_bid']}")
+            print(f"\n   ❌ THUMBNAIL ACCURACY ISSUES IDENTIFIED:")
+            for issue in issues:
+                print(f"      - {issue}")
             
-            if not hst_results.get('hst_correct', False):
-                print(f"      - HST detection for Entry 8 is incorrect: Got '{hst_results.get('hst_value')}', expected 'Yes'")
-            
-            if boundary_results.get('working_boundary_endpoints', 0) != 3:
-                print(f"      - Boundary images not working for all properties")
+            if refinement_results.get('recommendations'):
+                print(f"\n   🔧 COORDINATE REFINEMENT RECOMMENDATIONS:")
+                for i, rec in enumerate(refinement_results['recommendations'], 1):
+                    print(f"      {i}. {rec}")
         else:
-            print(f"      - Scraper test execution failed or returned no data")
+            print(f"      - Thumbnail accuracy test execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
