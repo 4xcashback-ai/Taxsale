@@ -224,15 +224,16 @@ def test_municipality_descriptions():
             print(f"         Municipality ID: {municipality.get('id', 'Unknown')}")
             print(f"         Name: {municipality.get('name', 'Unknown')}")
             
+            # Get expected keywords for this municipality
+            expected_keywords = target_data["expected_keywords"]
+            found_keywords = []
+            missing_keywords = []
+            
             if description:
                 print(f"         ✅ Description found ({len(description)} characters)")
                 print(f"         Description preview: {description[:150]}...")
                 
                 # Check for required keywords
-                expected_keywords = target_data["expected_keywords"]
-                found_keywords = []
-                missing_keywords = []
-                
                 for keyword in expected_keywords:
                     if keyword.lower() in description.lower():
                         found_keywords.append(keyword)
