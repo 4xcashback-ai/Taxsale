@@ -1515,20 +1515,43 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                     
                 logger.info(f"Successfully parsed Property #{property_number}: AAN={assessment_number}, PID={pid_number}, Owner={owner_name}")
                 
-                # Extract property type and address
-                # Pattern: Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
-                location_match = re.search(r'([^,]+),\s*located at\s*([^,]+(?:,\s*[^,]+)*),\s*([\d,]+)\s*([^.]+)\.', section)
+                # Extract property type and address with flexible patterns
+                # Handle formats:
+                # "Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-."
+                # "Land only, located at Washabuck Rd., Washabuck Centre, 2.5 Acres +/-."
                 
                 property_type = "Property"
                 property_address = "Address not specified"
                 lot_size = None
                 
-                if location_match:
-                    property_type = location_match.group(1).strip()
-                    property_address = location_match.group(2).strip()
-                    size_number = location_match.group(3).strip()
-                    size_unit = location_match.group(4).strip()
-                    lot_size = f"{size_number} {size_unit}"
+                # Extract property type (before first comma)
+                type_match = re.search(r'([^,]+),\s*located at', section, re.IGNORECASE)
+                if type_match:
+                    property_type = type_match.group(1).strip()
+                
+                # Extract address and lot size with flexible patterns
+                location_patterns = [
+                    # Pattern 1: address with size in Sq. Feet
+                    r'located at\s*([^,]+(?:,\s*[^,]+)*),\s*([\d,]+)\s*Sq\.\s*Feet\s*\+/-',
+                    # Pattern 2: address with size in Acres
+                    r'located at\s*([^,]+(?:,\s*[^,]+)*),\s*([\d.]+)\s*Acres\s*\+/-',
+                    # Pattern 3: just address without size
+                    r'located at\s*([^,]+(?:,\s*[^,]+)*)'
+                ]
+                
+                for pattern in location_patterns:
+                    location_match = re.search(pattern, section, re.IGNORECASE)
+                    if location_match:
+                        property_address = location_match.group(1).strip()
+                        if len(location_match.groups()) > 1:
+                            size_number = location_match.group(2).strip()
+                            if 'Acres' in pattern:
+                                lot_size = f"{size_number} Acres +/-"
+                            else:
+                                lot_size = f"{size_number} Sq. Feet +/-"
+                        break
+                
+                logger.info(f"Extracted location: Type={property_type}, Address={property_address}, Size={lot_size}")
                 
                 # Extract redeemable status
                 # Pattern: Redeemable/ Not Land Registered.
