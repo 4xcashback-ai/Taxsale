@@ -96,7 +96,7 @@ pip install gunicorn
 
 ### Frontend Setup
 ```bash
-cd /var/www/tax-sale-compass/frontend
+cd /var/www/nstaxsales/frontend
 
 # Install Node dependencies
 yarn install
