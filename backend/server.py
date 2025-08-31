@@ -1535,12 +1535,12 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 
                 # Extract address and lot size with flexible patterns
                 location_patterns = [
-                    # Pattern 1: address with size in Sq. Feet
-                    r'located at\s*([^,]+(?:,\s*[^,]+)*),\s*([\d,]+)\s*Sq\.\s*Feet\s*\+/-',
+                    # Pattern 1: address with size in Sq. Feet (handle comma-separated numbers)
+                    r'located at\s*([^,]+(?:,\s*[^,]+)*?),\s*([\d,]+)\s*Sq\.\s*Feet\s*\+/-',
                     # Pattern 2: address with size in Acres
-                    r'located at\s*([^,]+(?:,\s*[^,]+)*),\s*([\d.]+)\s*Acres\s*\+/-',
-                    # Pattern 3: just address without size
-                    r'located at\s*([^,]+(?:,\s*[^,]+)*)'
+                    r'located at\s*([^,]+(?:,\s*[^,]+)*?),\s*([\d.]+)\s*Acres\s*\+/-',
+                    # Pattern 3: just address without size (non-greedy match)
+                    r'located at\s*([^,]+(?:,\s*[^,]+)*?)(?:\s*,\s*[\d,]+\s*(?:Sq\.\s*Feet|Acres)\s*\+/-)?'
                 ]
                 
                 for pattern in location_patterns:
