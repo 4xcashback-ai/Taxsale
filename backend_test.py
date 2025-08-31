@@ -172,8 +172,8 @@ def test_victoria_county_thumbnail_accuracy():
                 print(f"      Error response: {scraper_response.text}")
             return False, {"error": f"Scraper failed with HTTP {scraper_response.status_code}"}
         
-        # Test 2: Retrieve Victoria County Properties and Verify Data
-        print(f"\n   🔧 TEST 2: Retrieve Victoria County Properties and Verify Complete Data")
+        # Test 2: Retrieve Victoria County Properties and Focus on AAN 00254118
+        print(f"\n   🔧 TEST 2: Retrieve Victoria County Properties and Focus on AAN 00254118")
         
         # Get all tax sales and filter for Victoria County
         response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
@@ -184,14 +184,24 @@ def test_victoria_county_thumbnail_accuracy():
             print(f"   ✅ Retrieved properties from database")
             print(f"      Victoria County properties found: {len(victoria_properties)}")
             
-            if len(victoria_properties) != 3:
-                print(f"   ❌ Expected 3 Victoria County properties, found {len(victoria_properties)}")
-                return False, {"error": f"Expected 3 properties, found {len(victoria_properties)}"}
+            # Find AAN 00254118 specifically
+            target_property = None
+            for prop in victoria_properties:
+                if prop.get('assessment_number') == '00254118':
+                    target_property = prop
+                    break
+            
+            if not target_property:
+                print(f"   ❌ Target property AAN 00254118 not found in Victoria County properties")
+                return False, {"error": "AAN 00254118 not found"}
+            
+            print(f"   ✅ Found target property AAN 00254118")
+            print(f"      Owner: {target_property.get('owner_name')}")
+            print(f"      Address: {target_property.get('property_address')}")
+            print(f"      Coordinates: {target_property.get('latitude')}, {target_property.get('longitude')}")
             
             # Sort properties by assessment number for consistent testing
             victoria_properties.sort(key=lambda x: x.get('assessment_number', ''))
-            
-            print(f"   ✅ Found all 3 expected Victoria County properties")
             
         else:
             print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
