@@ -1681,7 +1681,7 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 
                 # Generate boundary screenshot URL if coordinates are available
                 if latitude and longitude:
-                    boundary_screenshot = f"https://nstaxmap-1.preview.emergentagent.com/api/generate-boundary-thumbnail/{assessment_number}"
+                    boundary_screenshot = f"https://nstaxmap-1.preview.emergentagent.com/api/property-image/{assessment_number}"
                     logger.info(f"✅ Boundary screenshot URL generated for {assessment_number}")
                 
                 # Create property object
