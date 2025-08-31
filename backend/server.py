@@ -2531,6 +2531,8 @@ async def scrape_municipality_by_id(municipality_id: str):
             result = await scrape_cape_breton_tax_sales()
         elif scraper_type == "kentville":
             result = await scrape_kentville_tax_sales()
+        elif scraper_type == "victoria_county":
+            result = await scrape_victoria_county_tax_sales()
         else:
             result = await scrape_generic_municipality(municipality_id)
             
