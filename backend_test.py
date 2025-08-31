@@ -505,85 +505,76 @@ def test_halifax_vs_victoria_county_thumbnails():
             except Exception as e:
                 print(f"   ❌ Victoria County Google Maps API test error: {e}")
         
-        # Final Assessment - Victoria County Fixed Scraper
-        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Fixed Scraper:")
+        # Final Comparison Analysis
+        print(f"\n   📊 FINAL HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON:")
         
-        requirements_met = []
-        requirements_failed = []
+        # Calculate comparison metrics
+        halifax_success_rate = 0
+        victoria_success_rate = 0
         
-        # Requirement 1: Fixed scraper execution with enhanced tax amount extraction
-        if scrape_response.status_code == 200 and properties_count == 3:
-            requirements_met.append("1. Fixed scraper with enhanced tax amount extraction patterns")
+        if halifax_properties:
+            halifax_working_endpoints = len([r for r in halifax_endpoint_results if r.get("working", False)])
+            halifax_success_rate = (halifax_working_endpoints / len(halifax_endpoint_results)) * 100 if halifax_endpoint_results else 0
+        
+        if victoria_properties:
+            victoria_working_endpoints = len([r for r in victoria_endpoint_results if r.get("working", False)])
+            victoria_success_rate = (victoria_working_endpoints / len(victoria_endpoint_results)) * 100 if victoria_endpoint_results else 0
+        
+        print(f"\n   🏆 THUMBNAIL GENERATION COMPARISON RESULTS:")
+        print(f"      Halifax thumbnail success rate: {halifax_success_rate:.1f}%")
+        print(f"      Victoria County thumbnail success rate: {victoria_success_rate:.1f}%")
+        
+        # Identify key differences
+        differences_found = []
+        
+        if halifax_success_rate > victoria_success_rate:
+            differences_found.append("Halifax has higher thumbnail success rate than Victoria County")
+        elif victoria_success_rate > halifax_success_rate:
+            differences_found.append("Victoria County has higher thumbnail success rate than Halifax")
         else:
-            requirements_failed.append("1. Fixed scraper with enhanced tax amount extraction patterns")
+            differences_found.append("Both municipalities have similar thumbnail success rates")
         
-        # Requirement 2: Correct minimum bids (fixed calculations)
-        if bid_calculations_correct:
-            requirements_met.append("2. Correct minimum bids - Entry 1: $2,009.03, Entry 2: $1,599.71, Entry 8: $5,031.96")
-        else:
-            requirements_failed.append("2. Correct minimum bids - Entry 1: $2,009.03, Entry 2: $1,599.71, Entry 8: $5,031.96")
+        # Check coordinate availability differences
+        if halifax_properties and victoria_properties:
+            halifax_coord_rate = (halifax_thumbnail_results["properties_with_coordinates"] / len(halifax_properties)) * 100
+            victoria_coord_rate = (victoria_thumbnail_results["properties_with_coordinates"] / len(victoria_properties)) * 100
+            
+            if abs(halifax_coord_rate - victoria_coord_rate) > 10:
+                differences_found.append(f"Coordinate availability differs: Halifax {halifax_coord_rate:.1f}% vs Victoria County {victoria_coord_rate:.1f}%")
         
-        # Requirement 3: Boundary image generation with coordinates
-        if coordinates_assigned and boundary_images_present:
-            requirements_met.append("3. Boundary image generation - coordinates and screenshot URLs")
-        else:
-            requirements_failed.append("3. Boundary image generation - coordinates and screenshot URLs")
+        # Check boundary screenshot availability differences
+        if halifax_properties and victoria_properties:
+            halifax_screenshot_rate = (halifax_thumbnail_results["properties_with_boundary_screenshots"] / len(halifax_properties)) * 100
+            victoria_screenshot_rate = (victoria_thumbnail_results["properties_with_boundary_screenshots"] / len(victoria_properties)) * 100
+            
+            if abs(halifax_screenshot_rate - victoria_screenshot_rate) > 10:
+                differences_found.append(f"Boundary screenshot availability differs: Halifax {halifax_screenshot_rate:.1f}% vs Victoria County {victoria_screenshot_rate:.1f}%")
         
-        # Requirement 4: HST detection for Entry 8
-        if hst_detection_correct:
-            requirements_met.append("4. HST detection - Entry 8 shows 'Yes' due to '+ HST' in PDF")
-        else:
-            requirements_failed.append("4. HST detection - Entry 8 shows 'Yes' due to '+ HST' in PDF")
+        print(f"\n   🔍 KEY DIFFERENCES IDENTIFIED:")
+        for diff in differences_found:
+            print(f"      • {diff}")
         
-        # Requirement 5: Boundary image endpoints accessible
-        if boundary_endpoints_working:
-            requirements_met.append("5. Boundary image endpoints accessible")
-        else:
-            requirements_failed.append("5. Boundary image endpoints accessible")
+        # Determine if Victoria County thumbnails are working properly
+        victoria_thumbnails_working = victoria_success_rate >= 80 and victoria_thumbnail_results["coordinate_accuracy"]
+        halifax_thumbnails_working = halifax_success_rate >= 80 and halifax_thumbnail_results["coordinate_accuracy"]
         
-        print(f"\n   ✅ REQUIREMENTS MET ({len(requirements_met)}/5):")
-        for req in requirements_met:
-            print(f"      ✅ {req}")
+        print(f"\n   📋 REVIEW REQUEST ANSWERS:")
+        print(f"      1. Do Halifax properties show proper boundary thumbnails? {'✅ YES' if halifax_thumbnails_working else '❌ NO'}")
+        print(f"      2. Do Victoria County properties show same quality thumbnails? {'✅ YES' if victoria_thumbnails_working else '❌ NO'}")
+        print(f"      3. Are Victoria County coordinates accurate for boundary generation? {'✅ YES' if victoria_thumbnail_results['coordinate_accuracy'] else '❌ NO'}")
+        print(f"      4. Is boundary generation using same process for both? {'✅ YES' if halifax_success_rate > 0 and victoria_success_rate > 0 else '❌ NO'}")
         
-        if requirements_failed:
-            print(f"\n   ❌ REQUIREMENTS FAILED ({len(requirements_failed)}/5):")
-            for req in requirements_failed:
-                print(f"      ❌ {req}")
-        
-        # Overall result
-        if len(requirements_failed) == 0:
-            print(f"\n   🎉 VICTORIA COUNTY FIXED SCRAPER: ALL REQUIREMENTS MET!")
-            print(f"   ✅ Enhanced tax amount extraction patterns working correctly")
-            print(f"   ✅ All 3 properties show correct minimum bids from PDF tax amounts")
-            print(f"   ✅ Boundary image generation working with proper coordinates")
-            print(f"   ✅ Location-specific coordinates assigned for Little Narrows, Middle River, Washabuck")
-            print(f"   ✅ HST detection working for Entry 8 with '+ HST' indicator")
-            print(f"   ✅ Boundary image endpoints accessible for all properties")
-            return True, {
-                "requirements_met": len(requirements_met),
-                "requirements_failed": len(requirements_failed),
-                "properties_found": properties_count,
-                "bid_calculations_correct": bid_calculations_correct,
-                "coordinates_assigned": coordinates_assigned,
-                "boundary_images_present": boundary_images_present,
-                "hst_detection_correct": hst_detection_correct,
-                "boundary_endpoints_working": boundary_endpoints_working,
-                "expected_aans_found": found_aans
-            }
-        else:
-            print(f"\n   ❌ VICTORIA COUNTY FIXED SCRAPER: {len(requirements_failed)} REQUIREMENTS FAILED")
-            return False, {
-                "requirements_met": len(requirements_met),
-                "requirements_failed": len(requirements_failed),
-                "failed_requirements": requirements_failed,
-                "properties_found": properties_count,
-                "bid_calculations_correct": bid_calculations_correct,
-                "coordinates_assigned": coordinates_assigned,
-                "boundary_images_present": boundary_images_present,
-                "hst_detection_correct": hst_detection_correct,
-                "boundary_endpoints_working": boundary_endpoints_working,
-                "expected_aans_found": found_aans
-            }
+        return victoria_thumbnails_working and halifax_thumbnails_working, {
+            "halifax_success_rate": halifax_success_rate,
+            "victoria_success_rate": victoria_success_rate,
+            "differences_found": differences_found,
+            "halifax_thumbnails_working": halifax_thumbnails_working,
+            "victoria_thumbnails_working": victoria_thumbnails_working,
+            "halifax_results": halifax_thumbnail_results,
+            "victoria_results": victoria_thumbnail_results,
+            "halifax_endpoint_results": halifax_endpoint_results,
+            "victoria_endpoint_results": victoria_endpoint_results
+        }
             
     except Exception as e:
         print(f"   ❌ Victoria County improved parser test error: {e}")
