@@ -121,11 +121,11 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
 
   - task: "Victoria County Scraper Implementation"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 6
+    stuck_count: 7
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "testing"
