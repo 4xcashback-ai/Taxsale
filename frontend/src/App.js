@@ -672,7 +672,7 @@ function PropertySearch() {
   };
 
   const checkForUpdates = async () => {
-    setDeploymentLoading(true);
+    setButtonStates(prev => ({ ...prev, checkUpdates: true }));
     setDeploymentMessage("Checking for updates...");
     try {
       const response = await axios.post(`${API}/deployment/check-updates`);
@@ -689,7 +689,7 @@ function PropertySearch() {
       console.error("Error checking for updates:", error);
       setDeploymentMessage("Failed to check for updates: " + (error.response?.data?.detail || error.message));
     } finally {
-      setDeploymentLoading(false);
+      setButtonStates(prev => ({ ...prev, checkUpdates: false }));
     }
   };
 
