@@ -357,13 +357,22 @@ def test_victoria_county_improved_parser():
         # Test 4: Multiple PID Handling Verification
         print(f"\n   🔧 TEST 4: Multiple PID Handling Verification")
         
-        # Test with invalid municipality to verify error handling
-        invalid_response = requests.post(f"{BACKEND_URL}/scrape/invalid-municipality", timeout=30)
+        # Check if Entry 2 (AAN 00453706) has multiple PIDs as expected
+        entry_2_property = None
+        for prop in victoria_properties:
+            if prop.get("assessment_number") == "00453706":
+                entry_2_property = prop
+                break
         
-        if invalid_response.status_code in [404, 500]:
-            print(f"   ✅ Enhanced error handling: Invalid municipality returns appropriate error (HTTP {invalid_response.status_code})")
+        if entry_2_property:
+            print(f"   ✅ Entry 2 (AAN 00453706) found - checking for multiple PID handling")
+            raw_data = entry_2_property.get("raw_data", {})
+            if raw_data and "multiple_pids" in str(raw_data).lower():
+                print(f"   ✅ Multiple PID handling: Entry 2 shows evidence of multiple PID processing")
+            else:
+                print(f"   ⚠️ Multiple PID handling: Cannot verify multiple PID processing for Entry 2")
         else:
-            print(f"   ⚠️ Error handling: Unexpected response for invalid municipality (HTTP {invalid_response.status_code})")
+            print(f"   ❌ Entry 2 (AAN 00453706) not found - multiple PID handling cannot be verified")
         
         # Final Assessment
         print(f"\n   📊 FINAL ASSESSMENT - Victoria County Final Parser:")
