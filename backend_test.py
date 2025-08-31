@@ -23,13 +23,13 @@ def test_api_connection():
         if response.status_code == 200:
             print("✅ API connection successful")
             print(f"   Response: {response.json()}")
-            return True
+            return True, response.json()
         else:
             print(f"❌ API connection failed with status {response.status_code}")
-            return False
+            return False, None
     except Exception as e:
         print(f"❌ API connection error: {e}")
-        return False
+        return False, None
 
 def test_municipalities_endpoint():
     """Test municipalities endpoint and check Victoria County exists"""
