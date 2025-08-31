@@ -267,8 +267,8 @@ def test_victoria_county_coordinate_precision_fixes():
         else:
             print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
-        # Test 3: Verify AAN 00254118 Coordinates Accuracy
-        print(f"\n   🔧 TEST 3: Verify AAN 00254118 Coordinates Accuracy")
+        # Test 3: Test Boundary Image Quality - AAN 00254118 Thumbnail Shows Actual Building
+        print(f"\n   🔧 TEST 3: Test Boundary Image Quality - AAN 00254118 Thumbnail Shows Actual Building")
         
         coordinate_verification_results = {
             "target_property_found": False,
