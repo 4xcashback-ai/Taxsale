@@ -173,8 +173,8 @@ def test_victoria_county_coordinate_precision_fixes():
                 print(f"      Error response: {scraper_response.text}")
             return False, {"error": f"Scraper failed with HTTP {scraper_response.status_code}"}
         
-        # Test 2: Retrieve Victoria County Properties and Focus on AAN 00254118
-        print(f"\n   🔧 TEST 2: Retrieve Victoria County Properties and Focus on AAN 00254118")
+        # Test 2: Verify Coordinate Precision - Check 5 Decimal Places (±1m Accuracy)
+        print(f"\n   🔧 TEST 2: Verify Coordinate Precision - Check 5 Decimal Places (±1m Accuracy)")
         
         # Get all tax sales and filter for Victoria County
         response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
