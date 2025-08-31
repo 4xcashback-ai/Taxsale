@@ -149,8 +149,8 @@ def test_victoria_county_fixed_scraper():
     print("🔍 EXPECTED BOUNDARY IMAGES: All properties should have boundary_screenshot URLs and coordinates")
     
     try:
-        # Test 1: Victoria County Scraper - Check Current Data Extraction
-        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Current Data Extraction)")
+        # Test 1: Victoria County Fixed Scraper - Enhanced Tax Amount Extraction
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Fixed Scraper with Enhanced Tax Amount Extraction)")
         
         scrape_response = requests.post(
             f"{BACKEND_URL}/scrape/victoria-county", 
@@ -164,7 +164,7 @@ def test_victoria_county_fixed_scraper():
         
         if scrape_response.status_code == 200:
             scrape_result = scrape_response.json()
-            print(f"   ✅ Victoria County scraper executed successfully")
+            print(f"   ✅ Victoria County fixed scraper executed successfully")
             print(f"      Status: {scrape_result.get('status')}")
             print(f"      Municipality: {scrape_result.get('municipality', 'N/A')}")
             print(f"      Properties scraped: {scrape_result.get('properties_scraped', 0)}")
@@ -172,21 +172,21 @@ def test_victoria_county_fixed_scraper():
             # Check property count - expecting 3 properties
             properties_count = scrape_result.get('properties_scraped', 0)
             if properties_count == 3:
-                print(f"   ✅ PROPERTY COUNT: Found all 3 properties")
+                print(f"   ✅ PROPERTY COUNT: Found all 3 properties (entries 1, 2, 8)")
             elif properties_count == 1:
                 print(f"   ❌ PROPERTY COUNT ISSUE: Only 1 property found (expected 3)")
-                print(f"   🔍 DEBUG: This indicates PDF parsing is not finding all numbered sections")
+                print(f"   🔍 DEBUG: PDF parsing may not be finding all numbered sections")
             else:
                 print(f"   ⚠️ UNEXPECTED PROPERTY COUNT: Found {properties_count} properties (expected 3)")
             
         else:
-            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
+            print(f"   ❌ Victoria County fixed scraper failed with status {scrape_response.status_code}")
             try:
                 error_detail = scrape_response.json()
                 print(f"      Error details: {error_detail}")
             except:
                 print(f"      Raw response: {scrape_response.text[:200]}...")
-            return False, {"error": f"Scraper failed with HTTP {scrape_response.status_code}"}
+            return False, {"error": f"Fixed scraper failed with HTTP {scrape_response.status_code}"}
         
         # Test 2: Verify Minimum Bid Calculations Against PDF Tax Amounts
         print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Minimum Bid Calculations)")
