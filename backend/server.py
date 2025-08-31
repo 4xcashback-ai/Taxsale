@@ -175,6 +175,7 @@ class MunicipalityUpdate(BaseModel):
     scrape_day_of_month: Optional[int] = None
     scrape_time_hour: Optional[int] = None
     scrape_time_minute: Optional[int] = None
+    description: Optional[str] = None  # Municipality-specific description for property detail pages
 
 class TaxSaleProperty(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
