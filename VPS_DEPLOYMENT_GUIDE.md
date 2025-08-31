@@ -135,7 +135,7 @@ ENVIRONMENT=production
 
 ### Frontend Environment
 ```bash
-cd /var/www/tax-sale-compass/frontend
+cd /var/www/nstaxsales/frontend
 nano .env
 ```
 
