@@ -422,8 +422,17 @@ def test_victoria_county_data_extraction_debug():
         else:
             requirements_failed.append("3. Boundary screenshot generation")
         
-        # Requirement 4: Tax amount extraction patterns
-        if debug_response.status_code == 200 and tax_matches:
+        # Requirement 4: Tax amount extraction patterns  
+        tax_patterns_working = False
+        if 'debug_response' in locals() and debug_response.status_code == 200:
+            debug_data = debug_response.json()
+            pdf_content = debug_data.get('pdf_content_preview', '')
+            import re
+            tax_matches = re.findall(r"Taxes, Interest and Expenses owing:\s*\$[\d,]+\.?\d*", pdf_content)
+            if tax_matches:
+                tax_patterns_working = True
+        
+        if tax_patterns_working:
             requirements_met.append("4. Tax amount extraction patterns")
         else:
             requirements_failed.append("4. Tax amount extraction patterns")
