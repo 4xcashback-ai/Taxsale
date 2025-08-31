@@ -454,82 +454,115 @@ def test_victoria_county_coordinate_precision_fixes():
         # Test 5: Check Property Data Accuracy - Opening Bids and HST Detection
         print(f"\n   🔧 TEST 5: Check Property Data Accuracy - Opening Bids and HST Detection")
         
-        satellite_params_results = {
-            "zoom_level_appropriate": False,
-            "maptype_satellite": False,
-            "size_appropriate": False,
-            "coordinate_precision_analysis": {}
+        property_data_accuracy_results = {
+            "opening_bids_correct": True,
+            "hst_detection_working": True,
+            "all_required_fields_present": True,
+            "properties_analysis": []
         }
         
-        print(f"   📊 Analyzing Google Maps Static API parameters for building visibility...")
+        print(f"   📊 Verifying opening bids and HST detection still working correctly...")
         
-        if target_property and target_property.get('latitude') and target_property.get('longitude'):
-            lat = target_property.get('latitude')
-            lng = target_property.get('longitude')
-            
-            print(f"\n   📋 Google Maps Parameters Analysis:")
-            print(f"      Current coordinates: {lat}, {lng}")
-            
-            # Analyze zoom level (from backend code, it uses zoom=17)
-            print(f"      🔍 Zoom Level Analysis:")
-            print(f"         Backend uses zoom=17 (from server.py line 103)")
-            print(f"         Zoom 17: Building-level detail (~76m across)")
-            print(f"         ✅ Zoom level appropriate for showing individual buildings")
-            satellite_params_results["zoom_level_appropriate"] = True
-            
-            # Analyze map type (from backend code, it uses maptype=satellite)
-            print(f"      🛰️ Map Type Analysis:")
-            print(f"         Backend uses maptype=satellite (from server.py line 103)")
-            print(f"         ✅ Satellite view should show buildings and structures")
-            satellite_params_results["maptype_satellite"] = True
-            
-            # Analyze image size (from backend code, it uses 405x290 by default)
-            print(f"      📐 Image Size Analysis:")
-            print(f"         Backend uses size=405x290 (from server.py line 79)")
-            print(f"         ✅ Size appropriate for thumbnail display")
-            satellite_params_results["size_appropriate"] = True
-            
-            # Analyze coordinate precision for property boundary accuracy
-            print(f"      📍 Coordinate Precision Analysis:")
-            lat_precision = len(str(lat).split('.')[-1]) if '.' in str(lat) else 0
-            lng_precision = len(str(lng).split('.')[-1]) if '.' in str(lng) else 0
-            
-            print(f"         Latitude precision: {lat_precision} decimal places")
-            print(f"         Longitude precision: {lng_precision} decimal places")
-            
-            # Calculate approximate accuracy
-            # 1 degree ≈ 111km, so precision accuracy:
-            lat_accuracy_m = 111000 / (10 ** lat_precision) if lat_precision > 0 else 111000
-            lng_accuracy_m = 111000 / (10 ** lng_precision) * abs(math.cos(math.radians(lat))) if lng_precision > 0 else 111000
-            
-            print(f"         Approximate accuracy: ±{lat_accuracy_m:.1f}m latitude, ±{lng_accuracy_m:.1f}m longitude")
-            
-            satellite_params_results["coordinate_precision_analysis"] = {
-                "lat_precision": lat_precision,
-                "lng_precision": lng_precision,
-                "lat_accuracy_m": lat_accuracy_m,
-                "lng_accuracy_m": lng_accuracy_m
+        # Expected property data based on previous test results
+        expected_properties = [
+            {
+                "assessment_number": "00254118",
+                "expected_opening_bid": 2009.03,
+                "expected_hst": "No",
+                "owner_contains": "Donald John Beaton"
+            },
+            {
+                "assessment_number": "00453706", 
+                "expected_opening_bid": 1599.71,
+                "expected_hst": "No",
+                "owner_contains": "Kenneth Ferneyhough"
+            },
+            {
+                "assessment_number": "09541209",
+                "expected_opening_bid": 5031.96,
+                "expected_hst": "Yes",
+                "owner_contains": "Florance Debra Cleaves"
             }
+        ]
+        
+        for expected in expected_properties:
+            prop = None
+            for p in victoria_properties:
+                if p.get('assessment_number') == expected['assessment_number']:
+                    prop = p
+                    break
             
-            # Determine if precision is sufficient for property boundaries
-            if lat_accuracy_m <= 10 and lng_accuracy_m <= 10:
-                print(f"         ✅ Coordinate precision sufficient for property-level accuracy")
-            elif lat_accuracy_m <= 50 and lng_accuracy_m <= 50:
-                print(f"         ⚠️ Coordinate precision moderate - may show general area but not exact property")
-                print(f"            This could explain why thumbnail shows vacant land instead of dwelling")
+            if not prop:
+                print(f"      ❌ Property AAN {expected['assessment_number']} not found")
+                property_data_accuracy_results["all_required_fields_present"] = False
+                continue
+            
+            print(f"\n      📋 Property AAN {expected['assessment_number']}:")
+            print(f"         Owner: {prop.get('owner_name', 'Unknown')}")
+            print(f"         Address: {prop.get('property_address', 'Unknown')}")
+            
+            # Check opening bid
+            actual_bid = prop.get('opening_bid', 0)
+            expected_bid = expected['expected_opening_bid']
+            
+            print(f"         Opening Bid: ${actual_bid}")
+            print(f"         Expected: ${expected_bid}")
+            
+            if abs(actual_bid - expected_bid) < 0.01:  # Allow for small floating point differences
+                print(f"         ✅ Opening bid correct")
             else:
-                print(f"         ❌ Coordinate precision too low for accurate property boundaries")
-                print(f"            This likely explains why thumbnail shows vacant land instead of dwelling")
+                print(f"         ❌ Opening bid incorrect (expected ${expected_bid}, got ${actual_bid})")
+                property_data_accuracy_results["opening_bids_correct"] = False
             
-            # Test actual Google Maps URL construction
-            print(f"\n      🌐 Google Maps URL Construction Test:")
-            test_google_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png"
-            print(f"         Constructed URL: {test_google_url}")
-            print(f"         ✅ URL format matches backend implementation")
+            # Check HST detection
+            actual_hst = prop.get('hst_applicable', 'Unknown')
+            expected_hst = expected['expected_hst']
             
-        else:
-            print(f"   ❌ Cannot analyze Google Maps parameters - no coordinates for target property")
-            return False, {"error": "No coordinates available for Google Maps analysis"}
+            print(f"         HST Applicable: {actual_hst}")
+            print(f"         Expected: {expected_hst}")
+            
+            if actual_hst == expected_hst:
+                print(f"         ✅ HST detection correct")
+            else:
+                print(f"         ❌ HST detection incorrect (expected {expected_hst}, got {actual_hst})")
+                property_data_accuracy_results["hst_detection_working"] = False
+            
+            # Check owner name contains expected text
+            actual_owner = prop.get('owner_name', '')
+            expected_owner_part = expected['owner_contains']
+            
+            if expected_owner_part.lower() in actual_owner.lower():
+                print(f"         ✅ Owner name correct")
+            else:
+                print(f"         ❌ Owner name incorrect (expected to contain '{expected_owner_part}', got '{actual_owner}')")
+                property_data_accuracy_results["all_required_fields_present"] = False
+            
+            # Check required fields
+            required_fields = ['assessment_number', 'owner_name', 'property_address', 'opening_bid', 'hst_applicable', 'latitude', 'longitude']
+            missing_fields = []
+            
+            for field in required_fields:
+                if not prop.get(field):
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"         ❌ Missing required fields: {missing_fields}")
+                property_data_accuracy_results["all_required_fields_present"] = False
+            else:
+                print(f"         ✅ All required fields present")
+            
+            property_data_accuracy_results["properties_analysis"].append({
+                "assessment_number": expected['assessment_number'],
+                "opening_bid_correct": abs(actual_bid - expected_bid) < 0.01,
+                "hst_detection_correct": actual_hst == expected_hst,
+                "owner_name_correct": expected_owner_part.lower() in actual_owner.lower(),
+                "missing_fields": missing_fields
+            })
+        
+        print(f"\n   📊 Property Data Accuracy Summary:")
+        print(f"      Opening bids correct: {property_data_accuracy_results['opening_bids_correct']}")
+        print(f"      HST detection working: {property_data_accuracy_results['hst_detection_working']}")
+        print(f"      All required fields present: {property_data_accuracy_results['all_required_fields_present']}")
         
         # Test 6: Coordinate Refinement Recommendations
         print(f"\n   🔧 TEST 6: Coordinate Refinement Recommendations")
