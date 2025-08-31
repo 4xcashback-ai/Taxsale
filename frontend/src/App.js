@@ -1268,9 +1268,12 @@ function PropertySearch() {
                                     onChange={(e) => setEditingMunicipality({...editingMunicipality, scraper_type: e.target.value})}
                                     className="w-full p-2 border border-gray-300 rounded-md text-sm"
                                   >
-                                    <option value="manual">Manual</option>
-                                    <option value="halifax">Halifax (Live)</option>
-                                    <option value="generic">Generic PDF</option>
+                                    <option value="manual">Manual</option> 
+                                    <option value="generic">Generic</option>
+                                    <option value="halifax">Halifax (PDF)</option>
+                                    <option value="cape_breton">Cape Breton</option>
+                                    <option value="kentville">Kentville</option>
+                                    <option value="victoria_county">Victoria County (PDF)</option>
                                     <option value="placeholder">Placeholder</option>
                                   </select>
                                 </div>
