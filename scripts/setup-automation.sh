@@ -251,9 +251,9 @@ main() {
     log "Automation setup completed successfully!"
     log ""
     log "Available commands:"
-    log "  tax-sale-deploy deploy [repo-url]  - Deploy latest version"
-    log "  tax-sale-deploy check-updates      - Check for updates"
-    log "  tax-sale-health check             - Run health check"
+    log "  nstaxsales-deploy deploy [repo-url]  - Deploy latest version"
+    log "  nstaxsales-deploy check-updates      - Check for updates"
+    log "  nstaxsales-health check             - Run health check"
     log ""
     log "The backend API can now trigger deployments via the admin interface."
 }
