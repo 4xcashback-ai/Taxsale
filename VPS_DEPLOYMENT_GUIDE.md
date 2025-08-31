@@ -159,7 +159,7 @@ module.exports = {
   apps: [
     {
       name: 'tax-sale-backend',
-      cwd: '/var/www/tax-sale-compass/backend',
+      cwd: '/var/www/nstaxsales/backend',
       script: 'venv/bin/gunicorn',
       args: '-w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8001 server:app',
       env: {
