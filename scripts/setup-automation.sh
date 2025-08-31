@@ -237,7 +237,7 @@ test_setup() {
 
 # Main setup function
 main() {
-    log "Starting Tax Sale Compass automation setup..."
+    log "Starting NST Tax Sales automation setup..."
     
     check_root
     setup_directories
