@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Municipality Descriptions for Property Detail Pages
+Focus on Deployment Management API Endpoints
 """
 
 import requests
