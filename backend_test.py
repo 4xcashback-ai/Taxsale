@@ -479,18 +479,17 @@ def test_victoria_county_data_extraction_debug():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Victoria County Improved Parser Testing"""
+    """Main test execution function - Focus on Victoria County Data Extraction Debug"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County Parser with Improved Pattern Matching")
-    print("📋 REVIEW REQUEST: Test Victoria County parser with enhanced regex patterns for all property formats")
+    print("🎯 FOCUS: Victoria County Data Extraction Issues - Minimum Bid and Missing Images")
+    print("📋 REVIEW REQUEST: Debug Victoria County data extraction issues")
     print("🔍 REQUIREMENTS:")
-    print("   1. Test improved parser POST /api/scrape/victoria-county with enhanced regex patterns")
-    print("   2. Verify all 3 properties extracted - Entry 1: AAN 00254118, Entry 2: AAN 00453706, Entry 8: AAN 09541209")
-    print("   3. Check pattern matching - Enhanced patterns should handle different property formats and multiple PIDs")
-    print("   4. Verify complete data - All properties should have correct owners, addresses, tax amounts, and property types")
-    print("   5. Confirm no fallback - Should extract actual PDF data, not use fallback sample data")
-    print("   6. Verify sale date correctly set to '2025-08-26'")
+    print("   1. Test current Victoria County properties - Check actual data being extracted for all 3 properties")
+    print("   2. Verify minimum bid calculations - Compare extracted opening_bid values against PDF tax amounts")
+    print("   3. Check boundary screenshot generation - Verify if boundary_screenshot field is being generated")
+    print("   4. Debug tax amount extraction - Check if regex patterns correctly extract from 'Taxes, Interest and Expenses owing: $X,XXX.XX'")
+    print("   5. Verify property images - Check if Google Maps static API is generating boundary thumbnails")
     print("=" * 80)
     
     # Track overall results
