@@ -1581,14 +1581,33 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 property_address = "Address not specified"
                 lot_size = None
                 
-                # Extract property type (after the owner name, before "located at")
-                # Look for patterns like "Land/Dwelling, located at" or "Land only, located at"
-                type_match = re.search(r'(?:Property assessed to [^.]+\.\s*)?([^,]+),\s*located at', section, re.IGNORECASE)
-                if type_match:
-                    property_type = type_match.group(1).strip()
-                    # Clean up property type - remove any leading numbers or AAN references
-                    property_type = re.sub(r'^\d+\.\s*AAN:[^–]*–\s*Property assessed to [^.]+\.\s*', '', property_type)
-                    property_type = re.sub(r'^\d+\.\s*AAN:[^-]*-\s*Property assessed to [^.]+\.\s*', '', property_type)
+                # Extract property type with patterns for different formats
+                # Handle: "Land/Dwelling, located at" and "Land only, located at"
+                property_type = "Property"
+                
+                type_patterns = [
+                    r'([^.]+)\.\s*([^,]+),\s*located at',           # After period: "Name. Land/Dwelling, located at"
+                    r'Property assessed to [^.]+\.\s*([^,]+),\s*located at',  # After owner: "assessed to Name. Land/Dwelling, located at"
+                ]
+                
+                for pattern in type_patterns:
+                    type_match = re.search(pattern, section, re.IGNORECASE)
+                    if type_match:
+                        groups = type_match.groups()
+                        # Get the last group which should be the property type
+                        potential_type = groups[-1].strip()
+                        
+                        # Clean up - remove any AAN/PID references
+                        potential_type = re.sub(r'^\d+\.\s*AAN:[^–-]*[–-]\s*Property assessed to [^.]+\.\s*', '', potential_type)
+                        potential_type = potential_type.strip()
+                        
+                        if potential_type and len(potential_type) < 50:  # Reasonable length for property type
+                            property_type = potential_type
+                            logger.info(f"✅ Property type found: {property_type}")
+                            break
+                
+                if property_type == "Property":
+                    logger.warning(f"⚠️ Using default property type")
                 
                 # Extract address and lot size with flexible patterns
                 location_patterns = [
