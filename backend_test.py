@@ -337,9 +337,10 @@ def test_victoria_county_improved_parser():
             
             # Analyze PDF content and parsing details
             pdf_size = debug_data.get('pdf_size_bytes', 0)
-            pdf_chars = debug_data.get('pdf_text_length', 0)
-            aan_count = len(debug_data.get('aan_occurrences', []))
-            numbered_sections = debug_data.get('numbered_sections_found', 0)
+            pdf_chars = debug_data.get('extracted_text_length', 0)
+            analysis = debug_data.get('analysis', {})
+            aan_count = analysis.get('aan_occurrences', 0)
+            numbered_sections = analysis.get('numbered_sections', 0)
             
             print(f"      PDF Size: {pdf_size} bytes")
             print(f"      PDF Text Length: {pdf_chars} characters")
