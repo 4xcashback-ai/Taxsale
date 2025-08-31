@@ -375,7 +375,7 @@ def test_victoria_county_improved_parser():
             print(f"   ❌ Entry 2 (AAN 00453706) not found - multiple PID handling cannot be verified")
         
         # Final Assessment
-        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Final Parser:")
+        print(f"\n   📊 FINAL ASSESSMENT - Victoria County Improved Parser:")
         
         requirements_met = []
         requirements_failed = []
