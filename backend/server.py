@@ -1144,6 +1144,8 @@ async def scrape_victoria_county_tax_sales():
         # Victoria County PDF scraping implementation
         victoria_county_url = "https://victoriacounty.com"
         tax_sale_page_url = "https://victoriacounty.com/residents/property-taxation-services/tax-sales/"
+        # Direct PDF URL provided by user
+        direct_pdf_url = "https://victoriacounty.com/wp-content/uploads/2025/08/AUGUST-26-2025-TAX-SALE-AD-6.pdf"
         
         properties = []
         
