@@ -6224,6 +6224,246 @@ def test_victoria_county_enhanced_parsing():
         print(f"   ❌ Victoria County enhanced parsing test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_direct_pdf_scraper():
+    """Test Victoria County scraper with direct PDF URL - Review Request Focus"""
+    print("\n🏛️ Testing Victoria County Scraper with Direct PDF URL...")
+    print("🎯 FOCUS: Test POST /api/scrape/victoria-county with actual Victoria County PDF")
+    print("📋 REQUIREMENTS: Verify PDF download, content extraction, and 3 real properties")
+    print("🔍 GOAL: Ensure no fallback data - all properties from actual PDF with correct sale date")
+    
+    try:
+        # Test 1: Victoria County Scraper Endpoint with Direct PDF URL
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Direct PDF URL Test)")
+        print(f"   📄 Expected PDF: https://victoriacounty.com/wp-content/uploads/2025/08/AUGUST-26-2025-TAX-SALE-AD-6.pdf")
+        print(f"   🎯 Expected: 3 real properties with sale date 2025-08-26")
+        
+        scrape_response = requests.post(
+            f"{BACKEND_URL}/scrape/victoria-county", 
+            timeout=120  # Allow extra time for PDF processing
+        )
+        
+        if scrape_response.status_code == 200:
+            scrape_result = scrape_response.json()
+            print(f"   ✅ Victoria County scraper executed successfully - HTTP 200")
+            print(f"      Status: {scrape_result.get('status')}")
+            print(f"      Municipality: {scrape_result.get('municipality', 'N/A')}")
+            print(f"      Properties Scraped: {scrape_result.get('properties_scraped', 0)}")
+            
+            # CRITICAL CHECK: Verify we got 3 properties (not 1 fallback)
+            properties_count = scrape_result.get('properties_scraped', 0)
+            if properties_count == 3:
+                print(f"   ✅ PROPERTY COUNT CORRECT: Found {properties_count} properties (expected 3)")
+            elif properties_count == 1:
+                print(f"   ❌ PROPERTY COUNT ISSUE: Only {properties_count} property found (expected 3)")
+                print(f"   🚨 This suggests fallback data is being used instead of actual PDF parsing")
+                return False, {"error": "Only 1 property found - likely fallback data", "properties_count": properties_count}
+            else:
+                print(f"   ⚠️ UNEXPECTED PROPERTY COUNT: {properties_count} properties (expected 3)")
+            
+        else:
+            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
+            try:
+                error_detail = scrape_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {scrape_response.text}")
+            return False, {"error": f"Scraper failed with HTTP {scrape_response.status_code}"}
+        
+        # Test 2: Verify Victoria County Properties in Database
+        print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Victoria County Properties)")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            all_properties = tax_sales_response.json()
+            victoria_properties = [p for p in all_properties if p.get("municipality_name") == "Victoria County"]
+            
+            print(f"   ✅ Tax sales endpoint working - {len(all_properties)} total properties")
+            print(f"   📊 Victoria County properties in database: {len(victoria_properties)}")
+            
+            if len(victoria_properties) == 3:
+                print(f"   ✅ DATABASE VERIFICATION: 3 Victoria County properties found")
+            elif len(victoria_properties) == 1:
+                print(f"   ❌ DATABASE ISSUE: Only 1 Victoria County property in database")
+                print(f"   🚨 This confirms fallback data is being used")
+                return False, {"error": "Only 1 property in database - fallback data confirmed"}
+            else:
+                print(f"   ⚠️ UNEXPECTED DATABASE COUNT: {len(victoria_properties)} Victoria County properties")
+            
+            # Analyze the properties for PDF vs fallback indicators
+            print(f"\n   🔍 ANALYZING VICTORIA COUNTY PROPERTIES:")
+            
+            fallback_indicators = 0
+            real_pdf_indicators = 0
+            sale_date_correct = 0
+            
+            for i, prop in enumerate(victoria_properties):
+                assessment = prop.get('assessment_number', 'N/A')
+                owner = prop.get('owner_name', 'N/A')
+                address = prop.get('property_address', 'N/A')
+                sale_date = prop.get('sale_date', 'N/A')
+                raw_data = prop.get('raw_data', {})
+                
+                print(f"\n      Property {i+1}:")
+                print(f"         Assessment: {assessment}")
+                print(f"         Owner: {owner}")
+                print(f"         Address: {address}")
+                print(f"         Sale Date: {sale_date}")
+                
+                # Check for fallback data indicators
+                if assessment == "00254118" and "Donald John Beaton" in owner:
+                    print(f"         🚨 FALLBACK DATA DETECTED: This is the known sample property")
+                    fallback_indicators += 1
+                else:
+                    print(f"         ✅ APPEARS TO BE REAL DATA: Not the known sample property")
+                    real_pdf_indicators += 1
+                
+                # Check sale date (should be 2025-08-26 from PDF)
+                if "2025-08-26" in str(sale_date):
+                    print(f"         ✅ SALE DATE CORRECT: {sale_date} matches expected 2025-08-26")
+                    sale_date_correct += 1
+                elif "2025-05-15" in str(sale_date):
+                    print(f"         ❌ SALE DATE WRONG: {sale_date} is old hardcoded date")
+                else:
+                    print(f"         ⚠️ SALE DATE UNEXPECTED: {sale_date}")
+                
+                # Check raw_data for PDF parsing indicators
+                if raw_data:
+                    source = raw_data.get('source', 'unknown')
+                    if 'pdf_parsing_fallback' in str(source):
+                        print(f"         🚨 RAW DATA CONFIRMS FALLBACK: source = {source}")
+                        fallback_indicators += 1
+                    elif 'pdf' in str(source).lower():
+                        print(f"         ✅ RAW DATA SUGGESTS PDF PARSING: source = {source}")
+                    else:
+                        print(f"         📊 Raw data source: {source}")
+                
+        else:
+            print(f"   ❌ Tax sales endpoint failed with status {tax_sales_response.status_code}")
+            return False, {"error": f"Tax sales endpoint failed with HTTP {tax_sales_response.status_code}"}
+        
+        # Test 3: PDF Download Verification (Check if PDF is accessible)
+        print(f"\n   🔧 TEST 3: PDF Download Verification")
+        print(f"   📄 Testing direct access to Victoria County PDF")
+        
+        pdf_url = "https://victoriacounty.com/wp-content/uploads/2025/08/AUGUST-26-2025-TAX-SALE-AD-6.pdf"
+        
+        try:
+            pdf_response = requests.head(pdf_url, timeout=30)
+            if pdf_response.status_code == 200:
+                content_length = pdf_response.headers.get('content-length', 'unknown')
+                content_type = pdf_response.headers.get('content-type', 'unknown')
+                
+                print(f"   ✅ PDF is accessible - HTTP 200")
+                print(f"      Content-Length: {content_length} bytes")
+                print(f"      Content-Type: {content_type}")
+                
+                if 'pdf' in content_type.lower():
+                    print(f"   ✅ Content-Type confirms PDF format")
+                else:
+                    print(f"   ⚠️ Unexpected content type: {content_type}")
+                
+                # Try to get actual size
+                if content_length != 'unknown':
+                    try:
+                        size_bytes = int(content_length)
+                        if size_bytes > 10000:  # Reasonable PDF size
+                            print(f"   ✅ PDF size appears reasonable: {size_bytes:,} bytes")
+                        else:
+                            print(f"   ⚠️ PDF size seems small: {size_bytes} bytes")
+                    except:
+                        pass
+                        
+            else:
+                print(f"   ❌ PDF not accessible - HTTP {pdf_response.status_code}")
+                print(f"   🚨 This explains why scraper might fall back to sample data")
+                return False, {"error": f"PDF not accessible - HTTP {pdf_response.status_code}"}
+                
+        except Exception as e:
+            print(f"   ❌ PDF download test failed: {e}")
+            print(f"   🚨 Network issue may prevent PDF parsing")
+            return False, {"error": f"PDF download test failed: {e}"}
+        
+        # Test 4: Municipality Status Check
+        print(f"\n   🔧 TEST 4: Victoria County Municipality Status")
+        
+        municipalities_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        if municipalities_response.status_code == 200:
+            municipalities = municipalities_response.json()
+            victoria_muni = None
+            
+            for muni in municipalities:
+                if muni.get('name') == 'Victoria County':
+                    victoria_muni = muni
+                    break
+            
+            if victoria_muni:
+                print(f"   ✅ Victoria County municipality found")
+                print(f"      Scrape Status: {victoria_muni.get('scrape_status')}")
+                print(f"      Last Scraped: {victoria_muni.get('last_scraped')}")
+                print(f"      Tax Sale URL: {victoria_muni.get('tax_sale_url')}")
+                print(f"      Scraper Type: {victoria_muni.get('scraper_type')}")
+                
+                if victoria_muni.get('scrape_status') == 'success':
+                    print(f"   ✅ Municipality shows successful scrape status")
+                else:
+                    print(f"   ⚠️ Municipality scrape status: {victoria_muni.get('scrape_status')}")
+            else:
+                print(f"   ❌ Victoria County municipality not found")
+                return False, {"error": "Victoria County municipality not found"}
+        
+        # Test 5: Summary and Final Assessment
+        print(f"\n   📋 VICTORIA COUNTY DIRECT PDF SCRAPER ASSESSMENT:")
+        
+        # Determine if we're getting real PDF data or fallback
+        if 'fallback_indicators' in locals() and 'real_pdf_indicators' in locals():
+            print(f"      Fallback data indicators: {fallback_indicators}")
+            print(f"      Real PDF data indicators: {real_pdf_indicators}")
+            print(f"      Correct sale dates: {sale_date_correct}")
+            
+            if fallback_indicators > 0 and real_pdf_indicators == 0:
+                print(f"   ❌ CONCLUSION: Scraper is using FALLBACK DATA, not parsing actual PDF")
+                print(f"   🚨 CRITICAL ISSUE: PDF parsing is not working - only sample data returned")
+                return False, {
+                    "error": "PDF parsing not working - fallback data detected",
+                    "fallback_indicators": fallback_indicators,
+                    "real_pdf_indicators": real_pdf_indicators,
+                    "properties_count": len(victoria_properties) if 'victoria_properties' in locals() else 0
+                }
+            elif real_pdf_indicators >= 3 and sale_date_correct >= 3:
+                print(f"   ✅ CONCLUSION: Scraper appears to be parsing ACTUAL PDF successfully")
+                print(f"   🎯 SUCCESS: All requirements met - 3 real properties with correct sale date")
+                return True, {
+                    "success": True,
+                    "properties_count": len(victoria_properties) if 'victoria_properties' in locals() else 0,
+                    "real_pdf_indicators": real_pdf_indicators,
+                    "correct_sale_dates": sale_date_correct
+                }
+            else:
+                print(f"   ⚠️ CONCLUSION: Mixed results - some PDF parsing may be working")
+                return False, {
+                    "error": "Mixed results - partial PDF parsing",
+                    "fallback_indicators": fallback_indicators,
+                    "real_pdf_indicators": real_pdf_indicators,
+                    "properties_count": len(victoria_properties) if 'victoria_properties' in locals() else 0
+                }
+        
+        # If we got here without the detailed analysis, use basic checks
+        if 'properties_count' in locals():
+            if properties_count >= 3:
+                print(f"   ✅ BASIC ASSESSMENT: {properties_count} properties found - likely working")
+                return True, {"success": True, "properties_count": properties_count}
+            else:
+                print(f"   ❌ BASIC ASSESSMENT: Only {properties_count} properties - likely fallback")
+                return False, {"error": f"Only {properties_count} properties found"}
+        
+        return False, {"error": "Could not complete assessment"}
+        
+    except Exception as e:
+        print(f"   ❌ Victoria County scraper test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
     """Run Victoria County PDF Parsing Fixes Testing - Review Request Focus"""
     print("🚀 Starting Victoria County PDF Parsing Fixes Testing")
