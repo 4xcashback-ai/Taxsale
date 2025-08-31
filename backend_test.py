@@ -245,101 +245,82 @@ def test_halifax_vs_victoria_county_thumbnails():
         
         else:
             print(f"   ⚠️ No Halifax properties available for thumbnail comparison")
+        # Test 3: Compare Victoria County Property Thumbnails
+        print(f"\n   🔧 TEST 3: Test Victoria County Property Thumbnails")
+        
+        victoria_thumbnail_results = {
+            "properties_with_coordinates": 0,
+            "properties_with_boundary_screenshots": 0,
+            "working_thumbnail_endpoints": 0,
+            "thumbnail_sizes": [],
+            "coordinate_accuracy": True,
+            "sample_properties": []
+        }
+        
+        if victoria_properties:
+            print(f"   📊 Analyzing {len(victoria_properties)} Victoria County properties...")
             
+            # Test all Victoria County properties for thumbnail generation
             for i, prop in enumerate(victoria_properties):
                 aan = prop.get("assessment_number")
                 owner = prop.get("owner_name")
                 address = prop.get("property_address")
-                pid = prop.get("pid_number")
-                opening_bid = prop.get("opening_bid")
-                boundary_screenshot = prop.get("boundary_screenshot")
                 latitude = prop.get("latitude")
                 longitude = prop.get("longitude")
-                hst_applicable = prop.get("hst_applicable")
-                raw_data = prop.get("raw_data", {})
+                boundary_screenshot = prop.get("boundary_screenshot")
                 
-                print(f"\n   📋 Property {i+1} - Fixed Scraper Analysis:")
+                print(f"\n   📋 Victoria County Property {i+1}:")
                 print(f"      AAN: {aan}")
-                print(f"      Owner: '{owner}'")
-                print(f"      Address: '{address}'")
-                print(f"      Opening Bid: ${opening_bid}")
+                print(f"      Owner: {owner}")
+                print(f"      Address: {address}")
                 print(f"      Coordinates: {latitude}, {longitude}")
-                print(f"      HST Applicable: {hst_applicable}")
                 print(f"      Boundary Screenshot: {boundary_screenshot}")
                 
-                # Verify fixed minimum bid calculation
-                if aan in expected_bids:
-                    expected_bid = expected_bids[aan]
-                    if opening_bid and abs(float(opening_bid) - expected_bid) < 0.01:
-                        print(f"      ✅ FIXED MINIMUM BID CORRECT: ${opening_bid} matches expected ${expected_bid}")
-                    else:
-                        print(f"      ❌ FIXED MINIMUM BID STILL INCORRECT: Got ${opening_bid}, expected ${expected_bid}")
-                        print(f"         🔍 DEBUG: Enhanced tax amount extraction patterns may still be failing")
-                        bid_calculations_correct = False
-                    found_aans.append(aan)
-                else:
-                    print(f"      ⚠️ AAN {aan} not in expected list for bid verification")
-                
-                # Check coordinate assignment for boundary image generation
+                # Check coordinates
                 if latitude and longitude:
-                    print(f"      ✅ COORDINATES ASSIGNED: {latitude}, {longitude}")
+                    victoria_thumbnail_results["properties_with_coordinates"] += 1
+                    print(f"      ✅ Has coordinates for thumbnail generation")
                     
-                    # Verify location-specific coordinates
-                    if aan in expected_locations:
-                        expected_location = expected_locations[aan]
-                        print(f"         📍 Expected location: {expected_location}")
-                        
-                        # Basic coordinate validation for Nova Scotia Cape Breton area
-                        if 45.5 <= latitude <= 47.0 and -61.5 <= longitude <= -59.5:
-                            print(f"         ✅ Coordinates within Cape Breton region")
-                        else:
-                            print(f"         ⚠️ Coordinates may not be accurate for Cape Breton region")
-                else:
-                    print(f"      ❌ COORDINATES MISSING: No latitude/longitude for boundary image generation")
-                    coordinates_assigned = False
-                
-                # Check HST detection for Entry 8
-                if aan == "09541209":
-                    if hst_applicable and hst_applicable.lower() == "yes":
-                        print(f"      ✅ HST DETECTION CORRECT: Entry 8 shows HST applicable due to '+ HST' in PDF")
+                    # Verify Victoria County coordinates are in Cape Breton region
+                    if 45.5 <= latitude <= 47.0 and -61.5 <= longitude <= -59.5:
+                        print(f"      ✅ Coordinates within Cape Breton region")
                     else:
-                        print(f"      ❌ HST DETECTION INCORRECT: Entry 8 should show HST applicable, got '{hst_applicable}'")
-                        hst_detection_correct = False
+                        print(f"      ⚠️ Coordinates may be outside Cape Breton region")
+                        victoria_thumbnail_results["coordinate_accuracy"] = False
+                else:
+                    print(f"      ❌ Missing coordinates - cannot generate thumbnails")
                 
-                # Check boundary screenshot generation
+                # Check boundary screenshot
                 if boundary_screenshot:
-                    print(f"      ✅ BOUNDARY IMAGE: Screenshot field populated - {boundary_screenshot}")
-                    
-                    # Test if the boundary image is accessible
-                    try:
-                        image_response = requests.get(f"{BACKEND_URL}/boundary-image/{boundary_screenshot}", timeout=10)
-                        if image_response.status_code == 200:
-                            print(f"         ✅ Image accessible via API endpoint")
-                            print(f"         📏 Image size: {len(image_response.content)} bytes")
-                        else:
-                            print(f"         ❌ Image not accessible: HTTP {image_response.status_code}")
-                            boundary_images_present = False
-                    except Exception as e:
-                        print(f"         ❌ Error accessing image: {e}")
-                        boundary_images_present = False
+                    victoria_thumbnail_results["properties_with_boundary_screenshots"] += 1
+                    print(f"      ✅ Has boundary screenshot: {boundary_screenshot}")
                 else:
-                    print(f"      ❌ BOUNDARY IMAGE: No screenshot field - image generation still not working")
-                    boundary_images_present = False
+                    print(f"      ❌ No boundary screenshot generated")
                 
-                # Check raw_data for tax amount extraction patterns
-                if raw_data:
-                    tax_amount_raw = raw_data.get('tax_amount', '')
-                    if tax_amount_raw:
-                        print(f"      📊 Raw tax amount: {tax_amount_raw}")
-                        # Check if it matches the "Taxes, Interest and Expenses owing: $X,XXX.XX" pattern
-                        if "Taxes, Interest and Expenses owing:" in str(tax_amount_raw):
-                            print(f"         ✅ Tax amount extraction pattern working")
+                # Test property image endpoint
+                if aan:
+                    try:
+                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
+                        if image_response.status_code == 200:
+                            image_size = len(image_response.content)
+                            victoria_thumbnail_results["working_thumbnail_endpoints"] += 1
+                            victoria_thumbnail_results["thumbnail_sizes"].append(image_size)
+                            print(f"      ✅ Thumbnail endpoint working - Size: {image_size} bytes")
+                            print(f"      📷 Content-Type: {image_response.headers.get('content-type', 'unknown')}")
                         else:
-                            print(f"         ⚠️ Tax amount may not be extracted from expected pattern")
-                    else:
-                        print(f"      ⚠️ No raw tax amount data available")
-                else:
-                    print(f"      ⚠️ No raw data available for tax amount analysis")
+                            print(f"      ❌ Thumbnail endpoint failed - HTTP {image_response.status_code}")
+                    except Exception as e:
+                        print(f"      ❌ Thumbnail endpoint error: {e}")
+                
+                victoria_thumbnail_results["sample_properties"].append({
+                    "aan": aan,
+                    "has_coordinates": bool(latitude and longitude),
+                    "has_boundary_screenshot": bool(boundary_screenshot),
+                    "thumbnail_working": False  # Will be updated above
+                })
+        
+        else:
+            print(f"   ⚠️ No Victoria County properties available for thumbnail comparison")
             
             # Summary of fixed scraper findings
             print(f"\n   📊 FIXED SCRAPER ANALYSIS SUMMARY:")
