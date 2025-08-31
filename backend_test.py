@@ -6244,7 +6244,11 @@ def main():
         print("❌ Cannot proceed - API connection failed")
         return False
     
-    # Test 2: Victoria County PDF Parsing Fixes (Primary Focus - Review Request)
+    # Test 2: Victoria County Enhanced PDF Parsing (Primary Focus - Review Request)
+    print("\n🔍 Testing Victoria County Enhanced PDF Parsing...")
+    enhanced_success, enhanced_result = test_victoria_county_enhanced_parsing()
+    
+    # Test 3: Victoria County PDF Parsing Fixes (Secondary Test)
     print("\n🔍 Testing Victoria County PDF Parsing Fixes...")
     fixes_success, fixes_result = test_victoria_county_pdf_parsing_fixes()
     
