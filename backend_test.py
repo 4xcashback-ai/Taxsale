@@ -292,108 +292,72 @@ def test_municipality_descriptions():
                 "found_keywords": found_keywords if description else [],
                 "missing_keywords": missing_keywords if description else expected_keywords
             })
-        # Test 3: Test Boundary Image Quality - AAN 00254118 Thumbnail Shows Actual Building
-        print(f"\n   🔧 TEST 3: Test Boundary Image Quality - AAN 00254118 Thumbnail Shows Actual Building")
+        # Test 3: Test Individual Municipality Endpoints
+        print(f"\n   🔧 TEST 3: Test Individual Municipality Endpoints")
         
-        boundary_image_quality_results = {
-            "endpoint_accessible": False,
-            "image_size": 0,
-            "content_type": None,
-            "shows_building_not_vacant_land": False,
-            "coordinate_precision_adequate": False
+        individual_endpoint_results = {
+            "all_endpoints_accessible": True,
+            "all_descriptions_match": True,
+            "endpoint_analysis": []
         }
         
-        print(f"   📊 Testing if AAN 00254118 thumbnail now shows actual building/dwelling at 198 Little Narrows Rd...")
+        print(f"   📊 Testing individual municipality endpoints for description access...")
         
-        if target_property:
-            latitude = target_property.get("latitude")
-            longitude = target_property.get("longitude")
+        for target_name, target_data in target_municipalities.items():
+            if not target_data["found"]:
+                print(f"\n      ❌ {target_name}: Municipality not found - cannot test endpoint")
+                individual_endpoint_results["all_endpoints_accessible"] = False
+                continue
+                
+            municipality = target_data["data"]
+            municipality_id = municipality.get('id')
             
-            print(f"\n   📋 AAN 00254118 Boundary Image Quality Analysis:")
-            print(f"      Property Address: {target_property.get('property_address')}")
-            print(f"      Property Type: {target_property.get('property_type')}")
-            print(f"      Owner: {target_property.get('owner_name')}")
-            print(f"      Current Coordinates: {latitude}, {longitude}")
+            if not municipality_id:
+                print(f"\n      ❌ {target_name}: No municipality ID found")
+                individual_endpoint_results["all_endpoints_accessible"] = False
+                continue
             
-            if latitude and longitude:
-                # Check coordinate precision first
-                lat_precision = len(str(latitude).split('.')[-1]) if '.' in str(latitude) else 0
-                lng_precision = len(str(longitude).split('.')[-1]) if '.' in str(longitude) else 0
+            print(f"\n      📋 Testing {target_name} (ID: {municipality_id}):")
+            
+            try:
+                # Test individual municipality endpoint
+                individual_response = requests.get(f"{BACKEND_URL}/municipalities/{municipality_id}", timeout=30)
                 
-                print(f"      Coordinate precision: {lat_precision} lat, {lng_precision} lng decimal places")
-                
-                # Calculate accuracy
-                lat_accuracy_m = 111000 / (10 ** lat_precision) if lat_precision > 0 else 111000
-                lng_accuracy_m = 111000 / (10 ** lng_precision) * abs(math.cos(math.radians(latitude))) if lng_precision > 0 else 111000
-                
-                print(f"      Coordinate accuracy: ±{lat_accuracy_m:.1f}m lat, ±{lng_accuracy_m:.1f}m lng")
-                
-                # Check if precision is adequate for building-level detail
-                if lat_precision >= 5 and lng_precision >= 5:
-                    boundary_image_quality_results["coordinate_precision_adequate"] = True
-                    print(f"      ✅ Coordinate precision adequate for building-level detail (5+ decimal places)")
-                elif lat_precision >= 4 and lng_precision >= 4:
-                    print(f"      ⚠️ Coordinate precision moderate for building-level detail (4 decimal places)")
-                else:
-                    print(f"      ❌ Coordinate precision insufficient for building-level detail (3 or fewer decimal places)")
-                
-                # Test the property image endpoint
-                try:
-                    print(f"\n      🖼️ Testing /api/property-image/00254118 endpoint...")
-                    image_response = requests.get(f"{BACKEND_URL}/property-image/00254118", timeout=15)
+                if individual_response.status_code == 200:
+                    individual_municipality = individual_response.json()
+                    individual_description = individual_municipality.get('description', '')
                     
-                    if image_response.status_code == 200:
-                        boundary_image_quality_results["endpoint_accessible"] = True
-                        boundary_image_quality_results["image_size"] = len(image_response.content)
-                        boundary_image_quality_results["content_type"] = image_response.headers.get('content-type', 'unknown')
+                    print(f"         ✅ Individual endpoint accessible")
+                    print(f"         Municipality name: {individual_municipality.get('name', 'Unknown')}")
+                    
+                    if individual_description:
+                        print(f"         ✅ Description found via individual endpoint ({len(individual_description)} characters)")
                         
-                        print(f"      ✅ Property image endpoint accessible")
-                        print(f"         Image size: {boundary_image_quality_results['image_size']} bytes")
-                        print(f"         Content-Type: {boundary_image_quality_results['content_type']}")
-                        
-                        # Verify it's a valid image
-                        if 'image' in boundary_image_quality_results['content_type'] and boundary_image_quality_results['image_size'] > 1000:
-                            print(f"         ✅ Valid image returned")
-                            
-                            # Analyze Google Maps parameters for building visibility
-                            print(f"\n      🛰️ Google Maps Satellite View Analysis:")
-                            print(f"         Coordinates: {latitude}, {longitude}")
-                            print(f"         Zoom level: 17 (building-level detail)")
-                            print(f"         Map type: satellite (shows structures)")
-                            print(f"         Image size: 405x290 (thumbnail)")
-                            
-                            # Construct Google Maps URL for manual verification
-                            google_maps_url = f"https://maps.googleapis.com/maps/api/staticmap?center={latitude},{longitude}&zoom=17&size=405x290&maptype=satellite&format=png"
-                            print(f"         Google Maps URL: {google_maps_url}")
-                            
-                            # Assess if coordinates should show building
-                            if target_property.get('property_type') == 'Land/Dwelling':
-                                print(f"         ✅ Property type 'Land/Dwelling' - should show building in satellite view")
-                                
-                                # With improved coordinate precision, this should now show building
-                                if boundary_image_quality_results["coordinate_precision_adequate"]:
-                                    boundary_image_quality_results["shows_building_not_vacant_land"] = True
-                                    print(f"         ✅ With 5+ decimal precision, coordinates should now show building not vacant land")
-                                else:
-                                    print(f"         ⚠️ Coordinate precision may still be insufficient for exact building location")
-                            else:
-                                print(f"         ⚠️ Property type '{target_property.get('property_type')}' - building visibility may vary")
+                        # Compare with bulk endpoint description
+                        bulk_description = municipality.get('description', '')
+                        if individual_description == bulk_description:
+                            print(f"         ✅ Description matches bulk endpoint")
                         else:
-                            print(f"         ❌ Invalid or too small image returned")
+                            print(f"         ⚠️ Description differs from bulk endpoint")
+                            individual_endpoint_results["all_descriptions_match"] = False
                     else:
-                        print(f"      ❌ Property image endpoint failed: HTTP {image_response.status_code}")
-                        return False, {"error": f"Property image endpoint failed: HTTP {image_response.status_code}"}
+                        print(f"         ❌ No description found via individual endpoint")
+                        individual_endpoint_results["all_descriptions_match"] = False
                         
-                except Exception as e:
-                    print(f"      ❌ Property image endpoint error: {e}")
-                    return False, {"error": f"Property image endpoint error: {e}"}
-                
-            else:
-                print(f"      ❌ No coordinates found for AAN 00254118")
-                return False, {"error": "No coordinates found for AAN 00254118"}
-        else:
-            print(f"   ❌ Target property AAN 00254118 not found")
-            return False, {"error": "Target property AAN 00254118 not found"}
+                else:
+                    print(f"         ❌ Individual endpoint failed: HTTP {individual_response.status_code}")
+                    individual_endpoint_results["all_endpoints_accessible"] = False
+                    
+            except Exception as e:
+                print(f"         ❌ Individual endpoint error: {e}")
+                individual_endpoint_results["all_endpoints_accessible"] = False
+            
+            individual_endpoint_results["endpoint_analysis"].append({
+                "municipality_name": target_name,
+                "municipality_id": municipality_id,
+                "endpoint_accessible": individual_response.status_code == 200 if 'individual_response' in locals() else False,
+                "description_available": bool(individual_description) if 'individual_description' in locals() else False
+            })
         # Test 4: Verify All 3 Properties Have Improved Coordinate Precision
         print(f"\n   🔧 TEST 4: Verify All 3 Properties Have Improved Coordinate Precision")
         
