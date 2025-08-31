@@ -1125,7 +1125,10 @@ function PropertySearch() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                           >
                             <option value="generic">Generic</option>
-                            <option value="halifax">Halifax-style</option>
+                            <option value="halifax">Halifax (PDF)</option>
+                            <option value="cape_breton">Cape Breton</option>
+                            <option value="kentville">Kentville</option>
+                            <option value="victoria_county">Victoria County (PDF)</option>
                             <option value="pdf">PDF Parser</option>
                           </select>
                         </div>
