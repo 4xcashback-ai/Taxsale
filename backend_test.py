@@ -7211,8 +7211,9 @@ def main():
     """Main test execution function"""
     print("🚀 Starting Nova Scotia Tax Sale Aggregator Backend Testing")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County PDF parser with non-sequential numbering support")
-    print("📋 TESTING: Fixed parser should find all 3 properties (AANs: 00254118, 00453706, 09541209)")
+    print("🎯 FOCUS: Victoria County Completely Rewritten PDF Parser")
+    print("📋 TESTING: Rewritten parser should handle actual PDF structure (entries 1, 2, 8 only)")
+    print("🔍 EXPECTED: 3 properties with exact details from review request")
     print("=" * 80)
     
     # Track overall test results
@@ -7230,9 +7231,9 @@ def main():
         print("\n❌ API connection failed - cannot continue with other tests")
         return False
     
-    # Test 2: Victoria County Fixed Parser (MAIN FOCUS)
-    victoria_parser_success, victoria_parser_results = test_victoria_county_fixed_parser()
-    test_results["victoria_county_fixed_parser"] = victoria_parser_success
+    # Test 2: Victoria County Rewritten Parser (MAIN FOCUS)
+    victoria_parser_success, victoria_parser_results = test_victoria_county_rewritten_parser()
+    test_results["victoria_county_rewritten_parser"] = victoria_parser_success
     
     # Test 3: Municipalities endpoint
     municipalities_success, halifax_data = test_municipalities_endpoint()
