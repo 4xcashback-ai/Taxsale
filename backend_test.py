@@ -581,23 +581,17 @@ def test_halifax_vs_victoria_county_thumbnails():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Victoria County Fixed Scraper"""
+    """Main test execution function - Focus on Halifax vs Victoria County Thumbnail Comparison"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County scraper with fixed minimum bid calculation and boundary image generation")
-    print("📋 REVIEW REQUEST: Test Victoria County scraper with fixed minimum bid calculation and boundary image generation")
+    print("🎯 FOCUS: Halifax vs Victoria County thumbnail generation comparison")
+    print("📋 REVIEW REQUEST: Compare Halifax vs Victoria County thumbnail generation to identify why Victoria County thumbnails aren't working properly")
     print("🔍 REQUIREMENTS:")
-    print("   1. Test fixed scraper POST /api/scrape/victoria-county with enhanced tax amount extraction patterns")
-    print("   2. Verify correct minimum bids - Should now show correct amounts:")
-    print("      - Entry 1 (AAN 00254118): $2,009.03 (not $2.0)")
-    print("      - Entry 2 (AAN 00453706): $1,599.71 (not $1.0)")
-    print("      - Entry 8 (AAN 09541209): $5,031.96 (not $0.0)")
-    print("   3. Check boundary image generation - All properties should now have:")
-    print("      - Proper latitude/longitude coordinates assigned")
-    print("      - boundary_screenshot URLs generated")
-    print("      - Location-specific coordinates for Little Narrows, Middle River, Washabuck")
-    print("   4. Verify HST detection - Entry 8 should have hst_applicable: 'Yes' due to '+ HST' in PDF")
-    print("   5. Test boundary image endpoints - Try accessing the generated boundary screenshot URLs")
+    print("   1. Test Halifax property thumbnails - Check Halifax property thumbnail URL and verify proper boundary images")
+    print("   2. Test Victoria County property thumbnails - Check Victoria County thumbnail URLs and compare quality/content")
+    print("   3. Compare boundary data availability - Check if both have proper boundary_screenshot URLs and coordinate data")
+    print("   4. Verify boundary generation process - Test /api/property-image endpoint for both municipality types")
+    print("   5. Check coordinate accuracy - Verify if Victoria County coordinates are accurate for proper boundary generation")
     print("=" * 80)
     
     # Track overall results
@@ -611,10 +605,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Fixed Scraper (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Victoria County Fixed Scraper")
-    victoria_county_working, victoria_county_data = test_victoria_county_fixed_scraper()
-    test_results['victoria_county_fixed_scraper'] = victoria_county_working
+    # Test 2: Halifax vs Victoria County Thumbnail Comparison (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Halifax vs Victoria County Thumbnail Comparison")
+    comparison_successful, comparison_data = test_halifax_vs_victoria_county_thumbnails()
+    test_results['halifax_vs_victoria_comparison'] = comparison_successful
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
