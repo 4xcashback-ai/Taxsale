@@ -259,7 +259,7 @@ server {
 
     # Static files for property screenshots
     location /static/ {
-        alias /var/www/tax-sale-compass/backend/static/;
+        alias /var/www/nstaxsales/backend/static/;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
