@@ -6885,19 +6885,36 @@ def main():
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 VICTORIA COUNTY DIRECT PDF SCRAPER TEST SUMMARY")
+    print("🏁 VICTORIA COUNTY PDF DEBUG AND PARSING TEST SUMMARY")
     print("=" * 80)
     
-    # Direct PDF Scraper Test Results (Primary Focus)
+    # Debug PDF Test Results (Primary Focus)
+    if debug_success:
+        print("✅ Victoria County PDF Debug Analysis completed successfully!")
+        print("🎯 PDF Content Analysis Results:")
+        if debug_result:
+            print(f"   ✅ PDF Accessible: {debug_result.get('pdf_accessible', False)}")
+            print(f"   📊 PDF Size: {debug_result.get('pdf_size', 0):,} bytes")
+            print(f"   📊 Text Length: {debug_result.get('text_length', 0):,} characters")
+            print(f"   🔍 AAN Occurrences: {debug_result.get('aan_occurrences', 0)}")
+            print(f"   🔢 Numbered Sections: {debug_result.get('numbered_sections', 0)}")
+            print(f"   👤 Property Assessed Occurrences: {debug_result.get('property_assessed_occurrences', 0)}")
+    else:
+        print("❌ Victoria County PDF Debug Analysis failed")
+        print("🔍 Debug analysis issues:")
+        if debug_result:
+            print(f"   📊 Error: {debug_result.get('error', 'Unknown error')}")
+    
+    # Direct PDF Scraper Test Results (Secondary Focus)
     if direct_pdf_success:
-        print("✅ Victoria County Direct PDF Scraper is working correctly!")
+        print("\n✅ Victoria County Direct PDF Scraper is working correctly!")
         print("🎯 Direct PDF URL requirements met:")
         if direct_pdf_result:
             print(f"   ✅ Properties Found: {direct_pdf_result.get('properties_count', 0)}")
             print(f"   ✅ Real PDF Indicators: {direct_pdf_result.get('real_pdf_indicators', 0)}")
             print(f"   ✅ Correct Sale Dates: {direct_pdf_result.get('correct_sale_dates', 0)}")
     else:
-        print("❌ Victoria County Direct PDF Scraper needs improvement")
+        print("\n❌ Victoria County Direct PDF Scraper needs improvement")
         print("🔍 Direct PDF URL requirements not fully met:")
         if direct_pdf_result:
             print(f"   📊 Properties found: {direct_pdf_result.get('properties_count', 0)}")
