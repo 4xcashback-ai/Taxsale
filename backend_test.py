@@ -485,10 +485,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Final Parser (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Victoria County Final Parser Testing")
-    victoria_county_working, victoria_county_data = test_victoria_county_final_parser()
-    test_results['victoria_county_final_parser'] = victoria_county_working
+    # Test 2: Victoria County Improved Parser (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Victoria County Improved Parser Testing")
+    victoria_county_working, victoria_county_data = test_victoria_county_improved_parser()
+    test_results['victoria_county_improved_parser'] = victoria_county_working
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
