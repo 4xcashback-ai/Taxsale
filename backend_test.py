@@ -6867,7 +6867,11 @@ def main():
         print("❌ Cannot proceed - API connection failed")
         return False
     
-    # Test 2: Victoria County Direct PDF Scraper (Primary Focus - Review Request)
+    # Test 2: Victoria County Debug PDF Endpoint (Primary Focus - Review Request)
+    print("\n🔍 Testing Victoria County Debug PDF Endpoint...")
+    debug_success, debug_result = test_victoria_county_debug_pdf()
+    
+    # Test 3: Victoria County Direct PDF Scraper (Secondary Focus)
     print("\n🔍 Testing Victoria County Direct PDF Scraper...")
     direct_pdf_success, direct_pdf_result = test_victoria_county_direct_pdf_scraper()
     
