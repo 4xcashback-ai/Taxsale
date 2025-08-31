@@ -3678,8 +3678,7 @@ async def weekly_scrape_job():
         logger.error(f"Weekly scraping failed: {e}")
 
 
-# Include the router in the main app
-app.include_router(api_router)
+# Router will be included after all endpoints are defined
 
 app.add_middleware(
     CORSMiddleware,
