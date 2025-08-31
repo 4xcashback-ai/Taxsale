@@ -1260,6 +1260,19 @@ function PropertySearch() {
                                   placeholder="Tax Sale URL"
                                 />
                                 
+                                {/* Municipality Description */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Municipality Description</label>
+                                  <textarea
+                                    value={editingMunicipality.description || ''}
+                                    onChange={(e) => setEditingMunicipality({...editingMunicipality, description: e.target.value})}
+                                    placeholder="Enter municipality-specific information for property details pages (tax sale process, contact info, etc.)"
+                                    rows={3}
+                                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                  />
+                                  <p className="text-xs text-gray-500 mt-1">This description will be displayed on property detail pages for this municipality</p>
+                                </div>
+                                
                                 {/* Scraper Type */}
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-1">Scraper Type</label>
