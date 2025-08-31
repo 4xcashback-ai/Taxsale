@@ -200,100 +200,98 @@ def test_municipality_descriptions():
             print(f"   ❌ Municipalities endpoint failed: HTTP {municipalities_response.status_code}")
             return False, {"error": f"Municipalities endpoint failed: HTTP {municipalities_response.status_code}"}
         
-        # Test 2: Verify Coordinate Precision - Check 5 Decimal Places (±1m Accuracy)
-        print(f"\n   🔧 TEST 2: Verify Coordinate Precision - Check 5 Decimal Places (±1m Accuracy)")
+        # Test 2: Check Municipality Descriptions Content
+        print(f"\n   🔧 TEST 2: Check Municipality Descriptions Content")
         
-        # Get all tax sales and filter for Victoria County
-        response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
-        if response.status_code == 200:
-            all_properties = response.json()
-            victoria_properties = [p for p in all_properties if "Victoria County" in p.get("municipality_name", "")]
+        description_analysis_results = {
+            "all_municipalities_have_descriptions": True,
+            "all_descriptions_contain_required_keywords": True,
+            "municipalities_analysis": []
+        }
+        
+        print(f"   📊 Analyzing municipality descriptions for required content...")
+        
+        for target_name, target_data in target_municipalities.items():
+            if not target_data["found"]:
+                print(f"\n      ❌ {target_name}: Municipality not found - cannot check description")
+                description_analysis_results["all_municipalities_have_descriptions"] = False
+                continue
+                
+            municipality = target_data["data"]
+            description = municipality.get('description', '')
             
-            print(f"   ✅ Retrieved properties from database")
-            print(f"      Victoria County properties found: {len(victoria_properties)}")
+            print(f"\n      📋 {target_name}:")
+            print(f"         Municipality ID: {municipality.get('id', 'Unknown')}")
+            print(f"         Name: {municipality.get('name', 'Unknown')}")
             
-            if len(victoria_properties) != 3:
-                print(f"   ❌ Expected 3 Victoria County properties, found {len(victoria_properties)}")
-                return False, {"error": f"Expected 3 properties, found {len(victoria_properties)}"}
-            
-            # Sort properties by assessment number for consistent testing
-            victoria_properties.sort(key=lambda x: x.get('assessment_number', ''))
-            
-            # Check coordinate precision for all properties
-            coordinate_precision_results = {
-                "all_properties_have_5_decimal_precision": True,
-                "properties_analysis": []
-            }
-            
-            print(f"\n   📊 Analyzing coordinate precision for all 3 Victoria County properties...")
-            
-            for i, prop in enumerate(victoria_properties, 1):
-                assessment_num = prop.get('assessment_number', 'Unknown')
-                lat = prop.get('latitude')
-                lng = prop.get('longitude')
+            if description:
+                print(f"         ✅ Description found ({len(description)} characters)")
+                print(f"         Description preview: {description[:150]}...")
                 
-                print(f"\n      📋 Property {i} - AAN {assessment_num}:")
-                print(f"         Owner: {prop.get('owner_name', 'Unknown')}")
-                print(f"         Address: {prop.get('property_address', 'Unknown')}")
-                print(f"         Coordinates: {lat}, {lng}")
+                # Check for required keywords
+                expected_keywords = target_data["expected_keywords"]
+                found_keywords = []
+                missing_keywords = []
                 
-                # Check coordinate precision
-                lat_precision = 0
-                lng_precision = 0
+                for keyword in expected_keywords:
+                    if keyword.lower() in description.lower():
+                        found_keywords.append(keyword)
+                    else:
+                        missing_keywords.append(keyword)
                 
-                if lat and '.' in str(lat):
-                    lat_precision = len(str(lat).split('.')[-1])
-                if lng and '.' in str(lng):
-                    lng_precision = len(str(lng).split('.')[-1])
-                
-                print(f"         Latitude precision: {lat_precision} decimal places")
-                print(f"         Longitude precision: {lng_precision} decimal places")
-                
-                # Calculate accuracy (1 degree ≈ 111km)
-                lat_accuracy_m = 111000 / (10 ** lat_precision) if lat_precision > 0 else 111000
-                lng_accuracy_m = 111000 / (10 ** lng_precision) * abs(math.cos(math.radians(lat))) if lng_precision > 0 and lat else 111000
-                
-                print(f"         Approximate accuracy: ±{lat_accuracy_m:.1f}m latitude, ±{lng_accuracy_m:.1f}m longitude")
-                
-                # Check if precision meets 5 decimal places requirement (±1m accuracy)
-                has_5_decimal_precision = lat_precision >= 5 and lng_precision >= 5
-                meets_1m_accuracy = lat_accuracy_m <= 1.0 and lng_accuracy_m <= 1.0
-                
-                if has_5_decimal_precision and meets_1m_accuracy:
-                    print(f"         ✅ Coordinate precision meets requirement (5+ decimal places, ±1m accuracy)")
-                elif lat_precision >= 4 and lng_precision >= 4:
-                    print(f"         ⚠️ Coordinate precision good but not optimal (4 decimal places, ~±10m accuracy)")
-                    coordinate_precision_results["all_properties_have_5_decimal_precision"] = False
+                print(f"         Keywords found: {found_keywords}")
+                if missing_keywords:
+                    print(f"         ⚠️ Missing keywords: {missing_keywords}")
+                    description_analysis_results["all_descriptions_contain_required_keywords"] = False
                 else:
-                    print(f"         ❌ Coordinate precision insufficient (3 or fewer decimal places, >±50m accuracy)")
-                    coordinate_precision_results["all_properties_have_5_decimal_precision"] = False
+                    print(f"         ✅ All required keywords found")
                 
-                coordinate_precision_results["properties_analysis"].append({
-                    "assessment_number": assessment_num,
-                    "lat_precision": lat_precision,
-                    "lng_precision": lng_precision,
-                    "lat_accuracy_m": lat_accuracy_m,
-                    "lng_accuracy_m": lng_accuracy_m,
-                    "meets_5_decimal_requirement": has_5_decimal_precision,
-                    "meets_1m_accuracy": meets_1m_accuracy
-                })
+                # Specific content checks based on municipality
+                if target_name == "Halifax Regional Municipality":
+                    halifax_checks = {
+                        "sealed_tender": "sealed tender" in description.lower() or "sealed bid" in description.lower(),
+                        "hrm_website": "hrm" in description.lower() or "halifax.ca" in description.lower(),
+                        "submission_process": "submit" in description.lower() or "submission" in description.lower(),
+                        "bid_form": "bid form" in description.lower() or "tender form" in description.lower()
+                    }
+                    print(f"         Halifax-specific checks: {halifax_checks}")
+                    
+                elif target_name == "Victoria County":
+                    victoria_checks = {
+                        "baddeck_location": "baddeck" in description.lower(),
+                        "chebucto_street": "495 chebucto" in description.lower() or "chebucto st" in description.lower(),
+                        "tender_process": "tender" in description.lower(),
+                        "contact_info": "contact" in description.lower() or "phone" in description.lower()
+                    }
+                    print(f"         Victoria County-specific checks: {victoria_checks}")
+                    
+                elif target_name == "Cape Breton Regional Municipality":
+                    cbrm_checks = {
+                        "cbrm_process": "cbrm" in description.lower(),
+                        "tax_sale_process": "tax sale" in description.lower(),
+                        "contact_info": "contact" in description.lower() or "phone" in description.lower()
+                    }
+                    print(f"         CBRM-specific checks: {cbrm_checks}")
+                    
+                elif target_name == "Kentville":
+                    kentville_checks = {
+                        "kentville_process": "kentville" in description.lower(),
+                        "tax_sale_process": "tax sale" in description.lower(),
+                        "contact_info": "contact" in description.lower() or "phone" in description.lower()
+                    }
+                    print(f"         Kentville-specific checks: {kentville_checks}")
+                
+            else:
+                print(f"         ❌ No description found")
+                description_analysis_results["all_municipalities_have_descriptions"] = False
             
-            # Find AAN 00254118 specifically for detailed testing
-            target_property = None
-            for prop in victoria_properties:
-                if prop.get('assessment_number') == '00254118':
-                    target_property = prop
-                    break
-            
-            if not target_property:
-                print(f"\n   ❌ Target property AAN 00254118 not found in Victoria County properties")
-                return False, {"error": "AAN 00254118 not found"}
-            
-            print(f"\n   ✅ Found target property AAN 00254118 for detailed testing")
-            
-        else:
-            print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
-            return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
+            description_analysis_results["municipalities_analysis"].append({
+                "municipality_name": target_name,
+                "has_description": bool(description),
+                "description_length": len(description) if description else 0,
+                "found_keywords": found_keywords if description else [],
+                "missing_keywords": missing_keywords if description else expected_keywords
+            })
         # Test 3: Test Boundary Image Quality - AAN 00254118 Thumbnail Shows Actual Building
         print(f"\n   🔧 TEST 3: Test Boundary Image Quality - AAN 00254118 Thumbnail Shows Actual Building")
         
