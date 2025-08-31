@@ -6073,8 +6073,6 @@ def main():
         print("   - Property field extraction for AAN, PID, owner, address, tax amounts")
     
     return fixes_success
-    
-    return victoria_success
 
 if __name__ == "__main__":
     success = main()
