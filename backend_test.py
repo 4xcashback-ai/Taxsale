@@ -6875,11 +6875,11 @@ def main():
     print("\n🔍 Testing Victoria County Direct PDF Scraper...")
     direct_pdf_success, direct_pdf_result = test_victoria_county_direct_pdf_scraper()
     
-    # Test 3: Victoria County Enhanced PDF Parsing (Secondary Test)
+    # Test 4: Victoria County Enhanced PDF Parsing (Tertiary Test)
     print("\n🔍 Testing Victoria County Enhanced PDF Parsing...")
     enhanced_success, enhanced_result = test_victoria_county_enhanced_parsing()
     
-    # Test 4: Victoria County PDF Parsing Fixes (Tertiary Test)
+    # Test 5: Victoria County PDF Parsing Fixes (Quaternary Test)
     print("\n🔍 Testing Victoria County PDF Parsing Fixes...")
     fixes_success, fixes_result = test_victoria_county_pdf_parsing_fixes()
     
