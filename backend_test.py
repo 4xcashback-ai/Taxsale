@@ -638,10 +638,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Data Extraction Debug (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Victoria County Data Extraction Debug")
-    victoria_county_working, victoria_county_data = test_victoria_county_data_extraction_debug()
-    test_results['victoria_county_data_extraction_debug'] = victoria_county_working
+    # Test 2: Victoria County Fixed Scraper (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Victoria County Fixed Scraper")
+    victoria_county_working, victoria_county_data = test_victoria_county_fixed_scraper()
+    test_results['victoria_county_fixed_scraper'] = victoria_county_working
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
