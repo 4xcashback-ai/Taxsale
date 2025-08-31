@@ -757,7 +757,7 @@ function PropertySearch() {
   };
 
   const verifyDeployment = async () => {
-    setDeploymentLoading(true);
+    setButtonStates(prev => ({ ...prev, verify: true }));
     setDeploymentMessage("Verifying deployment...");
     try {
       const response = await axios.post(`${API}/deployment/verify`);
@@ -775,7 +775,21 @@ function PropertySearch() {
       console.error("Error verifying deployment:", error);
       setDeploymentMessage("Failed to verify deployment: " + (error.response?.data?.detail || error.message));
     } finally {
-      setDeploymentLoading(false);
+      setButtonStates(prev => ({ ...prev, verify: false }));
+    }
+  };
+
+  const refreshDeploymentStatus = async () => {
+    setButtonStates(prev => ({ ...prev, refresh: true }));
+    setDeploymentMessage("Refreshing deployment status...");
+    try {
+      await fetchDeploymentStatus();
+      await fetchSystemHealth();
+      setDeploymentMessage("Deployment status refreshed successfully.");
+    } catch (error) {
+      setDeploymentMessage("Failed to refresh deployment status.");
+    } finally {
+      setButtonStates(prev => ({ ...prev, refresh: false }));
     }
   };
 
