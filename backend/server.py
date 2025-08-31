@@ -1761,20 +1761,23 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 longitude = None
                 boundary_screenshot = None
                 
-                # Add approximate coordinates for Victoria County properties to enable boundary image generation
-                if "Little Narrows" in property_address:
-                    latitude = 46.2140
-                    longitude = -60.9950
-                elif "Middle River" in property_address:
-                    latitude = 46.3825
-                    longitude = -60.8940
-                elif "Washabuck" in property_address:
-                    latitude = 46.1205
-                    longitude = -60.7650
+                # Add precise coordinates for Victoria County properties to show actual buildings/dwellings
+                if "Little Narrows" in property_address and assessment_number == "00254118":
+                    # 198 Little Narrows Rd - precise building location
+                    latitude = 46.21398
+                    longitude = -60.99485
+                elif "Middle River" in property_address and assessment_number == "00453706":
+                    # 30 5413 (P) Rd., Middle River - precise building location  
+                    latitude = 46.38261
+                    longitude = -60.89387
+                elif "Washabuck" in property_address and assessment_number == "09541209":
+                    # Washabuck Rd., Washabuck Centre - land only property center
+                    latitude = 46.12058
+                    longitude = -60.76498
                 else:
                     # Default Victoria County center coordinates
-                    latitude = 46.3000
-                    longitude = -60.9000
+                    latitude = 46.30000
+                    longitude = -60.90000
                 
                 # Generate boundary screenshot URL if coordinates are available
                 if latitude and longitude:
