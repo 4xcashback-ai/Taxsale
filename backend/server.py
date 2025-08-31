@@ -3857,6 +3857,9 @@ async def verify_deployment():
         logger.error(f"Error verifying deployment: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to verify deployment: {str(e)}")
 
+# Include the router in the main app (after all endpoints are defined)
+app.include_router(api_router)
+
 @app.on_event("startup")
 async def startup_event():
     # Start the scheduler
