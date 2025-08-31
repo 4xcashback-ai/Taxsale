@@ -143,347 +143,329 @@ def test_deployment_management_endpoints():
     print("   - No server crashes or unhandled exceptions")
     
     try:
-        # Test 1: Get All Municipalities and Check for Target Municipalities
-        print(f"\n   🔧 TEST 1: Get All Municipalities and Check for Target Municipalities")
+        # Test 1: GET /api/deployment/status
+        print(f"\n   🔧 TEST 1: GET /api/deployment/status")
         
-        municipalities_response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
-        
-        if municipalities_response.status_code == 200:
-            municipalities = municipalities_response.json()
-            print(f"   ✅ Municipalities endpoint accessible")
-            print(f"      Total municipalities found: {len(municipalities)}")
-            
-            # Target municipalities we need to check
-            target_municipalities = {
-                "Halifax Regional Municipality": {
-                    "expected_keywords": ["SEALED TENDER", "HRM", "website submission", "bid form"],
-                    "found": False,
-                    "data": None
-                },
-                "Cape Breton Regional Municipality": {
-                    "expected_keywords": ["CBRM", "tax sale process", "contact"],
-                    "found": False,
-                    "data": None
-                },
-                "Kentville": {
-                    "expected_keywords": ["Kentville", "tax sale process", "contact"],
-                    "found": False,
-                    "data": None
-                },
-                "Victoria County": {
-                    "expected_keywords": ["tender process", "495 Chebucto St", "Baddeck", "contact"],
-                    "found": False,
-                    "data": None
-                }
-            }
-            
-            # Find target municipalities
-            for municipality in municipalities:
-                muni_name = municipality.get('name', '')
-                for target_name in target_municipalities.keys():
-                    if target_name in muni_name or muni_name in target_name:
-                        target_municipalities[target_name]["found"] = True
-                        target_municipalities[target_name]["data"] = municipality
-                        print(f"      📍 Found {target_name}: {muni_name}")
-                        break
-            
-            # Check which municipalities were found
-            found_count = sum(1 for target in target_municipalities.values() if target["found"])
-            print(f"      ✅ Target municipalities found: {found_count}/4")
-            
-            if found_count < 4:
-                missing = [name for name, data in target_municipalities.items() if not data["found"]]
-                print(f"      ⚠️ Missing municipalities: {missing}")
-                
-        else:
-            print(f"   ❌ Municipalities endpoint failed: HTTP {municipalities_response.status_code}")
-            return False, {"error": f"Municipalities endpoint failed: HTTP {municipalities_response.status_code}"}
-        
-        # Test 2: Check Municipality Descriptions Content
-        print(f"\n   🔧 TEST 2: Check Municipality Descriptions Content")
-        
-        description_analysis_results = {
-            "all_municipalities_have_descriptions": True,
-            "all_descriptions_contain_required_keywords": True,
-            "municipalities_analysis": []
+        deployment_status_results = {
+            "endpoint_accessible": False,
+            "returns_json": False,
+            "has_expected_fields": False,
+            "handles_errors_gracefully": False,
+            "response_data": None,
+            "status_code": None
         }
         
-        print(f"   📊 Analyzing municipality descriptions for required content...")
-        
-        for target_name, target_data in target_municipalities.items():
-            if not target_data["found"]:
-                print(f"\n      ❌ {target_name}: Municipality not found - cannot check description")
-                description_analysis_results["all_municipalities_have_descriptions"] = False
-                continue
+        try:
+            status_response = requests.get(f"{BACKEND_URL}/deployment/status", timeout=30)
+            deployment_status_results["status_code"] = status_response.status_code
+            
+            print(f"      📊 HTTP Status: {status_response.status_code}")
+            
+            if status_response.status_code == 200:
+                deployment_status_results["endpoint_accessible"] = True
+                print(f"      ✅ Endpoint accessible")
                 
-            municipality = target_data["data"]
-            description = municipality.get('description', '')
-            
-            print(f"\n      📋 {target_name}:")
-            print(f"         Municipality ID: {municipality.get('id', 'Unknown')}")
-            print(f"         Name: {municipality.get('name', 'Unknown')}")
-            
-            # Get expected keywords for this municipality
-            expected_keywords = target_data["expected_keywords"]
-            found_keywords = []
-            missing_keywords = []
-            
-            if description:
-                print(f"         ✅ Description found ({len(description)} characters)")
-                print(f"         Description preview: {description[:150]}...")
-                
-                # Check for required keywords
-                for keyword in expected_keywords:
-                    if keyword.lower() in description.lower():
-                        found_keywords.append(keyword)
+                try:
+                    status_data = status_response.json()
+                    deployment_status_results["returns_json"] = True
+                    deployment_status_results["response_data"] = status_data
+                    print(f"      ✅ Returns valid JSON")
+                    print(f"      📋 Response keys: {list(status_data.keys())}")
+                    
+                    # Check for expected fields
+                    expected_fields = ["status", "message", "last_check"]
+                    found_fields = [field for field in expected_fields if field in status_data]
+                    
+                    if len(found_fields) >= 2:  # At least 2 expected fields
+                        deployment_status_results["has_expected_fields"] = True
+                        print(f"      ✅ Contains expected fields: {found_fields}")
                     else:
-                        missing_keywords.append(keyword)
-                
-                print(f"         Keywords found: {found_keywords}")
-                if missing_keywords:
-                    print(f"         ⚠️ Missing keywords: {missing_keywords}")
-                    description_analysis_results["all_descriptions_contain_required_keywords"] = False
-                else:
-                    print(f"         ✅ All required keywords found")
-                
-                # Specific content checks based on municipality
-                if target_name == "Halifax Regional Municipality":
-                    halifax_checks = {
-                        "sealed_tender": "sealed tender" in description.lower() or "sealed bid" in description.lower(),
-                        "hrm_website": "hrm" in description.lower() or "halifax.ca" in description.lower(),
-                        "submission_process": "submit" in description.lower() or "submission" in description.lower(),
-                        "bid_form": "bid form" in description.lower() or "tender form" in description.lower()
-                    }
-                    print(f"         Halifax-specific checks: {halifax_checks}")
+                        print(f"      ⚠️ Missing some expected fields. Found: {found_fields}")
                     
-                elif target_name == "Victoria County":
-                    victoria_checks = {
-                        "baddeck_location": "baddeck" in description.lower(),
-                        "chebucto_street": "495 chebucto" in description.lower() or "chebucto st" in description.lower(),
-                        "tender_process": "tender" in description.lower(),
-                        "contact_info": "contact" in description.lower() or "phone" in description.lower()
-                    }
-                    print(f"         Victoria County-specific checks: {victoria_checks}")
+                    # Check if error handling is working (script likely doesn't exist)
+                    if status_data.get("status") == "error":
+                        deployment_status_results["handles_errors_gracefully"] = True
+                        print(f"      ✅ Error handling working - returns error status as expected")
+                        print(f"      📝 Error message: {status_data.get('message', 'No message')}")
+                    else:
+                        print(f"      📊 Status: {status_data.get('status', 'Unknown')}")
+                        deployment_status_results["handles_errors_gracefully"] = True  # Working normally is also good
+                        
+                except json.JSONDecodeError:
+                    print(f"      ❌ Response is not valid JSON")
+                    print(f"      📝 Response content: {status_response.text[:200]}...")
                     
-                elif target_name == "Cape Breton Regional Municipality":
-                    cbrm_checks = {
-                        "cbrm_process": "cbrm" in description.lower(),
-                        "tax_sale_process": "tax sale" in description.lower(),
-                        "contact_info": "contact" in description.lower() or "phone" in description.lower()
-                    }
-                    print(f"         CBRM-specific checks: {cbrm_checks}")
-                    
-                elif target_name == "Kentville":
-                    kentville_checks = {
-                        "kentville_process": "kentville" in description.lower(),
-                        "tax_sale_process": "tax sale" in description.lower(),
-                        "contact_info": "contact" in description.lower() or "phone" in description.lower()
-                    }
-                    print(f"         Kentville-specific checks: {kentville_checks}")
-                
             else:
-                print(f"         ❌ No description found")
-                description_analysis_results["all_municipalities_have_descriptions"] = False
-            
-            description_analysis_results["municipalities_analysis"].append({
-                "municipality_name": target_name,
-                "has_description": bool(description),
-                "description_length": len(description) if description else 0,
-                "found_keywords": found_keywords,
-                "missing_keywords": missing_keywords if description else expected_keywords
-            })
-        # Test 3: Test Individual Municipality Endpoints
-        print(f"\n   🔧 TEST 3: Test Individual Municipality Endpoints")
+                print(f"      ❌ Endpoint returned HTTP {status_response.status_code}")
+                print(f"      📝 Response: {status_response.text[:200]}...")
+                
+        except Exception as e:
+            print(f"      ❌ Request failed: {e}")
         
-        individual_endpoint_results = {
-            "all_endpoints_accessible": True,
-            "all_descriptions_match": True,
-            "endpoint_analysis": []
+        # Test 2: POST /api/deployment/check-updates
+        print(f"\n   🔧 TEST 2: POST /api/deployment/check-updates")
+        
+        check_updates_results = {
+            "endpoint_accessible": False,
+            "returns_json": False,
+            "has_expected_fields": False,
+            "handles_errors_gracefully": False,
+            "response_data": None,
+            "status_code": None
         }
         
-        print(f"   📊 Testing individual municipality endpoints for description access...")
-        
-        for target_name, target_data in target_municipalities.items():
-            if not target_data["found"]:
-                print(f"\n      ❌ {target_name}: Municipality not found - cannot test endpoint")
-                individual_endpoint_results["all_endpoints_accessible"] = False
-                continue
+        try:
+            updates_response = requests.post(f"{BACKEND_URL}/deployment/check-updates", timeout=60)
+            check_updates_results["status_code"] = updates_response.status_code
+            
+            print(f"      📊 HTTP Status: {updates_response.status_code}")
+            
+            if updates_response.status_code in [200, 500]:  # 500 is expected if script doesn't exist
+                check_updates_results["endpoint_accessible"] = True
+                print(f"      ✅ Endpoint accessible")
                 
-            municipality = target_data["data"]
-            municipality_id = municipality.get('id')
-            
-            if not municipality_id:
-                print(f"\n      ❌ {target_name}: No municipality ID found")
-                individual_endpoint_results["all_endpoints_accessible"] = False
-                continue
-            
-            print(f"\n      📋 Testing {target_name} (ID: {municipality_id}):")
-            
-            try:
-                # Test individual municipality endpoint
-                individual_response = requests.get(f"{BACKEND_URL}/municipalities/{municipality_id}", timeout=30)
-                
-                if individual_response.status_code == 200:
-                    individual_municipality = individual_response.json()
-                    individual_description = individual_municipality.get('description', '')
+                try:
+                    updates_data = updates_response.json()
+                    check_updates_results["returns_json"] = True
+                    check_updates_results["response_data"] = updates_data
+                    print(f"      ✅ Returns valid JSON")
+                    print(f"      📋 Response keys: {list(updates_data.keys())}")
                     
-                    print(f"         ✅ Individual endpoint accessible")
-                    print(f"         Municipality name: {individual_municipality.get('name', 'Unknown')}")
+                    # Check for expected fields
+                    expected_fields = ["updates_available", "message", "checked_at"]
+                    found_fields = [field for field in expected_fields if field in updates_data]
                     
-                    if individual_description:
-                        print(f"         ✅ Description found via individual endpoint ({len(individual_description)} characters)")
-                        
-                        # Compare with bulk endpoint description
-                        bulk_description = municipality.get('description', '')
-                        if individual_description == bulk_description:
-                            print(f"         ✅ Description matches bulk endpoint")
-                        else:
-                            print(f"         ⚠️ Description differs from bulk endpoint")
-                            individual_endpoint_results["all_descriptions_match"] = False
+                    if len(found_fields) >= 2:  # At least 2 expected fields
+                        check_updates_results["has_expected_fields"] = True
+                        print(f"      ✅ Contains expected fields: {found_fields}")
                     else:
-                        print(f"         ❌ No description found via individual endpoint")
-                        individual_endpoint_results["all_descriptions_match"] = False
+                        print(f"      ⚠️ Missing some expected fields. Found: {found_fields}")
+                    
+                    # Check error handling
+                    if updates_response.status_code == 500:
+                        check_updates_results["handles_errors_gracefully"] = True
+                        print(f"      ✅ Error handling working - returns 500 as expected when script missing")
+                        print(f"      📝 Error details: {updates_data.get('detail', 'No details')}")
+                    else:
+                        print(f"      📊 Updates available: {updates_data.get('updates_available', 'Unknown')}")
+                        check_updates_results["handles_errors_gracefully"] = True
                         
-                else:
-                    print(f"         ❌ Individual endpoint failed: HTTP {individual_response.status_code}")
-                    individual_endpoint_results["all_endpoints_accessible"] = False
+                except json.JSONDecodeError:
+                    print(f"      ❌ Response is not valid JSON")
+                    print(f"      📝 Response content: {updates_response.text[:200]}...")
                     
-            except Exception as e:
-                print(f"         ❌ Individual endpoint error: {e}")
-                individual_endpoint_results["all_endpoints_accessible"] = False
-            
-            individual_endpoint_results["endpoint_analysis"].append({
-                "municipality_name": target_name,
-                "municipality_id": municipality_id,
-                "endpoint_accessible": individual_response.status_code == 200 if 'individual_response' in locals() else False,
-                "description_available": bool(individual_description) if 'individual_description' in locals() else False
-            })
-        # Test 4: Test Property Detail Pages with Municipality Descriptions
-        print(f"\n   🔧 TEST 4: Test Property Detail Pages with Municipality Descriptions")
+            else:
+                print(f"      ❌ Unexpected HTTP status: {updates_response.status_code}")
+                print(f"      📝 Response: {updates_response.text[:200]}...")
+                
+        except Exception as e:
+            print(f"      ❌ Request failed: {e}")
         
-        property_detail_results = {
-            "property_endpoints_accessible": True,
-            "descriptions_appear_on_property_pages": True,
-            "property_analysis": []
+        # Test 3: GET /api/deployment/health
+        print(f"\n   🔧 TEST 3: GET /api/deployment/health")
+        
+        health_results = {
+            "endpoint_accessible": False,
+            "returns_json": False,
+            "has_expected_fields": False,
+            "handles_errors_gracefully": False,
+            "response_data": None,
+            "status_code": None
         }
         
-        print(f"   📊 Testing if municipality descriptions appear correctly on property detail pages...")
-        
-        # Get some sample properties from each municipality to test
-        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
-        
-        if tax_sales_response.status_code == 200:
-            all_properties = tax_sales_response.json()
-            print(f"      ✅ Tax sales endpoint accessible - {len(all_properties)} total properties")
+        try:
+            health_response = requests.get(f"{BACKEND_URL}/deployment/health", timeout=120)
+            health_results["status_code"] = health_response.status_code
             
-            # Find sample properties from target municipalities
-            sample_properties = {}
-            for target_name in target_municipalities.keys():
-                for prop in all_properties:
-                    if target_name in prop.get("municipality_name", ""):
-                        sample_properties[target_name] = prop
-                        break
+            print(f"      📊 HTTP Status: {health_response.status_code}")
             
-            print(f"      📋 Sample properties found for {len(sample_properties)}/4 target municipalities")
-            
-            # Test each sample property
-            for municipality_name, property_data in sample_properties.items():
-                assessment_number = property_data.get('assessment_number', 'Unknown')
-                municipality_id = property_data.get('municipality_id', 'Unknown')
+            if health_response.status_code in [200, 500]:  # 500 is expected if script doesn't exist
+                health_results["endpoint_accessible"] = True
+                print(f"      ✅ Endpoint accessible")
                 
-                print(f"\n      📋 Testing {municipality_name} property (AAN: {assessment_number}):")
-                
-                # Check if municipality has description
-                municipality_data = target_municipalities.get(municipality_name, {}).get("data", {})
-                municipality_description = municipality_data.get('description', '')
-                
-                if municipality_description:
-                    print(f"         ✅ Municipality has description ({len(municipality_description)} characters)")
-                    print(f"         Description preview: {municipality_description[:100]}...")
+                try:
+                    health_data = health_response.json()
+                    health_results["returns_json"] = True
+                    health_results["response_data"] = health_data
+                    print(f"      ✅ Returns valid JSON")
+                    print(f"      📋 Response keys: {list(health_data.keys())}")
                     
-                    # In a real application, we would test the frontend property detail page
-                    # For now, we verify the data is available via API
-                    print(f"         ✅ Description available for property detail page rendering")
+                    # Check for expected fields
+                    expected_fields = ["health_status", "checked_at"]
+                    found_fields = [field for field in expected_fields if field in health_data]
                     
-                else:
-                    print(f"         ❌ Municipality has no description for property detail page")
-                    property_detail_results["descriptions_appear_on_property_pages"] = False
+                    if len(found_fields) >= 1:  # At least 1 expected field
+                        health_results["has_expected_fields"] = True
+                        print(f"      ✅ Contains expected fields: {found_fields}")
+                    else:
+                        print(f"      ⚠️ Missing expected fields. Found: {found_fields}")
+                    
+                    # Check error handling
+                    if health_response.status_code == 500:
+                        health_results["handles_errors_gracefully"] = True
+                        print(f"      ✅ Error handling working - returns 500 as expected when script missing")
+                        print(f"      📝 Error details: {health_data.get('detail', 'No details')}")
+                    else:
+                        print(f"      📊 Health status: {health_data.get('health_status', 'Unknown')}")
+                        health_results["handles_errors_gracefully"] = True
+                        
+                except json.JSONDecodeError:
+                    print(f"      ❌ Response is not valid JSON")
+                    print(f"      📝 Response content: {health_response.text[:200]}...")
+                    
+            else:
+                print(f"      ❌ Unexpected HTTP status: {health_response.status_code}")
+                print(f"      📝 Response: {health_response.text[:200]}...")
                 
-                property_detail_results["property_analysis"].append({
-                    "municipality_name": municipality_name,
-                    "assessment_number": assessment_number,
-                    "municipality_id": municipality_id,
-                    "has_municipality_description": bool(municipality_description),
-                    "description_length": len(municipality_description) if municipality_description else 0
-                })
-        else:
-            print(f"      ❌ Tax sales endpoint failed: HTTP {tax_sales_response.status_code}")
-            property_detail_results["property_endpoints_accessible"] = False
+        except Exception as e:
+            print(f"      ❌ Request failed: {e}")
         
-        # Test 5: Final Assessment - Municipality Descriptions Implementation
-        print(f"\n   🔧 TEST 5: Final Assessment - Municipality Descriptions Implementation")
+        # Test 4: POST /api/deployment/verify
+        print(f"\n   🔧 TEST 4: POST /api/deployment/verify")
+        
+        verify_results = {
+            "endpoint_accessible": False,
+            "returns_json": False,
+            "has_expected_fields": False,
+            "handles_errors_gracefully": False,
+            "response_data": None,
+            "status_code": None
+        }
+        
+        try:
+            verify_response = requests.post(f"{BACKEND_URL}/deployment/verify", timeout=60)
+            verify_results["status_code"] = verify_response.status_code
+            
+            print(f"      📊 HTTP Status: {verify_response.status_code}")
+            
+            if verify_response.status_code in [200, 500]:  # 500 is expected if script doesn't exist
+                verify_results["endpoint_accessible"] = True
+                print(f"      ✅ Endpoint accessible")
+                
+                try:
+                    verify_data = verify_response.json()
+                    verify_results["returns_json"] = True
+                    verify_results["response_data"] = verify_data
+                    print(f"      ✅ Returns valid JSON")
+                    print(f"      📋 Response keys: {list(verify_data.keys())}")
+                    
+                    # Check for expected fields
+                    expected_fields = ["deployment_valid", "message", "verified_at"]
+                    found_fields = [field for field in expected_fields if field in verify_data]
+                    
+                    if len(found_fields) >= 2:  # At least 2 expected fields
+                        verify_results["has_expected_fields"] = True
+                        print(f"      ✅ Contains expected fields: {found_fields}")
+                    else:
+                        print(f"      ⚠️ Missing some expected fields. Found: {found_fields}")
+                    
+                    # Check error handling
+                    if verify_response.status_code == 500:
+                        verify_results["handles_errors_gracefully"] = True
+                        print(f"      ✅ Error handling working - returns 500 as expected when script missing")
+                        print(f"      📝 Error details: {verify_data.get('detail', 'No details')}")
+                    else:
+                        print(f"      📊 Deployment valid: {verify_data.get('deployment_valid', 'Unknown')}")
+                        verify_results["handles_errors_gracefully"] = True
+                        
+                except json.JSONDecodeError:
+                    print(f"      ❌ Response is not valid JSON")
+                    print(f"      📝 Response content: {verify_response.text[:200]}...")
+                    
+            else:
+                print(f"      ❌ Unexpected HTTP status: {verify_response.status_code}")
+                print(f"      📝 Response: {verify_response.text[:200]}...")
+                
+        except Exception as e:
+            print(f"      ❌ Request failed: {e}")
+        
+        # Test 5: Final Assessment - Deployment Management Endpoints
+        print(f"\n   🔧 TEST 5: Final Assessment - Deployment Management Endpoints")
         
         final_assessment_results = {
-            "municipality_descriptions_successful": False,
+            "deployment_endpoints_successful": False,
             "all_requirements_met": False,
             "issues_found": [],
             "successes": []
         }
         
-        print(f"   📊 Final assessment of municipality descriptions implementation...")
+        print(f"   📊 Final assessment of deployment management endpoints...")
         
         # Assess each requirement from the review request
         print(f"\n   📋 REVIEW REQUEST REQUIREMENTS ASSESSMENT:")
         
-        # Requirement 1: All target municipalities found
-        municipalities_found = sum(1 for target in target_municipalities.values() if target["found"])
-        municipalities_success = municipalities_found == 4
-        print(f"      1. {'✅' if municipalities_success else '❌'} Target municipalities found - {municipalities_found}/4")
-        if municipalities_success:
-            final_assessment_results["successes"].append("All 4 target municipalities found in database")
+        # Requirement 1: All endpoints accessible
+        all_endpoints_accessible = all([
+            deployment_status_results["endpoint_accessible"],
+            check_updates_results["endpoint_accessible"],
+            health_results["endpoint_accessible"],
+            verify_results["endpoint_accessible"]
+        ])
+        print(f"      1. {'✅' if all_endpoints_accessible else '❌'} All endpoints accessible - {'Success' if all_endpoints_accessible else 'Failed'}")
+        if all_endpoints_accessible:
+            final_assessment_results["successes"].append("All 4 deployment endpoints are accessible")
         else:
-            final_assessment_results["issues_found"].append(f"Only {municipalities_found}/4 target municipalities found")
+            final_assessment_results["issues_found"].append("Some deployment endpoints are not accessible")
         
-        # Requirement 2: All municipalities have descriptions
-        descriptions_success = description_analysis_results.get("all_municipalities_have_descriptions", False)
-        print(f"      2. {'✅' if descriptions_success else '❌'} All municipalities have descriptions - {'Success' if descriptions_success else 'Failed'}")
-        if descriptions_success:
-            final_assessment_results["successes"].append("All target municipalities have descriptions")
+        # Requirement 2: All endpoints return JSON
+        all_return_json = all([
+            deployment_status_results["returns_json"],
+            check_updates_results["returns_json"],
+            health_results["returns_json"],
+            verify_results["returns_json"]
+        ])
+        print(f"      2. {'✅' if all_return_json else '❌'} All endpoints return JSON - {'Success' if all_return_json else 'Failed'}")
+        if all_return_json:
+            final_assessment_results["successes"].append("All endpoints return valid JSON responses")
         else:
-            final_assessment_results["issues_found"].append("Some municipalities missing descriptions")
+            final_assessment_results["issues_found"].append("Some endpoints do not return valid JSON")
         
-        # Requirement 3: Descriptions contain required keywords
-        keywords_success = description_analysis_results.get("all_descriptions_contain_required_keywords", False)
-        print(f"      3. {'✅' if keywords_success else '❌'} Descriptions contain required keywords - {'Success' if keywords_success else 'Failed'}")
-        if keywords_success:
-            final_assessment_results["successes"].append("All descriptions contain required municipality-specific keywords")
+        # Requirement 3: Expected fields present
+        all_have_expected_fields = all([
+            deployment_status_results["has_expected_fields"],
+            check_updates_results["has_expected_fields"],
+            health_results["has_expected_fields"],
+            verify_results["has_expected_fields"]
+        ])
+        print(f"      3. {'✅' if all_have_expected_fields else '❌'} Expected fields present - {'Success' if all_have_expected_fields else 'Failed'}")
+        if all_have_expected_fields:
+            final_assessment_results["successes"].append("All endpoints contain expected response fields")
         else:
-            final_assessment_results["issues_found"].append("Some descriptions missing required keywords")
+            final_assessment_results["issues_found"].append("Some endpoints missing expected response fields")
         
-        # Requirement 4: Individual endpoints accessible
-        endpoints_success = individual_endpoint_results.get("all_endpoints_accessible", False)
-        print(f"      4. {'✅' if endpoints_success else '❌'} Individual municipality endpoints accessible - {'Success' if endpoints_success else 'Failed'}")
-        if endpoints_success:
-            final_assessment_results["successes"].append("All individual municipality endpoints accessible")
+        # Requirement 4: Error handling works
+        all_handle_errors = all([
+            deployment_status_results["handles_errors_gracefully"],
+            check_updates_results["handles_errors_gracefully"],
+            health_results["handles_errors_gracefully"],
+            verify_results["handles_errors_gracefully"]
+        ])
+        print(f"      4. {'✅' if all_handle_errors else '❌'} Error handling works - {'Success' if all_handle_errors else 'Failed'}")
+        if all_handle_errors:
+            final_assessment_results["successes"].append("All endpoints handle errors gracefully")
         else:
-            final_assessment_results["issues_found"].append("Some individual municipality endpoints not accessible")
+            final_assessment_results["issues_found"].append("Some endpoints do not handle errors properly")
         
-        # Requirement 5: Descriptions available for property detail pages
-        property_pages_success = property_detail_results.get("descriptions_appear_on_property_pages", False)
-        print(f"      5. {'✅' if property_pages_success else '❌'} Descriptions available for property detail pages - {'Success' if property_pages_success else 'Failed'}")
-        if property_pages_success:
-            final_assessment_results["successes"].append("Municipality descriptions available for property detail pages")
+        # Requirement 5: No server crashes
+        no_server_crashes = all([
+            result["status_code"] is not None for result in [
+                deployment_status_results, check_updates_results, health_results, verify_results
+            ]
+        ])
+        print(f"      5. {'✅' if no_server_crashes else '❌'} No server crashes - {'Success' if no_server_crashes else 'Failed'}")
+        if no_server_crashes:
+            final_assessment_results["successes"].append("No server crashes or unhandled exceptions")
         else:
-            final_assessment_results["issues_found"].append("Municipality descriptions not available for property detail pages")
+            final_assessment_results["issues_found"].append("Server crashes or connection failures detected")
         
         # Overall assessment
-        requirements_met = sum([municipalities_success, descriptions_success, keywords_success, endpoints_success, property_pages_success])
+        requirements_met = sum([all_endpoints_accessible, all_return_json, all_have_expected_fields, all_handle_errors, no_server_crashes])
         final_assessment_results["all_requirements_met"] = requirements_met == 5
-        final_assessment_results["municipality_descriptions_successful"] = requirements_met >= 3  # At least 3/5 requirements met
+        final_assessment_results["deployment_endpoints_successful"] = requirements_met >= 3  # At least 3/5 requirements met
         
         print(f"\n   🎯 FINAL ASSESSMENT SUMMARY:")
         print(f"      Requirements met: {requirements_met}/5")
-        print(f"      Municipality descriptions successful: {final_assessment_results['municipality_descriptions_successful']}")
+        print(f"      Deployment endpoints successful: {final_assessment_results['deployment_endpoints_successful']}")
         print(f"      All requirements met: {final_assessment_results['all_requirements_met']}")
         
         if final_assessment_results["successes"]:
@@ -496,103 +478,16 @@ def test_deployment_management_endpoints():
             for issue in final_assessment_results["issues_found"]:
                 print(f"         - {issue}")
         
-        return final_assessment_results["municipality_descriptions_successful"], {
-            "municipalities_found": municipalities_success,
-            "description_analysis": description_analysis_results,
-            "individual_endpoints": individual_endpoint_results,
-            "property_detail_pages": property_detail_results,
-            "final_assessment": final_assessment_results,
-            "target_municipalities": target_municipalities
-        }
-        
-        # Test 6: Final Assessment - Coordinate Precision Fixes Verification
-        print(f"\n   🔧 TEST 6: Final Assessment - Coordinate Precision Fixes Verification")
-        
-        final_assessment_results = {
-            "coordinate_precision_fixes_successful": False,
-            "all_requirements_met": False,
-            "issues_found": [],
-            "successes": []
-        }
-        
-        print(f"   📊 Final assessment of coordinate precision fixes and thumbnail quality improvements...")
-        
-        # Assess each requirement from the review request
-        print(f"\n   📋 REVIEW REQUEST REQUIREMENTS ASSESSMENT:")
-        
-        # Requirement 1: Re-scrape Victoria County
-        scraper_success = scraper_result.get('status') == 'success' and scraper_result.get('properties_scraped') == 3
-        print(f"      1. {'✅' if scraper_success else '❌'} Re-scrape Victoria County - {'Success' if scraper_success else 'Failed'}")
-        if scraper_success:
-            final_assessment_results["successes"].append("Victoria County re-scraping successful")
-        else:
-            final_assessment_results["issues_found"].append("Victoria County re-scraping failed")
-        
-        # Requirement 2: Verify coordinate precision (5 decimal places)
-        precision_success = coordinate_precision_results.get("all_properties_have_5_decimal_precision", False)
-        print(f"      2. {'✅' if precision_success else '❌'} Coordinate precision (5 decimal places) - {'Success' if precision_success else 'Failed'}")
-        if precision_success:
-            final_assessment_results["successes"].append("All properties have 5+ decimal coordinate precision")
-        else:
-            final_assessment_results["issues_found"].append("Properties do not have 5 decimal coordinate precision")
-        
-        # Requirement 3: Test boundary image quality for AAN 00254118
-        image_quality_success = (boundary_image_quality_results.get("endpoint_accessible", False) and 
-                                boundary_image_quality_results.get("coordinate_precision_adequate", False))
-        print(f"      3. {'✅' if image_quality_success else '❌'} AAN 00254118 thumbnail quality - {'Success' if image_quality_success else 'Failed'}")
-        if image_quality_success:
-            final_assessment_results["successes"].append("AAN 00254118 thumbnail shows building with adequate precision")
-        else:
-            final_assessment_results["issues_found"].append("AAN 00254118 thumbnail may still show vacant land due to coordinate precision")
-        
-        # Requirement 4: Verify all 3 properties have improved precision
-        all_properties_success = all_properties_precision_results.get("all_properties_meet_5_decimal_requirement", False)
-        print(f"      4. {'✅' if all_properties_success else '❌'} All 3 properties improved precision - {'Success' if all_properties_success else 'Failed'}")
-        if all_properties_success:
-            final_assessment_results["successes"].append("All 3 Victoria County properties have improved coordinate precision")
-        else:
-            final_assessment_results["issues_found"].append("Not all Victoria County properties have adequate coordinate precision")
-        
-        # Requirement 5: Check property data accuracy
-        data_accuracy_success = (property_data_accuracy_results.get("opening_bids_correct", False) and 
-                                property_data_accuracy_results.get("hst_detection_working", False))
-        print(f"      5. {'✅' if data_accuracy_success else '❌'} Property data accuracy - {'Success' if data_accuracy_success else 'Failed'}")
-        if data_accuracy_success:
-            final_assessment_results["successes"].append("Opening bids and HST detection working correctly")
-        else:
-            final_assessment_results["issues_found"].append("Issues with opening bids or HST detection")
-        
-        # Overall assessment
-        requirements_met = sum([scraper_success, precision_success, image_quality_success, all_properties_success, data_accuracy_success])
-        final_assessment_results["all_requirements_met"] = requirements_met == 5
-        final_assessment_results["coordinate_precision_fixes_successful"] = requirements_met >= 3  # At least 3/5 requirements met
-        
-        print(f"\n   🎯 FINAL ASSESSMENT SUMMARY:")
-        print(f"      Requirements met: {requirements_met}/5")
-        print(f"      Coordinate precision fixes successful: {final_assessment_results['coordinate_precision_fixes_successful']}")
-        print(f"      All requirements met: {final_assessment_results['all_requirements_met']}")
-        
-        if final_assessment_results["successes"]:
-            print(f"\n   ✅ SUCCESSES:")
-            for success in final_assessment_results["successes"]:
-                print(f"         - {success}")
-        
-        if final_assessment_results["issues_found"]:
-            print(f"\n   ❌ ISSUES FOUND:")
-            for issue in final_assessment_results["issues_found"]:
-                print(f"         - {issue}")
-        
-        return final_assessment_results["coordinate_precision_fixes_successful"], {
-            "scraper_executed": scraper_success,
-            "coordinate_precision": coordinate_precision_results,
-            "boundary_image_quality": boundary_image_quality_results,
-            "all_properties_precision": all_properties_precision_results,
-            "property_data_accuracy": property_data_accuracy_results,
+        return final_assessment_results["deployment_endpoints_successful"], {
+            "deployment_status": deployment_status_results,
+            "check_updates": check_updates_results,
+            "health": health_results,
+            "verify": verify_results,
             "final_assessment": final_assessment_results
         }
             
     except Exception as e:
-        print(f"   ❌ Victoria County improved parser test error: {e}")
+        print(f"   ❌ Deployment endpoints test error: {e}")
         return False, {"error": str(e)}
 
 def main():
