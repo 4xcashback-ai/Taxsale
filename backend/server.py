@@ -1169,21 +1169,56 @@ async def scrape_victoria_county_tax_sales():
                     await page.goto(tax_sale_page_url, timeout=30000)
                     await page.wait_for_timeout(3000)
                     
-                    # Look for PDF links on the page
-                    pdf_links = await page.query_selector_all('a[href*=".pdf"], a:has-text("PDF"), a:has-text("Tax Sale")')
+                    # Look for PDF links on the page - try multiple selectors
+                    pdf_links = await page.query_selector_all('a[href*=".pdf"], a:has-text("PDF"), a:has-text("Tax Sale"), a:has-text("tender"), a:has-text("bid")')
                     
                     pdf_url = None
+                    page_content = await page.content()
+                    
+                    # Log the page content to help debug
+                    logger.info(f"Victoria County page loaded, looking for PDF links...")
+                    
                     for link in pdf_links:
                         href = await link.get_attribute('href')
-                        text = await link.inner_text()
+                        text = await link.inner_text() if link else ""
                         
-                        if href and ('.pdf' in href.lower() or 'tax' in text.lower()):
+                        logger.info(f"Found link: href='{href}', text='{text}'")
+                        
+                        if href and ('.pdf' in href.lower() or 'tax' in text.lower() or 'tender' in text.lower()):
                             if not href.startswith('http'):
                                 pdf_url = f"https://victoriacounty.com{href}" if href.startswith('/') else f"https://victoriacounty.com/{href}"
                             else:
                                 pdf_url = href
-                            logger.info(f"Found potential PDF link: {pdf_url}")
+                            logger.info(f"Selected PDF link: {pdf_url}")
                             break
+                    
+                    # If no PDF found, try to find direct PDF URL in page content
+                    if not pdf_url:
+                        pdf_match = re.search(r'href=["\']([^"\']*\.pdf[^"\']*)["\']', page_content, re.IGNORECASE)
+                        if pdf_match:
+                            pdf_url = pdf_match.group(1)
+                            if not pdf_url.startswith('http'):
+                                pdf_url = f"https://victoriacounty.com{pdf_url}" if pdf_url.startswith('/') else f"https://victoriacounty.com/{pdf_url}"
+                            logger.info(f"Found PDF URL in page content: {pdf_url}")
+                    
+                    # Try known Victoria County PDF paths as fallback
+                    if not pdf_url:
+                        potential_urls = [
+                            "https://victoriacounty.com/wp-content/uploads/2025/08/Tax-Sale-By-Tender.pdf",
+                            "https://victoriacounty.com/wp-content/uploads/Tax-Sale-2025.pdf",
+                            "https://victoriacounty.com/media/tax-sale.pdf",
+                            "https://victoriacounty.com/documents/tax-sale-2025.pdf"
+                        ]
+                        
+                        for test_url in potential_urls:
+                            try:
+                                test_response = await page.goto(test_url, timeout=10000)
+                                if test_response.status == 200:
+                                    pdf_url = test_url
+                                    logger.info(f"Found working PDF URL: {pdf_url}")
+                                    break
+                            except:
+                                continue
                     
                     if pdf_url:
                         # Download and parse the PDF
