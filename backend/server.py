@@ -1312,6 +1312,127 @@ async def scrape_victoria_county_tax_sales():
         logger.error(f"Victoria County scraping failed: {e}")
         raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
 
+def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
+    """Parse Victoria County PDF format and extract property data"""
+    properties = []
+    
+    try:
+        # Victoria County format:
+        # 1. AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
+        # Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
+        # Redeemable/ Not Land Registered.
+        # Taxes, Interest and Expenses owing: $2,009.03
+        
+        import re
+        
+        # Split into sections - each property starts with a number followed by AAN
+        property_sections = re.split(r'\n\d+\.\s*AAN:', pdf_text)
+        
+        for i, section in enumerate(property_sections):
+            if not section.strip():
+                continue
+                
+            # Add back the AAN prefix for parsing (except first section which is header)
+            if i > 0:
+                section = "AAN:" + section
+            elif "AAN:" not in section:
+                continue
+            
+            try:
+                # Extract AAN and PID from first line
+                # Pattern: AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
+                aan_pid_match = re.search(r'AAN:\s*(\d+)\s*/\s*PID:\s*(\d+)\s*[–-]\s*Property assessed to\s*([^.]+)\.', section)
+                
+                if not aan_pid_match:
+                    logger.warning(f"Could not parse AAN/PID from Victoria County section: {section[:100]}...")
+                    continue
+                
+                assessment_number = aan_pid_match.group(1)
+                pid_number = aan_pid_match.group(2)
+                owner_name = aan_pid_match.group(3).strip()
+                
+                # Extract property type and address
+                # Pattern: Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
+                location_match = re.search(r'([^,]+),\s*located at\s*([^,]+(?:,\s*[^,]+)*),\s*([\d,]+)\s*([^.]+)\.', section)
+                
+                property_type = "Property"
+                property_address = "Address not specified"
+                lot_size = None
+                
+                if location_match:
+                    property_type = location_match.group(1).strip()
+                    property_address = location_match.group(2).strip()
+                    size_number = location_match.group(3).strip()
+                    size_unit = location_match.group(4).strip()
+                    lot_size = f"{size_number} {size_unit}"
+                
+                # Extract redeemable status
+                # Pattern: Redeemable/ Not Land Registered.
+                redeemable = "Unknown"
+                if re.search(r'Redeemable', section, re.IGNORECASE):
+                    redeemable = "Yes"
+                elif re.search(r'Not\s+Redeemable', section, re.IGNORECASE):
+                    redeemable = "No"
+                
+                # Extract tax amount
+                # Pattern: Taxes, Interest and Expenses owing: $2,009.03
+                tax_match = re.search(r'Taxes[^:]*:\s*\$?([\d,]+\.?\d*)', section)
+                opening_bid = 0.0
+                
+                if tax_match:
+                    tax_amount_str = tax_match.group(1).replace(',', '')
+                    try:
+                        opening_bid = float(tax_amount_str)
+                    except ValueError:
+                        logger.warning(f"Could not parse tax amount: {tax_amount_str}")
+                
+                # Create property object
+                property_data = {
+                    "id": str(uuid.uuid4()),
+                    "municipality_id": municipality_id,
+                    "assessment_number": assessment_number,
+                    "owner_name": owner_name,
+                    "property_address": property_address,
+                    "pid_number": pid_number,
+                    "opening_bid": opening_bid,
+                    "municipality_name": "Victoria County",
+                    "sale_date": "2025-05-15",  # TODO: Extract actual sale date from PDF
+                    "property_type": property_type,
+                    "lot_size": lot_size,
+                    "sale_location": "Victoria County Municipal Office",  # TODO: Extract from PDF
+                    "status": "active",
+                    "redeemable": redeemable,
+                    "hst_applicable": "No",  # Default for Victoria County
+                    "property_description": f"{property_address} {property_type}" + (f" - {lot_size}" if lot_size else ""),
+                    "latitude": None,  # TODO: Geocode if needed
+                    "longitude": None,
+                    "scraped_at": datetime.now(timezone.utc),
+                    "source_url": "https://victoriacounty.com",
+                    "raw_data": {
+                        "assessment_number": assessment_number,
+                        "pid_number": pid_number,
+                        "owner_name": owner_name,
+                        "property_address": property_address,
+                        "property_type": property_type,
+                        "lot_size": lot_size,
+                        "redeemable": redeemable,
+                        "taxes_owing": f"${opening_bid:.2f}",
+                        "raw_section": section[:500]  # Store first 500 chars for debugging
+                    }
+                }
+                
+                properties.append(property_data)
+                logger.info(f"Parsed Victoria County property: AAN {assessment_number}, Owner: {owner_name}")
+                
+            except Exception as e:
+                logger.error(f"Error parsing Victoria County property section: {e}")
+                continue
+    
+    except Exception as e:
+        logger.error(f"Victoria County PDF parsing failed: {e}")
+    
+    return properties
+
 async def scrape_generic_municipality(municipality_id: str):
     """Generic scraper for municipalities without specific implementation"""
     municipality = await db.municipalities.find_one({"id": municipality_id})
