@@ -1798,7 +1798,11 @@ function PropertySearch() {
                   {deploymentMessage && (
                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center space-x-2">
-                        <RefreshCw className={`h-4 w-4 text-blue-600 ${deploymentLoading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 text-blue-600 ${
+                          buttonStates.checkUpdates || buttonStates.deploy || 
+                          buttonStates.verify || buttonStates.health || 
+                          buttonStates.refresh ? 'animate-spin' : ''
+                        }`} />
                         <span className="text-blue-800">{deploymentMessage}</span>
                       </div>
                     </div>
