@@ -347,9 +347,9 @@ def test_victoria_county_improved_parser():
             print(f"      Numbered Sections: {numbered_sections}")
             
             if aan_count >= 3 and numbered_sections >= 3:
-                print(f"   ✅ REQUIREMENT 2 MET: Comprehensive logging shows detailed PDF parsing steps")
+                print(f"   ✅ ENHANCED PATTERN MATCHING: Parser correctly identifies all 3 AAN occurrences and numbered sections")
             else:
-                print(f"   ⚠️ REQUIREMENT 2 PARTIAL: Limited logging data available")
+                print(f"   ⚠️ PATTERN MATCHING ISSUE: Limited AAN/section detection - may indicate regex pattern problems")
         else:
             print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
             print(f"   ℹ️ REQUIREMENT 2: Cannot verify comprehensive logging without debug endpoint")
