@@ -608,17 +608,23 @@ def test_victoria_county_fixed_scraper():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Victoria County Data Extraction Debug"""
+    """Main test execution function - Focus on Victoria County Fixed Scraper"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County Data Extraction Issues - Minimum Bid and Missing Images")
-    print("📋 REVIEW REQUEST: Debug Victoria County data extraction issues")
+    print("🎯 FOCUS: Victoria County scraper with fixed minimum bid calculation and boundary image generation")
+    print("📋 REVIEW REQUEST: Test Victoria County scraper with fixed minimum bid calculation and boundary image generation")
     print("🔍 REQUIREMENTS:")
-    print("   1. Test current Victoria County properties - Check actual data being extracted for all 3 properties")
-    print("   2. Verify minimum bid calculations - Compare extracted opening_bid values against PDF tax amounts")
-    print("   3. Check boundary screenshot generation - Verify if boundary_screenshot field is being generated")
-    print("   4. Debug tax amount extraction - Check if regex patterns correctly extract from 'Taxes, Interest and Expenses owing: $X,XXX.XX'")
-    print("   5. Verify property images - Check if Google Maps static API is generating boundary thumbnails")
+    print("   1. Test fixed scraper POST /api/scrape/victoria-county with enhanced tax amount extraction patterns")
+    print("   2. Verify correct minimum bids - Should now show correct amounts:")
+    print("      - Entry 1 (AAN 00254118): $2,009.03 (not $2.0)")
+    print("      - Entry 2 (AAN 00453706): $1,599.71 (not $1.0)")
+    print("      - Entry 8 (AAN 09541209): $5,031.96 (not $0.0)")
+    print("   3. Check boundary image generation - All properties should now have:")
+    print("      - Proper latitude/longitude coordinates assigned")
+    print("      - boundary_screenshot URLs generated")
+    print("      - Location-specific coordinates for Little Narrows, Middle River, Washabuck")
+    print("   4. Verify HST detection - Entry 8 should have hst_applicable: 'Yes' due to '+ HST' in PDF")
+    print("   5. Test boundary image endpoints - Try accessing the generated boundary screenshot URLs")
     print("=" * 80)
     
     # Track overall results
