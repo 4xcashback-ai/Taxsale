@@ -144,8 +144,8 @@ def test_victoria_county_improved_parser():
     print("🔍 EXPECTED SALE DATE: Tuesday, August 26TH, 2025 at 2:00PM (should be 2025-08-26)")
     
     try:
-        # Test 1: Victoria County Final Parser with Enhanced Error Handling
-        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Final Parser with Enhanced Error Handling)")
+        # Test 1: Victoria County Improved Parser with Enhanced Regex Patterns
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Improved Parser with Enhanced Regex Patterns)")
         
         scrape_response = requests.post(
             f"{BACKEND_URL}/scrape/victoria-county", 
