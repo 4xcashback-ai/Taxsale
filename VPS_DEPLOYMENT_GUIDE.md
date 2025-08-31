@@ -81,7 +81,7 @@ mongo
 
 ### Backend Setup
 ```bash
-cd /var/www/tax-sale-compass/backend
+cd /var/www/nstaxsales/backend
 
 # Create Python virtual environment
 python3 -m venv venv
