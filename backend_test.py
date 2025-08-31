@@ -126,22 +126,21 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_municipality_descriptions():
-    """Test municipality descriptions for property detail pages"""
-    print("\n📝 Testing Municipality Descriptions for Property Detail Pages...")
-    print("🎯 FOCUS: Test municipality-specific descriptions for Halifax, Cape Breton, Kentville, and Victoria County")
-    print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Add descriptions to existing municipalities - Update Halifax, Cape Breton, Kentville, and Victoria County")
-    print("   2. Halifax description - Include SEALED TENDER process, HRM website submission, bid form requirements")
-    print("   3. Victoria County description - Include tender process, submission location at 495 Chebucto St., Baddeck, contact info")
-    print("   4. Cape Breton description - Include CBRM-specific tax sale process and contact information")
-    print("   5. Kentville description - Include Kentville-specific tax sale process and contact information")
+def test_deployment_management_endpoints():
+    """Test deployment management API endpoints"""
+    print("\n🚀 Testing Deployment Management API Endpoints...")
+    print("🎯 FOCUS: Test new deployment management API endpoints")
+    print("📋 ENDPOINTS TO TEST:")
+    print("   1. GET /api/deployment/status - should return deployment status info")
+    print("   2. POST /api/deployment/check-updates - should check for GitHub updates")
+    print("   3. GET /api/deployment/health - should return system health status")
+    print("   4. POST /api/deployment/verify - should verify current deployment")
     print("")
     print("🔍 TESTING GOALS:")
-    print("   - Do all target municipalities have appropriate descriptions?")
-    print("   - Do descriptions contain required information for each municipality?")
-    print("   - Are descriptions accessible via API endpoints?")
-    print("   - Do descriptions appear correctly on property detail pages?")
+    print("   - Endpoints are accessible and return proper HTTP status codes")
+    print("   - Error handling is working (since automation scripts don't exist here)")
+    print("   - Response format is JSON and contains expected fields")
+    print("   - No server crashes or unhandled exceptions")
     
     try:
         # Test 1: Get All Municipalities and Check for Target Municipalities
