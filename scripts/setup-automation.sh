@@ -192,16 +192,16 @@ setup_cron_jobs() {
     log "Setting up cron jobs..."
     
     # Create cron job for regular health checks
-    cat > /etc/cron.d/tax-sale-compass << 'EOF'
-# Tax Sale Compass automation cron jobs
+    cat > /etc/cron.d/nstaxsales << 'EOF'
+# NST Tax Sales automation cron jobs
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Run health check every 30 minutes
-*/30 * * * * root /opt/tax-sale-compass/scripts/system-health.sh check >/dev/null 2>&1
+*/30 * * * * root /var/www/nstaxsales/scripts/system-health.sh check >/dev/null 2>&1
 
 # Check for updates daily at 2 AM
-0 2 * * * root /opt/tax-sale-compass/scripts/deployment.sh check-updates >/dev/null 2>&1
+0 2 * * * root /var/www/nstaxsales/scripts/deployment.sh check-updates >/dev/null 2>&1
 EOF
 
     log "Cron jobs configured"
