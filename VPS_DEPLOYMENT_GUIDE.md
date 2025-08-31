@@ -23,7 +23,7 @@ This guide covers deploying Tax Sale Compass to your VPS and updating the existi
 
 1. **Save to GitHub**
    - Use Emergent's "Save to GitHub" feature
-   - Note your repository URL (e.g., `https://github.com/yourusername/tax-sale-compass`)
+   - Note your repository URL (e.g., `https://github.com/yourusername/nstaxsales`)
 
 2. **Clone to VPS**
    ```bash
