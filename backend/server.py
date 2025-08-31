@@ -1553,17 +1553,34 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 elif re.search(r'Not\s+Redeemable', section, re.IGNORECASE):
                     redeemable = "No"
                 
-                # Extract tax amount
-                # Pattern: Taxes, Interest and Expenses owing: $2,009.03
-                tax_match = re.search(r'Taxes[^:]*:\s*\$?([\d,]+\.?\d*)', section)
-                opening_bid = 0.0
+                # Extract tax amount with enhanced patterns for Victoria County format
+                # Pattern: "Taxes, Interest and Expenses owing: $2,009.03"
+                # Pattern: "Taxes, Interest and Expenses owing: $5,031.96 + HST"
+                tax_patterns = [
+                    r'Taxes,?\s*Interest\s*and\s*Expenses\s*owing:\s*\$?([\d,]+\.?\d*)',  # Standard format
+                    r'Taxes[^:]*owing:\s*\$?([\d,]+\.?\d*)',                              # Flexible format
+                    r'owing:\s*\$?([\d,]+\.?\d*)',                                        # Simple format
+                    r'\$?([\d,]+\.\d+)\s*\+?\s*HST?',                                    # With HST format
+                ]
                 
-                if tax_match:
-                    tax_amount_str = tax_match.group(1).replace(',', '')
-                    try:
-                        opening_bid = float(tax_amount_str)
-                    except ValueError:
-                        logger.warning(f"Could not parse tax amount: {tax_amount_str}")
+                opening_bid = 0.0
+                tax_amount_found = False
+                
+                for pattern in tax_patterns:
+                    tax_match = re.search(pattern, section, re.IGNORECASE)
+                    if tax_match:
+                        tax_amount_str = tax_match.group(1).replace(',', '')
+                        try:
+                            opening_bid = float(tax_amount_str)
+                            tax_amount_found = True
+                            logger.info(f"✅ Tax amount found with pattern '{pattern}': ${opening_bid}")
+                            break
+                        except ValueError:
+                            logger.warning(f"Could not parse tax amount: {tax_amount_str}")
+                
+                if not tax_amount_found:
+                    logger.error(f"❌ Tax amount not found in section {i+1}")
+                    logger.error(f"Section preview for tax search: {section[-200:]}")  # Last 200 chars where tax info usually is
                 
                 # Create property object
                 property_data = {
