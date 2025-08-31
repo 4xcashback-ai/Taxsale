@@ -1279,7 +1279,7 @@ async def scrape_victoria_county_tax_sales():
                                 else:
                                     logger.warning(f"Failed to download Victoria County PDF: {response.status}")
                     else:
-                        logger.warning("No PDF link found on Victoria County tax sale page")
+                        logger.warning("No PDF URL available for Victoria County")
                         
                 except Exception as e:
                     logger.error(f"Error scraping Victoria County page: {e}")
