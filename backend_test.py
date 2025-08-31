@@ -564,8 +564,8 @@ def test_victoria_county_coordinate_precision_fixes():
         print(f"      HST detection working: {property_data_accuracy_results['hst_detection_working']}")
         print(f"      All required fields present: {property_data_accuracy_results['all_required_fields_present']}")
         
-        # Test 6: Coordinate Refinement Recommendations
-        print(f"\n   🔧 TEST 6: Coordinate Refinement Recommendations")
+        # Test 6: Final Assessment - Coordinate Precision Fixes Verification
+        print(f"\n   🔧 TEST 6: Final Assessment - Coordinate Precision Fixes Verification")
         
         refinement_results = {
             "current_coordinates_adequate": False,
