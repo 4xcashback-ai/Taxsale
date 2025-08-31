@@ -1260,16 +1260,9 @@ async def scrape_victoria_county_tax_sales():
                                                     full_text += page_text + "\n"
                                             
                                             logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
+                                            logger.info(f"Victoria County PDF content preview: {full_text[:1500]}...")
                                             
-                                            # Log PDF content for debugging
-                                            logger.info(f"Victoria County PDF content preview: {full_text[:1000]}...")
-                                            
-                                            # Parse Victoria County format:
-                                            # AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
-                                            # Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
-                                            # Redeemable/ Not Land Registered.
-                                            # Taxes, Interest and Expenses owing: $2,009.03
-                                            
+                                            # Parse Victoria County format
                                             properties = parse_victoria_county_pdf(full_text, municipality_id)
                                             logger.info(f"Victoria County PDF parsing result: {len(properties)} properties found")
                                             
