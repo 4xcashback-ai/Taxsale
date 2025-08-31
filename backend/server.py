@@ -1396,27 +1396,84 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                         logger.info(f"Victoria County: Extracted sale date: {sale_date}")
                 break
         
-        # Try multiple splitting patterns to find all properties
+        # Create a more comprehensive approach to find all properties
         property_sections = []
         
-        # Pattern 1: Split by numbered sections (1. AAN:, 2. AAN:, etc.)
-        sections_1 = re.split(r'\n(\d+)\.\s*AAN:', pdf_text)
+        # Log full PDF text for debugging (first 2000 characters)
+        logger.info(f"Victoria County PDF content start: {pdf_text[:2000]}")
+        
+        # Try multiple splitting patterns to find all properties
+        patterns_tried = []
+        
+        # Pattern 1: Split by numbered sections (1. AAN:, 2. AAN:, 3. AAN:)
+        pattern_1 = r'\n(\d+)\.\s*AAN:'
+        sections_1 = re.split(pattern_1, pdf_text)
+        patterns_tried.append(f"Pattern 1 found {len(sections_1)} sections")
+        
         if len(sections_1) > 2:  # Found numbered sections
             for i in range(1, len(sections_1), 2):  # Take every other element (numbers and content)
                 if i + 1 < len(sections_1):
+                    section_number = sections_1[i]
                     section_content = "AAN:" + sections_1[i + 1]
-                    property_sections.append(sections_1[i] + ". " + section_content)
+                    full_section = f"{section_number}. {section_content}"
+                    property_sections.append(full_section)
+                    logger.info(f"Pattern 1 - Added section {section_number}: {section_content[:100]}...")
         
-        # Pattern 2: Split by AAN patterns if numbered sections didn't work
-        if not property_sections:
-            sections_2 = re.split(r'(?=\d+\.\s*AAN:\s*\d+)', pdf_text)
-            property_sections = [s for s in sections_2 if "AAN:" in s and s.strip()]
+        # Pattern 2: Split by AAN patterns directly if numbered sections didn't work
+        if len(property_sections) < 2:  # If we don't have enough properties yet
+            property_sections = []  # Reset and try different approach
+            pattern_2 = r'(?=\d+\.\s*AAN:\s*\d+)'
+            sections_2 = re.split(pattern_2, pdf_text)
+            sections_2 = [s for s in sections_2 if "AAN:" in s and s.strip()]
+            property_sections.extend(sections_2)
+            patterns_tried.append(f"Pattern 2 found {len(sections_2)} sections")
+            
+            for i, section in enumerate(sections_2):
+                logger.info(f"Pattern 2 - Section {i+1}: {section[:200]}...")
         
-        # Pattern 3: Simple AAN split as fallback
-        if not property_sections:
-            sections_3 = re.split(r'(?=AAN:\s*\d+)', pdf_text)
-            property_sections = [s for s in sections_3 if "AAN:" in s and s.strip()]
+        # Pattern 3: Look for specific property indicators in the text
+        if len(property_sections) < 2:
+            property_sections = []  # Reset
+            # Find all AAN occurrences with context
+            aan_matches = list(re.finditer(r'(\d+\.\s*)?AAN:\s*(\d+)', pdf_text))
+            patterns_tried.append(f"Pattern 3 found {len(aan_matches)} AAN matches")
+            
+            for i, match in enumerate(aan_matches):
+                start_pos = max(0, match.start() - 50)  # Get some context before
+                end_pos = min(len(pdf_text), match.end() + 1000)  # Get substantial content after
+                section = pdf_text[start_pos:end_pos]
+                property_sections.append(section)
+                logger.info(f"Pattern 3 - AAN {match.group(2)}: {section[:200]}...")
         
+        # Pattern 4: Manual search for known property patterns
+        if len(property_sections) < 2:
+            property_sections = []  # Reset
+            # Look for specific patterns that might indicate property starts
+            property_indicators = [
+                r'AAN:\s*\d+\s*/\s*PID:\s*\d+',
+                r'\d+\.\s*AAN:\s*\d+',
+                r'Property assessed to',
+                r'Taxes.*owing'
+            ]
+            
+            found_positions = []
+            for pattern in property_indicators:
+                matches = list(re.finditer(pattern, pdf_text, re.IGNORECASE))
+                found_positions.extend([(m.start(), m.end(), pattern) for m in matches])
+            
+            found_positions.sort()  # Sort by position
+            patterns_tried.append(f"Pattern 4 found {len(found_positions)} indicators")
+            
+            # Create sections based on found positions
+            for i, (start, end, pattern) in enumerate(found_positions):
+                next_start = found_positions[i + 1][0] if i + 1 < len(found_positions) else len(pdf_text)
+                section = pdf_text[start:next_start]
+                if "AAN:" in section:
+                    property_sections.append(section)
+                    logger.info(f"Pattern 4 - Indicator '{pattern}': {section[:200]}...")
+        
+        # Log all patterns tried
+        logger.info(f"Victoria County parsing patterns tried: {patterns_tried}")
         logger.info(f"Victoria County: Found {len(property_sections)} potential property sections")
         
         for i, section in enumerate(property_sections):
