@@ -342,25 +342,63 @@ def test_victoria_county_data_extraction_debug():
             print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
             print(f"   ℹ️ Cannot verify tax amount extraction patterns without debug endpoint")
         
-        # Test 4: Multiple PID Handling Verification
-        print(f"\n   🔧 TEST 4: Multiple PID Handling Verification")
+        # Test 4: Google Maps API and Boundary Image Generation
+        print(f"\n   🔧 TEST 4: Google Maps API and Boundary Image Generation")
         
-        # Check if Entry 2 (AAN 00453706) has multiple PIDs as expected
-        entry_2_property = None
-        for prop in victoria_properties:
-            if prop.get("assessment_number") == "00453706":
-                entry_2_property = prop
-                break
+        # Test Google Maps API key and static map generation
+        google_maps_working = True
         
-        if entry_2_property:
-            print(f"   ✅ Entry 2 (AAN 00453706) found - checking for multiple PID handling")
-            raw_data = entry_2_property.get("raw_data", {})
-            if raw_data and "multiple_pids" in str(raw_data).lower():
-                print(f"   ✅ Multiple PID handling: Entry 2 shows evidence of multiple PID processing")
-            else:
-                print(f"   ⚠️ Multiple PID handling: Cannot verify multiple PID processing for Entry 2")
+        # Check if properties have coordinates for map generation
+        properties_with_coords = [p for p in victoria_properties if p.get('latitude') and p.get('longitude')]
+        print(f"   📍 Properties with coordinates: {len(properties_with_coords)}/{len(victoria_properties)}")
+        
+        if properties_with_coords:
+            # Test Google Maps static API with first property coordinates
+            test_prop = properties_with_coords[0]
+            lat = test_prop.get('latitude')
+            lng = test_prop.get('longitude')
+            
+            # Test static map API (similar to what the backend uses)
+            test_map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
+            
+            try:
+                map_response = requests.get(test_map_url, timeout=10)
+                if map_response.status_code == 200 and 'image' in map_response.headers.get('content-type', ''):
+                    print(f"   ✅ GOOGLE MAPS API: Static map generation working")
+                    print(f"      Test coordinates: {lat}, {lng}")
+                    print(f"      Response size: {len(map_response.content)} bytes")
+                else:
+                    print(f"   ❌ GOOGLE MAPS API: Static map generation failed")
+                    print(f"      Status: {map_response.status_code}")
+                    print(f"      Content-Type: {map_response.headers.get('content-type', 'unknown')}")
+                    google_maps_working = False
+            except Exception as e:
+                print(f"   ❌ GOOGLE MAPS API: Error testing static map - {e}")
+                google_maps_working = False
         else:
-            print(f"   ❌ Entry 2 (AAN 00453706) not found - multiple PID handling cannot be verified")
+            print(f"   ❌ COORDINATES MISSING: No properties have latitude/longitude for map generation")
+            google_maps_working = False
+        
+        # Test property image endpoint
+        if victoria_properties:
+            test_aan = victoria_properties[0].get('assessment_number')
+            if test_aan:
+                try:
+                    image_response = requests.get(f"{BACKEND_URL}/property-image/{test_aan}", timeout=10)
+                    if image_response.status_code == 200:
+                        print(f"   ✅ PROPERTY IMAGE ENDPOINT: Working for AAN {test_aan}")
+                        print(f"      Image size: {len(image_response.content)} bytes")
+                    else:
+                        print(f"   ❌ PROPERTY IMAGE ENDPOINT: Failed for AAN {test_aan} - HTTP {image_response.status_code}")
+                except Exception as e:
+                    print(f"   ❌ PROPERTY IMAGE ENDPOINT: Error - {e}")
+        
+        # Summary of boundary image issues
+        if not boundary_images_present:
+            print(f"\n   🔍 BOUNDARY IMAGE ISSUES IDENTIFIED:")
+            print(f"      - boundary_screenshot field missing or empty for Victoria County properties")
+            print(f"      - This indicates the boundary screenshot generation process is not working")
+            print(f"      - May be related to coordinates, Google Maps API, or image processing pipeline")
         
         # Final Assessment
         print(f"\n   📊 FINAL ASSESSMENT - Victoria County Improved Parser:")
