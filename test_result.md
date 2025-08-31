@@ -123,7 +123,7 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 8
+    stuck_count: 9
     priority: "high"
     needs_retesting: false
     status_history:
