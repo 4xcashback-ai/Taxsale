@@ -504,7 +504,7 @@ def main():
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Final Parser Focus")
+    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Improved Parser Focus")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
