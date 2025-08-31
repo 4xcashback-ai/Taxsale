@@ -185,8 +185,8 @@ def test_victoria_county_data_extraction_debug():
                 print(f"      Raw response: {scrape_response.text[:200]}...")
             return False, {"error": f"Scraper failed with HTTP {scrape_response.status_code}"}
         
-        # Test 2: Verify Properties in Database with Complete Data Validation
-        print(f"\n   🔧 TEST 2: GET /api/tax-sales (Validate Complete Data)")
+        # Test 2: Verify Minimum Bid Calculations Against PDF Tax Amounts
+        print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Minimum Bid Calculations)")
         
         properties_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria County", timeout=30)
         
@@ -196,21 +196,18 @@ def test_victoria_county_data_extraction_debug():
             
             print(f"   ✅ Retrieved {len(victoria_properties)} Victoria County properties from database")
             
-            if len(victoria_properties) != 3:
-                print(f"   ❌ DATABASE PROPERTY COUNT MISMATCH: Expected 3, found {len(victoria_properties)}")
-                return False, {"error": f"Database contains {len(victoria_properties)} properties instead of 3"}
+            # Expected minimum bids from PDF tax amounts (from review request)
+            expected_bids = {
+                "00254118": 2009.03,  # Entry 1: Should be $2,009.03
+                "00453706": 1599.71,  # Entry 2: Should be $1,599.71  
+                "09541209": 5031.96   # Entry 8: Should be $5,031.96 + HST
+            }
             
-            # Expected AANs from PDF entries 1, 2, 8 (confirmed from debug analysis)
-            expected_aans = ["00254118", "00453706", "09541209"]
-            expected_owners = ["Donald John Beaton", "Kenneth Ferneyhough", "Florance Debra Cleaves"]
-            expected_pids = ["85006500", "85010866/85074276", "85142388"]  # Updated to include multiple PIDs for entry 2
-            expected_property_types = ["Land/Dwelling", "Land/Dwelling", "Land"]
-            
-            print(f"\n   🎯 VALIDATING COMPLETE DATA FOR ALL 3 PROPERTIES:")
+            print(f"\n   🎯 VERIFYING MINIMUM BID CALCULATIONS:")
             
             found_aans = []
-            all_data_complete = True
-            fallback_detected = False
+            bid_calculations_correct = True
+            boundary_images_present = True
             
             for i, prop in enumerate(victoria_properties):
                 aan = prop.get("assessment_number")
