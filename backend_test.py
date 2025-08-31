@@ -354,8 +354,8 @@ def test_victoria_county_improved_parser():
             print(f"   ⚠️ Debug endpoint not available (status: {debug_response.status_code})")
             print(f"   ℹ️ REQUIREMENT 2: Cannot verify comprehensive logging without debug endpoint")
         
-        # Test 4: Enhanced Error Handling Verification
-        print(f"\n   🔧 TEST 4: Enhanced Error Handling Verification")
+        # Test 4: Multiple PID Handling Verification
+        print(f"\n   🔧 TEST 4: Multiple PID Handling Verification")
         
         # Test with invalid municipality to verify error handling
         invalid_response = requests.post(f"{BACKEND_URL}/scrape/invalid-municipality", timeout=30)
