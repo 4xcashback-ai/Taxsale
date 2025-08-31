@@ -1696,10 +1696,12 @@ async def search_tax_sales(
     if q:
         # Search across multiple fields
         query["$or"] = [
+            {"assessment_number": {"$regex": q, "$options": "i"}},
             {"property_address": {"$regex": q, "$options": "i"}},
             {"municipality_name": {"$regex": q, "$options": "i"}},
             {"property_description": {"$regex": q, "$options": "i"}},
-            {"owner_name": {"$regex": q, "$options": "i"}}
+            {"owner_name": {"$regex": q, "$options": "i"}},
+            {"pid_number": {"$regex": q, "$options": "i"}}
         ]
     
     if municipality:
