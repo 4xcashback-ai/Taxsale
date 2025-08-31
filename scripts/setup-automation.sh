@@ -104,7 +104,7 @@ EOF
 setup_log_rotation() {
     log "Setting up log rotation..."
     
-    cat > /etc/logrotate.d/tax-sale-compass << 'EOF'
+    cat > /etc/logrotate.d/nstaxsales << 'EOF'
 /var/log/tax-sale-*.log {
     daily
     rotate 30
