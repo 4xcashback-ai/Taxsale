@@ -126,22 +126,22 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_victoria_county_thumbnail_accuracy():
-    """Test Victoria County thumbnail accuracy issue - properties showing vacant land instead of dwellings"""
-    print("\n🔍 Testing Victoria County Thumbnail Accuracy Issue...")
-    print("🎯 FOCUS: Investigate Victoria County thumbnail accuracy - properties showing vacant land instead of dwellings")
+def test_victoria_county_coordinate_precision_fixes():
+    """Test Victoria County coordinate precision fixes and improved thumbnail quality"""
+    print("\n🔍 Testing Victoria County Coordinate Precision Fixes...")
+    print("🎯 FOCUS: Test both fixes - updated site branding and improved Victoria County thumbnail coordinates")
     print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Check current Victoria County property coordinates - Verify coordinates for AAN 00254118")
-    print("   2. Test boundary image generation - Check /api/property-image/00254118 endpoint accuracy")
-    print("   3. Compare coordinate accuracy - Property should show building at 198 Little Narrows Rd, Little Narrows")
-    print("   4. Verify boundary image parameters - Check Google Maps Static API zoom/satellite view settings")
-    print("   5. Check if coordinates need refinement - Current coordinates may be too general")
+    print("   1. Re-scrape Victoria County POST /api/scrape/victoria-county to update properties with new precise coordinates")
+    print("   2. Verify coordinate precision - Check that properties now have 5 decimal places (±1m accuracy) instead of 3")
+    print("   3. Test boundary image quality - Check if AAN 00254118 thumbnail now shows actual building/dwelling at 198 Little Narrows Rd")
+    print("   4. Verify all 3 properties - Ensure all Victoria County properties have improved coordinate precision")
+    print("   5. Check property data accuracy - Confirm opening bids and HST detection still working correctly")
     print("")
     print("🔍 TESTING GOALS:")
-    print("   - Are the current coordinates for Victoria County properties showing actual property locations?")
-    print("   - Does AAN 00254118 coordinate (46.2140, -60.9950) show the building at 198 Little Narrows Rd?")
-    print("   - Is the boundary image generation using satellite view to show buildings/dwellings?")
-    print("   - Do we need more precise coordinates for each Victoria County property?")
+    print("   - Do Victoria County properties now have precise coordinates (5 decimal places)?")
+    print("   - Does AAN 00254118 thumbnail show the actual dwelling/building instead of vacant land?")
+    print("   - Are the coordinates accurate enough to show buildings at the specific addresses?")
+    print("   - Do all 3 Victoria County properties have proper precise coordinates?")
     
     try:
         # Test 1: Execute Victoria County Scraper
