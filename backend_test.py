@@ -203,7 +203,7 @@ def test_victoria_county_improved_parser():
             # Expected AANs from PDF entries 1, 2, 8 (confirmed from debug analysis)
             expected_aans = ["00254118", "00453706", "09541209"]
             expected_owners = ["Donald John Beaton", "Kenneth Ferneyhough", "Florance Debra Cleaves"]
-            expected_pids = ["85006500", "85010866", "85142388"]
+            expected_pids = ["85006500", "85010866/85074276", "85142388"]  # Updated to include multiple PIDs for entry 2
             expected_property_types = ["Land/Dwelling", "Land/Dwelling", "Land"]
             
             print(f"\n   🎯 VALIDATING COMPLETE DATA FOR ALL 3 PROPERTIES:")
