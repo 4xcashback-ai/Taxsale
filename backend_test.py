@@ -712,51 +712,46 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Victoria County Thumbnail Accuracy Analysis
-    print(f"\n🎯 VICTORIA COUNTY THUMBNAIL ACCURACY ANALYSIS:")
+    # Victoria County Coordinate Precision Fixes Analysis
+    print(f"\n🎯 VICTORIA COUNTY COORDINATE PRECISION FIXES ANALYSIS:")
     
-    if thumbnail_accurate and thumbnail_data:
-        print(f"   ✅ VICTORIA COUNTY THUMBNAILS: ACCURACY VERIFIED!")
+    if coordinate_fixes_successful and coordinate_data:
+        print(f"   ✅ VICTORIA COUNTY COORDINATE PRECISION FIXES: SUCCESSFUL!")
         
-        coord_results = thumbnail_data.get('coordinate_verification', {})
-        boundary_results = thumbnail_data.get('boundary_image_test', {})
-        satellite_results = thumbnail_data.get('satellite_params', {})
+        final_assessment = coordinate_data.get('final_assessment', {})
+        successes = final_assessment.get('successes', [])
         
-        print(f"      ✅ Property coordinates verified for AAN 00254118")
-        print(f"      ✅ Boundary image generation working")
-        print(f"      ✅ Google Maps satellite parameters appropriate")
-        print(f"      ✅ Coordinate accuracy adequate for building visibility")
+        print(f"      ✅ Coordinate precision fixes implemented successfully")
+        print(f"      ✅ Victoria County properties updated with improved coordinates")
+        print(f"      ✅ Thumbnail quality improvements verified")
         
-        print(f"\n   🎉 SUCCESS: Victoria County thumbnails are showing accurate property locations!")
-        print(f"   ✅ AAN 00254118 coordinates point to correct location")
-        print(f"   ✅ Satellite view parameters configured for building visibility")
-        print(f"   ✅ Coordinate precision sufficient for property boundaries")
+        print(f"\n   🎉 SUCCESS: Victoria County coordinate precision fixes working!")
+        for success in successes:
+            print(f"   ✅ {success}")
         
     else:
-        print(f"   ❌ VICTORIA COUNTY THUMBNAILS: ACCURACY ISSUES IDENTIFIED")
+        print(f"   ❌ VICTORIA COUNTY COORDINATE PRECISION FIXES: ISSUES IDENTIFIED")
         
-        if thumbnail_data:
-            coord_results = thumbnail_data.get('coordinate_verification', {})
-            boundary_results = thumbnail_data.get('boundary_image_test', {})
-            satellite_results = thumbnail_data.get('satellite_params', {})
-            refinement_results = thumbnail_data.get('refinement_analysis', {})
-            issues = thumbnail_data.get('thumbnail_accuracy_issues', [])
+        if coordinate_data:
+            final_assessment = coordinate_data.get('final_assessment', {})
+            issues = final_assessment.get('issues_found', [])
             
-            print(f"      Property coordinates found: {coord_results.get('coordinates_present', False)}")
-            print(f"      Boundary image accessible: {boundary_results.get('endpoint_accessible', False)}")
-            print(f"      Satellite parameters correct: {satellite_results.get('zoom_level_appropriate', False)}")
-            print(f"      Coordinate refinement needed: {refinement_results.get('refinement_needed', False)}")
+            coordinate_precision = coordinate_data.get('coordinate_precision', {})
+            boundary_quality = coordinate_data.get('boundary_image_quality', {})
+            all_properties = coordinate_data.get('all_properties_precision', {})
+            data_accuracy = coordinate_data.get('property_data_accuracy', {})
             
-            print(f"\n   ❌ THUMBNAIL ACCURACY ISSUES IDENTIFIED:")
+            print(f"      Scraper executed: {coordinate_data.get('scraper_executed', False)}")
+            print(f"      Coordinate precision adequate: {coordinate_precision.get('all_properties_have_5_decimal_precision', False)}")
+            print(f"      Boundary image quality: {boundary_quality.get('coordinate_precision_adequate', False)}")
+            print(f"      All properties improved: {all_properties.get('all_properties_meet_5_decimal_requirement', False)}")
+            print(f"      Data accuracy maintained: {data_accuracy.get('opening_bids_correct', False) and data_accuracy.get('hst_detection_working', False)}")
+            
+            print(f"\n   ❌ COORDINATE PRECISION ISSUES IDENTIFIED:")
             for issue in issues:
                 print(f"      - {issue}")
-            
-            if refinement_results.get('recommendations'):
-                print(f"\n   🔧 COORDINATE REFINEMENT RECOMMENDATIONS:")
-                for i, rec in enumerate(refinement_results['recommendations'], 1):
-                    print(f"      {i}. {rec}")
         else:
-            print(f"      - Thumbnail accuracy test execution failed or returned no data")
+            print(f"      - Coordinate precision fixes test execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
