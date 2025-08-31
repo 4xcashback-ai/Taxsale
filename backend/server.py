@@ -1251,24 +1251,36 @@ async def scrape_victoria_county_tax_sales():
                                         tmp_file.write(pdf_content)
                                         tmp_file.flush()
                                         
-                                        # Parse PDF with pdfplumber
-                                        with pdfplumber.open(tmp_file.name) as pdf:
-                                            full_text = ""
-                                            for page_obj in pdf.pages:
-                                                page_text = page_obj.extract_text()
-                                                if page_text:
-                                                    full_text += page_text + "\n"
-                                            
-                                            logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
-                                            logger.info(f"Victoria County PDF content preview: {full_text[:1500]}...")
-                                            
-                                            # Parse Victoria County format
-                                            properties = parse_victoria_county_pdf(full_text, municipality_id)
-                                            logger.info(f"Victoria County PDF parsing result: {len(properties)} properties found")
-                                            
-                                            # Log each property for debugging
-                                            for i, prop in enumerate(properties):
-                                                logger.info(f"Property {i+1}: AAN={prop.get('assessment_number')}, Owner={prop.get('owner_name')}, Sale Date={prop.get('sale_date')}")
+                                        try:
+                                            # Parse PDF with pdfplumber
+                                            with pdfplumber.open(tmp_file.name) as pdf:
+                                                full_text = ""
+                                                for page_obj in pdf.pages:
+                                                    page_text = page_obj.extract_text()
+                                                    if page_text:
+                                                        full_text += page_text + "\n"
+                                                
+                                                logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
+                                                logger.info(f"Victoria County PDF content preview: {full_text[:1500]}...")
+                                                
+                                                if full_text.strip():
+                                                    # Parse Victoria County format
+                                                    properties = parse_victoria_county_pdf(full_text, municipality_id)
+                                                    logger.info(f"Victoria County PDF parsing result: {len(properties)} properties found")
+                                                    
+                                                    # Log each property for debugging
+                                                    for i, prop in enumerate(properties):
+                                                        logger.info(f"Property {i+1}: AAN={prop.get('assessment_number')}, Owner={prop.get('owner_name')}, Sale Date={prop.get('sale_date')}")
+                                                    
+                                                    if properties and len(properties) > 0:
+                                                        logger.info(f"Victoria County PDF parsing successful - using parsed properties")
+                                                    else:
+                                                        logger.warning(f"Victoria County PDF parsing returned empty results")
+                                                else:
+                                                    logger.error(f"Victoria County PDF text extraction failed - no text extracted")
+                                        except Exception as pdf_parse_error:
+                                            logger.error(f"Victoria County PDF parsing error: {pdf_parse_error}")
+                                            logger.error(f"PDF parsing failed, will use fallback data")
                                     
                                     # Clean up temp file
                                     import os
