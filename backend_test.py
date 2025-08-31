@@ -556,17 +556,17 @@ def test_victoria_county_thumbnail_accuracy():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Victoria County scraper with direct PDF extraction fix"""
+    """Main test execution function - Focus on Victoria County thumbnail accuracy issue"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts")
-    print("📋 REVIEW REQUEST: Test Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts")
+    print("🎯 FOCUS: Victoria County thumbnail accuracy issue - properties showing vacant land instead of dwellings")
+    print("📋 REVIEW REQUEST: Investigate Victoria County thumbnail accuracy issue")
     print("🔍 REQUIREMENTS:")
-    print("   1. Test fixed Victoria County scraper POST /api/scrape/victoria-county with new direct PDF extraction logic")
-    print("   2. Verify correct minimum bid amounts - Should now extract actual tax amounts from PDF")
-    print("   3. Check HST detection - Entry 8 should now show hst_applicable: 'Yes'")
-    print("   4. Verify all properties - Should find all 3 properties with complete accurate data")
-    print("   5. Test boundary images - Confirm boundary screenshot URLs are still working")
+    print("   1. Check current Victoria County property coordinates - Verify coordinates for AAN 00254118")
+    print("   2. Test boundary image generation - Check /api/property-image/00254118 endpoint accuracy")
+    print("   3. Compare coordinate accuracy - Property should show building at 198 Little Narrows Rd, Little Narrows")
+    print("   4. Verify boundary image parameters - Check Google Maps Static API zoom/satellite view settings")
+    print("   5. Check if coordinates need refinement - Current coordinates may be too general for property boundaries")
     print("=" * 80)
     
     # Track overall results
