@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-SCRIPT_DIR="/opt/tax-sale-compass/scripts"
+SCRIPT_DIR="/var/www/nstaxsales/scripts"
 SERVICE_USER="www-data"
 LOG_DIR="/var/log"
 
