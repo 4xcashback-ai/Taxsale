@@ -6,8 +6,8 @@
 set -e  # Exit on any error
 
 # Configuration
-APP_DIR="/var/www/tax-sale-compass"
-BACKUP_DIR="/var/backups/tax-sale-compass"
+APP_DIR="/var/www/nstaxsales"
+BACKUP_DIR="/var/backups/nstaxsales"
 LOG_FILE="/var/log/tax-sale-deployment.log"
 GITHUB_REPO=""  # Will be set dynamically
 DB_BACKUP_DIR="/var/backups/mongodb"
