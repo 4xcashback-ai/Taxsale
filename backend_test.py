@@ -369,8 +369,8 @@ def test_victoria_county_coordinate_precision_fixes():
         else:
             print(f"   ❌ Target property AAN 00254118 not found")
             return False, {"error": "Target property AAN 00254118 not found"}
-        # Test 4: Test Boundary Image Generation for AAN 00254118
-        print(f"\n   🔧 TEST 4: Test Boundary Image Generation for AAN 00254118")
+        # Test 4: Verify All 3 Properties Have Improved Coordinate Precision
+        print(f"\n   🔧 TEST 4: Verify All 3 Properties Have Improved Coordinate Precision")
         
         boundary_image_results = {
             "endpoint_accessible": False,
