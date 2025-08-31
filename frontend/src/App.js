@@ -642,6 +642,96 @@ function PropertySearch() {
     }
   };
 
+  // Deployment management functions
+  const fetchDeploymentStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/deployment/status`);
+      setDeploymentStatus(response.data);
+    } catch (error) {
+      console.error("Error fetching deployment status:", error);
+      setDeploymentMessage("Failed to fetch deployment status");
+    }
+  };
+
+  const checkForUpdates = async () => {
+    setDeploymentLoading(true);
+    setDeploymentMessage("Checking for updates...");
+    try {
+      const response = await axios.post(`${API}/deployment/check-updates`);
+      setDeploymentMessage(response.data.message);
+      await fetchDeploymentStatus(); // Refresh status
+    } catch (error) {
+      console.error("Error checking for updates:", error);
+      setDeploymentMessage("Failed to check for updates: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
+  const deployApplication = async () => {
+    if (!window.confirm("Are you sure you want to deploy the latest version? This will restart all services.")) {
+      return;
+    }
+
+    setDeploymentLoading(true);
+    setDeploymentMessage("Starting deployment...");
+    try {
+      const response = await axios.post(`${API}/deployment/deploy`, null, {
+        params: githubRepo ? { github_repo: githubRepo } : {}
+      });
+      setDeploymentMessage("Deployment started successfully! This may take a few minutes.");
+      
+      // Check status periodically
+      const statusInterval = setInterval(async () => {
+        try {
+          await fetchDeploymentStatus();
+          await fetchSystemHealth();
+        } catch (error) {
+          console.error("Error checking deployment progress:", error);
+        }
+      }, 10000); // Check every 10 seconds
+
+      // Clear interval after 5 minutes
+      setTimeout(() => clearInterval(statusInterval), 300000);
+      
+    } catch (error) {
+      console.error("Error deploying application:", error);
+      setDeploymentMessage("Failed to start deployment: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
+  const fetchSystemHealth = async () => {
+    try {
+      const response = await axios.get(`${API}/deployment/health`);
+      setSystemHealth(response.data);
+    } catch (error) {
+      console.error("Error fetching system health:", error);
+    }
+  };
+
+  const verifyDeployment = async () => {
+    setDeploymentLoading(true);
+    setDeploymentMessage("Verifying deployment...");
+    try {
+      const response = await axios.post(`${API}/deployment/verify`);
+      setDeploymentMessage(response.data.message);
+      await fetchSystemHealth();
+    } catch (error) {
+      console.error("Error verifying deployment:", error);
+      setDeploymentMessage("Failed to verify deployment: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
+  // Load deployment status on component mount
+  useEffect(() => {
+    fetchDeploymentStatus();
+    fetchSystemHealth();
+  }, []);
+
   const formatCurrency = (amount) => {
     if (!amount) return "N/A";
     return new Intl.NumberFormat('en-CA', {
