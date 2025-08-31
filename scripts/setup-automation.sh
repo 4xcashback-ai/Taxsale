@@ -144,8 +144,8 @@ cat > "$status_file" << 'EOJ'
 EOJ
 
 # Check if app directory exists
-if [ -d "/var/www/tax-sale-compass" ]; then
-    cd /var/www/tax-sale-compass
+if [ -d "/var/www/nstaxsales" ]; then
+    cd /var/www/nstaxsales
     
     # Get current and remote commits
     current_commit=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
