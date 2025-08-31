@@ -510,33 +510,45 @@ def test_victoria_county_thumbnail_accuracy():
         for i, rec in enumerate(refinement_results['recommendations'], 1):
             print(f"         {i}. {rec}")
         
-        # Final Success Verification
-        print(f"\n   🎉 FINAL VERIFICATION: All Victoria County Scraper Requirements Met!")
+        # Final Thumbnail Accuracy Assessment
+        print(f"\n   🎉 FINAL ASSESSMENT: Victoria County Thumbnail Accuracy Analysis!")
         
-        all_tests_passed = (
-            bid_verification_results["correct_bids"] == 3 and
-            hst_verification_results["hst_correct"] and
-            boundary_image_results["working_boundary_endpoints"] == 3 and
-            data_completeness_results["properties_with_complete_data"] == 3
-        )
+        thumbnail_accuracy_issues = []
+        
+        # Check if coordinates are adequate
+        if not coordinate_verification_results.get("coordinates_in_expected_region", False):
+            thumbnail_accuracy_issues.append("Coordinates outside expected region")
+        
+        # Check if boundary image is accessible
+        if not boundary_image_results.get("endpoint_accessible", False):
+            thumbnail_accuracy_issues.append("Boundary image endpoint not accessible")
+        
+        # Check if coordinate precision is sufficient
+        coord_analysis = satellite_params_results.get("coordinate_precision_analysis", {})
+        if coord_analysis.get("lat_accuracy_m", 1000) > 50 or coord_analysis.get("lng_accuracy_m", 1000) > 50:
+            thumbnail_accuracy_issues.append("Coordinate precision insufficient for building-level accuracy")
+        
+        # Check if refinement is needed
+        if refinement_results.get("refinement_needed", False):
+            thumbnail_accuracy_issues.append("Coordinate refinement needed for accurate property boundaries")
+        
+        thumbnail_issue_identified = len(thumbnail_accuracy_issues) > 0
         
         print(f"\n   📋 REVIEW REQUEST REQUIREMENTS STATUS:")
-        print(f"      1. ✅ Victoria County scraper executed successfully")
-        print(f"      2. {'✅' if bid_verification_results['correct_bids'] == 3 else '❌'} Correct minimum bid amounts from PDF extraction:")
-        for detail in bid_verification_results["bid_details"]:
-            status = "✅" if detail["correct"] else "❌"
-            print(f"         {status} AAN {detail['aan']}: ${detail['actual_bid']} (expected ${detail['expected_bid']})")
-        print(f"      3. {'✅' if hst_verification_results['hst_correct'] else '❌'} HST detection for Entry 8: {hst_verification_results['hst_value']}")
-        print(f"      4. ✅ All 3 properties found with complete accurate data")
-        print(f"      5. {'✅' if boundary_image_results['working_boundary_endpoints'] == 3 else '❌'} Boundary images working: {boundary_image_results['working_boundary_endpoints']}/3")
+        print(f"      1. {'✅' if coordinate_verification_results.get('coordinates_present') else '❌'} Victoria County property coordinates verified for AAN 00254118")
+        print(f"      2. {'✅' if boundary_image_results.get('endpoint_accessible') else '❌'} Boundary image generation tested - /api/property-image/00254118")
+        print(f"      3. {'⚠️' if thumbnail_issue_identified else '✅'} Coordinate accuracy analysis - {'Issues found' if thumbnail_issue_identified else 'Coordinates adequate'}")
+        print(f"      4. {'✅' if satellite_params_results.get('zoom_level_appropriate') else '❌'} Google Maps satellite view parameters verified")
+        print(f"      5. {'✅' if refinement_results.get('recommendations') else '❌'} Coordinate refinement recommendations provided")
         
-        return all_tests_passed, {
+        return not thumbnail_issue_identified, {
             "scraper_executed": True,
-            "bid_verification": bid_verification_results,
-            "hst_verification": hst_verification_results,
-            "boundary_images": boundary_image_results,
-            "data_completeness": data_completeness_results,
-            "all_requirements_met": all_tests_passed
+            "coordinate_verification": coordinate_verification_results,
+            "boundary_image_test": boundary_image_results,
+            "satellite_params": satellite_params_results,
+            "refinement_analysis": refinement_results,
+            "thumbnail_accuracy_issues": thumbnail_accuracy_issues,
+            "thumbnail_accuracy_adequate": not thumbnail_issue_identified
         }
             
     except Exception as e:
