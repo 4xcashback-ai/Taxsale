@@ -169,38 +169,82 @@ def test_halifax_vs_victoria_county_thumbnails():
             print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
             return False, {"error": f"Failed to retrieve properties: HTTP {response.status_code}"}
         
-        # Test 2: Verify Fixed Minimum Bid Calculations
-        print(f"\n   🔧 TEST 2: GET /api/tax-sales (Verify Fixed Minimum Bid Calculations)")
+        # Test 2: Compare Halifax Property Thumbnails
+        print(f"\n   🔧 TEST 2: Test Halifax Property Thumbnails")
         
-        properties_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria County", timeout=30)
+        halifax_thumbnail_results = {
+            "properties_with_coordinates": 0,
+            "properties_with_boundary_screenshots": 0,
+            "working_thumbnail_endpoints": 0,
+            "thumbnail_sizes": [],
+            "coordinate_accuracy": True,
+            "sample_properties": []
+        }
         
-        if properties_response.status_code == 200:
-            properties = properties_response.json()
-            victoria_properties = [p for p in properties if p.get("municipality_name") == "Victoria County"]
+        if halifax_properties:
+            print(f"   📊 Analyzing {len(halifax_properties)} Halifax properties...")
             
-            print(f"   ✅ Retrieved {len(victoria_properties)} Victoria County properties from database")
-            
-            # Expected minimum bids from fixed tax amount extraction (from review request)
-            expected_bids = {
-                "00254118": 2009.03,  # Entry 1: Should be $2,009.03 (not $2.0)
-                "00453706": 1599.71,  # Entry 2: Should be $1,599.71 (not $1.0)  
-                "09541209": 5031.96   # Entry 8: Should be $5,031.96 (not $0.0)
-            }
-            
-            # Expected locations for coordinate verification
-            expected_locations = {
-                "00254118": "Little Narrows",
-                "00453706": "Middle River", 
-                "09541209": "Washabuck"
-            }
-            
-            print(f"\n   🎯 VERIFYING FIXED MINIMUM BID CALCULATIONS:")
-            
-            found_aans = []
-            bid_calculations_correct = True
-            boundary_images_present = True
-            coordinates_assigned = True
-            hst_detection_correct = True
+            # Test first 3 Halifax properties for thumbnail generation
+            for i, prop in enumerate(halifax_properties[:3]):
+                aan = prop.get("assessment_number")
+                owner = prop.get("owner_name")
+                address = prop.get("property_address")
+                latitude = prop.get("latitude")
+                longitude = prop.get("longitude")
+                boundary_screenshot = prop.get("boundary_screenshot")
+                
+                print(f"\n   📋 Halifax Property {i+1}:")
+                print(f"      AAN: {aan}")
+                print(f"      Owner: {owner}")
+                print(f"      Address: {address}")
+                print(f"      Coordinates: {latitude}, {longitude}")
+                print(f"      Boundary Screenshot: {boundary_screenshot}")
+                
+                # Check coordinates
+                if latitude and longitude:
+                    halifax_thumbnail_results["properties_with_coordinates"] += 1
+                    print(f"      ✅ Has coordinates for thumbnail generation")
+                    
+                    # Verify Halifax coordinates are in Nova Scotia region
+                    if 44.0 <= latitude <= 47.0 and -66.0 <= longitude <= -59.0:
+                        print(f"      ✅ Coordinates within Nova Scotia region")
+                    else:
+                        print(f"      ⚠️ Coordinates may be outside Nova Scotia region")
+                        halifax_thumbnail_results["coordinate_accuracy"] = False
+                else:
+                    print(f"      ❌ Missing coordinates - cannot generate thumbnails")
+                
+                # Check boundary screenshot
+                if boundary_screenshot:
+                    halifax_thumbnail_results["properties_with_boundary_screenshots"] += 1
+                    print(f"      ✅ Has boundary screenshot: {boundary_screenshot}")
+                else:
+                    print(f"      ❌ No boundary screenshot generated")
+                
+                # Test property image endpoint
+                if aan:
+                    try:
+                        image_response = requests.get(f"{BACKEND_URL}/property-image/{aan}", timeout=10)
+                        if image_response.status_code == 200:
+                            image_size = len(image_response.content)
+                            halifax_thumbnail_results["working_thumbnail_endpoints"] += 1
+                            halifax_thumbnail_results["thumbnail_sizes"].append(image_size)
+                            print(f"      ✅ Thumbnail endpoint working - Size: {image_size} bytes")
+                            print(f"      📷 Content-Type: {image_response.headers.get('content-type', 'unknown')}")
+                        else:
+                            print(f"      ❌ Thumbnail endpoint failed - HTTP {image_response.status_code}")
+                    except Exception as e:
+                        print(f"      ❌ Thumbnail endpoint error: {e}")
+                
+                halifax_thumbnail_results["sample_properties"].append({
+                    "aan": aan,
+                    "has_coordinates": bool(latitude and longitude),
+                    "has_boundary_screenshot": bool(boundary_screenshot),
+                    "thumbnail_working": False  # Will be updated above
+                })
+        
+        else:
+            print(f"   ⚠️ No Halifax properties available for thumbnail comparison")
             
             for i, prop in enumerate(victoria_properties):
                 aan = prop.get("assessment_number")
