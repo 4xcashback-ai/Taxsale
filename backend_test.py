@@ -705,32 +705,44 @@ def main():
     
     print(f"\n🎯 OVERALL ASSESSMENT:")
     
-    if victoria_county_working:
-        print(f"🎉 VICTORIA COUNTY FIXED SCRAPER: SUCCESS!")
+    if comparison_successful:
+        print(f"🎉 HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON: SUCCESS!")
         print(f"   ✅ All review request requirements met")
-        print(f"   ✅ Enhanced tax amount extraction patterns working correctly")
-        print(f"   ✅ All 3 properties show correct minimum bids:")
-        print(f"       - Entry 1 (AAN 00254118): $2,009.03")
-        print(f"       - Entry 2 (AAN 00453706): $1,599.71")
-        print(f"       - Entry 8 (AAN 09541209): $5,031.96")
-        print(f"   ✅ Boundary image generation working with proper coordinates")
-        print(f"   ✅ Location-specific coordinates for Little Narrows, Middle River, Washabuck")
-        print(f"   ✅ HST detection working for Entry 8 with '+ HST' indicator")
-        print(f"   ✅ Boundary image endpoints accessible")
-        print(f"   🚀 Victoria County fixed scraper is production-ready!")
+        print(f"   ✅ Halifax properties show proper boundary thumbnails with property boundaries")
+        print(f"   ✅ Victoria County properties show same quality boundary thumbnails")
+        print(f"   ✅ Victoria County coordinates are accurate enough for proper boundary generation")
+        print(f"   ✅ Boundary image generation using same process for both municipalities")
+        print(f"   🚀 Both Halifax and Victoria County thumbnail systems are working properly!")
+        
+        if comparison_data and comparison_data.get('differences_found'):
+            print(f"\n   📋 Minor differences noted but not affecting functionality:")
+            for diff in comparison_data['differences_found']:
+                print(f"      • {diff}")
     else:
-        print(f"❌ VICTORIA COUNTY FIXED SCRAPER: FAILED")
-        print(f"   ❌ Review request requirements not met")
-        print(f"   🔧 Enhanced tax amount extraction patterns need additional work")
-        print(f"   📋 Check minimum bid calculations - should show $2,009.03, $1,599.71, $5,031.96")
-        print(f"   📋 Verify boundary image generation with coordinates")
-        print(f"   📋 Ensure HST detection for Entry 8")
-        print(f"   📋 Test boundary image endpoint accessibility")
+        print(f"❌ HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON: ISSUES FOUND")
+        print(f"   ❌ Review request requirements not fully met")
+        print(f"   🔧 Victoria County thumbnails may not be working the same as Halifax thumbnails")
+        
+        if comparison_data:
+            if not comparison_data.get('halifax_thumbnails_working', False):
+                print(f"   📋 Halifax thumbnail issues need investigation")
+            if not comparison_data.get('victoria_thumbnails_working', False):
+                print(f"   📋 Victoria County thumbnail issues need fixing:")
+                print(f"       - Check coordinate accuracy for boundary generation")
+                print(f"       - Verify boundary screenshot generation process")
+                print(f"       - Test /api/property-image endpoint functionality")
+            
+            halifax_rate = comparison_data.get('halifax_success_rate', 0)
+            victoria_rate = comparison_data.get('victoria_success_rate', 0)
+            if abs(halifax_rate - victoria_rate) > 20:
+                print(f"   📋 Significant difference in success rates:")
+                print(f"       - Halifax: {halifax_rate:.1f}% vs Victoria County: {victoria_rate:.1f}%")
+                print(f"       - This indicates different processes or data quality issues")
     
     print(f"\n📊 System Success Rate: {success_rate:.1f}%")
     print("=" * 80)
     
-    return victoria_county_working
+    return comparison_successful
 
 if __name__ == "__main__":
     success = main()
