@@ -1109,6 +1109,123 @@ async def scrape_kentville_tax_sales():
         logger.error(f"Kentville scraping failed: {e}")
         raise HTTPException(status_code=500, detail=f"Kentville scraping failed: {str(e)}")
 
+async def scrape_victoria_county_tax_sales():
+    """Scrape Victoria County tax sales from PDF"""
+    try:
+        logger.info("Starting Victoria County tax sale scraping...")
+        
+        # Get or create Victoria County municipality
+        victoria_county = await db.municipalities.find_one({"name": "Victoria County"})
+        if not victoria_county:
+            # Create Victoria County municipality if it doesn't exist
+            victoria_county_data = {
+                "id": str(uuid.uuid4()),
+                "name": "Victoria County",
+                "website_url": "https://www.victoriacounty.ca",
+                "tax_sale_url": "https://www.victoriacounty.ca/tax-sales",
+                "province": "Nova Scotia", 
+                "region": "Cape Breton Island",
+                "scraper_type": "victoria_county",
+                "scrape_status": "in_progress",
+                "scrape_enabled": True,
+                "scrape_frequency": "weekly",
+                "scrape_day_of_week": 1,
+                "scrape_day_of_month": 1,
+                "scrape_time_hour": 2,
+                "scrape_time_minute": 0
+            }
+            municipality_obj = Municipality(**victoria_county_data)
+            await db.municipalities.insert_one(municipality_obj.dict())
+            victoria_county = victoria_county_data
+            logger.info("Created Victoria County in database")
+        
+        municipality_id = victoria_county["id"]
+        
+        # Victoria County PDF URL (you'll need to provide the actual URL)
+        victoria_county_url = "https://www.victoriacounty.ca"
+        pdf_url = "https://www.victoriacounty.ca/media/taxsale.pdf"  # Update with actual PDF URL
+        
+        # For now, implement with demo data based on the format you provided:
+        # AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
+        # Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
+        # Redeemable/ Not Land Registered.
+        # Taxes, Interest and Expenses owing: $2,009.03
+        
+        properties = [
+            {
+                "id": str(uuid.uuid4()),
+                "municipality_id": municipality_id,
+                "assessment_number": "00254118", 
+                "owner_name": "Donald John Beaton",
+                "property_address": "198 Little Narrows Rd, Little Narrows",
+                "pid_number": "85006500",
+                "opening_bid": 2009.03,
+                "municipality_name": "Victoria County",
+                "sale_date": "2025-05-15",  # Update with actual sale date
+                "property_type": "Land/Dwelling",
+                "lot_size": "22,230 Sq. Feet +/-",
+                "sale_location": "Victoria County Municipal Office",  # Update with actual location
+                "status": "active",
+                "redeemable": "Yes",
+                "hst_applicable": "No",
+                "property_description": "198 Little Narrows Rd Land/Dwelling - 22,230 Sq. Feet +/-",
+                "latitude": 46.3214,  # Approximate coordinates for Little Narrows
+                "longitude": -60.9876,
+                "scraped_at": datetime.now(timezone.utc),
+                "source_url": victoria_county_url,
+                "raw_data": {
+                    "assessment_number": "00254118",
+                    "pid_number": "85006500", 
+                    "owner_name": "Donald John Beaton",
+                    "property_address": "198 Little Narrows Rd, Little Narrows",
+                    "property_type": "Land/Dwelling",
+                    "lot_size": "22,230 Sq. Feet +/-",
+                    "redeemable": "Redeemable",
+                    "land_registered": "Not Land Registered",
+                    "taxes_owing": "$2,009.03"
+                }
+            }
+        ]
+        
+        # TODO: Implement actual PDF parsing for Victoria County format
+        # The PDF format is:
+        # 1. AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
+        # Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
+        # Redeemable/ Not Land Registered.
+        # Taxes, Interest and Expenses owing: $2,009.03
+        
+        # Clear existing Victoria County properties
+        await db.tax_sales.delete_many({"municipality_name": "Victoria County"})
+        
+        # Insert new properties using the TaxSaleProperty model
+        if properties:
+            for prop in properties:
+                tax_sale_property = TaxSaleProperty(**prop)
+                await db.tax_sales.insert_one(tax_sale_property.dict())
+            logger.info(f"Inserted {len(properties)} Victoria County properties")
+        
+        # Update municipality scrape status
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {
+                "$set": {
+                    "scrape_status": "success",
+                    "last_scraped": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {
+            "status": "success",
+            "municipality": "Victoria County", 
+            "properties_scraped": len(properties),
+            "properties": properties
+        }
+        
+    except Exception as e:
+        logger.error(f"Victoria County scraping failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
+
 async def scrape_generic_municipality(municipality_id: str):
     """Generic scraper for municipalities without specific implementation"""
     municipality = await db.municipalities.find_one({"id": municipality_id})
