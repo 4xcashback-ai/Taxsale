@@ -1392,22 +1392,6 @@ def test_victoria_county_final_parser():
     except Exception as e:
         print(f"   ❌ Victoria County final parser test error: {e}")
         return False, {"error": str(e)}
-                    if abs(found_prop['opening_bid'] - expected_prop['tax_amount']) < 1.0:
-                        print(f"      Tax Amount: ${found_prop['opening_bid']:.2f} ✅")
-                    else:
-                        print(f"      Tax Amount: ${found_prop['opening_bid']:.2f} ❌ (Expected: ${expected_prop['tax_amount']:.2f})")
-                        all_correct = False
-                    
-                    # Verify lot size format (Sq. Feet vs Acres)
-                    if found_prop['lot_size']:
-                        if "Sq. Feet" in found_prop['lot_size'] or "Acres" in found_prop['lot_size']:
-                            print(f"      Lot Size: '{found_prop['lot_size']}' ✅ (Format correct)")
-                        else:
-                            print(f"      Lot Size: '{found_prop['lot_size']}' ⚠️ (Format may need verification)")
-                    else:
-                        print(f"      Lot Size: Not specified ⚠️")
-                    
-                    # Verify sale date is 2025-08-26
                     if "2025-08-26" in str(found_prop['sale_date']):
                         print(f"      Sale Date: {found_prop['sale_date']} ✅")
                     else:
