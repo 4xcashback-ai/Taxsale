@@ -219,6 +219,7 @@ def test_victoria_county_improved_parser():
                 pid = prop.get("pid_number")
                 opening_bid = prop.get("opening_bid")
                 sale_date = prop.get("sale_date")
+                property_type = prop.get("property_type")
                 raw_data = prop.get("raw_data", {})
                 
                 print(f"\n   📋 Property {i+1} Complete Data Validation:")
