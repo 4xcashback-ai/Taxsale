@@ -4633,10 +4633,228 @@ def test_land_only_property_lot_size_data():
         print(f"   ❌ Land-only property lot size test error: {e}")
         return False, {"error": str(e)}
 
+def test_pvsc_data_availability_00554596():
+    """Test PVSC data availability for land property assessment 00554596 - Review Request Focus"""
+    print("\n🏠 Testing PVSC Data Availability for Assessment 00554596...")
+    print("🎯 FOCUS: Test enhanced endpoint for assessment 00554596 (showing '.00 Acres' instead of actual land size)")
+    print("📋 REQUIREMENTS: Check PVSC data structure, compare with working property 00374059, check regex matching")
+    print("🔍 GOAL: Identify if there are different land size formats on PVSC that our regex isn't catching")
+    
+    try:
+        # Test 1: Enhanced Property Endpoint with Assessment 00554596 - Main Focus
+        print(f"\n   🔧 TEST 1: GET /api/property/00554596/enhanced (Problem Assessment)")
+        
+        target_assessment = "00554596"
+        enhanced_response = requests.get(
+            f"{BACKEND_URL}/property/{target_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if enhanced_response.status_code == 200:
+            property_data = enhanced_response.json()
+            print(f"   ✅ Enhanced property endpoint SUCCESS - HTTP 200")
+            print(f"      Assessment: {property_data.get('assessment_number')}")
+            print(f"      Owner: {property_data.get('owner_name')}")
+            print(f"      Address: {property_data.get('property_address')}")
+            
+            # CRITICAL: Check for land_size in property_details
+            property_details = property_data.get('property_details', {})
+            if property_details:
+                print(f"\n   🎯 CHECKING LAND_SIZE FIELD FOR ASSESSMENT 00554596:")
+                print(f"   ✅ property_details object present with {len(property_details)} fields")
+                
+                # Check for land_size field specifically
+                land_size = property_details.get('land_size')
+                if land_size:
+                    print(f"   📊 property_details.land_size: '{land_size}'")
+                    
+                    # Check if it shows ".00 Acres" (the problem reported)
+                    if ".00 Acres" in land_size:
+                        print(f"   ❌ PROBLEM CONFIRMED: Shows '.00 Acres' instead of actual land size")
+                        print(f"   🔍 This indicates PVSC has land size data but regex isn't capturing it correctly")
+                    elif "Acres" in land_size and land_size != ".00 Acres":
+                        print(f"   ✅ LAND SIZE FOUND: '{land_size}' (not the '.00 Acres' problem)")
+                    elif "Sq. Ft." in land_size or "Sq Ft" in land_size:
+                        print(f"   ✅ LAND SIZE FOUND: '{land_size}' (Sq. Ft. format)")
+                    else:
+                        print(f"   ⚠️ UNEXPECTED FORMAT: '{land_size}' (neither Acres nor Sq. Ft.)")
+                else:
+                    print(f"   ❌ property_details.land_size: NOT FOUND")
+                    print(f"   🔍 This could mean PVSC website has no land size data for this property")
+                
+                # Show all available fields for analysis
+                print(f"\n   📊 COMPLETE PROPERTY_DETAILS FOR ASSESSMENT 00554596:")
+                for key, value in sorted(property_details.items()):
+                    print(f"      {key}: {value}")
+                
+            else:
+                print(f"   ❌ property_details object missing")
+                return False, {"error": "property_details object missing", "assessment": target_assessment}
+                
+        elif enhanced_response.status_code == 404:
+            print(f"   ❌ Assessment {target_assessment} not found")
+            return False, {"error": f"Assessment {target_assessment} not found"}
+        else:
+            print(f"   ❌ Enhanced property endpoint failed with status {enhanced_response.status_code}")
+            try:
+                error_detail = enhanced_response.json()
+                print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+            except:
+                print(f"      Raw response: {enhanced_response.text}")
+            return False, {"error": f"HTTP {enhanced_response.status_code}"}
+        
+        # Test 2: Compare with working property 00374059 to identify differences
+        print(f"\n   🔧 TEST 2: Compare with Working Property 00374059")
+        
+        working_assessment = "00374059"
+        working_response = requests.get(
+            f"{BACKEND_URL}/property/{working_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if working_response.status_code == 200:
+            working_data = working_response.json()
+            working_details = working_data.get('property_details', {})
+            working_land_size = working_details.get('land_size')
+            
+            print(f"   ✅ Working property (00374059) enhanced endpoint SUCCESS")
+            if working_land_size:
+                print(f"   ✅ Working property land_size: '{working_land_size}'")
+                
+                # Compare the two properties
+                print(f"\n   📊 COMPARISON ANALYSIS:")
+                print(f"      Assessment 00554596 land_size: '{land_size if 'land_size' in locals() else 'NOT FOUND'}'")
+                print(f"      Assessment 00374059 land_size: '{working_land_size}'")
+                
+                # Analyze the difference
+                if 'land_size' in locals() and land_size:
+                    if ".00 Acres" in land_size and "28.44 Acres" in working_land_size:
+                        print(f"   🔍 PATTERN IDENTIFIED: 00374059 shows actual acres (28.44), 00554596 shows .00 Acres")
+                        print(f"   💡 HYPOTHESIS: PVSC website may have different land size formats that regex isn't capturing")
+                    elif land_size == working_land_size:
+                        print(f"   ✅ Both properties show same land_size format")
+                    else:
+                        print(f"   🔍 Different formats detected - may indicate regex coverage gaps")
+                else:
+                    print(f"   🔍 00554596 has no land_size while 00374059 has '{working_land_size}'")
+                    print(f"   💡 This suggests PVSC data availability differs between properties")
+                
+            else:
+                print(f"   ❌ Working property also missing land_size field")
+        else:
+            print(f"   ⚠️ Could not test working property comparison (status: {working_response.status_code})")
+        
+        # Test 3: Check PVSC data structure by examining raw scraping
+        print(f"\n   🔧 TEST 3: Analyze PVSC Data Structure")
+        print(f"   📋 Making multiple calls to see if data varies or is consistent")
+        
+        # Make another call to see if results are consistent
+        second_response = requests.get(
+            f"{BACKEND_URL}/property/{target_assessment}/enhanced", 
+            timeout=60
+        )
+        
+        if second_response.status_code == 200:
+            second_data = second_response.json()
+            second_details = second_data.get('property_details', {})
+            second_land_size = second_details.get('land_size')
+            
+            print(f"   ✅ Second call completed")
+            if second_land_size:
+                print(f"   📊 Second call land_size: '{second_land_size}'")
+                
+                # Check consistency
+                if 'land_size' in locals() and second_land_size == land_size:
+                    print(f"   ✅ Consistent results across calls")
+                else:
+                    print(f"   ⚠️ Results vary between calls - may indicate scraping issues")
+            else:
+                print(f"   📊 Second call also shows no land_size")
+        
+        # Test 4: Check if PVSC website has land size data for this property
+        print(f"\n   🔧 TEST 4: PVSC Website Data Availability Analysis")
+        print(f"   📋 Based on enhanced endpoint response, analyzing what PVSC data is available")
+        
+        if 'property_details' in locals() and property_details:
+            # Count how many PVSC fields are populated
+            pvsc_fields = ['current_assessment', 'taxable_assessment', 'building_style', 'year_built', 
+                          'living_area', 'bedrooms', 'bathrooms', 'land_size', 'quality_of_construction',
+                          'under_construction', 'living_units', 'finished_basement', 'garage']
+            
+            populated_fields = []
+            missing_fields = []
+            
+            for field in pvsc_fields:
+                if field in property_details and property_details[field] is not None:
+                    populated_fields.append(field)
+                else:
+                    missing_fields.append(field)
+            
+            print(f"   📊 PVSC Data Analysis for Assessment 00554596:")
+            print(f"      Populated fields ({len(populated_fields)}): {populated_fields}")
+            print(f"      Missing fields ({len(missing_fields)}): {missing_fields}")
+            
+            # Determine if this is a data availability issue or regex issue
+            if len(populated_fields) > 2:  # More than just assessments
+                print(f"   ✅ PVSC has substantial data for this property ({len(populated_fields)} fields)")
+                if 'land_size' not in populated_fields:
+                    print(f"   🔍 CONCLUSION: PVSC website likely has land size data but regex isn't capturing it")
+                    print(f"   💡 RECOMMENDATION: Check for different land size formats on PVSC website")
+                else:
+                    print(f"   ✅ land_size field is populated, checking for '.00 Acres' issue")
+            else:
+                print(f"   ⚠️ PVSC has limited data for this property (only {len(populated_fields)} fields)")
+                print(f"   🔍 CONCLUSION: May be a data availability issue rather than regex issue")
+        
+        # Test 5: Summary and Recommendations
+        print(f"\n   📋 ASSESSMENT 00554596 ANALYSIS SUMMARY:")
+        
+        findings = []
+        recommendations = []
+        
+        if 'land_size' in locals() and land_size:
+            if ".00 Acres" in land_size:
+                findings.append("❌ Shows '.00 Acres' instead of actual land size")
+                recommendations.append("🔧 Check PVSC website for different land size formats")
+                recommendations.append("🔧 Update regex pattern to capture additional formats")
+            else:
+                findings.append(f"✅ Shows land_size: '{land_size}'")
+        else:
+            findings.append("❌ No land_size data returned")
+            recommendations.append("🔧 Check if PVSC website has land size data for this property")
+        
+        if 'working_land_size' in locals() and working_land_size:
+            findings.append(f"✅ Working property 00374059 shows: '{working_land_size}'")
+        
+        print(f"\n   🔍 KEY FINDINGS:")
+        for finding in findings:
+            print(f"      {finding}")
+        
+        print(f"\n   💡 RECOMMENDATIONS:")
+        for recommendation in recommendations:
+            print(f"      {recommendation}")
+        
+        # Determine if this is working or needs investigation
+        has_land_size = 'land_size' in locals() and land_size and ".00 Acres" not in land_size
+        
+        return True, {
+            "assessment": target_assessment,
+            "has_land_size": has_land_size,
+            "land_size_value": land_size if 'land_size' in locals() else None,
+            "shows_zero_acres": ".00 Acres" in (land_size if 'land_size' in locals() and land_size else ""),
+            "pvsc_fields_populated": len(populated_fields) if 'populated_fields' in locals() else 0,
+            "needs_regex_investigation": not has_land_size,
+            "working_property_comparison": working_land_size if 'working_land_size' in locals() else None
+        }
+        
+    except Exception as e:
+        print(f"   ❌ Assessment 00554596 test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
-    """Main function to test fixed land size scraping for assessment 00374059"""
-    print("🚀 Testing Fixed Land Size Scraping for Assessment 00374059")
-    print("🎯 FOCUS: Verify regex fix for 'Land Size 28.44 Acres' format")
+    """Main function to test PVSC data availability for assessment 00554596 and compare with working property"""
+    print("🚀 Testing PVSC Data Availability for Assessment 00554596")
+    print("🎯 FOCUS: Test enhanced endpoint, check PVSC data structure, compare with working property 00374059")
     print("=" * 80)
     
     # Test 1: Basic API Connection
