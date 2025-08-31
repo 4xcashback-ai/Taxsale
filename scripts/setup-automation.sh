@@ -41,7 +41,7 @@ setup_directories() {
     log "Setting up directories..."
     
     mkdir -p "$SCRIPT_DIR"
-    mkdir -p "/var/backups/tax-sale-compass"
+    mkdir -p "/var/backups/nstaxsales"
     mkdir -p "/var/backups/mongodb"
     
     # Set proper permissions
