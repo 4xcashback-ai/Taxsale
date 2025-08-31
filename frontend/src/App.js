@@ -669,8 +669,15 @@ function PropertySearch() {
     setDeploymentMessage("Checking for updates...");
     try {
       const response = await axios.post(`${API}/deployment/check-updates`);
-      setDeploymentMessage(response.data.message);
-      await fetchDeploymentStatus(); // Refresh status
+      const updateResult = response.data;
+      
+      if (updateResult.updates_available) {
+        setDeploymentMessage(`Updates available! ${updateResult.message}`);
+      } else {
+        setDeploymentMessage("No updates available. Application is up to date.");
+      }
+      
+      await fetchDeploymentStatus(); // Refresh status after checking
     } catch (error) {
       console.error("Error checking for updates:", error);
       setDeploymentMessage("Failed to check for updates: " + (error.response?.data?.detail || error.message));
