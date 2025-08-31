@@ -125,25 +125,22 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_victoria_county_scraper_with_pdf_extraction():
-    """Test Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts"""
-    print("\n🔍 Testing Victoria County Scraper with Direct PDF Extraction Fix...")
-    print("🎯 FOCUS: Test fixed Victoria County scraper with new direct PDF extraction logic")
+def test_victoria_county_thumbnail_accuracy():
+    """Test Victoria County thumbnail accuracy issue - properties showing vacant land instead of dwellings"""
+    print("\n🔍 Testing Victoria County Thumbnail Accuracy Issue...")
+    print("🎯 FOCUS: Investigate Victoria County thumbnail accuracy - properties showing vacant land instead of dwellings")
     print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Test fixed Victoria County scraper POST /api/scrape/victoria-county with new direct PDF extraction logic")
-    print("   2. Verify correct minimum bid amounts - Should now extract actual tax amounts from PDF:")
-    print("      - Entry 1 (AAN 00254118): $2,009.03 (not $2.0)")
-    print("      - Entry 2 (AAN 00453706): $1,599.71 (not $1.0)")
-    print("      - Entry 8 (AAN 09541209): $5,031.96 (not $0.0)")
-    print("   3. Check HST detection - Entry 8 should now show hst_applicable: 'Yes'")
-    print("   4. Verify all properties - Should find all 3 properties with complete accurate data")
-    print("   5. Test boundary images - Confirm boundary screenshot URLs are still working")
+    print("   1. Check current Victoria County property coordinates - Verify coordinates for AAN 00254118")
+    print("   2. Test boundary image generation - Check /api/property-image/00254118 endpoint accuracy")
+    print("   3. Compare coordinate accuracy - Property should show building at 198 Little Narrows Rd, Little Narrows")
+    print("   4. Verify boundary image parameters - Check Google Maps Static API zoom/satellite view settings")
+    print("   5. Check if coordinates need refinement - Current coordinates may be too general")
     print("")
     print("🔍 TESTING GOALS:")
-    print("   - Are the opening_bid amounts now correct from actual PDF extraction?")
-    print("   - Does Entry 8 correctly show HST as 'Yes'?")
-    print("   - Are all 3 properties extracted with complete and accurate data?")
-    print("   - Do boundary images continue to work properly?")
+    print("   - Are the current coordinates for Victoria County properties showing actual property locations?")
+    print("   - Does AAN 00254118 coordinate (46.2140, -60.9950) show the building at 198 Little Narrows Rd?")
+    print("   - Is the boundary image generation using satellite view to show buildings/dwellings?")
+    print("   - Do we need more precise coordinates for each Victoria County property?")
     
     try:
         # Test 1: Execute Victoria County Scraper
