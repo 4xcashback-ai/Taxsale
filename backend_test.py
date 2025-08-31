@@ -7294,114 +7294,150 @@ def test_victoria_county_direct_pdf_scraper():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function"""
-    print("🚀 Starting Nova Scotia Tax Sale Aggregator Backend Testing")
+    """Main test execution function - Focus on Victoria County Final Parser Testing"""
+    print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Victoria County Completely Rewritten PDF Parser")
-    print("📋 TESTING: Rewritten parser should handle actual PDF structure (entries 1, 2, 8 only)")
-    print("🔍 EXPECTED: 3 properties with exact details from review request")
+    print("🎯 FOCUS: Victoria County Final Parser with Enhanced Error Handling")
+    print("📋 REVIEW REQUEST: Final test of Victoria County parser with improved error handling")
+    print("🔍 REQUIREMENTS:")
+    print("   1. Test final parser POST /api/scrape/victoria-county with enhanced error handling")
+    print("   2. Check comprehensive logging - Should show detailed PDF parsing steps")
+    print("   3. Verify all 3 properties - Should extract all properties from entries 1, 2, and 8")
+    print("   4. Validate complete data - All properties should have correct AANs, owners, addresses, tax amounts")
+    print("   5. Confirm no fallback - Should use actual PDF data, not fallback sample data")
     print("=" * 80)
     
-    # Track overall test results
+    # Track overall results
     test_results = {}
     
-    # Initialize municipalities if needed
-    init_success = initialize_municipalities_if_needed()
-    test_results["initialization"] = init_success
-    
     # Test 1: Basic API connectivity
-    api_success = test_api_connection()
-    test_results["api_connection"] = api_success
+    api_connected, _ = test_api_connection()
+    test_results['api_connection'] = api_connected
     
-    if not api_success:
-        print("\n❌ API connection failed - cannot continue with other tests")
+    if not api_connected:
+        print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Rewritten Parser (MAIN FOCUS)
-    victoria_parser_success, victoria_parser_results = test_victoria_county_rewritten_parser()
-    test_results["victoria_county_rewritten_parser"] = victoria_parser_success
+    # Test 2: Victoria County Final Parser (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Victoria County Final Parser Testing")
+    victoria_county_working, victoria_county_data = test_victoria_county_final_parser()
+    test_results['victoria_county_final_parser'] = victoria_county_working
     
-    # Test 3: Municipalities endpoint
-    municipalities_success, halifax_data = test_municipalities_endpoint()
-    test_results["municipalities_endpoint"] = municipalities_success
+    # Test 3: Municipalities endpoint (supporting test)
+    municipalities_working, halifax_data = test_municipalities_endpoint()
+    test_results['municipalities_endpoint'] = municipalities_working
     
-    # Test 4: Tax sales endpoint and data verification
-    tax_sales_success, halifax_properties = test_tax_sales_endpoint()
-    test_results["tax_sales_endpoint"] = tax_sales_success
+    # Test 4: Tax sales endpoint (supporting test)
+    tax_sales_working, halifax_properties = test_tax_sales_endpoint()
+    test_results['tax_sales_endpoint'] = tax_sales_working
     
-    # Test 5: Statistics endpoint
-    stats_success, stats_data = test_stats_endpoint()
-    test_results["stats_endpoint"] = stats_success
+    # Test 5: Statistics endpoint (supporting test)
+    stats_working, stats_data = test_stats_endpoint()
+    test_results['stats_endpoint'] = stats_working
     
-    # Print comprehensive test summary
+    # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 COMPREHENSIVE TEST RESULTS SUMMARY")
+    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Final Parser Focus")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
     total_tests = len(test_results)
     
-    print(f"📈 Overall Success Rate: {passed_tests}/{total_tests} ({(passed_tests/total_tests)*100:.1f}%)")
-    print(f"\n📋 Individual Test Results:")
+    print(f"✅ Tests Passed: {passed_tests}/{total_tests}")
+    print(f"❌ Tests Failed: {total_tests - passed_tests}/{total_tests}")
     
-    for test_name, success in test_results.items():
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"   {status} {test_name.replace('_', ' ').title()}")
+    print(f"\n📋 DETAILED RESULTS:")
+    for test_name, result in test_results.items():
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Detailed findings for Victoria County parser
-    print(f"\n🎯 VICTORIA COUNTY REWRITTEN PARSER RESULTS:")
+    # Victoria County Specific Analysis
+    print(f"\n🎯 VICTORIA COUNTY FINAL PARSER ANALYSIS:")
     
-    if victoria_parser_results and isinstance(victoria_parser_results, dict):
-        print(f"   📊 Parser Performance:")
-        print(f"      - Properties Found: {victoria_parser_results.get('properties_found', 0)}/3")
-        print(f"      - All Details Correct: {'✅' if victoria_parser_results.get('all_details_correct', False) else '❌'}")
-        print(f"      - No Fallback Data: {'✅' if victoria_parser_results.get('no_fallback_data', False) else '❌'}")
-        print(f"      - PDF Structure Understood: {'✅' if victoria_parser_results.get('pdf_structure_understood', False) else '❌'}")
+    if victoria_county_working and victoria_county_data:
+        print(f"   ✅ VICTORIA COUNTY PARSER: ALL REQUIREMENTS MET!")
+        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
+        print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)}")
+        print(f"      All Data Complete: {victoria_county_data.get('all_data_complete', False)}")
+        print(f"      Fallback Detected: {victoria_county_data.get('fallback_detected', True)}")
         
-        # Show found properties
-        found_properties = victoria_parser_results.get('properties', [])
-        if found_properties:
-            print(f"\n   📋 Found Properties:")
-            for i, prop in enumerate(found_properties):
-                print(f"      {i+1}. AAN: {prop.get('aan')}, Owner: {prop.get('owner')}")
-                print(f"          Address: {prop.get('address')}")
-                print(f"          PID: {prop.get('pid')}, Tax: ${prop.get('opening_bid', 0):.2f}")
+        if victoria_county_data.get('expected_aans_found'):
+            print(f"      Expected AANs Found: {victoria_county_data['expected_aans_found']}")
         
-        # Show missing properties
-        missing_properties = victoria_parser_results.get('missing_properties', [])
-        if missing_properties:
-            print(f"\n   ❌ Missing Properties:")
-            for missing in missing_properties:
-                print(f"      - AAN: {missing.get('aan')}, Owner: {missing.get('owner')}")
-                print(f"        Address: {missing.get('address')}, Tax: ${missing.get('tax_amount', 0):.2f}")
+        print(f"\n   🎉 SUCCESS: Victoria County PDF parser working correctly with actual PDF data!")
+        print(f"   ✅ Enhanced error handling and validation working")
+        print(f"   ✅ All 3 properties successfully extracted from entries 1, 2, and 8")
+        print(f"   ✅ Complete data validation passed")
+        print(f"   ✅ Using actual PDF data, not fallback sample data")
         
-        # Overall assessment
-        if (victoria_parser_results.get('properties_found', 0) == 3 and 
-            victoria_parser_results.get('all_details_correct', False) and 
-            victoria_parser_results.get('no_fallback_data', False) and 
-            victoria_parser_results.get('pdf_structure_understood', False)):
-            print(f"\n   ✅ VICTORIA COUNTY REWRITTEN PARSER: COMPLETELY SUCCESSFUL")
-            print(f"      - All 3 properties found with exact details")
-            print(f"      - PDF structure correctly understood (entries 1, 2, 8 only)")
-            print(f"      - Multiple PID handling working (85010866/85074276)")
-            print(f"      - Property types distinguished (Land/Dwelling vs Land only)")
-            print(f"      - Lot sizes in correct formats (Sq. Feet and Acres)")
-            print(f"      - Tax amounts correctly extracted")
-        else:
-            print(f"\n   ❌ VICTORIA COUNTY REWRITTEN PARSER: NEEDS ADDITIONAL WORK")
-            if victoria_parser_results.get('properties_found', 0) < 3:
-                print(f"      - Still not finding all 3 properties from PDF")
-            if not victoria_parser_results.get('all_details_correct', False):
-                print(f"      - Property details not matching expected values")
-            if not victoria_parser_results.get('no_fallback_data', False):
-                print(f"      - Still using fallback data instead of PDF parsing")
-            if not victoria_parser_results.get('pdf_structure_understood', False):
-                print(f"      - PDF structure not correctly understood")
+    elif not victoria_county_working and victoria_county_data:
+        print(f"   ❌ VICTORIA COUNTY PARSER: REQUIREMENTS NOT MET")
+        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
+        print(f"      Requirements Failed: {victoria_county_data.get('requirements_failed', 5)}/5")
+        
+        if victoria_county_data.get('failed_requirements'):
+            print(f"      Failed Requirements:")
+            for req in victoria_county_data['failed_requirements']:
+                print(f"         ❌ {req}")
+        
+        print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)} (expected 3)")
+        print(f"      All Data Complete: {victoria_county_data.get('all_data_complete', False)}")
+        print(f"      Fallback Detected: {victoria_county_data.get('fallback_detected', True)}")
+        
+        print(f"\n   ❌ ISSUES IDENTIFIED:")
+        if victoria_county_data.get('properties_found', 0) != 3:
+            print(f"      - Parser not finding all 3 properties from PDF entries 1, 2, 8")
+        if victoria_county_data.get('fallback_detected', True):
+            print(f"      - System using fallback data instead of actual PDF parsing")
+        if not victoria_county_data.get('all_data_complete', False):
+            print(f"      - Some properties missing correct AANs, owners, addresses, or tax amounts")
+    else:
+        print(f"   ❌ VICTORIA COUNTY PARSER: CRITICAL ERROR")
+        print(f"      - Parser execution failed or returned no data")
     
-    print(f"\n🏁 Testing completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    # Supporting Tests Analysis
+    print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
     
-    # Return success based on Victoria County parser working
-    return victoria_parser_success
+    if municipalities_working:
+        print(f"   ✅ Municipalities endpoint working - Victoria County municipality accessible")
+    else:
+        print(f"   ❌ Municipalities endpoint issues - May affect Victoria County scraper")
+    
+    if tax_sales_working:
+        print(f"   ✅ Tax sales endpoint working - Victoria County properties retrievable")
+    else:
+        print(f"   ❌ Tax sales endpoint issues - Victoria County properties may not be accessible")
+    
+    if stats_working:
+        print(f"   ✅ Statistics endpoint working - System health good")
+    else:
+        print(f"   ⚠️ Statistics endpoint issues - Minor system health concern")
+    
+    # Overall Assessment
+    success_rate = (passed_tests / total_tests) * 100
+    
+    print(f"\n🎯 OVERALL ASSESSMENT:")
+    
+    if victoria_county_working:
+        print(f"🎉 VICTORIA COUNTY FINAL PARSER: SUCCESS!")
+        print(f"   ✅ All review request requirements met")
+        print(f"   ✅ Enhanced error handling working")
+        print(f"   ✅ All 3 properties extracted from PDF entries 1, 2, 8")
+        print(f"   ✅ Complete data validation passed")
+        print(f"   ✅ Using actual PDF data, not fallback")
+        print(f"   🚀 Victoria County PDF parser is production-ready!")
+    else:
+        print(f"❌ VICTORIA COUNTY FINAL PARSER: FAILED")
+        print(f"   ❌ Review request requirements not met")
+        print(f"   🔧 Additional debugging and fixes needed")
+        print(f"   📋 Check parser logic for PDF entries 1, 2, 8 extraction")
+        print(f"   📋 Verify non-sequential numbering handling (1, 2, 8)")
+        print(f"   📋 Ensure actual PDF parsing instead of fallback data")
+    
+    print(f"\n📊 System Success Rate: {success_rate:.1f}%")
+    print("=" * 80)
+    
+    return victoria_county_working
 
 if __name__ == "__main__":
     success = main()
