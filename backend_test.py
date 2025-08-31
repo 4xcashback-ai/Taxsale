@@ -8,6 +8,7 @@ Focus on data truncation and redeemable status issues reported by user
 import requests
 import json
 import sys
+import re
 from datetime import datetime
 import time
 
