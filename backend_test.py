@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Victoria County thumbnail accuracy issue - properties showing vacant land instead of dwellings
+Focus on Victoria County coordinate precision fixes and thumbnail quality improvements
 """
 
 import requests
