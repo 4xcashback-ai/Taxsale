@@ -3837,7 +3837,7 @@ async def verify_deployment():
         
         # Run the verify command
         result = subprocess.run(
-            ['sudo', '/opt/tax-sale-compass/scripts/deployment.sh', 'verify'],
+            ['sudo', '/var/www/nstaxsales/scripts/deployment.sh', 'verify'],
             capture_output=True,
             text=True,
             timeout=60
