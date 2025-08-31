@@ -65,7 +65,7 @@ const PropertyDetails = () => {
   // Fetch municipality data for tax sale URL
   const fetchMunicipalityData = async (municipalityName) => {
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://taxsalecompass.ca';
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/municipalities`);
       const municipalities = await response.json();
       
