@@ -373,7 +373,7 @@ sudo ufw enable
 For future updates:
 
 ```bash
-cd /var/www/tax-sale-compass
+cd /var/www/nstaxsales
 
 # Pull latest changes
 git pull origin main
