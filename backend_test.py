@@ -672,30 +672,33 @@ def main():
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
     # Victoria County Specific Analysis
-    print(f"\n🎯 VICTORIA COUNTY IMPROVED PARSER ANALYSIS:")
+    print(f"\n🎯 VICTORIA COUNTY FIXED SCRAPER ANALYSIS:")
     
     if victoria_county_working and victoria_county_data:
-        print(f"   ✅ VICTORIA COUNTY IMPROVED PARSER: ALL REQUIREMENTS MET!")
-        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/6")
+        print(f"   ✅ VICTORIA COUNTY FIXED SCRAPER: ALL REQUIREMENTS MET!")
+        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
         print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)}")
-        print(f"      All Data Complete: {victoria_county_data.get('all_data_complete', False)}")
-        print(f"      Fallback Detected: {victoria_county_data.get('fallback_detected', True)}")
-        print(f"      Sale Date Correct: {victoria_county_data.get('sale_date_correct', False)}")
+        print(f"      Bid Calculations Correct: {victoria_county_data.get('bid_calculations_correct', False)}")
+        print(f"      Coordinates Assigned: {victoria_county_data.get('coordinates_assigned', False)}")
+        print(f"      Boundary Images Present: {victoria_county_data.get('boundary_images_present', False)}")
+        print(f"      HST Detection Correct: {victoria_county_data.get('hst_detection_correct', False)}")
+        print(f"      Boundary Endpoints Working: {victoria_county_data.get('boundary_endpoints_working', False)}")
         
         if victoria_county_data.get('expected_aans_found'):
             print(f"      Expected AANs Found: {victoria_county_data['expected_aans_found']}")
         
-        print(f"\n   🎉 SUCCESS: Victoria County improved parser working correctly!")
-        print(f"   ✅ Enhanced regex patterns successfully extract all 3 properties")
-        print(f"   ✅ Pattern matching handles different property formats and multiple PIDs")
-        print(f"   ✅ All properties have correct owners, addresses, tax amounts, and property types")
-        print(f"   ✅ Using actual PDF data, not fallback sample data")
-        print(f"   ✅ Sale date correctly set to 2025-08-26")
+        print(f"\n   🎉 SUCCESS: Victoria County fixed scraper working correctly!")
+        print(f"   ✅ Enhanced tax amount extraction patterns working")
+        print(f"   ✅ All 3 properties show correct minimum bids from PDF tax amounts")
+        print(f"   ✅ Boundary image generation working with proper coordinates")
+        print(f"   ✅ Location-specific coordinates for Little Narrows, Middle River, Washabuck")
+        print(f"   ✅ HST detection working for Entry 8")
+        print(f"   ✅ Boundary image endpoints accessible")
         
     elif not victoria_county_working and victoria_county_data:
-        print(f"   ❌ VICTORIA COUNTY IMPROVED PARSER: REQUIREMENTS NOT MET")
-        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/6")
-        print(f"      Requirements Failed: {victoria_county_data.get('requirements_failed', 6)}/6")
+        print(f"   ❌ VICTORIA COUNTY FIXED SCRAPER: REQUIREMENTS NOT MET")
+        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
+        print(f"      Requirements Failed: {victoria_county_data.get('requirements_failed', 5)}/5")
         
         if victoria_county_data.get('failed_requirements'):
             print(f"      Failed Requirements:")
@@ -703,19 +706,25 @@ def main():
                 print(f"         ❌ {req}")
         
         print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)} (expected 3)")
-        print(f"      All Data Complete: {victoria_county_data.get('all_data_complete', False)}")
-        print(f"      Fallback Detected: {victoria_county_data.get('fallback_detected', True)}")
+        print(f"      Bid Calculations Correct: {victoria_county_data.get('bid_calculations_correct', False)}")
+        print(f"      Coordinates Assigned: {victoria_county_data.get('coordinates_assigned', False)}")
+        print(f"      Boundary Images Present: {victoria_county_data.get('boundary_images_present', False)}")
+        print(f"      HST Detection Correct: {victoria_county_data.get('hst_detection_correct', False)}")
         
         print(f"\n   ❌ ISSUES IDENTIFIED:")
         if victoria_county_data.get('properties_found', 0) != 3:
-            print(f"      - Parser not finding all 3 properties from PDF entries 1, 2, 8")
-        if victoria_county_data.get('fallback_detected', True):
-            print(f"      - System using fallback data instead of actual PDF parsing")
-        if not victoria_county_data.get('all_data_complete', False):
-            print(f"      - Some properties missing correct AANs, owners, addresses, or tax amounts")
+            print(f"      - Fixed scraper not finding all 3 properties from PDF entries 1, 2, 8")
+        if not victoria_county_data.get('bid_calculations_correct', False):
+            print(f"      - Enhanced tax amount extraction patterns not working correctly")
+        if not victoria_county_data.get('coordinates_assigned', False):
+            print(f"      - Location-specific coordinates not assigned properly")
+        if not victoria_county_data.get('boundary_images_present', False):
+            print(f"      - Boundary image generation still not working")
+        if not victoria_county_data.get('hst_detection_correct', False):
+            print(f"      - HST detection for Entry 8 not working")
     else:
-        print(f"   ❌ VICTORIA COUNTY PARSER: CRITICAL ERROR")
-        print(f"      - Parser execution failed or returned no data")
+        print(f"   ❌ VICTORIA COUNTY FIXED SCRAPER: CRITICAL ERROR")
+        print(f"      - Fixed scraper execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
