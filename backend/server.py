@@ -1325,17 +1325,59 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
         
         import re
         
-        # Split into sections - each property starts with a number followed by AAN
-        property_sections = re.split(r'\n\d+\.\s*AAN:', pdf_text)
+        # Extract sale date from PDF header first
+        # Pattern: "Tuesday, August 26TH, 2025 at 2:00PM"
+        sale_date = "2025-05-15"  # Default fallback
+        sale_location = "Victoria County Municipal Office"  # Default
+        
+        # Look for sale date pattern
+        date_patterns = [
+            r'(\w+,\s*\w+\s+\d+\w*,?\s*\d{4})\s*at\s*(\d+:\d+\s*[AP]M)',
+            r'(\w+\s+\d+\w*,?\s*\d{4})\s*at\s*(\d+:\d+\s*[AP]M)',
+            r'(\d{4}-\d{2}-\d{2})'
+        ]
+        
+        for pattern in date_patterns:
+            date_match = re.search(pattern, pdf_text, re.IGNORECASE)
+            if date_match:
+                date_str = date_match.group(1)
+                # Convert "Tuesday, August 26TH, 2025" to "2025-08-26"
+                if "august" in date_str.lower():
+                    # Extract day and year
+                    day_match = re.search(r'(\d+)', date_str)
+                    year_match = re.search(r'(\d{4})', date_str)
+                    if day_match and year_match:
+                        day = day_match.group(1).zfill(2)
+                        year = year_match.group(1)
+                        sale_date = f"{year}-08-{day}"
+                        logger.info(f"Victoria County: Extracted sale date: {sale_date}")
+                break
+        
+        # Try multiple splitting patterns to find all properties
+        property_sections = []
+        
+        # Pattern 1: Split by numbered sections (1. AAN:, 2. AAN:, etc.)
+        sections_1 = re.split(r'\n(\d+)\.\s*AAN:', pdf_text)
+        if len(sections_1) > 2:  # Found numbered sections
+            for i in range(1, len(sections_1), 2):  # Take every other element (numbers and content)
+                if i + 1 < len(sections_1):
+                    section_content = "AAN:" + sections_1[i + 1]
+                    property_sections.append(sections_1[i] + ". " + section_content)
+        
+        # Pattern 2: Split by AAN patterns if numbered sections didn't work
+        if not property_sections:
+            sections_2 = re.split(r'(?=\d+\.\s*AAN:\s*\d+)', pdf_text)
+            property_sections = [s for s in sections_2 if "AAN:" in s and s.strip()]
+        
+        # Pattern 3: Simple AAN split as fallback
+        if not property_sections:
+            sections_3 = re.split(r'(?=AAN:\s*\d+)', pdf_text)
+            property_sections = [s for s in sections_3 if "AAN:" in s and s.strip()]
+        
+        logger.info(f"Victoria County: Found {len(property_sections)} potential property sections")
         
         for i, section in enumerate(property_sections):
-            if not section.strip():
-                continue
-                
-            # Add back the AAN prefix for parsing (except first section which is header)
-            if i > 0:
-                section = "AAN:" + section
-            elif "AAN:" not in section:
+            if not section.strip() or "AAN:" not in section:
                 continue
             
             try:
