@@ -1394,7 +1394,7 @@ def test_victoria_county_rewritten_parser():
             
     except Exception as e:
         print(f"   ❌ Victoria County rewritten parser test error: {e}")
-        return False, {"error": str(e)}ties appear to be parsed from actual PDF")
+        return False, {"error": str(e)}
                 
                 # Test 4: Verify Non-Sequential Numbering Fix
                 print(f"\n   🔧 TEST 4: Verify Non-Sequential Numbering Fix (1, 2, 8)")
