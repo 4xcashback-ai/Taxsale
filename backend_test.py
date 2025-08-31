@@ -502,7 +502,7 @@ def main():
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Halifax vs Victoria County Thumbnail Comparison")
+    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Scraper with Direct PDF Extraction")
     print("=" * 80)
     
     passed_tests = sum(1 for result in test_results.values() if result)
@@ -516,49 +516,55 @@ def main():
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
-    # Halifax vs Victoria County Comparison Analysis
-    print(f"\n🎯 HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON ANALYSIS:")
+    # Victoria County Scraper Analysis
+    print(f"\n🎯 VICTORIA COUNTY SCRAPER WITH DIRECT PDF EXTRACTION ANALYSIS:")
     
-    if comparison_successful and comparison_data:
-        print(f"   ✅ THUMBNAIL COMPARISON: BOTH MUNICIPALITIES WORKING PROPERLY!")
-        print(f"      Halifax thumbnail success rate: {comparison_data.get('halifax_success_rate', 0):.1f}%")
-        print(f"      Victoria County thumbnail success rate: {comparison_data.get('victoria_success_rate', 0):.1f}%")
-        print(f"      Halifax thumbnails working: {comparison_data.get('halifax_thumbnails_working', False)}")
-        print(f"      Victoria County thumbnails working: {comparison_data.get('victoria_thumbnails_working', False)}")
+    if scraper_successful and scraper_data:
+        print(f"   ✅ VICTORIA COUNTY SCRAPER: ALL REQUIREMENTS MET!")
         
-        if comparison_data.get('differences_found'):
-            print(f"\n   🔍 Key differences identified:")
-            for diff in comparison_data['differences_found']:
-                print(f"      • {diff}")
+        bid_results = scraper_data.get('bid_verification', {})
+        hst_results = scraper_data.get('hst_verification', {})
+        boundary_results = scraper_data.get('boundary_images', {})
         
-        print(f"\n   🎉 SUCCESS: Both Halifax and Victoria County thumbnails working properly!")
-        print(f"   ✅ Halifax properties show proper boundary thumbnails with property boundaries")
-        print(f"   ✅ Victoria County properties show same quality boundary thumbnails")
-        print(f"   ✅ Victoria County coordinates are accurate enough for proper boundary generation")
-        print(f"   ✅ Boundary image generation using same process for both municipalities")
+        print(f"      ✅ Scraper executed successfully")
+        print(f"      ✅ Correct minimum bid amounts: {bid_results.get('correct_bids', 0)}/3")
+        print(f"      ✅ HST detection working: {hst_results.get('hst_correct', False)}")
+        print(f"      ✅ Boundary images working: {boundary_results.get('working_boundary_endpoints', 0)}/3")
+        print(f"      ✅ All properties have complete data")
         
-    elif not comparison_successful and comparison_data:
-        print(f"   ❌ THUMBNAIL COMPARISON: ISSUES IDENTIFIED BETWEEN MUNICIPALITIES")
-        print(f"      Halifax thumbnail success rate: {comparison_data.get('halifax_success_rate', 0):.1f}%")
-        print(f"      Victoria County thumbnail success rate: {comparison_data.get('victoria_success_rate', 0):.1f}%")
-        print(f"      Halifax thumbnails working: {comparison_data.get('halifax_thumbnails_working', False)}")
-        print(f"      Victoria County thumbnails working: {comparison_data.get('victoria_thumbnails_working', False)}")
+        print(f"\n   🎉 SUCCESS: Victoria County scraper with direct PDF extraction is working perfectly!")
+        print(f"   ✅ Opening bid amounts now correct from actual PDF extraction")
+        print(f"   ✅ Entry 8 correctly shows HST as 'Yes'")
+        print(f"   ✅ All 3 properties extracted with complete and accurate data")
+        print(f"   ✅ Boundary images continue to work properly")
         
-        if comparison_data.get('differences_found'):
-            print(f"\n   🔍 Key differences identified:")
-            for diff in comparison_data['differences_found']:
-                print(f"      • {diff}")
-        
-        print(f"\n   ❌ ISSUES IDENTIFIED:")
-        if not comparison_data.get('halifax_thumbnails_working', False):
-            print(f"      - Halifax properties not showing proper boundary thumbnails")
-        if not comparison_data.get('victoria_thumbnails_working', False):
-            print(f"      - Victoria County properties not showing same quality boundary thumbnails")
-        if comparison_data.get('halifax_success_rate', 0) != comparison_data.get('victoria_success_rate', 0):
-            print(f"      - Different success rates between municipalities indicate process differences")
     else:
-        print(f"   ❌ THUMBNAIL COMPARISON: CRITICAL ERROR")
-        print(f"      - Comparison test execution failed or returned no data")
+        print(f"   ❌ VICTORIA COUNTY SCRAPER: ISSUES IDENTIFIED")
+        
+        if scraper_data:
+            bid_results = scraper_data.get('bid_verification', {})
+            hst_results = scraper_data.get('hst_verification', {})
+            boundary_results = scraper_data.get('boundary_images', {})
+            
+            print(f"      Scraper executed: {scraper_data.get('scraper_executed', False)}")
+            print(f"      Correct minimum bid amounts: {bid_results.get('correct_bids', 0)}/3")
+            print(f"      HST detection working: {hst_results.get('hst_correct', False)}")
+            print(f"      Boundary images working: {boundary_results.get('working_boundary_endpoints', 0)}/3")
+            
+            print(f"\n   ❌ ISSUES IDENTIFIED:")
+            if bid_results.get('correct_bids', 0) != 3:
+                print(f"      - Minimum bid amounts are incorrect")
+                for detail in bid_results.get('bid_details', []):
+                    if not detail.get('correct', False):
+                        print(f"        • AAN {detail['aan']}: Got ${detail['actual_bid']}, expected ${detail['expected_bid']}")
+            
+            if not hst_results.get('hst_correct', False):
+                print(f"      - HST detection for Entry 8 is incorrect: Got '{hst_results.get('hst_value')}', expected 'Yes'")
+            
+            if boundary_results.get('working_boundary_endpoints', 0) != 3:
+                print(f"      - Boundary images not working for all properties")
+        else:
+            print(f"      - Scraper test execution failed or returned no data")
     
     # Supporting Tests Analysis
     print(f"\n📊 SUPPORTING TESTS ANALYSIS:")
@@ -583,44 +589,43 @@ def main():
     
     print(f"\n🎯 OVERALL ASSESSMENT:")
     
-    if comparison_successful:
-        print(f"🎉 HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON: SUCCESS!")
+    if scraper_successful:
+        print(f"🎉 VICTORIA COUNTY SCRAPER WITH DIRECT PDF EXTRACTION: SUCCESS!")
         print(f"   ✅ All review request requirements met")
-        print(f"   ✅ Halifax properties show proper boundary thumbnails with property boundaries")
-        print(f"   ✅ Victoria County properties show same quality boundary thumbnails")
-        print(f"   ✅ Victoria County coordinates are accurate enough for proper boundary generation")
-        print(f"   ✅ Boundary image generation using same process for both municipalities")
-        print(f"   🚀 Both Halifax and Victoria County thumbnail systems are working properly!")
-        
-        if comparison_data and comparison_data.get('differences_found'):
-            print(f"\n   📋 Minor differences noted but not affecting functionality:")
-            for diff in comparison_data['differences_found']:
-                print(f"      • {diff}")
+        print(f"   ✅ Opening bid amounts now correct from actual PDF extraction ($2,009.03, $1,599.71, $5,031.96)")
+        print(f"   ✅ Entry 8 correctly shows HST as 'Yes'")
+        print(f"   ✅ All 3 properties extracted with complete and accurate data")
+        print(f"   ✅ Boundary images continue to work properly")
+        print(f"   🚀 Victoria County scraper is production-ready with direct PDF extraction!")
     else:
-        print(f"❌ HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON: ISSUES FOUND")
+        print(f"❌ VICTORIA COUNTY SCRAPER WITH DIRECT PDF EXTRACTION: ISSUES FOUND")
         print(f"   ❌ Review request requirements not fully met")
-        print(f"   🔧 Victoria County thumbnails may not be working the same as Halifax thumbnails")
+        print(f"   🔧 Victoria County scraper needs additional fixes")
         
-        if comparison_data:
-            if not comparison_data.get('halifax_thumbnails_working', False):
-                print(f"   📋 Halifax thumbnail issues need investigation")
-            if not comparison_data.get('victoria_thumbnails_working', False):
-                print(f"   📋 Victoria County thumbnail issues need fixing:")
-                print(f"       - Check coordinate accuracy for boundary generation")
-                print(f"       - Verify boundary screenshot generation process")
-                print(f"       - Test /api/property-image endpoint functionality")
+        if scraper_data:
+            bid_results = scraper_data.get('bid_verification', {})
+            hst_results = scraper_data.get('hst_verification', {})
+            boundary_results = scraper_data.get('boundary_images', {})
             
-            halifax_rate = comparison_data.get('halifax_success_rate', 0)
-            victoria_rate = comparison_data.get('victoria_success_rate', 0)
-            if abs(halifax_rate - victoria_rate) > 20:
-                print(f"   📋 Significant difference in success rates:")
-                print(f"       - Halifax: {halifax_rate:.1f}% vs Victoria County: {victoria_rate:.1f}%")
-                print(f"       - This indicates different processes or data quality issues")
+            if bid_results.get('correct_bids', 0) != 3:
+                print(f"   📋 Minimum bid amount extraction needs fixing:")
+                print(f"       - Tax amount extraction regex patterns not working correctly")
+                print(f"       - PDF parsing may be truncating tax amount sections")
+            
+            if not hst_results.get('hst_correct', False):
+                print(f"   📋 HST detection needs fixing:")
+                print(f"       - HST detection patterns not finding '+ HST' indicator for Entry 8")
+                print(f"       - PDF section extraction may be incomplete")
+            
+            if boundary_results.get('working_boundary_endpoints', 0) != 3:
+                print(f"   📋 Boundary image generation needs fixing:")
+                print(f"       - Property image endpoints not working for all properties")
+                print(f"       - Coordinate or image generation issues")
     
     print(f"\n📊 System Success Rate: {success_rate:.1f}%")
     print("=" * 80)
     
-    return comparison_successful
+    return scraper_successful
 
 if __name__ == "__main__":
     success = main()
