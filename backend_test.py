@@ -6498,8 +6498,28 @@ def main():
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 VICTORIA COUNTY ENHANCED PDF PARSING TEST SUMMARY")
+    print("🏁 VICTORIA COUNTY DIRECT PDF SCRAPER TEST SUMMARY")
     print("=" * 80)
+    
+    # Direct PDF Scraper Test Results (Primary Focus)
+    if direct_pdf_success:
+        print("✅ Victoria County Direct PDF Scraper is working correctly!")
+        print("🎯 Direct PDF URL requirements met:")
+        if direct_pdf_result:
+            print(f"   ✅ Properties Found: {direct_pdf_result.get('properties_count', 0)}")
+            print(f"   ✅ Real PDF Indicators: {direct_pdf_result.get('real_pdf_indicators', 0)}")
+            print(f"   ✅ Correct Sale Dates: {direct_pdf_result.get('correct_sale_dates', 0)}")
+    else:
+        print("❌ Victoria County Direct PDF Scraper needs improvement")
+        print("🔍 Direct PDF URL requirements not fully met:")
+        if direct_pdf_result:
+            print(f"   📊 Properties found: {direct_pdf_result.get('properties_count', 0)}")
+            print(f"   📊 Error: {direct_pdf_result.get('error', 'Unknown error')}")
+            print(f"   📊 Fallback indicators: {direct_pdf_result.get('fallback_indicators', 0)}")
+    
+    print("\n" + "-" * 80)
+    print("🔧 VICTORIA COUNTY ENHANCED PDF PARSING TEST RESULTS")
+    print("-" * 80)
     
     # Enhanced Parsing Test Results
     if enhanced_success:
