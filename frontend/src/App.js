@@ -647,9 +647,20 @@ function PropertySearch() {
     try {
       const response = await axios.get(`${API}/deployment/status`);
       setDeploymentStatus(response.data);
+      // Clear any previous error messages on successful fetch
+      if (deploymentMessage && deploymentMessage.includes("Failed to fetch")) {
+        setDeploymentMessage("");
+      }
     } catch (error) {
       console.error("Error fetching deployment status:", error);
       setDeploymentMessage("Failed to fetch deployment status");
+      // Set a default error state for deploymentStatus
+      setDeploymentStatus({
+        status: 'error',
+        message: 'Unable to connect to deployment service',
+        updates_available: false,
+        last_deployment: null
+      });
     }
   };
 
