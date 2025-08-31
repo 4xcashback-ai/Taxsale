@@ -2662,6 +2662,74 @@ async def scrape_victoria_county():
         logger.error(f"Victoria County scraping endpoint failed: {e}")
         raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
 
+@api_router.get("/debug/victoria-county-pdf")
+async def debug_victoria_county_pdf():
+    """Debug endpoint to examine Victoria County PDF content"""
+    try:
+        import aiohttp
+        import tempfile
+        import pdfplumber
+        
+        pdf_url = "https://victoriacounty.com/wp-content/uploads/2025/08/AUGUST-26-2025-TAX-SALE-AD-6.pdf"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(pdf_url, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }) as response:
+                if response.status == 200:
+                    pdf_content = await response.read()
+                    
+                    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                        tmp_file.write(pdf_content)
+                        tmp_file.flush()
+                        
+                        with pdfplumber.open(tmp_file.name) as pdf:
+                            full_text = ""
+                            for page_obj in pdf.pages:
+                                page_text = page_obj.extract_text()
+                                if page_text:
+                                    full_text += page_text + "\n"
+                        
+                        # Clean up
+                        import os
+                        try:
+                            os.unlink(tmp_file.name)
+                        except:
+                            pass
+                    
+                    # Analyze the content
+                    import re
+                    
+                    aan_matches = list(re.finditer(r'AAN.*?\d+', full_text, re.IGNORECASE))
+                    numbered_sections = list(re.finditer(r'\d+\.\s*AAN', full_text, re.IGNORECASE))
+                    property_assessed = list(re.finditer(r'Property assessed to', full_text, re.IGNORECASE))
+                    
+                    return {
+                        "pdf_accessible": True,
+                        "pdf_size_bytes": len(pdf_content),
+                        "extracted_text_length": len(full_text),
+                        "full_text": full_text,
+                        "analysis": {
+                            "aan_occurrences": len(aan_matches),
+                            "numbered_sections": len(numbered_sections),
+                            "property_assessed_occurrences": len(property_assessed),
+                            "aan_positions": [m.span() for m in aan_matches],
+                            "numbered_section_positions": [m.span() for m in numbered_sections]
+                        }
+                    }
+                else:
+                    return {
+                        "pdf_accessible": False,
+                        "error": f"HTTP {response.status}",
+                        "url": pdf_url
+                    }
+    except Exception as e:
+        return {
+            "pdf_accessible": False,
+            "error": str(e),
+            "url": pdf_url
+        }
+
 @api_router.post("/scrape/halifax")
 async def scrape_halifax():
     """Trigger Halifax-specific scraping"""
