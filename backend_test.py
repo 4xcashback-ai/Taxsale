@@ -459,17 +459,17 @@ def test_victoria_county_scraper_with_pdf_extraction():
         return False, {"error": str(e)}
 
 def main():
-    """Main test execution function - Focus on Halifax vs Victoria County Thumbnail Comparison"""
+    """Main test execution function - Focus on Victoria County scraper with direct PDF extraction fix"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Halifax vs Victoria County thumbnail generation comparison")
-    print("📋 REVIEW REQUEST: Compare Halifax vs Victoria County thumbnail generation to identify why Victoria County thumbnails aren't working properly")
+    print("🎯 FOCUS: Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts")
+    print("📋 REVIEW REQUEST: Test Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts")
     print("🔍 REQUIREMENTS:")
-    print("   1. Test Halifax property thumbnails - Check Halifax property thumbnail URL and verify proper boundary images")
-    print("   2. Test Victoria County property thumbnails - Check Victoria County thumbnail URLs and compare quality/content")
-    print("   3. Compare boundary data availability - Check if both have proper boundary_screenshot URLs and coordinate data")
-    print("   4. Verify boundary generation process - Test /api/property-image endpoint for both municipality types")
-    print("   5. Check coordinate accuracy - Verify if Victoria County coordinates are accurate for proper boundary generation")
+    print("   1. Test fixed Victoria County scraper POST /api/scrape/victoria-county with new direct PDF extraction logic")
+    print("   2. Verify correct minimum bid amounts - Should now extract actual tax amounts from PDF")
+    print("   3. Check HST detection - Entry 8 should now show hst_applicable: 'Yes'")
+    print("   4. Verify all properties - Should find all 3 properties with complete accurate data")
+    print("   5. Test boundary images - Confirm boundary screenshot URLs are still working")
     print("=" * 80)
     
     # Track overall results
@@ -483,10 +483,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Halifax vs Victoria County Thumbnail Comparison (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Halifax vs Victoria County Thumbnail Comparison")
-    comparison_successful, comparison_data = test_halifax_vs_victoria_county_thumbnails()
-    test_results['halifax_vs_victoria_comparison'] = comparison_successful
+    # Test 2: Victoria County Scraper with PDF Extraction (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Victoria County Scraper with Direct PDF Extraction Fix")
+    scraper_successful, scraper_data = test_victoria_county_scraper_with_pdf_extraction()
+    test_results['victoria_county_scraper'] = scraper_successful
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
