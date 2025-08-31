@@ -4138,6 +4138,216 @@ def test_enhanced_property_endpoint_pvsc_fields():
         print(f"   ❌ Enhanced property endpoint test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_municipality_data():
+    """Test Victoria County municipality data verification - Review Request Focus"""
+    print("\n🏛️ Testing Victoria County Municipality Data...")
+    print("🎯 FOCUS: Check Victoria County info, tax_sale_url, and municipality configuration")
+    print("📋 REQUIREMENTS: Verify current tax_sale_url and municipality setup for PDF scraping")
+    
+    try:
+        # Test 1: Get Victoria County from municipalities endpoint
+        print(f"\n   🔧 TEST 1: GET /api/municipalities - Find Victoria County")
+        
+        response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        if response.status_code == 200:
+            municipalities = response.json()
+            print(f"   ✅ Municipalities endpoint working - Found {len(municipalities)} municipalities")
+            
+            # Find Victoria County specifically
+            victoria_county = None
+            for muni in municipalities:
+                if muni.get("name") == "Victoria County":
+                    victoria_county = muni
+                    break
+            
+            if victoria_county:
+                print(f"   ✅ Victoria County found in database")
+                print(f"      Municipality ID: {victoria_county.get('id')}")
+                print(f"      Name: {victoria_county.get('name')}")
+                print(f"      Website URL: {victoria_county.get('website_url')}")
+                print(f"      Tax Sale URL: {victoria_county.get('tax_sale_url')}")
+                print(f"      Scraper Type: {victoria_county.get('scraper_type')}")
+                print(f"      Scrape Status: {victoria_county.get('scrape_status')}")
+                print(f"      Last Scraped: {victoria_county.get('last_scraped')}")
+                print(f"      Province: {victoria_county.get('province')}")
+                print(f"      Region: {victoria_county.get('region')}")
+                
+                # Check tax_sale_url configuration
+                tax_sale_url = victoria_county.get('tax_sale_url')
+                if tax_sale_url:
+                    print(f"\n   📋 TAX_SALE_URL CONFIGURATION:")
+                    print(f"      Current URL: {tax_sale_url}")
+                    
+                    # Analyze the URL to understand PDF scraping setup
+                    if 'pdf' in tax_sale_url.lower():
+                        print(f"      ✅ URL appears to point to PDF document")
+                    elif 'tax' in tax_sale_url.lower() and 'sale' in tax_sale_url.lower():
+                        print(f"      ✅ URL appears to be tax sale related")
+                    else:
+                        print(f"      ⚠️ URL format unclear for PDF scraping")
+                else:
+                    print(f"\n   ⚠️ TAX_SALE_URL: Not configured (None/empty)")
+                
+                # Check municipality configuration for PDF scraping
+                print(f"\n   🔧 MUNICIPALITY CONFIGURATION FOR PDF SCRAPING:")
+                scraper_type = victoria_county.get('scraper_type')
+                if scraper_type == 'victoria_county':
+                    print(f"      ✅ Scraper Type: '{scraper_type}' - Properly configured for Victoria County")
+                else:
+                    print(f"      ⚠️ Scraper Type: '{scraper_type}' - May need 'victoria_county' for specific scraping")
+                
+                # Check if municipality is enabled for scraping
+                scrape_enabled = victoria_county.get('scrape_enabled')
+                if scrape_enabled:
+                    print(f"      ✅ Scrape Enabled: {scrape_enabled}")
+                else:
+                    print(f"      ⚠️ Scrape Enabled: {scrape_enabled} - May need to be enabled")
+                
+                # Check scraping schedule configuration
+                scrape_frequency = victoria_county.get('scrape_frequency')
+                if scrape_frequency:
+                    print(f"      📅 Scrape Frequency: {scrape_frequency}")
+                    print(f"      📅 Scrape Time: {victoria_county.get('scrape_time_hour', 'N/A')}:{victoria_county.get('scrape_time_minute', 'N/A'):02d}")
+                    if scrape_frequency == 'weekly':
+                        print(f"      📅 Scrape Day of Week: {victoria_county.get('scrape_day_of_week', 'N/A')}")
+                    elif scrape_frequency == 'monthly':
+                        print(f"      📅 Scrape Day of Month: {victoria_county.get('scrape_day_of_month', 'N/A')}")
+                
+            else:
+                print(f"   ❌ Victoria County NOT found in database")
+                print(f"   📊 Available municipalities:")
+                for muni in municipalities[:5]:  # Show first 5
+                    print(f"      - {muni.get('name', 'Unknown')}")
+                return False, {"error": "Victoria County not found in database"}
+                
+        else:
+            print(f"   ❌ Municipalities endpoint failed with status {response.status_code}")
+            return False, {"error": f"Municipalities endpoint failed: {response.status_code}"}
+        
+        # Test 2: Test Victoria County scraper endpoint if available
+        if victoria_county:
+            print(f"\n   🔧 TEST 2: POST /api/scrape/victoria-county - Test Scraper Endpoint")
+            
+            scraper_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=60)
+            
+            if scraper_response.status_code == 200:
+                scraper_result = scraper_response.json()
+                print(f"   ✅ Victoria County scraper endpoint working")
+                print(f"      Status: {scraper_result.get('status')}")
+                print(f"      Municipality: {scraper_result.get('municipality')}")
+                print(f"      Properties Scraped: {scraper_result.get('properties_scraped', 0)}")
+                
+                # Check if any properties were scraped
+                properties_count = scraper_result.get('properties_scraped', 0)
+                if properties_count > 0:
+                    print(f"   ✅ Scraper successfully processed {properties_count} properties")
+                else:
+                    print(f"   ⚠️ No properties scraped (may be expected if no current tax sales)")
+                    
+            elif scraper_response.status_code == 404:
+                print(f"   ⚠️ Victoria County scraper endpoint not found (404)")
+                print(f"      This may indicate scraper not yet implemented")
+            else:
+                print(f"   ❌ Victoria County scraper failed with status {scraper_response.status_code}")
+                try:
+                    error_detail = scraper_response.json()
+                    print(f"      Error: {error_detail.get('detail', 'Unknown error')}")
+                except:
+                    print(f"      Raw response: {scraper_response.text[:200]}...")
+        
+        # Test 3: Check for Victoria County properties in tax sales
+        print(f"\n   🔧 TEST 3: GET /api/tax-sales - Check for Victoria County Properties")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            properties = tax_sales_response.json()
+            print(f"   ✅ Tax sales endpoint working - {len(properties)} total properties")
+            
+            # Filter Victoria County properties
+            victoria_properties = [p for p in properties if p.get("municipality_name") == "Victoria County"]
+            print(f"   📊 Victoria County properties: {len(victoria_properties)}")
+            
+            if victoria_properties:
+                print(f"   ✅ Victoria County properties found in database:")
+                for i, prop in enumerate(victoria_properties[:3]):  # Show first 3
+                    print(f"      {i+1}. Assessment: {prop.get('assessment_number', 'N/A')}")
+                    print(f"         Owner: {prop.get('owner_name', 'N/A')}")
+                    print(f"         Address: {prop.get('property_address', 'N/A')}")
+                    print(f"         Opening Bid: ${prop.get('opening_bid', 'N/A')}")
+                    print(f"         PID: {prop.get('pid_number', 'N/A')}")
+            else:
+                print(f"   ⚠️ No Victoria County properties found in current tax sales data")
+        else:
+            print(f"   ❌ Tax sales endpoint failed with status {tax_sales_response.status_code}")
+        
+        # Test 4: Summary and recommendations
+        print(f"\n   📋 VICTORIA COUNTY MUNICIPALITY SETUP SUMMARY:")
+        
+        if victoria_county:
+            setup_status = []
+            
+            # Check key configuration items
+            if victoria_county.get('scraper_type') == 'victoria_county':
+                setup_status.append("✅ Scraper type properly configured")
+            else:
+                setup_status.append("⚠️ Scraper type may need adjustment")
+            
+            if victoria_county.get('tax_sale_url'):
+                setup_status.append("✅ Tax sale URL configured")
+            else:
+                setup_status.append("❌ Tax sale URL not configured")
+            
+            if victoria_county.get('scrape_enabled'):
+                setup_status.append("✅ Scraping enabled")
+            else:
+                setup_status.append("⚠️ Scraping disabled")
+            
+            if victoria_county.get('scrape_status') == 'success':
+                setup_status.append("✅ Last scrape successful")
+            else:
+                setup_status.append(f"⚠️ Scrape status: {victoria_county.get('scrape_status', 'unknown')}")
+            
+            for status in setup_status:
+                print(f"      {status}")
+            
+            # Provide recommendations
+            print(f"\n   💡 RECOMMENDATIONS FOR PDF PARSING IMPLEMENTATION:")
+            
+            current_url = victoria_county.get('tax_sale_url', '')
+            if not current_url or 'tax-sales' in current_url:
+                print(f"      1. Update tax_sale_url to point to specific PDF document")
+                print(f"         Current: {current_url}")
+                print(f"         Suggested: Direct PDF URL for Victoria County tax sale list")
+            
+            if victoria_county.get('scraper_type') == 'victoria_county':
+                print(f"      2. Victoria County scraper type is correctly configured")
+            else:
+                print(f"      2. Consider setting scraper_type to 'victoria_county' for specific handling")
+            
+            print(f"      3. Verify PDF format matches expected Victoria County structure:")
+            print(f"         - AAN: XXXXXXXX / PID: XXXXXXXX format")
+            print(f"         - Property owner information")
+            print(f"         - Property type and location details")
+            print(f"         - Tax amounts and redeemable status")
+            
+            return True, {
+                "victoria_county_found": True,
+                "municipality_id": victoria_county.get('id'),
+                "tax_sale_url": victoria_county.get('tax_sale_url'),
+                "scraper_type": victoria_county.get('scraper_type'),
+                "scrape_status": victoria_county.get('scrape_status'),
+                "scrape_enabled": victoria_county.get('scrape_enabled'),
+                "properties_count": len(victoria_properties) if 'victoria_properties' in locals() else 0
+            }
+        else:
+            return False, {"error": "Victoria County municipality not found"}
+            
+    except Exception as e:
+        print(f"   ❌ Victoria County municipality test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
     """Main test execution function - FOCUSED ON ENHANCED PROPERTY ENDPOINT PVSC FIELDS"""
     print("🚀 STARTING BACKEND API TESTING")
