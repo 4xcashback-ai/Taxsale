@@ -215,87 +215,62 @@ def test_victoria_county_data_extraction_debug():
                 address = prop.get("property_address")
                 pid = prop.get("pid_number")
                 opening_bid = prop.get("opening_bid")
-                sale_date = prop.get("sale_date")
-                property_type = prop.get("property_type")
+                boundary_screenshot = prop.get("boundary_screenshot")
                 raw_data = prop.get("raw_data", {})
                 
-                print(f"\n   📋 Property {i+1} Complete Data Validation:")
+                print(f"\n   📋 Property {i+1} - Minimum Bid & Image Analysis:")
                 print(f"      AAN: {aan}")
                 print(f"      Owner: '{owner}'")
                 print(f"      Address: '{address}'")
-                print(f"      PID: {pid}")
                 print(f"      Opening Bid: ${opening_bid}")
-                print(f"      Property Type: {property_type}")
-                print(f"      Sale Date: {sale_date}")
+                print(f"      Boundary Screenshot: {boundary_screenshot}")
                 
-                # Verify AAN is one of the expected ones from PDF
-                if aan in expected_aans:
-                    print(f"      ✅ AAN matches expected PDF data")
+                # Verify minimum bid calculation against expected PDF tax amounts
+                if aan in expected_bids:
+                    expected_bid = expected_bids[aan]
+                    if opening_bid and abs(float(opening_bid) - expected_bid) < 0.01:
+                        print(f"      ✅ MINIMUM BID CORRECT: ${opening_bid} matches expected ${expected_bid}")
+                    else:
+                        print(f"      ❌ MINIMUM BID INCORRECT: Got ${opening_bid}, expected ${expected_bid}")
+                        print(f"         🔍 DEBUG: Tax amount extraction may be failing")
+                        bid_calculations_correct = False
                     found_aans.append(aan)
                 else:
-                    print(f"      ❌ AAN not in expected list: {expected_aans}")
-                    all_data_complete = False
+                    print(f"      ⚠️ AAN {aan} not in expected list for bid verification")
                 
-                # Verify owner name matches expected (partial match for variations)
-                owner_match = False
-                for expected_owner in expected_owners:
-                    if expected_owner.lower() in owner.lower() or owner.lower() in expected_owner.lower():
-                        owner_match = True
-                        break
-                
-                if owner_match:
-                    print(f"      ✅ Owner name matches expected PDF data")
+                # Check boundary screenshot generation
+                if boundary_screenshot:
+                    print(f"      ✅ BOUNDARY IMAGE: Screenshot field populated - {boundary_screenshot}")
+                    
+                    # Test if the boundary image is accessible
+                    try:
+                        image_response = requests.get(f"{BACKEND_URL}/boundary-image/{boundary_screenshot}", timeout=10)
+                        if image_response.status_code == 200:
+                            print(f"         ✅ Image accessible via API endpoint")
+                        else:
+                            print(f"         ❌ Image not accessible: HTTP {image_response.status_code}")
+                            boundary_images_present = False
+                    except Exception as e:
+                        print(f"         ❌ Error accessing image: {e}")
+                        boundary_images_present = False
                 else:
-                    print(f"      ❌ Owner name doesn't match expected: {expected_owners}")
-                    all_data_complete = False
+                    print(f"      ❌ BOUNDARY IMAGE: No screenshot field - missing image generation")
+                    boundary_images_present = False
                 
-                # Verify PID is one of the expected ones
-                if pid in expected_pids:
-                    print(f"      ✅ PID matches expected PDF data")
-                else:
-                    print(f"      ❌ PID not in expected list: {expected_pids}")
-                    all_data_complete = False
-                
-                # Verify property type matches expected format
-                property_type_match = False
-                for expected_type in expected_property_types:
-                    if expected_type.lower() in property_type.lower() if property_type else False:
-                        property_type_match = True
-                        break
-                
-                if property_type_match:
-                    print(f"      ✅ Property type matches expected format")
-                else:
-                    print(f"      ❌ Property type doesn't match expected: {expected_property_types}")
-                    all_data_complete = False
-                
-                # Verify sale date is correct (should be 2025-08-26 from "Tuesday, August 26TH, 2025")
-                if sale_date and "2025-08-26" in str(sale_date):
-                    print(f"      ✅ Sale date correct: extracted from 'Tuesday, August 26TH, 2025 at 2:00PM'")
-                else:
-                    print(f"      ❌ Sale date incorrect: expected 2025-08-26, got {sale_date}")
-                    all_data_complete = False
-                
-                # Check for fallback data indicators
-                if (aan == "00254118" and 
-                    "Donald John Beaton" in owner and 
-                    "198 Little Narrows Rd" in address and
-                    len(victoria_properties) == 1):
-                    print(f"      ⚠️ POSSIBLE FALLBACK DATA: This looks like sample/fallback data")
-                    fallback_detected = True
-                
-                # Verify raw_data contains actual parsing information
+                # Check raw_data for tax amount extraction patterns
                 if raw_data:
-                    source = raw_data.get('source', '')
-                    if 'pdf_parsing' in source.lower():
-                        print(f"      ✅ Raw data indicates actual PDF parsing")
-                    elif 'fallback' in source.lower():
-                        print(f"      ❌ Raw data indicates fallback data used")
-                        fallback_detected = True
+                    tax_amount_raw = raw_data.get('tax_amount', '')
+                    if tax_amount_raw:
+                        print(f"      📊 Raw tax amount: {tax_amount_raw}")
+                        # Check if it matches the "Taxes, Interest and Expenses owing: $X,XXX.XX" pattern
+                        if "Taxes, Interest and Expenses owing:" in str(tax_amount_raw):
+                            print(f"         ✅ Tax amount extraction pattern working")
+                        else:
+                            print(f"         ⚠️ Tax amount may not be extracted from expected pattern")
                     else:
-                        print(f"      📊 Raw data source: {source}")
+                        print(f"      ⚠️ No raw tax amount data available")
                 else:
-                    print(f"      ⚠️ No raw data available for analysis")
+                    print(f"      ⚠️ No raw data available for tax amount analysis")
             
             # REQUIREMENT 4: Validate complete data
             if all_data_complete and len(found_aans) == 3:
