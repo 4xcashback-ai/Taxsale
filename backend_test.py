@@ -5995,6 +5995,235 @@ def test_victoria_county_pdf_parsing_fixes():
         print(f"   ❌ Victoria County PDF parsing fixes test error: {e}")
         return False, {"error": str(e)}
 
+def test_victoria_county_enhanced_parsing():
+    """Test Victoria County Enhanced PDF Parsing - Review Request Focus"""
+    print("\n🏛️ Testing Victoria County Enhanced PDF Parsing...")
+    print("🎯 FOCUS: Enhanced multi-pattern property detection with improved debugging")
+    print("📋 REQUIREMENTS: Test POST /api/scrape/victoria-county with enhanced parsing patterns")
+    print("🔍 GOAL: Verify all actual properties from PDF, not sample data")
+    
+    try:
+        # Test 1: Victoria County Scraper Endpoint with Enhanced Parsing
+        print(f"\n   🔧 TEST 1: POST /api/scrape/victoria-county (Enhanced Multi-Pattern Detection)")
+        
+        scrape_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=120)
+        
+        if scrape_response.status_code == 200:
+            scrape_result = scrape_response.json()
+            print(f"   ✅ Victoria County scraper executed successfully")
+            print(f"   📊 Status: {scrape_result.get('status', 'unknown')}")
+            print(f"   🏠 Properties scraped: {scrape_result.get('properties_scraped', 0)}")
+            print(f"   🏛️ Municipality: {scrape_result.get('municipality', 'unknown')}")
+            
+            # Check if we got multiple properties (not just fallback)
+            properties_count = scrape_result.get('properties_scraped', 0)
+            if properties_count >= 3:
+                print(f"   ✅ ENHANCED PARSING SUCCESS: Found {properties_count} properties (expected 3+)")
+                print(f"   🎯 Multi-pattern detection appears to be working")
+            elif properties_count == 1:
+                print(f"   ⚠️ SINGLE PROPERTY DETECTED: Only {properties_count} property found")
+                print(f"   🔍 This may indicate fallback data instead of actual PDF parsing")
+            else:
+                print(f"   ❌ UNEXPECTED PROPERTY COUNT: {properties_count} properties")
+            
+            # Check properties data if available
+            properties_data = scrape_result.get('properties', [])
+            if properties_data:
+                print(f"\n   📋 PROPERTY DATA ANALYSIS:")
+                for i, prop in enumerate(properties_data[:3]):  # Show first 3
+                    print(f"      Property {i+1}:")
+                    print(f"         AAN: {prop.get('assessment_number', 'N/A')}")
+                    print(f"         Owner: {prop.get('owner_name', 'N/A')}")
+                    print(f"         Address: {prop.get('property_address', 'N/A')}")
+                    print(f"         Sale Date: {prop.get('sale_date', 'N/A')}")
+                    print(f"         Property Type: {prop.get('property_type', 'N/A')}")
+                    
+                    # Check if this looks like real data vs sample data
+                    raw_data = prop.get('raw_data', {})
+                    source = raw_data.get('source', 'unknown')
+                    if source == 'pdf_parsing_fallback':
+                        print(f"         ⚠️ SOURCE: Fallback data (not actual PDF)")
+                    elif 'raw_section' in raw_data:
+                        print(f"         ✅ SOURCE: Actual PDF parsing (has raw_section)")
+                    else:
+                        print(f"         ❓ SOURCE: {source}")
+                
+                # Analyze sale dates to check if they're extracted correctly
+                print(f"\n   📅 SALE DATE ANALYSIS:")
+                expected_date = "2025-08-26"  # Expected from "Tuesday, August 26TH, 2025"
+                
+                correct_dates = 0
+                for prop in properties_data:
+                    sale_date = prop.get('sale_date', '')
+                    if expected_date in str(sale_date):
+                        correct_dates += 1
+                        print(f"      ✅ Property {prop.get('assessment_number', 'N/A')}: Correct date {sale_date}")
+                    else:
+                        print(f"      ❌ Property {prop.get('assessment_number', 'N/A')}: Wrong date {sale_date} (expected {expected_date})")
+                
+                if correct_dates == len(properties_data):
+                    print(f"   ✅ SALE DATE EXTRACTION: All {correct_dates} properties have correct date")
+                else:
+                    print(f"   ❌ SALE DATE EXTRACTION: Only {correct_dates}/{len(properties_data)} properties have correct date")
+            
+        else:
+            print(f"   ❌ Victoria County scraper failed with status {scrape_response.status_code}")
+            try:
+                error_detail = scrape_response.json()
+                print(f"      Error details: {error_detail}")
+            except:
+                print(f"      Raw response: {scrape_response.text}")
+            return False, {"error": f"Scraper failed with HTTP {scrape_response.status_code}"}
+        
+        # Test 2: Verify Properties in Database
+        print(f"\n   🔧 TEST 2: Verify Victoria County Properties in Database")
+        
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria County", timeout=30)
+        
+        if tax_sales_response.status_code == 200:
+            victoria_properties = tax_sales_response.json()
+            print(f"   ✅ Retrieved {len(victoria_properties)} Victoria County properties from database")
+            
+            if len(victoria_properties) >= 3:
+                print(f"   ✅ DATABASE VERIFICATION: {len(victoria_properties)} properties stored (expected 3+)")
+                
+                # Check for variety in property data (indicates real parsing vs sample data)
+                unique_owners = set(prop.get('owner_name', '') for prop in victoria_properties)
+                unique_addresses = set(prop.get('property_address', '') for prop in victoria_properties)
+                unique_assessments = set(prop.get('assessment_number', '') for prop in victoria_properties)
+                
+                print(f"      Unique owners: {len(unique_owners)}")
+                print(f"      Unique addresses: {len(unique_addresses)}")
+                print(f"      Unique assessments: {len(unique_assessments)}")
+                
+                if len(unique_owners) >= 2 and len(unique_addresses) >= 2:
+                    print(f"   ✅ DATA VARIETY: Multiple unique owners/addresses (indicates real PDF data)")
+                else:
+                    print(f"   ⚠️ LIMITED VARIETY: May indicate sample/fallback data")
+                
+                # Check specific expected property from review request
+                expected_assessment = "00254118"
+                expected_owner = "Donald John Beaton"
+                expected_address = "198 Little Narrows Rd"
+                
+                found_expected = False
+                for prop in victoria_properties:
+                    if (prop.get('assessment_number') == expected_assessment and 
+                        expected_owner in prop.get('owner_name', '') and
+                        expected_address in prop.get('property_address', '')):
+                        found_expected = True
+                        print(f"   ✅ EXPECTED PROPERTY FOUND: {expected_assessment} - {expected_owner}")
+                        break
+                
+                if not found_expected:
+                    print(f"   ⚠️ Expected property {expected_assessment} not found or data mismatch")
+                
+            elif len(victoria_properties) == 1:
+                print(f"   ⚠️ DATABASE VERIFICATION: Only 1 property (may be fallback data)")
+                single_prop = victoria_properties[0]
+                print(f"      Single property: {single_prop.get('assessment_number')} - {single_prop.get('owner_name')}")
+            else:
+                print(f"   ❌ DATABASE VERIFICATION: No Victoria County properties found")
+                return False, {"error": "No Victoria County properties in database"}
+        else:
+            print(f"   ❌ Failed to retrieve Victoria County properties: {tax_sales_response.status_code}")
+        
+        # Test 3: Check Parsing Logs and Patterns
+        print(f"\n   🔧 TEST 3: Analyze Parsing Patterns and Debugging")
+        print(f"   📋 This test checks if enhanced parsing patterns are working")
+        
+        # Trigger another scrape to see fresh logs
+        fresh_scrape_response = requests.post(f"{BACKEND_URL}/scrape/victoria-county", timeout=120)
+        
+        if fresh_scrape_response.status_code == 200:
+            fresh_result = fresh_scrape_response.json()
+            print(f"   ✅ Fresh scrape completed")
+            
+            # Check if we get consistent results
+            fresh_count = fresh_result.get('properties_scraped', 0)
+            if 'properties_count' in locals() and fresh_count == properties_count:
+                print(f"   ✅ CONSISTENT RESULTS: Both scrapes returned {fresh_count} properties")
+            else:
+                print(f"   ⚠️ INCONSISTENT RESULTS: First scrape: {properties_count if 'properties_count' in locals() else 'N/A'}, Fresh scrape: {fresh_count}")
+            
+            # Analyze raw data for parsing pattern information
+            fresh_properties = fresh_result.get('properties', [])
+            if fresh_properties:
+                print(f"\n   🔍 PARSING PATTERN ANALYSIS:")
+                for prop in fresh_properties:
+                    raw_data = prop.get('raw_data', {})
+                    if 'raw_section' in raw_data:
+                        raw_section = raw_data['raw_section'][:200]
+                        print(f"      Property {prop.get('assessment_number', 'N/A')}: Has raw PDF section")
+                        print(f"         Raw section preview: {raw_section}...")
+                        
+                        # Check which parsing pattern was used
+                        if 'AAN:' in raw_section and 'PID:' in raw_section:
+                            print(f"         ✅ Contains AAN/PID pattern (Pattern 1-4 working)")
+                        else:
+                            print(f"         ⚠️ Missing expected AAN/PID pattern")
+                    else:
+                        print(f"      Property {prop.get('assessment_number', 'N/A')}: No raw section (may be fallback)")
+        
+        # Test 4: Summary and Pattern Detection Results
+        print(f"\n   📋 ENHANCED PARSING SUMMARY:")
+        
+        success_criteria = []
+        issues_found = []
+        
+        # Check property count
+        final_count = fresh_count if 'fresh_count' in locals() else properties_count if 'properties_count' in locals() else 0
+        if final_count >= 3:
+            success_criteria.append(f"✅ Property count: {final_count} (expected 3+)")
+        elif final_count == 1:
+            issues_found.append(f"⚠️ Only 1 property found (may be fallback data)")
+        else:
+            issues_found.append(f"❌ Unexpected property count: {final_count}")
+        
+        # Check sale date extraction
+        if 'correct_dates' in locals() and 'properties_data' in locals():
+            if correct_dates == len(properties_data):
+                success_criteria.append(f"✅ Sale date extraction: All properties correct")
+            else:
+                issues_found.append(f"❌ Sale date extraction: {correct_dates}/{len(properties_data)} correct")
+        
+        # Check data variety
+        if 'unique_owners' in locals() and len(unique_owners) >= 2:
+            success_criteria.append(f"✅ Data variety: {len(unique_owners)} unique owners")
+        else:
+            issues_found.append(f"⚠️ Limited data variety (may indicate sample data)")
+        
+        print(f"\n   🎯 SUCCESS CRITERIA MET:")
+        for criterion in success_criteria:
+            print(f"      {criterion}")
+        
+        if issues_found:
+            print(f"\n   ⚠️ ISSUES IDENTIFIED:")
+            for issue in issues_found:
+                print(f"      {issue}")
+        
+        # Determine overall result
+        if len(success_criteria) >= 2 and len(issues_found) <= 1:
+            print(f"\n   ✅ VICTORIA COUNTY ENHANCED PARSING: WORKING")
+            return True, {
+                "properties_scraped": final_count,
+                "success_criteria": len(success_criteria),
+                "issues_found": len(issues_found),
+                "parsing_patterns_working": True
+            }
+        else:
+            print(f"\n   ❌ VICTORIA COUNTY ENHANCED PARSING: NEEDS IMPROVEMENT")
+            return False, {
+                "properties_scraped": final_count,
+                "success_criteria": len(success_criteria),
+                "issues_found": len(issues_found),
+                "parsing_patterns_working": False
+            }
+        
+    except Exception as e:
+        print(f"   ❌ Victoria County enhanced parsing test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
     """Run Victoria County PDF Parsing Fixes Testing - Review Request Focus"""
     print("🚀 Starting Victoria County PDF Parsing Fixes Testing")
