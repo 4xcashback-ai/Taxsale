@@ -358,87 +358,67 @@ def test_municipality_descriptions():
                 "endpoint_accessible": individual_response.status_code == 200 if 'individual_response' in locals() else False,
                 "description_available": bool(individual_description) if 'individual_description' in locals() else False
             })
-        # Test 4: Verify All 3 Properties Have Improved Coordinate Precision
-        print(f"\n   🔧 TEST 4: Verify All 3 Properties Have Improved Coordinate Precision")
+        # Test 4: Test Property Detail Pages with Municipality Descriptions
+        print(f"\n   🔧 TEST 4: Test Property Detail Pages with Municipality Descriptions")
         
-        all_properties_precision_results = {
-            "all_properties_meet_5_decimal_requirement": True,
-            "properties_with_adequate_precision": 0,
-            "properties_needing_improvement": 0,
-            "detailed_analysis": []
+        property_detail_results = {
+            "property_endpoints_accessible": True,
+            "descriptions_appear_on_property_pages": True,
+            "property_analysis": []
         }
         
-        print(f"   📊 Verifying all 3 Victoria County properties have improved coordinate precision...")
+        print(f"   📊 Testing if municipality descriptions appear correctly on property detail pages...")
         
-        expected_assessments = ['00254118', '00453706', '09541209']
+        # Get some sample properties from each municipality to test
+        tax_sales_response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
         
-        for expected_aan in expected_assessments:
-            prop = None
-            for p in victoria_properties:
-                if p.get('assessment_number') == expected_aan:
-                    prop = p
-                    break
+        if tax_sales_response.status_code == 200:
+            all_properties = tax_sales_response.json()
+            print(f"      ✅ Tax sales endpoint accessible - {len(all_properties)} total properties")
             
-            if not prop:
-                print(f"      ❌ Property AAN {expected_aan} not found")
-                all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
-                continue
+            # Find sample properties from target municipalities
+            sample_properties = {}
+            for target_name in target_municipalities.keys():
+                for prop in all_properties:
+                    if target_name in prop.get("municipality_name", ""):
+                        sample_properties[target_name] = prop
+                        break
             
-            lat = prop.get('latitude')
-            lng = prop.get('longitude')
+            print(f"      📋 Sample properties found for {len(sample_properties)}/4 target municipalities")
             
-            print(f"\n      📋 Property AAN {expected_aan}:")
-            print(f"         Owner: {prop.get('owner_name', 'Unknown')}")
-            print(f"         Address: {prop.get('property_address', 'Unknown')}")
-            print(f"         Coordinates: {lat}, {lng}")
-            
-            if lat and lng:
-                # Check coordinate precision
-                lat_precision = len(str(lat).split('.')[-1]) if '.' in str(lat) else 0
-                lng_precision = len(str(lng).split('.')[-1]) if '.' in str(lng) else 0
+            # Test each sample property
+            for municipality_name, property_data in sample_properties.items():
+                assessment_number = property_data.get('assessment_number', 'Unknown')
+                municipality_id = property_data.get('municipality_id', 'Unknown')
                 
-                print(f"         Precision: {lat_precision} lat, {lng_precision} lng decimal places")
+                print(f"\n      📋 Testing {municipality_name} property (AAN: {assessment_number}):")
                 
-                # Calculate accuracy
-                lat_accuracy_m = 111000 / (10 ** lat_precision) if lat_precision > 0 else 111000
-                lng_accuracy_m = 111000 / (10 ** lng_precision) * abs(math.cos(math.radians(lat))) if lng_precision > 0 else 111000
+                # Check if municipality has description
+                municipality_data = target_municipalities.get(municipality_name, {}).get("data", {})
+                municipality_description = municipality_data.get('description', '')
                 
-                print(f"         Accuracy: ±{lat_accuracy_m:.1f}m lat, ±{lng_accuracy_m:.1f}m lng")
-                
-                # Check if meets 5 decimal places requirement
-                meets_5_decimal = lat_precision >= 5 and lng_precision >= 5
-                meets_1m_accuracy = lat_accuracy_m <= 1.0 and lng_accuracy_m <= 1.0
-                
-                if meets_5_decimal and meets_1m_accuracy:
-                    print(f"         ✅ Meets 5 decimal places requirement (±1m accuracy)")
-                    all_properties_precision_results["properties_with_adequate_precision"] += 1
-                elif lat_precision >= 4 and lng_precision >= 4:
-                    print(f"         ⚠️ Good precision but not optimal (4 decimal places, ~±10m accuracy)")
-                    all_properties_precision_results["properties_needing_improvement"] += 1
-                    all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
+                if municipality_description:
+                    print(f"         ✅ Municipality has description ({len(municipality_description)} characters)")
+                    print(f"         Description preview: {municipality_description[:100]}...")
+                    
+                    # In a real application, we would test the frontend property detail page
+                    # For now, we verify the data is available via API
+                    print(f"         ✅ Description available for property detail page rendering")
+                    
                 else:
-                    print(f"         ❌ Insufficient precision (3 or fewer decimal places, >±50m accuracy)")
-                    all_properties_precision_results["properties_needing_improvement"] += 1
-                    all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
+                    print(f"         ❌ Municipality has no description for property detail page")
+                    property_detail_results["descriptions_appear_on_property_pages"] = False
                 
-                all_properties_precision_results["detailed_analysis"].append({
-                    "assessment_number": expected_aan,
-                    "lat_precision": lat_precision,
-                    "lng_precision": lng_precision,
-                    "lat_accuracy_m": lat_accuracy_m,
-                    "lng_accuracy_m": lng_accuracy_m,
-                    "meets_5_decimal_requirement": meets_5_decimal,
-                    "meets_1m_accuracy": meets_1m_accuracy
+                property_detail_results["property_analysis"].append({
+                    "municipality_name": municipality_name,
+                    "assessment_number": assessment_number,
+                    "municipality_id": municipality_id,
+                    "has_municipality_description": bool(municipality_description),
+                    "description_length": len(municipality_description) if municipality_description else 0
                 })
-            else:
-                print(f"         ❌ No coordinates found")
-                all_properties_precision_results["properties_needing_improvement"] += 1
-                all_properties_precision_results["all_properties_meet_5_decimal_requirement"] = False
-        
-        print(f"\n   📊 All Properties Precision Summary:")
-        print(f"      Properties with adequate precision (5+ decimals): {all_properties_precision_results['properties_with_adequate_precision']}/3")
-        print(f"      Properties needing improvement: {all_properties_precision_results['properties_needing_improvement']}/3")
-        print(f"      All properties meet 5 decimal requirement: {all_properties_precision_results['all_properties_meet_5_decimal_requirement']}")
+        else:
+            print(f"      ❌ Tax sales endpoint failed: HTTP {tax_sales_response.status_code}")
+            property_detail_results["property_endpoints_accessible"] = False
         
         # Test 5: Check Property Data Accuracy - Opening Bids and HST Detection
         print(f"\n   🔧 TEST 5: Check Property Data Accuracy - Opening Bids and HST Detection")
