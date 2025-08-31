@@ -1248,6 +1248,9 @@ async def scrape_victoria_county_tax_sales():
                                             
                                             logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
                                             
+                                            # Log PDF content for debugging
+                                            logger.info(f"Victoria County PDF content preview: {full_text[:1000]}...")
+                                            
                                             # Parse Victoria County format:
                                             # AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
                                             # Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
@@ -1255,7 +1258,11 @@ async def scrape_victoria_county_tax_sales():
                                             # Taxes, Interest and Expenses owing: $2,009.03
                                             
                                             properties = parse_victoria_county_pdf(full_text, municipality_id)
-                                            logger.info(f"Parsed {len(properties)} properties from Victoria County PDF")
+                                            logger.info(f"Victoria County PDF parsing result: {len(properties)} properties found")
+                                            
+                                            # Log each property for debugging
+                                            for i, prop in enumerate(properties):
+                                                logger.info(f"Property {i+1}: AAN={prop.get('assessment_number')}, Owner={prop.get('owner_name')}, Sale Date={prop.get('sale_date')}")
                                     
                                     # Clean up temp file
                                     import os
