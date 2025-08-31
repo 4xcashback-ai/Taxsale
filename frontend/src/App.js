@@ -743,6 +743,19 @@ function PropertySearch() {
     }
   };
 
+  const handleHealthCheck = async () => {
+    setButtonStates(prev => ({ ...prev, health: true }));
+    setDeploymentMessage("Checking system health...");
+    try {
+      await fetchSystemHealth();
+      setDeploymentMessage("System health check completed.");
+    } catch (error) {
+      setDeploymentMessage("Failed to check system health.");
+    } finally {
+      setButtonStates(prev => ({ ...prev, health: false }));
+    }
+  };
+
   const verifyDeployment = async () => {
     setDeploymentLoading(true);
     setDeploymentMessage("Verifying deployment...");
