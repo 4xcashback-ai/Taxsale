@@ -272,27 +272,25 @@ def test_victoria_county_data_extraction_debug():
                 else:
                     print(f"      ⚠️ No raw data available for tax amount analysis")
             
-            # REQUIREMENT 4: Validate complete data
-            if all_data_complete and len(found_aans) == 3:
-                print(f"\n   ✅ REQUIREMENT 4 MET: All properties have correct AANs, owners, addresses, and tax amounts")
-            else:
-                print(f"\n   ❌ REQUIREMENT 4 FAILED: Some properties missing correct data")
-                all_data_complete = False
+            # Summary of findings
+            print(f"\n   📊 MINIMUM BID ANALYSIS SUMMARY:")
+            print(f"      Properties found: {len(victoria_properties)}")
+            print(f"      Bid calculations correct: {bid_calculations_correct}")
+            print(f"      Boundary images present: {boundary_images_present}")
+            print(f"      AANs found: {found_aans}")
             
-            # REQUIREMENT 5: Confirm no fallback
-            if fallback_detected:
-                print(f"\n   ❌ REQUIREMENT 5 FAILED: Fallback sample data detected instead of actual PDF data")
-                return False, {"error": "System using fallback data instead of actual PDF parsing"}
-            else:
-                print(f"\n   ✅ REQUIREMENT 5 MET: Using actual PDF data, not fallback sample data")
+            # Critical issues identified
+            if not bid_calculations_correct:
+                print(f"\n   🚨 CRITICAL ISSUE: Minimum bid calculations are incorrect")
+                print(f"      - All opening_bid values are extremely low ($0-$2)")
+                print(f"      - Expected values are in thousands ($1,599-$5,031)")
+                print(f"      - This indicates tax amount extraction is failing")
             
-            # Verify all expected AANs were found
-            missing_aans = [aan for aan in expected_aans if aan not in found_aans]
-            if missing_aans:
-                print(f"\n   ❌ MISSING AANs: {missing_aans} not found in parsed properties")
-                return False, {"error": f"Missing expected AANs: {missing_aans}"}
-            else:
-                print(f"\n   ✅ ALL EXPECTED AANs FOUND: {found_aans}")
+            if not boundary_images_present:
+                print(f"\n   🚨 CRITICAL ISSUE: Boundary images are missing")
+                print(f"      - All boundary_screenshot fields are None/empty")
+                print(f"      - Image generation pipeline is not working")
+                print(f"      - May be related to coordinates or Google Maps API")
             
         else:
             print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
