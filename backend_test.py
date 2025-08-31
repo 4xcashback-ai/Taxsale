@@ -451,8 +451,8 @@ def test_victoria_county_coordinate_precision_fixes():
         print(f"      Properties needing improvement: {all_properties_precision_results['properties_needing_improvement']}/3")
         print(f"      All properties meet 5 decimal requirement: {all_properties_precision_results['all_properties_meet_5_decimal_requirement']}")
         
-        # Test 5: Verify Google Maps Satellite View Parameters
-        print(f"\n   🔧 TEST 5: Verify Google Maps Satellite View Parameters")
+        # Test 5: Check Property Data Accuracy - Opening Bids and HST Detection
+        print(f"\n   🔧 TEST 5: Check Property Data Accuracy - Opening Bids and HST Detection")
         
         satellite_params_results = {
             "zoom_level_appropriate": False,
