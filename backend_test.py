@@ -254,44 +254,45 @@ def test_victoria_county_scraper_with_pdf_extraction():
         if bid_verification_results["correct_bids"] != 3:
             print(f"   ❌ CRITICAL: Not all minimum bid amounts are correct!")
             return False, {"error": "Minimum bid amounts are incorrect", "details": bid_verification_results}
-        # Test 4: Compare Boundary Data Availability
-        print(f"\n   🔧 TEST 4: Compare Boundary Data Availability Between Municipalities")
+        # Test 4: Check HST Detection for Entry 8
+        print(f"\n   🔧 TEST 4: Check HST Detection for Entry 8 (AAN 09541209)")
         
-        print(f"\n   📊 HALIFAX BOUNDARY DATA SUMMARY:")
-        if halifax_properties:
-            halifax_total = len(halifax_properties)
-            halifax_coords = halifax_thumbnail_results["properties_with_coordinates"]
-            halifax_screenshots = halifax_thumbnail_results["properties_with_boundary_screenshots"]
-            halifax_working = halifax_thumbnail_results["working_thumbnail_endpoints"]
-            
-            print(f"      Total properties: {halifax_total}")
-            print(f"      Properties with coordinates: {halifax_coords}/{halifax_total} ({(halifax_coords/halifax_total*100):.1f}%)")
-            print(f"      Properties with boundary screenshots: {halifax_screenshots}/{halifax_total} ({(halifax_screenshots/halifax_total*100):.1f}%)")
-            print(f"      Working thumbnail endpoints: {halifax_working}/{halifax_total} ({(halifax_working/halifax_total*100):.1f}%)")
-            
-            if halifax_thumbnail_results["thumbnail_sizes"]:
-                avg_size = sum(halifax_thumbnail_results["thumbnail_sizes"]) / len(halifax_thumbnail_results["thumbnail_sizes"])
-                print(f"      Average thumbnail size: {avg_size:.0f} bytes")
-        else:
-            print(f"      No Halifax properties available for analysis")
+        hst_verification_results = {
+            "entry_8_found": False,
+            "hst_correct": False,
+            "hst_value": None
+        }
         
-        print(f"\n   📊 VICTORIA COUNTY BOUNDARY DATA SUMMARY:")
-        if victoria_properties:
-            victoria_total = len(victoria_properties)
-            victoria_coords = victoria_thumbnail_results["properties_with_coordinates"]
-            victoria_screenshots = victoria_thumbnail_results["properties_with_boundary_screenshots"]
-            victoria_working = victoria_thumbnail_results["working_thumbnail_endpoints"]
+        # Find Entry 8 (AAN 09541209)
+        entry_8 = None
+        for prop in victoria_properties:
+            if prop.get("assessment_number") == "09541209":
+                entry_8 = prop
+                hst_verification_results["entry_8_found"] = True
+                break
+        
+        if entry_8:
+            hst_applicable = entry_8.get("hst_applicable")
+            hst_verification_results["hst_value"] = hst_applicable
             
-            print(f"      Total properties: {victoria_total}")
-            print(f"      Properties with coordinates: {victoria_coords}/{victoria_total} ({(victoria_coords/victoria_total*100):.1f}%)")
-            print(f"      Properties with boundary screenshots: {victoria_screenshots}/{victoria_total} ({(victoria_screenshots/victoria_total*100):.1f}%)")
-            print(f"      Working thumbnail endpoints: {victoria_working}/{victoria_total} ({(victoria_working/victoria_total*100):.1f}%)")
+            print(f"   📋 Entry 8 (AAN 09541209) found:")
+            print(f"      Owner: {entry_8.get('owner_name')}")
+            print(f"      HST Applicable: {hst_applicable}")
+            print(f"      Expected HST: 'Yes'")
             
-            if victoria_thumbnail_results["thumbnail_sizes"]:
-                avg_size = sum(victoria_thumbnail_results["thumbnail_sizes"]) / len(victoria_thumbnail_results["thumbnail_sizes"])
-                print(f"      Average thumbnail size: {avg_size:.0f} bytes")
+            if hst_applicable and hst_applicable.lower() == "yes":
+                print(f"      ✅ HST detection is CORRECT: {hst_applicable}")
+                hst_verification_results["hst_correct"] = True
+            else:
+                print(f"      ❌ HST detection is INCORRECT: Got '{hst_applicable}', expected 'Yes'")
+                hst_verification_results["hst_correct"] = False
         else:
-            print(f"      No Victoria County properties available for analysis")
+            print(f"   ❌ Entry 8 (AAN 09541209) not found in Victoria County properties")
+            return False, {"error": "Entry 8 (AAN 09541209) not found"}
+        
+        if not hst_verification_results["hst_correct"]:
+            print(f"   ❌ CRITICAL: HST detection for Entry 8 is incorrect!")
+            return False, {"error": "HST detection incorrect for Entry 8", "details": hst_verification_results}
         
         # Test 5: Verify Boundary Generation Process Comparison
         print(f"\n   🔧 TEST 5: Verify Boundary Generation Process for Both Municipality Types")
