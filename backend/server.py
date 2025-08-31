@@ -1244,6 +1244,7 @@ async def scrape_victoria_county_tax_sales():
                             }) as response:
                                 if response.status == 200:
                                     pdf_content = await response.read()
+                                    logger.info(f"Downloaded PDF successfully: {len(pdf_content)} bytes")
                                     
                                     # Save to temporary file and parse
                                     with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
@@ -1254,7 +1255,9 @@ async def scrape_victoria_county_tax_sales():
                                         with pdfplumber.open(tmp_file.name) as pdf:
                                             full_text = ""
                                             for page_obj in pdf.pages:
-                                                full_text += page_obj.extract_text() + "\n"
+                                                page_text = page_obj.extract_text()
+                                                if page_text:
+                                                    full_text += page_text + "\n"
                                             
                                             logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
                                             
