@@ -1617,7 +1617,8 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 logger.info(f"Parsed Victoria County property: AAN {assessment_number}, Owner: {owner_name}")
                 
             except Exception as e:
-                logger.error(f"Error parsing Victoria County property section: {e}")
+                logger.error(f"Error parsing Victoria County property section {i+1}: {e}")
+                logger.error(f"Section content: {section[:200]}...")
                 continue
     
     except Exception as e:
