@@ -3802,7 +3802,7 @@ async def get_system_health():
         
         # Run the health check
         result = subprocess.run(
-            ['sudo', '/opt/tax-sale-compass/scripts/system-health.sh', 'check'],
+            ['sudo', '/var/www/nstaxsales/scripts/system-health.sh', 'check'],
             capture_output=True,
             text=True,
             timeout=120
