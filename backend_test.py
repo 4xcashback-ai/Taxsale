@@ -519,28 +519,30 @@ def main():
         print(f"   {status} - {test_name.replace('_', ' ').title()}")
     
     # Victoria County Specific Analysis
-    print(f"\n🎯 VICTORIA COUNTY FINAL PARSER ANALYSIS:")
+    print(f"\n🎯 VICTORIA COUNTY IMPROVED PARSER ANALYSIS:")
     
     if victoria_county_working and victoria_county_data:
-        print(f"   ✅ VICTORIA COUNTY PARSER: ALL REQUIREMENTS MET!")
-        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
+        print(f"   ✅ VICTORIA COUNTY IMPROVED PARSER: ALL REQUIREMENTS MET!")
+        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/6")
         print(f"      Properties Found: {victoria_county_data.get('properties_found', 0)}")
         print(f"      All Data Complete: {victoria_county_data.get('all_data_complete', False)}")
         print(f"      Fallback Detected: {victoria_county_data.get('fallback_detected', True)}")
+        print(f"      Sale Date Correct: {victoria_county_data.get('sale_date_correct', False)}")
         
         if victoria_county_data.get('expected_aans_found'):
             print(f"      Expected AANs Found: {victoria_county_data['expected_aans_found']}")
         
-        print(f"\n   🎉 SUCCESS: Victoria County PDF parser working correctly with actual PDF data!")
-        print(f"   ✅ Enhanced error handling and validation working")
-        print(f"   ✅ All 3 properties successfully extracted from entries 1, 2, and 8")
-        print(f"   ✅ Complete data validation passed")
+        print(f"\n   🎉 SUCCESS: Victoria County improved parser working correctly!")
+        print(f"   ✅ Enhanced regex patterns successfully extract all 3 properties")
+        print(f"   ✅ Pattern matching handles different property formats and multiple PIDs")
+        print(f"   ✅ All properties have correct owners, addresses, tax amounts, and property types")
         print(f"   ✅ Using actual PDF data, not fallback sample data")
+        print(f"   ✅ Sale date correctly set to 2025-08-26")
         
     elif not victoria_county_working and victoria_county_data:
-        print(f"   ❌ VICTORIA COUNTY PARSER: REQUIREMENTS NOT MET")
-        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/5")
-        print(f"      Requirements Failed: {victoria_county_data.get('requirements_failed', 5)}/5")
+        print(f"   ❌ VICTORIA COUNTY IMPROVED PARSER: REQUIREMENTS NOT MET")
+        print(f"      Requirements Met: {victoria_county_data.get('requirements_met', 0)}/6")
+        print(f"      Requirements Failed: {victoria_county_data.get('requirements_failed', 6)}/6")
         
         if victoria_county_data.get('failed_requirements'):
             print(f"      Failed Requirements:")
