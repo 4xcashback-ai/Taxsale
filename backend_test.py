@@ -1386,13 +1386,7 @@ def test_victoria_county_final_parser():
             
     except Exception as e:
         print(f"   ❌ Victoria County final parser test error: {e}")
-        return False, {"error": str(e)}d)")
-                        elif expected_prop['pid'] in found_prop['pid'] or found_prop['pid'] in expected_prop['pid']:
-                            print(f"      PID: '{found_prop['pid']}' ✅")
-                        else:
-                            print(f"      PID: '{found_prop['pid']}' ❌ (Expected: '{expected_prop['pid']}')")
-                            all_correct = False
-                    else:
+        return False, {"error": str(e)}
                         print(f"      PID: Missing ❌")
                         all_correct = False
                     
