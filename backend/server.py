@@ -3696,6 +3696,168 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Deployment automation endpoints
+@api_router.get("/deployment/status")
+async def get_deployment_status():
+    """Get current deployment status"""
+    try:
+        import subprocess
+        import json
+        
+        # Run the deployment status script
+        result = subprocess.run(
+            ['/opt/tax-sale-compass/scripts/deployment-status.sh'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode == 0:
+            try:
+                status_data = json.loads(result.stdout)
+                return status_data
+            except json.JSONDecodeError:
+                return {
+                    "status": "error",
+                    "message": "Failed to parse status data",
+                    "last_check": datetime.now(timezone.utc).isoformat()
+                }
+        else:
+            return {
+                "status": "error", 
+                "message": "Failed to get deployment status",
+                "last_check": datetime.now(timezone.utc).isoformat()
+            }
+            
+    except Exception as e:
+        logger.error(f"Error getting deployment status: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "last_check": datetime.now(timezone.utc).isoformat()
+        }
+
+@api_router.post("/deployment/check-updates")
+async def check_for_updates():
+    """Check if updates are available"""
+    try:
+        import subprocess
+        
+        # Run the check-updates command
+        result = subprocess.run(
+            ['sudo', '/opt/tax-sale-compass/scripts/deployment.sh', 'check-updates'],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        updates_available = result.returncode == 0
+        
+        return {
+            "updates_available": updates_available,
+            "message": "Updates available" if updates_available else "No updates available",
+            "output": result.stdout,
+            "checked_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error checking for updates: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to check for updates: {str(e)}")
+
+@api_router.post("/deployment/deploy")
+async def deploy_application(github_repo: str = None):
+    """Deploy latest application version"""
+    try:
+        import subprocess
+        import asyncio
+        
+        # Build the deployment command
+        cmd = ['sudo', '/opt/tax-sale-compass/scripts/deployment.sh', 'deploy']
+        if github_repo:
+            cmd.append(github_repo)
+        
+        # Run deployment in background
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        # Start the deployment process
+        return {
+            "status": "started",
+            "message": "Deployment started",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "github_repo": github_repo
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting deployment: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start deployment: {str(e)}")
+
+@api_router.get("/deployment/health")
+async def get_system_health():
+    """Get system health status"""
+    try:
+        import subprocess
+        
+        # Run the health check
+        result = subprocess.run(
+            ['sudo', '/opt/tax-sale-compass/scripts/system-health.sh', 'check'],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        # Determine health status based on exit code
+        if result.returncode == 0:
+            health_status = "excellent"
+        elif result.returncode == 1:
+            health_status = "good"
+        elif result.returncode == 2:
+            health_status = "poor"
+        else:
+            health_status = "unknown"
+        
+        return {
+            "health_status": health_status,
+            "output": result.stdout,
+            "errors": result.stderr,
+            "checked_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting system health: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get system health: {str(e)}")
+
+@api_router.post("/deployment/verify")
+async def verify_deployment():
+    """Verify current deployment"""
+    try:
+        import subprocess
+        
+        # Run the verify command
+        result = subprocess.run(
+            ['sudo', '/opt/tax-sale-compass/scripts/deployment.sh', 'verify'],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        deployment_valid = result.returncode == 0
+        
+        return {
+            "deployment_valid": deployment_valid,
+            "message": "Deployment verified successfully" if deployment_valid else "Deployment verification failed",
+            "output": result.stdout,
+            "errors": result.stderr,
+            "verified_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error verifying deployment: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to verify deployment: {str(e)}")
+
 @app.on_event("startup")
 async def startup_event():
     # Start the scheduler
