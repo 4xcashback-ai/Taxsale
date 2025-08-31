@@ -5810,9 +5810,31 @@ def main():
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 VICTORIA COUNTY ENHANCED SCRAPER TESTING SUMMARY")
+    print("🏁 VICTORIA COUNTY PDF PARSING DEBUG SUMMARY")
     print("=" * 80)
     
+    # Debug Test Results
+    if debug_success:
+        print("✅ Victoria County PDF parsing debug completed successfully")
+        if debug_result:
+            print(f"   📊 Properties found: {debug_result.get('properties_found', 0)}")
+            print(f"   📊 Expected properties: {debug_result.get('expected_properties', 3)}")
+            print(f"   📊 Issues identified: {len(debug_result.get('issues', []))}")
+    else:
+        print("❌ Victoria County PDF parsing debug found critical issues")
+        if debug_result:
+            print(f"   📊 Properties found: {debug_result.get('properties_found', 0)} (expected: {debug_result.get('expected_properties', 3)})")
+            if debug_result.get('issues'):
+                print(f"   ❌ Issues found:")
+                for issue in debug_result['issues']:
+                    print(f"      - {issue}")
+            if debug_result.get('recommendations'):
+                print(f"   💡 Recommendations:")
+                for rec in debug_result['recommendations']:
+                    print(f"      - {rec}")
+    
+    # Enhanced Scraper Results
+    print(f"\n🏛️ ENHANCED SCRAPER RESULTS:")
     if victoria_success:
         print("✅ Victoria County enhanced scraper testing completed successfully")
         if victoria_result:
