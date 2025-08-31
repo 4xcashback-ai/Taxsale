@@ -1456,26 +1456,19 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 logger.info(f"Processing Victoria County property section {i+1}:")
                 logger.info(f"Section content: {section}")
                 
-                # Extract AAN and PID from first line
-                # Pattern: AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
+                # Extract AAN and PID from section (already parsed in the main loop)
+                # Pattern: X. AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
                 aan_pid_match = re.search(r'(\d+)\.\s*AAN:\s*(\d+)\s*/\s*PID:\s*(\d+)\s*[–-–]\s*Property assessed to\s*([^.]+)\.', section, re.IGNORECASE)
                 
-                if not aan_pid_match:
-                    # Try alternative pattern without number prefix
-                    aan_pid_match = re.search(r'AAN:\s*(\d+)\s*/\s*PID:\s*(\d+)\s*[–-–]\s*Property assessed to\s*([^.]+)\.', section, re.IGNORECASE)
-                    if aan_pid_match:
-                        assessment_number = aan_pid_match.group(1)
-                        pid_number = aan_pid_match.group(2)
-                        owner_name = aan_pid_match.group(3).strip()
-                    else:
-                        logger.warning(f"Could not parse AAN/PID from Victoria County section: {section[:200]}...")
-                        continue
-                else:
-                    assessment_number = aan_pid_match.group(2)  # AAN is the second group when number is first
+                if aan_pid_match:
+                    property_number = aan_pid_match.group(1)
+                    assessment_number = aan_pid_match.group(2)
                     pid_number = aan_pid_match.group(3)
                     owner_name = aan_pid_match.group(4).strip()
-                
-                logger.info(f"Extracted: AAN={assessment_number}, PID={pid_number}, Owner={owner_name}")
+                    logger.info(f"Successfully parsed Property #{property_number}: AAN={assessment_number}, PID={pid_number}, Owner={owner_name}")
+                else:
+                    logger.warning(f"Could not parse AAN/PID from Victoria County section: {section[:200]}...")
+                    continue
                 
                 # Extract property type and address
                 # Pattern: Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
