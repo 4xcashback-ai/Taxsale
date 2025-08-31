@@ -1438,10 +1438,10 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                     "pid_number": pid_number,
                     "opening_bid": opening_bid,
                     "municipality_name": "Victoria County",
-                    "sale_date": "2025-05-15",  # TODO: Extract actual sale date from PDF
+                    "sale_date": sale_date,  # Use extracted sale date
                     "property_type": property_type,
                     "lot_size": lot_size,
-                    "sale_location": "Victoria County Municipal Office",  # TODO: Extract from PDF
+                    "sale_location": sale_location,  # Use extracted sale location
                     "status": "active",
                     "redeemable": redeemable,
                     "hst_applicable": "No",  # Default for Victoria County
@@ -1459,6 +1459,7 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                         "lot_size": lot_size,
                         "redeemable": redeemable,
                         "taxes_owing": f"${opening_bid:.2f}",
+                        "sale_date_extracted": sale_date,
                         "raw_section": section[:500]  # Store first 500 chars for debugging
                     }
                 }
