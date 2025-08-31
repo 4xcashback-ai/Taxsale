@@ -185,7 +185,73 @@ def test_victoria_county_coordinate_precision_fixes():
             print(f"   ✅ Retrieved properties from database")
             print(f"      Victoria County properties found: {len(victoria_properties)}")
             
-            # Find AAN 00254118 specifically
+            if len(victoria_properties) != 3:
+                print(f"   ❌ Expected 3 Victoria County properties, found {len(victoria_properties)}")
+                return False, {"error": f"Expected 3 properties, found {len(victoria_properties)}"}
+            
+            # Sort properties by assessment number for consistent testing
+            victoria_properties.sort(key=lambda x: x.get('assessment_number', ''))
+            
+            # Check coordinate precision for all properties
+            coordinate_precision_results = {
+                "all_properties_have_5_decimal_precision": True,
+                "properties_analysis": []
+            }
+            
+            print(f"\n   📊 Analyzing coordinate precision for all 3 Victoria County properties...")
+            
+            for i, prop in enumerate(victoria_properties, 1):
+                assessment_num = prop.get('assessment_number', 'Unknown')
+                lat = prop.get('latitude')
+                lng = prop.get('longitude')
+                
+                print(f"\n      📋 Property {i} - AAN {assessment_num}:")
+                print(f"         Owner: {prop.get('owner_name', 'Unknown')}")
+                print(f"         Address: {prop.get('property_address', 'Unknown')}")
+                print(f"         Coordinates: {lat}, {lng}")
+                
+                # Check coordinate precision
+                lat_precision = 0
+                lng_precision = 0
+                
+                if lat and '.' in str(lat):
+                    lat_precision = len(str(lat).split('.')[-1])
+                if lng and '.' in str(lng):
+                    lng_precision = len(str(lng).split('.')[-1])
+                
+                print(f"         Latitude precision: {lat_precision} decimal places")
+                print(f"         Longitude precision: {lng_precision} decimal places")
+                
+                # Calculate accuracy (1 degree ≈ 111km)
+                lat_accuracy_m = 111000 / (10 ** lat_precision) if lat_precision > 0 else 111000
+                lng_accuracy_m = 111000 / (10 ** lng_precision) * abs(math.cos(math.radians(lat))) if lng_precision > 0 and lat else 111000
+                
+                print(f"         Approximate accuracy: ±{lat_accuracy_m:.1f}m latitude, ±{lng_accuracy_m:.1f}m longitude")
+                
+                # Check if precision meets 5 decimal places requirement (±1m accuracy)
+                has_5_decimal_precision = lat_precision >= 5 and lng_precision >= 5
+                meets_1m_accuracy = lat_accuracy_m <= 1.0 and lng_accuracy_m <= 1.0
+                
+                if has_5_decimal_precision and meets_1m_accuracy:
+                    print(f"         ✅ Coordinate precision meets requirement (5+ decimal places, ±1m accuracy)")
+                elif lat_precision >= 4 and lng_precision >= 4:
+                    print(f"         ⚠️ Coordinate precision good but not optimal (4 decimal places, ~±10m accuracy)")
+                    coordinate_precision_results["all_properties_have_5_decimal_precision"] = False
+                else:
+                    print(f"         ❌ Coordinate precision insufficient (3 or fewer decimal places, >±50m accuracy)")
+                    coordinate_precision_results["all_properties_have_5_decimal_precision"] = False
+                
+                coordinate_precision_results["properties_analysis"].append({
+                    "assessment_number": assessment_num,
+                    "lat_precision": lat_precision,
+                    "lng_precision": lng_precision,
+                    "lat_accuracy_m": lat_accuracy_m,
+                    "lng_accuracy_m": lng_accuracy_m,
+                    "meets_5_decimal_requirement": has_5_decimal_precision,
+                    "meets_1m_accuracy": meets_1m_accuracy
+                })
+            
+            # Find AAN 00254118 specifically for detailed testing
             target_property = None
             for prop in victoria_properties:
                 if prop.get('assessment_number') == '00254118':
@@ -193,16 +259,10 @@ def test_victoria_county_coordinate_precision_fixes():
                     break
             
             if not target_property:
-                print(f"   ❌ Target property AAN 00254118 not found in Victoria County properties")
+                print(f"\n   ❌ Target property AAN 00254118 not found in Victoria County properties")
                 return False, {"error": "AAN 00254118 not found"}
             
-            print(f"   ✅ Found target property AAN 00254118")
-            print(f"      Owner: {target_property.get('owner_name')}")
-            print(f"      Address: {target_property.get('property_address')}")
-            print(f"      Coordinates: {target_property.get('latitude')}, {target_property.get('longitude')}")
-            
-            # Sort properties by assessment number for consistent testing
-            victoria_properties.sort(key=lambda x: x.get('assessment_number', ''))
+            print(f"\n   ✅ Found target property AAN 00254118 for detailed testing")
             
         else:
             print(f"   ❌ Failed to retrieve properties: HTTP {response.status_code}")
