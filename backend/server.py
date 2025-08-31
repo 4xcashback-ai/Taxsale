@@ -1332,8 +1332,8 @@ async def scrape_victoria_county_tax_sales():
                     "redeemable": "Yes",
                     "hst_applicable": "No",
                     "property_description": "198 Little Narrows Rd, Little Narrows Land/Dwelling - 22,230 Sq. Feet +/-",
-                    "latitude": 46.2140,  # Little Narrows coordinates
-                    "longitude": -60.9950,
+                    "latitude": 46.21398,  # Little Narrows precise building coordinates
+                    "longitude": -60.99485,
                     "boundary_screenshot": f"https://nstaxmap-1.preview.emergentagent.com/api/property-image/00254118",
                     "scraped_at": datetime.now(timezone.utc),
                     "source_url": "https://victoriacounty.com",
