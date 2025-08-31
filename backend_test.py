@@ -125,22 +125,25 @@ def test_stats_endpoint():
         print(f"❌ Statistics endpoint error: {e}")
         return False, None
 
-def test_halifax_vs_victoria_county_thumbnails():
-    """Compare Halifax vs Victoria County thumbnail generation to identify differences"""
-    print("\n🔍 Testing Halifax vs Victoria County Thumbnail Generation Comparison...")
-    print("🎯 FOCUS: Compare thumbnail generation between Halifax and Victoria County")
+def test_victoria_county_scraper_with_pdf_extraction():
+    """Test Victoria County scraper with direct PDF extraction fix for correct minimum bid amounts"""
+    print("\n🔍 Testing Victoria County Scraper with Direct PDF Extraction Fix...")
+    print("🎯 FOCUS: Test fixed Victoria County scraper with new direct PDF extraction logic")
     print("📋 REQUIREMENTS from Review Request:")
-    print("   1. Test Halifax property thumbnails - Check Halifax property thumbnail URL and verify proper boundary images")
-    print("   2. Test Victoria County property thumbnails - Check Victoria County thumbnail URLs and compare quality/content")
-    print("   3. Compare boundary data availability - Check if both have proper boundary_screenshot URLs and coordinate data")
-    print("   4. Verify boundary generation process - Test /api/property-image endpoint for both municipality types")
-    print("   5. Check coordinate accuracy - Verify if Victoria County coordinates are accurate for proper boundary generation")
+    print("   1. Test fixed Victoria County scraper POST /api/scrape/victoria-county with new direct PDF extraction logic")
+    print("   2. Verify correct minimum bid amounts - Should now extract actual tax amounts from PDF:")
+    print("      - Entry 1 (AAN 00254118): $2,009.03 (not $2.0)")
+    print("      - Entry 2 (AAN 00453706): $1,599.71 (not $1.0)")
+    print("      - Entry 8 (AAN 09541209): $5,031.96 (not $0.0)")
+    print("   3. Check HST detection - Entry 8 should now show hst_applicable: 'Yes'")
+    print("   4. Verify all properties - Should find all 3 properties with complete accurate data")
+    print("   5. Test boundary images - Confirm boundary screenshot URLs are still working")
     print("")
-    print("🔍 COMPARISON GOALS:")
-    print("   - Do Halifax properties show proper boundary thumbnails with property boundaries?")
-    print("   - Do Victoria County properties show the same quality boundary thumbnails?")
-    print("   - Are coordinates for Victoria County properties accurate enough for boundary generation?")
-    print("   - Is boundary image generation using the same process for both municipalities?")
+    print("🔍 TESTING GOALS:")
+    print("   - Are the opening_bid amounts now correct from actual PDF extraction?")
+    print("   - Does Entry 8 correctly show HST as 'Yes'?")
+    print("   - Are all 3 properties extracted with complete and accurate data?")
+    print("   - Do boundary images continue to work properly?")
     
     try:
         # Test 1: Get Halifax Properties for Comparison
