@@ -734,8 +734,16 @@ function PropertySearch() {
     setDeploymentMessage("Verifying deployment...");
     try {
       const response = await axios.post(`${API}/deployment/verify`);
-      setDeploymentMessage(response.data.message);
+      const verificationResult = response.data;
+      
+      if (verificationResult.deployment_valid) {
+        setDeploymentMessage("Deployment verification successful! All services are running correctly.");
+      } else {
+        setDeploymentMessage(`Deployment verification failed: ${verificationResult.message}`);
+      }
+      
       await fetchSystemHealth();
+      await fetchDeploymentStatus(); // Refresh status after verification
     } catch (error) {
       console.error("Error verifying deployment:", error);
       setDeploymentMessage("Failed to verify deployment: " + (error.response?.data?.detail || error.message));
