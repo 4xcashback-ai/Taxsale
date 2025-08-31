@@ -3794,12 +3794,6 @@ async def deploy_application(github_repo: str = None):
         logger.error(f"Error starting deployment: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to start deployment: {str(e)}")
 
-
-@api_router.get("/health")
-async def health_check():
-    """Basic health check endpoint"""
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
-
 @api_router.get("/deployment/health")
 async def get_system_health():
     """Get system health status"""
@@ -3884,6 +3878,3 @@ async def startup_event():
 async def shutdown_db_client():
     scheduler.shutdown()
     client.close()
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
