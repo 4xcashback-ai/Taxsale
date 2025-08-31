@@ -294,7 +294,7 @@ sudo certbot --nginx -d taxsalecompass.ca -d www.taxsalecompass.ca
 
 ### Start services
 ```bash
-cd /var/www/tax-sale-compass
+cd /var/www/nstaxsales
 
 # Start applications with PM2
 pm2 start ecosystem.config.js
