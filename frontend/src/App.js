@@ -1118,6 +1118,17 @@ function PropertySearch() {
                           />
                         </div>
                         <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Municipality Description (Optional)</label>
+                          <textarea
+                            value={newMunicipality.description || ''}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, description: e.target.value})}
+                            placeholder="Enter municipality-specific information for property details pages (tax sale process, contact info, etc.)"
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">This description will be displayed on property detail pages for this municipality</p>
+                        </div>
+                        <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Scraper Type</label>
                           <select
                             value={newMunicipality.scraper_type}
