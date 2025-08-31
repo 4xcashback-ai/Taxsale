@@ -1124,6 +1124,11 @@ def test_victoria_county_final_parser():
             timeout=120  # Allow time for PDF download and processing
         )
         
+        properties_count = 0
+        all_data_complete = False
+        fallback_detected = False
+        found_aans = []
+        
         if scrape_response.status_code == 200:
             scrape_result = scrape_response.json()
             print(f"   ✅ Victoria County scraper executed successfully")
@@ -1387,17 +1392,6 @@ def test_victoria_county_final_parser():
     except Exception as e:
         print(f"   ❌ Victoria County final parser test error: {e}")
         return False, {"error": str(e)}
-                        print(f"      PID: Missing ❌")
-                        all_correct = False
-                    
-                    # Verify property type
-                    if expected_prop['property_type'].lower() in found_prop['property_type'].lower():
-                        print(f"      Property Type: '{found_prop['property_type']}' ✅")
-                    else:
-                        print(f"      Property Type: '{found_prop['property_type']}' ❌ (Expected: '{expected_prop['property_type']}')")
-                        all_correct = False
-                    
-                    # Verify tax amount (opening bid)
                     if abs(found_prop['opening_bid'] - expected_prop['tax_amount']) < 1.0:
                         print(f"      Tax Amount: ${found_prop['opening_bid']:.2f} ✅")
                     else:
