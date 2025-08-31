@@ -228,6 +228,7 @@ def test_victoria_county_improved_parser():
                 print(f"      Address: '{address}'")
                 print(f"      PID: {pid}")
                 print(f"      Opening Bid: ${opening_bid}")
+                print(f"      Property Type: {property_type}")
                 print(f"      Sale Date: {sale_date}")
                 
                 # Verify AAN is one of the expected ones from PDF
