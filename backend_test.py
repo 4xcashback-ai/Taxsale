@@ -679,10 +679,10 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Thumbnail Accuracy (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Victoria County Thumbnail Accuracy Investigation")
-    thumbnail_accurate, thumbnail_data = test_victoria_county_thumbnail_accuracy()
-    test_results['victoria_county_thumbnail_accuracy'] = thumbnail_accurate
+    # Test 2: Victoria County Coordinate Precision Fixes (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Victoria County Coordinate Precision Fixes Testing")
+    coordinate_fixes_successful, coordinate_data = test_victoria_county_coordinate_precision_fixes()
+    test_results['victoria_county_coordinate_precision_fixes'] = coordinate_fixes_successful
     
     # Test 3: Municipalities endpoint (supporting test)
     municipalities_working, victoria_data = test_municipalities_endpoint()
