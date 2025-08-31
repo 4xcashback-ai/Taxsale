@@ -5996,9 +5996,14 @@ def test_victoria_county_pdf_parsing_fixes():
         return False, {"error": str(e)}
 
 def main():
-    """Run Victoria County Enhanced Scraper Testing - Review Request Focus"""
-    print("🚀 Starting Victoria County Enhanced Scraper Testing")
-    print("🎯 FOCUS: Test enhanced Victoria County scraper with PDF parsing functionality")
+    """Run Victoria County PDF Parsing Fixes Testing - Review Request Focus"""
+    print("🚀 Starting Victoria County PDF Parsing Fixes Testing")
+    print("🎯 FOCUS: Test improved Victoria County PDF parsing with fixes")
+    print("📋 REVIEW REQUEST REQUIREMENTS:")
+    print("   1. Should now find all 3 properties from PDF (not just 1)")
+    print("   2. Should extract sale date '2025-08-26' from 'Tuesday, August 26TH, 2025 at 2:00PM'")
+    print("   3. All 3 properties should have correct AAN, PID, owner, address, tax amounts")
+    print("   4. Multiple split patterns should handle different PDF formats")
     print("=" * 80)
     print(f"🌐 Backend URL: {BACKEND_URL}")
     print("=" * 80)
@@ -6010,54 +6015,64 @@ def main():
         print("❌ Cannot proceed - API connection failed")
         return False
     
-    # Test 2: Victoria County PDF Parsing Debug (Primary Focus - Review Request)
-    print("\n🔍 Testing Victoria County PDF Parsing Debug...")
-    debug_success, debug_result = test_victoria_county_pdf_parsing_debug()
-    
-    # Test 3: Victoria County Enhanced Scraper (Secondary)
-    print("\n🏛️ Testing Victoria County Enhanced Scraper with PDF Parsing...")
-    victoria_success, victoria_result = test_victoria_county_enhanced_scraper()
+    # Test 2: Victoria County PDF Parsing Fixes (Primary Focus - Review Request)
+    print("\n🔍 Testing Victoria County PDF Parsing Fixes...")
+    fixes_success, fixes_result = test_victoria_county_pdf_parsing_fixes()
     
     # Summary
     print("\n" + "=" * 80)
-    print("🏁 VICTORIA COUNTY PDF PARSING DEBUG SUMMARY")
+    print("🏁 VICTORIA COUNTY PDF PARSING FIXES TEST SUMMARY")
     print("=" * 80)
     
-    # Debug Test Results
-    if debug_success:
-        print("✅ Victoria County PDF parsing debug completed successfully")
-        if debug_result:
-            print(f"   📊 Properties found: {debug_result.get('properties_found', 0)}")
-            print(f"   📊 Expected properties: {debug_result.get('expected_properties', 3)}")
-            print(f"   📊 Issues identified: {len(debug_result.get('issues', []))}")
+    # Fixes Test Results
+    if fixes_success:
+        print("✅ Victoria County PDF parsing fixes are working correctly!")
+        print("🎯 All review request requirements have been met:")
+        if fixes_result:
+            print(f"   ✅ Property Count: {fixes_result.get('properties_found', 0)}/3 properties found")
+            print(f"   ✅ Sale Date Extraction: {fixes_result.get('properties_with_correct_sale_date', 0)} properties with correct date")
+            print(f"   ✅ Complete Data: {fixes_result.get('properties_with_complete_data', 0)} properties with all required fields")
+            print(f"   ✅ Property Count Fixed: {fixes_result.get('property_count_fixed', False)}")
+            print(f"   ✅ Sale Date Extraction Working: {fixes_result.get('sale_date_extraction_working', False)}")
     else:
-        print("❌ Victoria County PDF parsing debug found critical issues")
-        if debug_result:
-            print(f"   📊 Properties found: {debug_result.get('properties_found', 0)} (expected: {debug_result.get('expected_properties', 3)})")
-            if debug_result.get('issues'):
-                print(f"   ❌ Issues found:")
-                for issue in debug_result['issues']:
+        print("❌ Victoria County PDF parsing fixes need more work")
+        print("🔍 Review request requirements not fully met:")
+        if fixes_result:
+            print(f"   📊 Properties found: {fixes_result.get('properties_found', 0)}/3 (expected 3)")
+            print(f"   📊 Properties with correct sale date: {fixes_result.get('properties_with_correct_sale_date', 0)}")
+            print(f"   📊 Properties with complete data: {fixes_result.get('properties_with_complete_data', 0)}")
+            
+            # Identify specific issues
+            issues = []
+            if not fixes_result.get('property_count_fixed', False):
+                issues.append("Property count issue - not finding all 3 properties from PDF")
+            if not fixes_result.get('sale_date_extraction_working', False):
+                issues.append("Sale date extraction issue - not parsing 'Tuesday, August 26TH, 2025 at 2:00PM' correctly")
+            if fixes_result.get('properties_with_complete_data', 0) < fixes_result.get('properties_found', 0):
+                issues.append("Property data completeness issue - missing required fields")
+            
+            if issues:
+                print(f"\n   ❌ SPECIFIC ISSUES IDENTIFIED:")
+                for issue in issues:
                     print(f"      - {issue}")
-            if debug_result.get('recommendations'):
-                print(f"   💡 Recommendations:")
-                for rec in debug_result['recommendations']:
-                    print(f"      - {rec}")
+            
+            if 'error' in fixes_result:
+                print(f"   ❌ Error: {fixes_result['error']}")
     
-    # Enhanced Scraper Results
-    print(f"\n🏛️ ENHANCED SCRAPER RESULTS:")
-    if victoria_success:
-        print("✅ Victoria County enhanced scraper testing completed successfully")
-        if victoria_result:
-            print(f"   📊 Scraper working: {victoria_result.get('scraper_working', False)}")
-            print(f"   📊 Properties found: {victoria_result.get('properties_found', 0)}")
-            print(f"   📊 Sample property found: {victoria_result.get('sample_property_found', False)}")
-            print(f"   📊 Expected values correct: {victoria_result.get('expected_values_correct', False)}")
-            print(f"   📊 PDF parsing working: {victoria_result.get('pdf_parsing_working', False)}")
+    # Final recommendation
+    print(f"\n🎯 FINAL ASSESSMENT:")
+    if fixes_success:
+        print("✅ Victoria County PDF parsing improvements are working correctly")
+        print("✅ All review request requirements have been successfully implemented")
+        print("✅ The scraper now finds 3 properties with correct sale dates and complete data")
     else:
-        print("❌ Victoria County enhanced scraper testing has issues")
-        if victoria_result and 'error' in victoria_result:
-            print(f"   ❌ Error: {victoria_result['error']}")
-        if victoria_result and 'issues' in victoria_result:
+        print("❌ Victoria County PDF parsing improvements need additional work")
+        print("🔧 Recommend reviewing the PDF parsing logic for:")
+        print("   - Property splitting patterns to find all 3 properties")
+        print("   - Sale date extraction from 'Tuesday, August 26TH, 2025 at 2:00PM' format")
+        print("   - Property field extraction for AAN, PID, owner, address, tax amounts")
+    
+    return fixes_success
             print(f"   ❌ Issues found:")
             for issue in victoria_result['issues']:
                 print(f"      - {issue}")
