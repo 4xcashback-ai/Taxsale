@@ -1500,34 +1500,39 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 property_number = property_number_match.group(1) if property_number_match else 'Unknown'
                 logger.info(f"Property number: {property_number}")
                 
-                # Extract AAN with debugging
+                # Extract AAN with comprehensive patterns to handle all formats
                 aan_patterns = [
-                    r'AAN:\s*(\d+)',
-                    r'AAN\s+(\d+)',
-                    r'(\d+)\.\s*AAN:\s*(\d+)'  # Handle numbered format
+                    r'AAN:\s*(\d+)',                    # Standard: "AAN: 00254118"
+                    r'AAN\s+(\d+)',                     # No colon: "AAN 00254118"
+                    r'(\d+)\.\s*AAN:\s*(\d+)',          # Numbered: "1. AAN: 00254118"
+                    r'(\d+)\s*/\s*PID:',                # Just get digits before /PID (backup)
                 ]
                 
                 assessment_number = None
                 for pattern in aan_patterns:
                     aan_match = re.search(pattern, section)
                     if aan_match:
-                        # Handle both single group and double group patterns
-                        if len(aan_match.groups()) == 1:
-                            assessment_number = aan_match.group(1)
-                        else:
-                            assessment_number = aan_match.group(2)  # Second group for numbered format
-                        logger.info(f"AAN found with pattern '{pattern}': {assessment_number}")
+                        groups = aan_match.groups()
+                        if len(groups) == 1:
+                            assessment_number = groups[0]
+                        elif len(groups) == 2:
+                            # For numbered format, AAN is the second group
+                            assessment_number = groups[1] if 'AAN' in pattern else groups[0]
+                        logger.info(f"✅ AAN found with pattern '{pattern}': {assessment_number}")
                         break
                 
                 if not assessment_number:
                     logger.error(f"❌ AAN not found in section {i+1}")
+                    logger.error(f"Section preview: {section[:300]}")
                     continue
                 
-                # Extract PID with debugging
+                # Extract PID with comprehensive patterns
                 pid_patterns = [
-                    r'PID:\s*([\d/]+)',
-                    r'PID\s+([\d/]+)',
-                    r'/\s*PID:\s*([\d/]+)'
+                    r'PID:\s*([\d/]+)',                 # Standard: "PID: 85006500"
+                    r'PID\s+([\d/]+)',                  # No colon: "PID 85006500"
+                    r'/\s*PID:\s*([\d/]+)',             # With slash: "/ PID: 85006500"
+                    r'PID:\s*([\d]+/[\d]+)',            # Multiple PIDs: "PID: 85010866/85074276"
+                    r'PID:\s*([\d]+)',                  # Single PID: "PID: 85142388"
                 ]
                 
                 pid_number = None
@@ -1535,18 +1540,19 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                     pid_match = re.search(pattern, section)
                     if pid_match:
                         pid_number = pid_match.group(1)
-                        logger.info(f"PID found with pattern '{pattern}': {pid_number}")
+                        logger.info(f"✅ PID found with pattern '{pattern}': {pid_number}")
                         break
                 
                 if not pid_number:
                     logger.warning(f"⚠️ PID not found in section {i+1}")
                 
-                # Extract owner name with enhanced patterns
+                # Extract owner name with enhanced patterns for different formats
                 owner_patterns = [
-                    r'Property assessed to\s+([^.]+)\.',
-                    r'assessed to\s+([^.]+)\.',
-                    r'–\s*Property assessed to\s+([^.]+)\.',
-                    r'-\s*Property assessed to\s+([^.]+)\.'
+                    r'Property assessed to\s+([^.]+)\.',                    # Standard format
+                    r'assessed to\s+([^.]+)\.',                            # Without "Property"
+                    r'–\s*Property assessed to\s+([^.]+)\.',               # With em dash
+                    r'-\s*Property assessed to\s+([^.]+)\.',               # With regular dash
+                    r'Property assessed to\s+([^/]+)(?:/[^.]*)?\.', # Handle multiple names with slash
                 ]
                 
                 owner_name = None
@@ -1554,11 +1560,14 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                     owner_match = re.search(pattern, section, re.IGNORECASE)
                     if owner_match:
                         owner_name = owner_match.group(1).strip()
-                        logger.info(f"Owner found with pattern '{pattern}': {owner_name}")
+                        # Clean up owner name
+                        owner_name = re.sub(r'\s+', ' ', owner_name)  # Normalize spaces
+                        logger.info(f"✅ Owner found with pattern '{pattern}': {owner_name}")
                         break
                 
                 if not owner_name:
                     logger.error(f"❌ Owner name not found in section {i+1}")
+                    logger.error(f"Section preview: {section[:300]}")
                     continue
                 
                 logger.info(f"✅ Successfully parsed Property #{property_number}: AAN={assessment_number}, PID={pid_number}, Owner={owner_name}")
