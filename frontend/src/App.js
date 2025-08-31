@@ -389,6 +389,13 @@ function PropertySearch() {
     scrape_time_minute: 0
   });
 
+  // Deployment management state
+  const [deploymentStatus, setDeploymentStatus] = useState(null);
+  const [deploymentLoading, setDeploymentLoading] = useState(false);
+  const [deploymentMessage, setDeploymentMessage] = useState("");
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [githubRepo, setGithubRepo] = useState("");
+
   // Fetch initial data and refresh when filters change
   useEffect(() => {
     fetchStats();
