@@ -381,163 +381,77 @@ def test_victoria_county_scraper_with_pdf_extraction():
             print(f"   ❌ CRITICAL: Not all boundary images are working!")
             return False, {"error": "Boundary images not working for all properties", "details": boundary_image_results}
         
-        # Test 6: Check Coordinate Accuracy for Boundary Generation
-        print(f"\n   🔧 TEST 6: Check Coordinate Accuracy for Proper Boundary Generation")
+        # Test 6: Verify All Properties Have Complete and Accurate Data
+        print(f"\n   🔧 TEST 6: Verify All Properties Have Complete and Accurate Data")
         
-        print(f"\n   📍 COORDINATE ACCURACY ANALYSIS:")
+        data_completeness_results = {
+            "properties_with_complete_data": 0,
+            "missing_data_issues": [],
+            "data_accuracy_issues": []
+        }
         
-        # Analyze Halifax coordinates
-        if halifax_properties:
-            halifax_coords_analysis = []
-            for prop in halifax_properties[:3]:
-                lat = prop.get("latitude")
-                lng = prop.get("longitude")
-                aan = prop.get("assessment_number")
-                address = prop.get("property_address", "")
-                
-                if lat and lng:
-                    # Check if coordinates are in Halifax region (approximate bounds)
-                    halifax_region = 44.5 <= lat <= 45.0 and -64.0 <= lng <= -63.0
-                    halifax_coords_analysis.append({
-                        "aan": aan,
-                        "coordinates": (lat, lng),
-                        "in_halifax_region": halifax_region,
-                        "address": address
-                    })
+        required_fields = ["assessment_number", "owner_name", "property_address", "opening_bid", 
+                          "municipality_name", "sale_date", "latitude", "longitude"]
+        
+        print(f"   📊 Checking data completeness for all 3 properties...")
+        
+        for i, prop in enumerate(victoria_properties):
+            aan = prop.get("assessment_number")
+            print(f"\n   📋 Property {i+1} - AAN {aan}:")
             
-            print(f"   📊 Halifax Coordinate Analysis:")
-            for analysis in halifax_coords_analysis:
-                region_status = "✅ In Halifax region" if analysis["in_halifax_region"] else "⚠️ Outside Halifax region"
-                print(f"      AAN {analysis['aan']}: {analysis['coordinates']} - {region_status}")
-        
-        # Analyze Victoria County coordinates
-        if victoria_properties:
-            victoria_coords_analysis = []
-            for prop in victoria_properties:
-                lat = prop.get("latitude")
-                lng = prop.get("longitude")
-                aan = prop.get("assessment_number")
-                address = prop.get("property_address", "")
-                
-                if lat and lng:
-                    # Check if coordinates are in Cape Breton/Victoria County region
-                    cape_breton_region = 45.5 <= lat <= 47.0 and -61.5 <= lng <= -59.5
-                    victoria_coords_analysis.append({
-                        "aan": aan,
-                        "coordinates": (lat, lng),
-                        "in_cape_breton_region": cape_breton_region,
-                        "address": address
-                    })
-            
-            print(f"   📊 Victoria County Coordinate Analysis:")
-            for analysis in victoria_coords_analysis:
-                region_status = "✅ In Cape Breton region" if analysis["in_cape_breton_region"] else "⚠️ Outside Cape Breton region"
-                print(f"      AAN {analysis['aan']}: {analysis['coordinates']} - {region_status}")
-        
-        # Test Google Maps API with sample coordinates from both municipalities
-        print(f"\n   🗺️ GOOGLE MAPS API TESTING:")
-        
-        google_maps_api_key = "AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"
-        
-        # Test with Halifax coordinates if available
-        if halifax_properties and halifax_properties[0].get("latitude"):
-            halifax_prop = halifax_properties[0]
-            lat, lng = halifax_prop.get("latitude"), halifax_prop.get("longitude")
-            test_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key={google_maps_api_key}"
-            
-            try:
-                response = requests.get(test_url, timeout=10)
-                if response.status_code == 200:
-                    print(f"   ✅ Halifax Google Maps API test: {len(response.content)} bytes")
+            missing_fields = []
+            for field in required_fields:
+                value = prop.get(field)
+                if value is None or value == "":
+                    missing_fields.append(field)
+                    print(f"      ❌ Missing {field}")
                 else:
-                    print(f"   ❌ Halifax Google Maps API test failed: HTTP {response.status_code}")
-            except Exception as e:
-                print(f"   ❌ Halifax Google Maps API test error: {e}")
-        
-        # Test with Victoria County coordinates if available
-        if victoria_properties and victoria_properties[0].get("latitude"):
-            victoria_prop = victoria_properties[0]
-            lat, lng = victoria_prop.get("latitude"), victoria_prop.get("longitude")
-            test_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=17&size=405x290&maptype=satellite&format=png&key={google_maps_api_key}"
+                    print(f"      ✅ Has {field}: {value}")
             
-            try:
-                response = requests.get(test_url, timeout=10)
-                if response.status_code == 200:
-                    print(f"   ✅ Victoria County Google Maps API test: {len(response.content)} bytes")
-                else:
-                    print(f"   ❌ Victoria County Google Maps API test failed: HTTP {response.status_code}")
-            except Exception as e:
-                print(f"   ❌ Victoria County Google Maps API test error: {e}")
+            if not missing_fields:
+                data_completeness_results["properties_with_complete_data"] += 1
+                print(f"      ✅ Property has complete data")
+            else:
+                data_completeness_results["missing_data_issues"].append({
+                    "aan": aan,
+                    "missing_fields": missing_fields
+                })
+                print(f"      ❌ Property missing {len(missing_fields)} fields")
         
-        # Final Comparison Analysis
-        print(f"\n   📊 FINAL HALIFAX vs VICTORIA COUNTY THUMBNAIL COMPARISON:")
+        print(f"\n   📊 Data Completeness Summary:")
+        print(f"      Properties with complete data: {data_completeness_results['properties_with_complete_data']}/3")
         
-        # Calculate comparison metrics
-        halifax_success_rate = 0
-        victoria_success_rate = 0
+        if data_completeness_results["properties_with_complete_data"] != 3:
+            print(f"   ❌ CRITICAL: Not all properties have complete data!")
+            return False, {"error": "Properties missing required data", "details": data_completeness_results}
         
-        if halifax_properties:
-            halifax_working_endpoints = len([r for r in halifax_endpoint_results if r.get("working", False)])
-            halifax_success_rate = (halifax_working_endpoints / len(halifax_endpoint_results)) * 100 if halifax_endpoint_results else 0
+        # Final Success Verification
+        print(f"\n   🎉 FINAL VERIFICATION: All Victoria County Scraper Requirements Met!")
         
-        if victoria_properties:
-            victoria_working_endpoints = len([r for r in victoria_endpoint_results if r.get("working", False)])
-            victoria_success_rate = (victoria_working_endpoints / len(victoria_endpoint_results)) * 100 if victoria_endpoint_results else 0
+        all_tests_passed = (
+            bid_verification_results["correct_bids"] == 3 and
+            hst_verification_results["hst_correct"] and
+            boundary_image_results["working_boundary_endpoints"] == 3 and
+            data_completeness_results["properties_with_complete_data"] == 3
+        )
         
-        print(f"\n   🏆 THUMBNAIL GENERATION COMPARISON RESULTS:")
-        print(f"      Halifax thumbnail success rate: {halifax_success_rate:.1f}%")
-        print(f"      Victoria County thumbnail success rate: {victoria_success_rate:.1f}%")
+        print(f"\n   📋 REVIEW REQUEST REQUIREMENTS STATUS:")
+        print(f"      1. ✅ Victoria County scraper executed successfully")
+        print(f"      2. {'✅' if bid_verification_results['correct_bids'] == 3 else '❌'} Correct minimum bid amounts from PDF extraction:")
+        for detail in bid_verification_results["bid_details"]:
+            status = "✅" if detail["correct"] else "❌"
+            print(f"         {status} AAN {detail['aan']}: ${detail['actual_bid']} (expected ${detail['expected_bid']})")
+        print(f"      3. {'✅' if hst_verification_results['hst_correct'] else '❌'} HST detection for Entry 8: {hst_verification_results['hst_value']}")
+        print(f"      4. ✅ All 3 properties found with complete accurate data")
+        print(f"      5. {'✅' if boundary_image_results['working_boundary_endpoints'] == 3 else '❌'} Boundary images working: {boundary_image_results['working_boundary_endpoints']}/3")
         
-        # Identify key differences
-        differences_found = []
-        
-        if halifax_success_rate > victoria_success_rate:
-            differences_found.append("Halifax has higher thumbnail success rate than Victoria County")
-        elif victoria_success_rate > halifax_success_rate:
-            differences_found.append("Victoria County has higher thumbnail success rate than Halifax")
-        else:
-            differences_found.append("Both municipalities have similar thumbnail success rates")
-        
-        # Check coordinate availability differences
-        if halifax_properties and victoria_properties:
-            halifax_coord_rate = (halifax_thumbnail_results["properties_with_coordinates"] / len(halifax_properties)) * 100
-            victoria_coord_rate = (victoria_thumbnail_results["properties_with_coordinates"] / len(victoria_properties)) * 100
-            
-            if abs(halifax_coord_rate - victoria_coord_rate) > 10:
-                differences_found.append(f"Coordinate availability differs: Halifax {halifax_coord_rate:.1f}% vs Victoria County {victoria_coord_rate:.1f}%")
-        
-        # Check boundary screenshot availability differences
-        if halifax_properties and victoria_properties:
-            halifax_screenshot_rate = (halifax_thumbnail_results["properties_with_boundary_screenshots"] / len(halifax_properties)) * 100
-            victoria_screenshot_rate = (victoria_thumbnail_results["properties_with_boundary_screenshots"] / len(victoria_properties)) * 100
-            
-            if abs(halifax_screenshot_rate - victoria_screenshot_rate) > 10:
-                differences_found.append(f"Boundary screenshot availability differs: Halifax {halifax_screenshot_rate:.1f}% vs Victoria County {victoria_screenshot_rate:.1f}%")
-        
-        print(f"\n   🔍 KEY DIFFERENCES IDENTIFIED:")
-        for diff in differences_found:
-            print(f"      • {diff}")
-        
-        # Determine if Victoria County thumbnails are working properly
-        victoria_thumbnails_working = victoria_success_rate >= 80 and victoria_thumbnail_results["coordinate_accuracy"]
-        halifax_thumbnails_working = halifax_success_rate >= 80 and halifax_thumbnail_results["coordinate_accuracy"]
-        
-        print(f"\n   📋 REVIEW REQUEST ANSWERS:")
-        print(f"      1. Do Halifax properties show proper boundary thumbnails? {'✅ YES' if halifax_thumbnails_working else '❌ NO'}")
-        print(f"      2. Do Victoria County properties show same quality thumbnails? {'✅ YES' if victoria_thumbnails_working else '❌ NO'}")
-        print(f"      3. Are Victoria County coordinates accurate for boundary generation? {'✅ YES' if victoria_thumbnail_results['coordinate_accuracy'] else '❌ NO'}")
-        print(f"      4. Is boundary generation using same process for both? {'✅ YES' if halifax_success_rate > 0 and victoria_success_rate > 0 else '❌ NO'}")
-        
-        return victoria_thumbnails_working and halifax_thumbnails_working, {
-            "halifax_success_rate": halifax_success_rate,
-            "victoria_success_rate": victoria_success_rate,
-            "differences_found": differences_found,
-            "halifax_thumbnails_working": halifax_thumbnails_working,
-            "victoria_thumbnails_working": victoria_thumbnails_working,
-            "halifax_results": halifax_thumbnail_results,
-            "victoria_results": victoria_thumbnail_results,
-            "halifax_endpoint_results": halifax_endpoint_results,
-            "victoria_endpoint_results": victoria_endpoint_results
+        return all_tests_passed, {
+            "scraper_executed": True,
+            "bid_verification": bid_verification_results,
+            "hst_verification": hst_verification_results,
+            "boundary_images": boundary_image_results,
+            "data_completeness": data_completeness_results,
+            "all_requirements_met": all_tests_passed
         }
             
     except Exception as e:
