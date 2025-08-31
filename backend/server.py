@@ -1478,19 +1478,42 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 logger.info(f"Processing Victoria County property section {i+1}:")
                 logger.info(f"Section content: {section}")
                 
-                # Extract AAN and PID from section (already parsed in the main loop)
-                # Pattern: X. AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton.
-                aan_pid_match = re.search(r'(\d+)\.\s*AAN:\s*(\d+)\s*/\s*PID:\s*(\d+)\s*[–-–]\s*Property assessed to\s*([^.]+)\.', section, re.IGNORECASE)
+                # Extract AAN and PID from section with more flexible patterns
+                # Handle formats like:
+                # "X. AAN: 00254118 / PID: 85006500 – Property assessed to Donald John Beaton."
+                # "X. AAN: 00453706 / PID: 85010866/85074276 – Property assessed to Kenneth Ferneyhough."
                 
-                if aan_pid_match:
-                    property_number = aan_pid_match.group(1)
-                    assessment_number = aan_pid_match.group(2)
-                    pid_number = aan_pid_match.group(3)
-                    owner_name = aan_pid_match.group(4).strip()
-                    logger.info(f"Successfully parsed Property #{property_number}: AAN={assessment_number}, PID={pid_number}, Owner={owner_name}")
-                else:
-                    logger.warning(f"Could not parse AAN/PID from Victoria County section: {section[:200]}...")
+                # Extract property number
+                property_number_match = re.search(r'^(\d+)\.', section)
+                property_number = property_number_match.group(1) if property_number_match else 'Unknown'
+                
+                # Extract AAN
+                aan_match = re.search(r'AAN:\s*(\d+)', section)
+                assessment_number = aan_match.group(1) if aan_match else None
+                
+                # Extract PID (handle multiple PIDs separated by /)
+                pid_match = re.search(r'PID:\s*([\d/]+)', section)
+                pid_number = pid_match.group(1) if pid_match else None
+                
+                # Extract owner name with flexible patterns
+                owner_patterns = [
+                    r'Property assessed to\s+([^.]+)\.',
+                    r'assessed to\s+([^.]+)\.',
+                    r'–\s*Property assessed to\s+([^.]+)\.'
+                ]
+                
+                owner_name = None
+                for pattern in owner_patterns:
+                    owner_match = re.search(pattern, section, re.IGNORECASE)
+                    if owner_match:
+                        owner_name = owner_match.group(1).strip()
+                        break
+                
+                if not assessment_number or not owner_name:
+                    logger.warning(f"Could not parse required fields from Victoria County section: {section[:200]}...")
                     continue
+                    
+                logger.info(f"Successfully parsed Property #{property_number}: AAN={assessment_number}, PID={pid_number}, Owner={owner_name}")
                 
                 # Extract property type and address
                 # Pattern: Land/Dwelling, located at 198 Little Narrows Rd, Little Narrows, 22,230 Sq. Feet +/-.
