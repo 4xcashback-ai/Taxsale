@@ -321,42 +321,44 @@ def test_halifax_vs_victoria_county_thumbnails():
         
         else:
             print(f"   ⚠️ No Victoria County properties available for thumbnail comparison")
+        # Test 4: Compare Boundary Data Availability
+        print(f"\n   🔧 TEST 4: Compare Boundary Data Availability Between Municipalities")
+        
+        print(f"\n   📊 HALIFAX BOUNDARY DATA SUMMARY:")
+        if halifax_properties:
+            halifax_total = len(halifax_properties)
+            halifax_coords = halifax_thumbnail_results["properties_with_coordinates"]
+            halifax_screenshots = halifax_thumbnail_results["properties_with_boundary_screenshots"]
+            halifax_working = halifax_thumbnail_results["working_thumbnail_endpoints"]
             
-            # Summary of fixed scraper findings
-            print(f"\n   📊 FIXED SCRAPER ANALYSIS SUMMARY:")
-            print(f"      Properties found: {len(victoria_properties)}")
-            print(f"      Fixed bid calculations correct: {bid_calculations_correct}")
-            print(f"      Coordinates assigned: {coordinates_assigned}")
-            print(f"      Boundary images present: {boundary_images_present}")
-            print(f"      HST detection correct: {hst_detection_correct}")
-            print(f"      AANs found: {found_aans}")
+            print(f"      Total properties: {halifax_total}")
+            print(f"      Properties with coordinates: {halifax_coords}/{halifax_total} ({(halifax_coords/halifax_total*100):.1f}%)")
+            print(f"      Properties with boundary screenshots: {halifax_screenshots}/{halifax_total} ({(halifax_screenshots/halifax_total*100):.1f}%)")
+            print(f"      Working thumbnail endpoints: {halifax_working}/{halifax_total} ({(halifax_working/halifax_total*100):.1f}%)")
             
-            # Critical issues identified
-            if not bid_calculations_correct:
-                print(f"\n   🚨 CRITICAL ISSUE: Fixed minimum bid calculations still incorrect")
-                print(f"      - Enhanced tax amount extraction patterns not working")
-                print(f"      - Opening bid values still showing low amounts instead of correct PDF tax amounts")
-                print(f"      - Expected: Entry 1=$2,009.03, Entry 2=$1,599.71, Entry 8=$5,031.96")
-            
-            if not coordinates_assigned:
-                print(f"\n   🚨 CRITICAL ISSUE: Coordinates not assigned")
-                print(f"      - Properties missing latitude/longitude for boundary image generation")
-                print(f"      - Location-specific coordinates for Little Narrows, Middle River, Washabuck not working")
-            
-            if not boundary_images_present:
-                print(f"\n   🚨 CRITICAL ISSUE: Boundary images still missing")
-                print(f"      - boundary_screenshot fields still None/empty")
-                print(f"      - Image generation pipeline still not working")
-                print(f"      - May be related to coordinates or Google Maps API integration")
-            
-            if not hst_detection_correct:
-                print(f"\n   🚨 CRITICAL ISSUE: HST detection not working")
-                print(f"      - Entry 8 should show hst_applicable: 'Yes' due to '+ HST' in PDF")
-                print(f"      - Enhanced patterns not detecting HST indicators correctly")
-            
+            if halifax_thumbnail_results["thumbnail_sizes"]:
+                avg_size = sum(halifax_thumbnail_results["thumbnail_sizes"]) / len(halifax_thumbnail_results["thumbnail_sizes"])
+                print(f"      Average thumbnail size: {avg_size:.0f} bytes")
         else:
-            print(f"   ❌ Failed to retrieve Victoria County properties: {properties_response.status_code}")
-            return False, {"error": f"Failed to retrieve properties: HTTP {properties_response.status_code}"}
+            print(f"      No Halifax properties available for analysis")
+        
+        print(f"\n   📊 VICTORIA COUNTY BOUNDARY DATA SUMMARY:")
+        if victoria_properties:
+            victoria_total = len(victoria_properties)
+            victoria_coords = victoria_thumbnail_results["properties_with_coordinates"]
+            victoria_screenshots = victoria_thumbnail_results["properties_with_boundary_screenshots"]
+            victoria_working = victoria_thumbnail_results["working_thumbnail_endpoints"]
+            
+            print(f"      Total properties: {victoria_total}")
+            print(f"      Properties with coordinates: {victoria_coords}/{victoria_total} ({(victoria_coords/victoria_total*100):.1f}%)")
+            print(f"      Properties with boundary screenshots: {victoria_screenshots}/{victoria_total} ({(victoria_screenshots/victoria_total*100):.1f}%)")
+            print(f"      Working thumbnail endpoints: {victoria_working}/{victoria_total} ({(victoria_working/victoria_total*100):.1f}%)")
+            
+            if victoria_thumbnail_results["thumbnail_sizes"]:
+                avg_size = sum(victoria_thumbnail_results["thumbnail_sizes"]) / len(victoria_thumbnail_results["thumbnail_sizes"])
+                print(f"      Average thumbnail size: {avg_size:.0f} bytes")
+        else:
+            print(f"      No Victoria County properties available for analysis")
         
         # Test 3: Test Enhanced Tax Amount Extraction Patterns
         print(f"\n   🔧 TEST 3: Test Enhanced Tax Amount Extraction Patterns")
