@@ -698,7 +698,7 @@ function PropertySearch() {
       return;
     }
 
-    setDeploymentLoading(true);
+    setButtonStates(prev => ({ ...prev, deploy: true }));
     setDeploymentMessage("Starting deployment...");
     try {
       const response = await axios.post(`${API}/deployment/deploy`, null, {
@@ -723,7 +723,7 @@ function PropertySearch() {
       console.error("Error deploying application:", error);
       setDeploymentMessage("Failed to start deployment: " + (error.response?.data?.detail || error.message));
     } finally {
-      setDeploymentLoading(false);
+      setButtonStates(prev => ({ ...prev, deploy: false }));
     }
   };
 
