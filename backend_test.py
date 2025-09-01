@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Deployment Management Endpoints Testing
+Focus on Production VPS Deployment Check-Updates Endpoint Testing
 """
 
 import requests
@@ -15,6 +15,9 @@ import time
 # Get backend URL from environment
 import os
 BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-automation.preview.emergentagent.com') + '/api'
+
+# Production VPS URL for deployment testing
+PRODUCTION_VPS_URL = 'https://taxsalecompass.ca/api'
 
 def test_api_connection():
     """Test basic API connectivity"""
