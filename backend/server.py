@@ -3779,7 +3779,7 @@ async def deploy_application(github_repo: str = None):
         import asyncio
         
         # Build the deployment command
-        cmd = ['sudo', '/app/scripts/deployment.sh', 'deploy']
+        cmd = ['sudo', f'{SCRIPT_DIR}/deployment.sh', 'deploy']
         if github_repo:
             cmd.append(github_repo)
         
