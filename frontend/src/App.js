@@ -1763,7 +1763,8 @@ function PropertySearch() {
                             ) : (
                               <Download className="h-3 w-3 mr-1" />
                             )}
-                            {muni.scraper_type === 'halifax' ? 'Run Halifax Scraper' : 'Run Generic Scraper'}
+                            {muni.scraper_type === 'halifax' ? 'Run Halifax Scraper' : 
+                             muni.scraper_type === 'victoria_county' ? 'Run Victoria County Scraper' : 'Run Generic Scraper'}
                           </Button>
                         </div>
                         
