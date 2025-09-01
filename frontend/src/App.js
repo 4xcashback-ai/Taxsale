@@ -2061,7 +2061,6 @@ function PropertySearch() {
                 </CardContent>
               </Card>
               </>
-              )}
             </div>
           </TabsContent>
         </Tabs>
