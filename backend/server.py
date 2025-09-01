@@ -3816,7 +3816,7 @@ async def get_system_health():
         
         # Run the health check
         result = subprocess.run(
-            ['sudo', '/app/scripts/system-health.sh', 'check'],
+            ['sudo', f'{SCRIPT_DIR}/system-health.sh', 'check'],
             capture_output=True,
             text=True,
             timeout=120
