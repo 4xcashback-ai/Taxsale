@@ -3309,7 +3309,7 @@ async def scrape_municipality_by_id(municipality_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/scrape-all")
-async def scrape_all_municipalities():
+async def scrape_all_municipalities(current_user: dict = Depends(verify_token)):
     """Trigger scraping for all municipalities"""
     municipalities = await db.municipalities.find().to_list(1000)
     results = []
