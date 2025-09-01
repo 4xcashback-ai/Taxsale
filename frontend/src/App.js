@@ -1151,7 +1151,7 @@ function PropertySearch() {
                   </div>
                 </CardTitle>
                 <CardDescription>
-                  Interactive map showing {mapData.length} tax sale properties across Nova Scotia
+                  Interactive map showing {taxSales.length} tax sale properties across Nova Scotia
                 </CardDescription>
               </CardHeader>
               <CardContent>
