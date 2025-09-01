@@ -3903,6 +3903,36 @@ async def verify_auth(current_user: dict = Depends(verify_token)):
     """Verify if user is authenticated"""
     return {"authenticated": True, "username": current_user["username"]}
 
+@api_router.post("/admin/fix-property-images")
+async def fix_property_images(current_user: dict = Depends(verify_token)):
+    """Fix property images with malformed URLs (migration helper)"""
+    try:
+        # Find all properties with full URLs in boundary_screenshot
+        properties = await db.tax_sales.find({
+            "boundary_screenshot": {"$regex": "^https?://"}
+        }).to_list(1000)
+        
+        updated_count = 0
+        for prop in properties:
+            assessment_number = prop.get("assessment_number", "")
+            if assessment_number:
+                new_boundary_screenshot = f"boundary_{assessment_number}.png"
+                await db.tax_sales.update_one(
+                    {"_id": prop["_id"]},
+                    {"$set": {"boundary_screenshot": new_boundary_screenshot}}
+                )
+                updated_count += 1
+        
+        return {
+            "status": "success",
+            "message": f"Fixed {updated_count} property images with malformed URLs",
+            "properties_updated": updated_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fixing property images: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fix property images: {str(e)}")
+
 @api_router.get("/deployment/health")
 async def get_system_health(current_user: dict = Depends(verify_token)):
     """Get system health status"""
