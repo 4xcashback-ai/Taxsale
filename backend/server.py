@@ -3848,7 +3848,7 @@ async def check_for_updates(current_user: dict = Depends(verify_token)):
         raise HTTPException(status_code=500, detail=f"Failed to check for updates: {str(e)}")
 
 @api_router.post("/deployment/deploy")
-async def deploy_application(github_repo: str = None):
+async def deploy_application(github_repo: str = None, current_user: dict = Depends(verify_token)):
     """Deploy latest application version"""
     try:
         import subprocess
