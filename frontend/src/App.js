@@ -760,10 +760,20 @@ function PropertySearch() {
   };
 
   const checkForUpdates = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setButtonStates(prev => ({ ...prev, checkUpdates: true }));
     setDeploymentMessage("Checking for updates...");
     try {
-      const response = await axios.post(`${API}/deployment/check-updates`);
+      const response = await axios.post(`${API}/deployment/check-updates`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       const updateResult = response.data;
       
       if (updateResult.updates_available) {
