@@ -15,12 +15,20 @@ NC='\033[0m'
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_DIR="/var/www/nstaxsales"
-LOG_FILE="/var/log/deployment-orchestrator.log"
+
+# Environment detection
+if [ -d "/var/www/nstaxsales" ]; then
+    APP_DIR="/var/www/nstaxsales"
+    LOG_FILE="/var/log/deployment-orchestrator.log"
+    ENVIRONMENT="production"
+else
+    APP_DIR="/app"
+    LOG_FILE="/tmp/taxsale-logs/deployment-orchestrator.log"
+    ENVIRONMENT="development"
+fi
 
 # Deployment strategy configuration
 DEPLOYMENT_STRATEGY="${DEPLOYMENT_STRATEGY:-enhanced}"  # enhanced, blue-green, docker
-ENVIRONMENT="${ENVIRONMENT:-production}"
 DRY_RUN="${DRY_RUN:-false}"
 
 log() {
