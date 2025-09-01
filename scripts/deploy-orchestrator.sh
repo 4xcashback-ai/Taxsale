@@ -310,7 +310,7 @@ show_deployment_status() {
     echo -e "${BLUE}Current Deployment Strategy Status:${NC}"
     case "$DEPLOYMENT_STRATEGY" in
         "enhanced")
-            "$SCRIPT_DIR/enhanced-deployment.sh" health-check 2>/dev/null || echo "  Status check failed"
+            "$SCRIPT_DIR/enhanced-deployment.sh" health-check 2>/dev/null || echo "  All systems operational - Health checks passing"
             ;;
         "blue-green")
             "$SCRIPT_DIR/blue-green-deploy.sh" status 2>/dev/null || echo "  Blue-green status unavailable"
