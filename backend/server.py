@@ -29,6 +29,14 @@ from apscheduler.triggers.cron import CronTrigger
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Environment detection for script paths
+if os.path.exists('/var/www/nstaxsales'):
+    # Production VPS environment
+    SCRIPT_DIR = '/var/www/nstaxsales/scripts'
+else:
+    # Development environment  
+    SCRIPT_DIR = '/app/scripts'
+
 # Setup logging
 logger = logging.getLogger(__name__)
 
