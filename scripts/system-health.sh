@@ -5,9 +5,16 @@
 
 set -e
 
-# Configuration
-APP_DIR="/var/www/nstaxsales"
-LOG_FILE="/var/log/tax-sale-health.log"
+# Configuration - Environment Detection
+if [ -d "/var/www/nstaxsales" ]; then
+    # Production VPS environment
+    APP_DIR="/var/www/nstaxsales"
+    LOG_FILE="/var/log/tax-sale-health.log"
+else
+    # Development environment
+    APP_DIR="/app"
+    LOG_FILE="/tmp/tax-sale-health.log"
+fi
 
 # Logging function
 log() {
