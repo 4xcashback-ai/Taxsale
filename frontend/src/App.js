@@ -1156,9 +1156,9 @@ function PropertySearch() {
               </CardHeader>
               <CardContent>
                 <div className="h-96 rounded-lg overflow-hidden border border-slate-200">
-                  {mapData.length > 0 ? (
+                  {taxSales.length > 0 ? (
                     <MapWrapper 
-                      properties={mapData}
+                      properties={taxSales}
                       onMarkerClick={(property) => {
                         // Handle marker click - could show property details
                         console.log('Property clicked:', property);
