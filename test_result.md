@@ -105,6 +105,17 @@
 user_problem_statement: "Test the deployment check-updates endpoint on the production VPS to troubleshoot why it's not detecting recent GitHub changes."
 
 backend:
+  - task: "Production VPS Deployment Check-Updates Endpoint Testing"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "PRODUCTION VPS DEPLOYMENT CHECK-UPDATES ENDPOINT COMPREHENSIVE TESTING COMPLETED - CRITICAL ISSUES IDENTIFIED! Review request testing for production VPS deployment system reveals exact problems described by user. DETAILED FINDINGS: 1) ENDPOINT ACCESSIBILITY VERIFIED: ✅ POST https://taxsalecompass.ca/api/deployment/check-updates returns HTTP 200 with proper JSON response, endpoint is accessible and responding correctly, 2) USER REPORT CONFIRMED: ❌ VPS shows 'updates_available: false' and 'message: No updates available' despite recent GitHub pushes (504 timeout fix and property image routing fix), exactly matching user report of deployment system not detecting recent changes, 3) CRITICAL SCRIPT OUTPUT ISSUE: ❌ Response shows empty 'output' field indicating deployment script not producing any output - script may not be executing properly or failing silently, 4) GIT ACCESS STATUS: ✅ GET /api/deployment/status returns 'status: success' and 'message: Deployment is operational' suggesting basic git access is working, 5) PATH CONFIGURATION ISSUES DETECTED: ❌ GET /api/deployment/health shows error 'sudo: /var/www/nstaxsales/scripts/system-health.sh: command not found' - VPS deployment scripts looking in wrong location, 6) ROOT CAUSE ANALYSIS: VPS deployment system has 3 critical issues - deployment script not producing output (may not be running), script paths pointing to /var/www/nstaxsales but scripts may be in different location, git update checking logic not detecting recent GitHub changes despite basic git access working. SPECIFIC ISSUES CONFIRMED: 1) VPS not detecting GitHub updates despite recent pushes, 2) Deployment script not producing any output during execution, 3) Path configuration issues with deployment scripts on VPS, 4) Git fetch/pull operations may not be working correctly in /var/www/nstaxsales directory. RECOMMENDATIONS FOR MAIN AGENT: 1) SSH into production VPS and manually test git operations in /var/www/nstaxsales directory, 2) Check if deployment scripts exist and are executable at expected paths, 3) Verify GitHub repository access and SSH keys on VPS, 4) Review deployment script logs for detailed error messages, 5) Test git fetch/pull operations manually to identify specific git access issues, 6) Confirm deployment script paths point to correct VPS directory structure. CONCLUSION: Production VPS deployment check-updates endpoint is accessible but has critical functionality issues preventing GitHub update detection. The system needs immediate investigation of git operations, script paths, and deployment script execution on the VPS environment."
 
   - task: "Multi-Municipality Scraper Implementation"
     implemented: true
