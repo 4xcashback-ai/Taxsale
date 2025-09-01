@@ -452,6 +452,10 @@ function PropertySearch() {
   const [scrapeStatus, setScrapeStatus] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
   
+  // Authentication state
+  const { isAuthenticated, logout } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
   // Municipality management state
   const [editingMunicipality, setEditingMunicipality] = useState(null);
   const [showAddMunicipality, setShowAddMunicipality] = useState(false);
