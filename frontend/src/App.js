@@ -1150,7 +1150,7 @@ function PropertySearch() {
                       <div className="relative h-48 bg-gray-200">
                         {property.boundary_screenshot ? (
                           <img
-                            src={`${BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}`}
+                            src={getBoundaryImageUrl(property.boundary_screenshot, property.assessment_number)}
                             alt={`Property boundary map of ${property.property_address}`}
                             className="w-full h-full object-cover rounded-t-lg"
                             onError={(e) => {
