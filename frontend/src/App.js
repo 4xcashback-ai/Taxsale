@@ -547,7 +547,6 @@ function PropertySearch() {
 
   const handleSearch = async () => {
     await fetchTaxSales(selectedMunicipality, searchQuery);
-    await fetchMapData();
   };
 
   const initializeMunicipalities = async () => {
