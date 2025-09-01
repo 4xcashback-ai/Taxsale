@@ -456,6 +456,20 @@ function PropertySearch() {
   const { isAuthenticated, token, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   
+  // Helper function to handle both old and new boundary_screenshot formats
+  const getBoundaryImageUrl = (boundaryScreenshot, assessmentNumber) => {
+    // If it's already a full URL (old format), use the property image endpoint directly
+    if (boundaryScreenshot && boundaryScreenshot.startsWith('http')) {
+      return `${BACKEND_URL}/api/property-image/${assessmentNumber}`;
+    }
+    // If it's a filename (new format), use the boundary-image endpoint
+    if (boundaryScreenshot && !boundaryScreenshot.startsWith('http')) {
+      return `${BACKEND_URL}/api/boundary-image/${boundaryScreenshot}`;
+    }
+    // Fallback to property image endpoint
+    return `${BACKEND_URL}/api/property-image/${assessmentNumber}`;
+  };
+  
   // Municipality management state
   const [editingMunicipality, setEditingMunicipality] = useState(null);
   const [showAddMunicipality, setShowAddMunicipality] = useState(false);
