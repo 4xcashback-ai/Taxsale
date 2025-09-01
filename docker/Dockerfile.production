@@ -1,0 +1,103 @@
+# Tax Sale Compass - Production Docker Configuration
+# Multi-stage build for optimized production deployment
+
+# Stage 1: Backend Dependencies
+FROM python:3.12-slim as backend-deps
+
+WORKDIR /app/backend
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    pkg-config \
+    libffi-dev \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Frontend Build
+FROM node:18-alpine as frontend-build
+
+WORKDIR /app/frontend
+
+# Copy package files
+COPY frontend/package.json frontend/yarn.lock ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy frontend source
+COPY frontend/src ./src
+COPY frontend/public ./public
+COPY frontend/tailwind.config.js ./
+COPY frontend/postcss.config.js ./
+COPY frontend/craco.config.js ./
+
+# Build arguments for environment
+ARG REACT_APP_BACKEND_URL
+ARG REACT_APP_GOOGLE_MAPS_API_KEY
+
+# Create production environment file
+RUN echo "REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL" > .env && \
+    echo "REACT_APP_GOOGLE_MAPS_API_KEY=$REACT_APP_GOOGLE_MAPS_API_KEY" >> .env
+
+# Build frontend
+RUN yarn build
+
+# Stage 3: Production Runtime
+FROM python:3.12-slim as production
+
+# Create non-root user
+RUN groupadd -r taxsale && useradd -r -g taxsale taxsale
+
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    nginx \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy backend dependencies from first stage
+COPY --from=backend-deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=backend-deps /usr/local/bin /usr/local/bin
+
+# Copy backend source
+COPY backend ./backend
+
+# Copy frontend build from second stage
+COPY --from=frontend-build /app/frontend/build ./frontend/build
+
+# Copy configuration files
+COPY docker/nginx.prod.conf /etc/nginx/sites-available/default
+COPY docker/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy scripts
+COPY scripts ./scripts
+RUN chmod +x scripts/*.sh
+
+# Create necessary directories
+RUN mkdir -p /var/log/taxsale /var/run/taxsale /etc/taxsale
+RUN chown -R taxsale:taxsale /var/log/taxsale /var/run/taxsale /etc/taxsale /app
+
+# Expose ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost/api/health || exit 1
+
+# Environment variables
+ENV PYTHONPATH=/app/backend
+ENV NODE_ENV=production
+ENV ENVIRONMENT=production
+
+# Start supervisor (manages nginx + backend)
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
