@@ -1292,8 +1292,6 @@ function PropertySearch() {
                       </CardContent>
                     </Card>
                   )}
-                </>
-              )}
 
               {/* Enhanced Statistics Card */}
               {stats && (
