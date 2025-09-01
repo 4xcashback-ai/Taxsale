@@ -710,10 +710,20 @@ function PropertySearch() {
   };
 
   const scrapeAllMunicipalities = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setLoading(true);
     setScrapeStatus("Scraping all municipalities...");
     try {
-      const response = await axios.post(`${API}/scrape-all`);
+      const response = await axios.post(`${API}/scrape-all`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       console.log("All scraping results:", response.data);
       await fetchTaxSales();
       await fetchMunicipalities(); // Refresh municipalities to show updated status
