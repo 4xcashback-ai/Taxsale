@@ -870,10 +870,20 @@ function PropertySearch() {
   };
 
   const verifyDeployment = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setButtonStates(prev => ({ ...prev, verify: true }));
     setDeploymentMessage("Verifying deployment...");
     try {
-      const response = await axios.post(`${API}/deployment/verify`);
+      const response = await axios.post(`${API}/deployment/verify`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       const verificationResult = response.data;
       
       if (verificationResult.deployment_valid) {
