@@ -1740,7 +1740,7 @@ function PropertySearch() {
                             {muni.scrape_status}
                           </Badge>
                           
-                          {muni.scraper_type === 'halifax' && (
+                          {(muni.scraper_type === 'halifax' || muni.scraper_type === 'victoria_county') && (
                             <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
                               Live Scraper
                             </Badge>
