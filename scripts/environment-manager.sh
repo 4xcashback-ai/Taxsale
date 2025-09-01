@@ -133,9 +133,9 @@ initialize_production_environment() {
     local jwt_secret=$(cat "$SECURE_ENV_DIR/jwt_secret.key" 2>/dev/null || echo "PLEASE_GENERATE_SECURE_KEY")
     local admin_password=$(cat "$SECURE_ENV_DIR/admin_password.key" 2>/dev/null || echo "PLEASE_CHANGE_PASSWORD")
     
-    # Create backend .env
-    sed -e "s/GENERATE_SECURE_KEY_IN_PRODUCTION/$jwt_secret/g" \
-        -e "s/CHANGE_THIS_IN_PRODUCTION/$admin_password/g" \
+    # Create backend .env (using different delimiter to handle special characters)
+    sed -e "s|GENERATE_SECURE_KEY_IN_PRODUCTION|$jwt_secret|g" \
+        -e "s|CHANGE_THIS_IN_PRODUCTION|$admin_password|g" \
         "$ENV_CONFIG_DIR/backend.env.template" > "$ENV_CONFIG_DIR/backend.env.production"
     
     # Create frontend .env (no secrets to replace)
