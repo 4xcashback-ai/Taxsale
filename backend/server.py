@@ -3268,7 +3268,7 @@ async def generate_all_boundary_thumbnails():
         raise HTTPException(status_code=500, detail=f"Failed to generate thumbnails: {str(e)}")
 
 @api_router.post("/scrape/{municipality_id}")
-async def scrape_municipality(municipality_id: str):
+async def scrape_municipality(municipality_id: str, current_user: dict = Depends(verify_token)):
     """Trigger scraping for a specific municipality"""
     municipality = await db.municipalities.find_one({"id": municipality_id})
     if not municipality:
