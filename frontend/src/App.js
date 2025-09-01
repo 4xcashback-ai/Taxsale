@@ -668,13 +668,23 @@ function PropertySearch() {
   };
 
   const scrapeIndividualMunicipality = async (municipalityId, municipalityName, scraperType) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setLoading(true);
     setScrapeStatus(`Scraping ${municipalityName}...`);
     try {
       let response;
       
       // Always use the individual municipality endpoint - it will route to correct scraper based on type
-      response = await axios.post(`${API}/scrape-municipality/${municipalityId}`);
+      response = await axios.post(`${API}/scrape-municipality/${municipalityId}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       
       console.log(`${municipalityName} scraping results:`, response.data);
       await fetchTaxSales();
