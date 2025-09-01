@@ -6,11 +6,11 @@
 set -e  # Exit on any error
 
 # Configuration
-APP_DIR="/var/www/nstaxsales"
-BACKUP_DIR="/var/backups/nstaxsales"
-LOG_FILE="/var/log/tax-sale-deployment.log"
+APP_DIR="/app"
+BACKUP_DIR="/tmp/backups/nstaxsales"
+LOG_FILE="/tmp/tax-sale-deployment.log"
 GITHUB_REPO=""  # Will be set dynamically
-DB_BACKUP_DIR="/var/backups/mongodb"
+DB_BACKUP_DIR="/tmp/backups/mongodb"
 
 # Logging function
 log() {
