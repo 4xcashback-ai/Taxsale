@@ -2060,10 +2060,17 @@ function PropertySearch() {
                   </div>
                 </CardContent>
               </Card>
+              </>
+              )}
             </div>
           </TabsContent>
-          </TabsContent>
         </Tabs>
+        
+        {/* Login Modal */}
+        <LoginModal 
+          isOpen={showLoginModal} 
+          onClose={() => setShowLoginModal(false)} 
+        />
       </div>
     </div>
   );
