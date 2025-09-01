@@ -32,570 +32,383 @@ def test_api_connection():
         print(f"❌ API connection error: {e}")
         return False, None
 
-def test_victoria_county_properties():
-    """Test Victoria County properties exist with correct assessment numbers"""
-    print("\n🏛️ Testing Victoria County Properties...")
-    print("🎯 FOCUS: Verify Victoria County properties with assessment numbers 00254118, 00453706, 09541209")
-    
-    target_assessments = ["00254118", "00453706", "09541209"]
+def test_deployment_status_endpoint():
+    """Test GET /api/deployment/status endpoint"""
+    print("\n📊 Testing Deployment Status Endpoint...")
+    print("🎯 FOCUS: GET /api/deployment/status - should return current deployment status")
     
     try:
-        response = requests.get(f"{BACKEND_URL}/tax-sales", timeout=30)
+        response = requests.get(f"{BACKEND_URL}/deployment/status", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
         if response.status_code == 200:
-            properties = response.json()
-            print(f"✅ Tax sales endpoint working - Found {len(properties)} total properties")
-            
-            # Filter Victoria County properties
-            victoria_properties = [p for p in properties if "Victoria County" in p.get("municipality_name", "")]
-            print(f"   🏛️ Victoria County properties: {len(victoria_properties)}")
-            
-            # Check for target assessment numbers
-            found_assessments = []
-            property_data = {}
-            
-            for prop in victoria_properties:
-                assessment = prop.get('assessment_number', '')
-                if assessment in target_assessments:
-                    found_assessments.append(assessment)
-                    property_data[assessment] = prop
-                    print(f"   ✅ Found target property: {assessment}")
-                    print(f"      Owner: {prop.get('owner_name', 'N/A')}")
-                    print(f"      Address: {prop.get('property_address', 'N/A')}")
-                    print(f"      Opening Bid: ${prop.get('opening_bid', 0)}")
-                    print(f"      Boundary Screenshot: {prop.get('boundary_screenshot', 'N/A')}")
-            
-            missing_assessments = [a for a in target_assessments if a not in found_assessments]
-            
-            if missing_assessments:
-                print(f"   ❌ Missing target assessments: {missing_assessments}")
-                return False, property_data
-            else:
-                print(f"   ✅ All target assessments found: {found_assessments}")
-                return True, property_data
-                
-        else:
-            print(f"❌ Tax sales endpoint failed with status {response.status_code}")
-            return False, {}
-    except Exception as e:
-        print(f"❌ Victoria County properties test error: {e}")
-        return False, {}
-
-def test_boundary_screenshot_field_format():
-    """Test that boundary_screenshot field stores filenames instead of full URLs"""
-    print("\n📸 Testing Boundary Screenshot Field Format...")
-    print("🎯 FOCUS: Verify boundary_screenshot stores filenames (e.g., 'boundary_00254118.png') not full URLs")
-    
-    target_assessments = ["00254118", "00453706", "09541209"]
-    
-    try:
-        # Get Victoria County properties
-        properties_found, property_data = test_victoria_county_properties()
-        
-        if not properties_found:
-            print("❌ Cannot test boundary_screenshot format - Victoria County properties not found")
-            return False, {}
-        
-        results = {}
-        all_correct_format = True
-        
-        for assessment in target_assessments:
-            if assessment in property_data:
-                prop = property_data[assessment]
-                boundary_screenshot = prop.get('boundary_screenshot', '')
-                
-                print(f"\n   📋 Assessment {assessment}:")
-                print(f"      Boundary Screenshot: '{boundary_screenshot}'")
-                
-                # Check if it's a filename (not a full URL)
-                is_filename = False
-                is_full_url = False
-                
-                if boundary_screenshot:
-                    # Check if it's a full URL (contains http/https)
-                    if boundary_screenshot.startswith(('http://', 'https://')):
-                        is_full_url = True
-                        print(f"      ❌ ISSUE: Contains full URL (should be filename only)")
-                        all_correct_format = False
-                    # Check if it's a filename format (ends with .png and doesn't contain URL)
-                    elif boundary_screenshot.endswith('.png') and not '/' in boundary_screenshot:
-                        is_filename = True
-                        print(f"      ✅ CORRECT: Filename format detected")
-                        # Check if it matches expected pattern
-                        expected_filename = f"boundary_{assessment}.png"
-                        if boundary_screenshot == expected_filename:
-                            print(f"      ✅ PERFECT: Matches expected pattern '{expected_filename}'")
-                        else:
-                            print(f"      ⚠️ DIFFERENT: Expected '{expected_filename}', got '{boundary_screenshot}'")
-                    else:
-                        print(f"      ❌ UNKNOWN: Format not recognized")
-                        all_correct_format = False
-                else:
-                    print(f"      ❌ MISSING: No boundary_screenshot value")
-                    all_correct_format = False
-                
-                results[assessment] = {
-                    'boundary_screenshot': boundary_screenshot,
-                    'is_filename': is_filename,
-                    'is_full_url': is_full_url,
-                    'correct_format': is_filename and not is_full_url
-                }
-        
-        print(f"\n   📊 BOUNDARY SCREENSHOT FORMAT SUMMARY:")
-        correct_count = sum(1 for r in results.values() if r['correct_format'])
-        print(f"      Correct format: {correct_count}/{len(results)}")
-        print(f"      All correct: {'✅ YES' if all_correct_format else '❌ NO'}")
-        
-        return all_correct_format, results
-        
-    except Exception as e:
-        print(f"❌ Boundary screenshot format test error: {e}")
-        return False, {}
-
-def test_boundary_image_endpoints():
-    """Test /api/boundary-image/{filename} endpoints work properly"""
-    print("\n🖼️ Testing Boundary Image Endpoints...")
-    print("🎯 FOCUS: Test /api/boundary-image/{filename} endpoints for Victoria County properties")
-    
-    target_assessments = ["00254118", "00453706", "09541209"]
-    
-    try:
-        # Get boundary screenshot data
-        format_correct, boundary_data = test_boundary_screenshot_field_format()
-        
-        if not boundary_data:
-            print("❌ Cannot test boundary image endpoints - no boundary screenshot data")
-            return False, {}
-        
-        results = {}
-        all_endpoints_working = True
-        
-        for assessment in target_assessments:
-            if assessment in boundary_data:
-                boundary_info = boundary_data[assessment]
-                filename = boundary_info['boundary_screenshot']
-                
-                print(f"\n   📋 Testing Assessment {assessment}:")
-                print(f"      Filename: '{filename}'")
-                
-                if filename and filename.endswith('.png'):
-                    # Test the boundary-image endpoint
-                    boundary_url = f"{BACKEND_URL}/boundary-image/{filename}"
-                    print(f"      Testing: {boundary_url}")
-                    
-                    try:
-                        response = requests.get(boundary_url, timeout=30)
-                        
-                        print(f"      Status Code: {response.status_code}")
-                        
-                        if response.status_code == 200:
-                            # Check content type
-                            content_type = response.headers.get('content-type', '')
-                            content_length = len(response.content)
-                            
-                            print(f"      ✅ SUCCESS: Image accessible")
-                            print(f"      Content-Type: {content_type}")
-                            print(f"      Content-Length: {content_length} bytes")
-                            
-                            # Verify it's actually an image
-                            if 'image' in content_type and content_length > 1000:
-                                print(f"      ✅ VALID: Proper image response")
-                                results[assessment] = {
-                                    'endpoint_working': True,
-                                    'status_code': response.status_code,
-                                    'content_type': content_type,
-                                    'content_length': content_length,
-                                    'filename': filename
-                                }
-                            else:
-                                print(f"      ⚠️ WARNING: Response may not be valid image")
-                                results[assessment] = {
-                                    'endpoint_working': False,
-                                    'status_code': response.status_code,
-                                    'content_type': content_type,
-                                    'content_length': content_length,
-                                    'filename': filename,
-                                    'issue': 'Invalid image response'
-                                }
-                                all_endpoints_working = False
-                        elif response.status_code == 404:
-                            print(f"      ❌ NOT FOUND: Image file does not exist")
-                            results[assessment] = {
-                                'endpoint_working': False,
-                                'status_code': 404,
-                                'filename': filename,
-                                'issue': 'Image file not found'
-                            }
-                            all_endpoints_working = False
-                        else:
-                            print(f"      ❌ ERROR: HTTP {response.status_code}")
-                            results[assessment] = {
-                                'endpoint_working': False,
-                                'status_code': response.status_code,
-                                'filename': filename,
-                                'issue': f'HTTP error {response.status_code}'
-                            }
-                            all_endpoints_working = False
-                            
-                    except Exception as e:
-                        print(f"      ❌ REQUEST ERROR: {e}")
-                        results[assessment] = {
-                            'endpoint_working': False,
-                            'filename': filename,
-                            'issue': f'Request error: {e}'
-                        }
-                        all_endpoints_working = False
-                else:
-                    print(f"      ❌ INVALID FILENAME: '{filename}' is not a valid PNG filename")
-                    results[assessment] = {
-                        'endpoint_working': False,
-                        'filename': filename,
-                        'issue': 'Invalid filename format'
-                    }
-                    all_endpoints_working = False
-        
-        print(f"\n   📊 BOUNDARY IMAGE ENDPOINTS SUMMARY:")
-        working_count = sum(1 for r in results.values() if r.get('endpoint_working', False))
-        print(f"      Working endpoints: {working_count}/{len(results)}")
-        print(f"      All working: {'✅ YES' if all_endpoints_working else '❌ NO'}")
-        
-        return all_endpoints_working, results
-        
-    except Exception as e:
-        print(f"❌ Boundary image endpoints test error: {e}")
-        return False, {}
-
-def test_property_image_endpoints():
-    """Test /api/property-image/{assessment_number} endpoints work properly"""
-    print("\n🏠 Testing Property Image Endpoints...")
-    print("🎯 FOCUS: Test /api/property-image/{assessment_number} endpoints for Victoria County properties")
-    
-    target_assessments = ["00254118", "00453706", "09541209"]
-    
-    try:
-        results = {}
-        all_endpoints_working = True
-        
-        for assessment in target_assessments:
-            print(f"\n   📋 Testing Assessment {assessment}:")
-            
-            # Test the property-image endpoint
-            property_url = f"{BACKEND_URL}/property-image/{assessment}"
-            print(f"      Testing: {property_url}")
-            
             try:
-                response = requests.get(property_url, timeout=30)
+                data = response.json()
+                print(f"   ✅ SUCCESS: Deployment status endpoint accessible")
+                print(f"   Response Data: {json.dumps(data, indent=2)}")
                 
-                print(f"      Status Code: {response.status_code}")
+                # Check response structure
+                required_fields = ['status', 'message', 'last_check']
+                missing_fields = [field for field in required_fields if field not in data]
                 
-                if response.status_code == 200:
-                    # Check content type
-                    content_type = response.headers.get('content-type', '')
-                    content_length = len(response.content)
-                    
-                    print(f"      ✅ SUCCESS: Property image accessible")
-                    print(f"      Content-Type: {content_type}")
-                    print(f"      Content-Length: {content_length} bytes")
-                    
-                    # Verify it's actually an image
-                    if 'image' in content_type and content_length > 1000:
-                        print(f"      ✅ VALID: Proper image response")
-                        results[assessment] = {
-                            'endpoint_working': True,
-                            'status_code': response.status_code,
-                            'content_type': content_type,
-                            'content_length': content_length
-                        }
-                    else:
-                        print(f"      ⚠️ WARNING: Response may not be valid image")
-                        results[assessment] = {
-                            'endpoint_working': False,
-                            'status_code': response.status_code,
-                            'content_type': content_type,
-                            'content_length': content_length,
-                            'issue': 'Invalid image response'
-                        }
-                        all_endpoints_working = False
-                elif response.status_code == 404:
-                    print(f"      ❌ NOT FOUND: Property not found or no image available")
-                    results[assessment] = {
-                        'endpoint_working': False,
-                        'status_code': 404,
-                        'issue': 'Property or image not found'
-                    }
-                    all_endpoints_working = False
+                if missing_fields:
+                    print(f"   ⚠️ WARNING: Missing fields: {missing_fields}")
                 else:
-                    print(f"      ❌ ERROR: HTTP {response.status_code}")
-                    results[assessment] = {
-                        'endpoint_working': False,
-                        'status_code': response.status_code,
-                        'issue': f'HTTP error {response.status_code}'
-                    }
-                    all_endpoints_working = False
+                    print(f"   ✅ STRUCTURE: All required fields present")
+                
+                # Check if status shows "Error"
+                status = data.get('status', '')
+                if status.lower() == 'error':
+                    print(f"   ❌ CRITICAL: Status shows 'Error' - this matches user report!")
+                    print(f"   Error Message: {data.get('message', 'No message')}")
+                    return False, data
+                else:
+                    print(f"   ✅ STATUS: {status} (not 'Error')")
+                    return True, data
                     
-            except Exception as e:
-                print(f"      ❌ REQUEST ERROR: {e}")
-                results[assessment] = {
-                    'endpoint_working': False,
-                    'issue': f'Request error: {e}'
-                }
-                all_endpoints_working = False
-        
-        print(f"\n   📊 PROPERTY IMAGE ENDPOINTS SUMMARY:")
-        working_count = sum(1 for r in results.values() if r.get('endpoint_working', False))
-        print(f"      Working endpoints: {working_count}/{len(results)}")
-        print(f"      All working: {'✅ YES' if all_endpoints_working else '❌ NO'}")
-        
-        return all_endpoints_working, results
-        
+            except json.JSONDecodeError as e:
+                print(f"   ❌ JSON DECODE ERROR: {e}")
+                print(f"   Raw Response: {response.text[:500]}...")
+                return False, {"error": "Invalid JSON response"}
+        else:
+            print(f"   ❌ HTTP ERROR: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error Details: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw Response: {response.text[:200]}...")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
     except Exception as e:
-        print(f"❌ Property image endpoints test error: {e}")
-        return False, {}
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
 
-def test_url_construction_correctness():
-    """Test that URL construction is correct for frontend usage"""
-    print("\n🔗 Testing URL Construction Correctness...")
-    print("🎯 FOCUS: Verify frontend can construct correct URLs without 404 errors")
-    
-    target_assessments = ["00254118", "00453706", "09541209"]
+def test_deployment_check_updates_endpoint():
+    """Test POST /api/deployment/check-updates endpoint"""
+    print("\n🔄 Testing Deployment Check Updates Endpoint...")
+    print("🎯 FOCUS: POST /api/deployment/check-updates - should check for available updates")
     
     try:
-        # Get boundary screenshot data
-        format_correct, boundary_data = test_boundary_screenshot_field_format()
+        response = requests.post(f"{BACKEND_URL}/deployment/check-updates", timeout=60)
         
-        if not boundary_data:
-            print("❌ Cannot test URL construction - no boundary screenshot data")
-            return False, {}
+        print(f"   Status Code: {response.status_code}")
         
-        results = {}
-        all_constructions_correct = True
-        
-        # Get the backend URL that frontend would use
-        frontend_backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-automation.preview.emergentagent.com')
-        
-        print(f"   🌐 Frontend Backend URL: {frontend_backend_url}")
-        
-        for assessment in target_assessments:
-            if assessment in boundary_data:
-                boundary_info = boundary_data[assessment]
-                filename = boundary_info['boundary_screenshot']
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                print(f"   ✅ SUCCESS: Check updates endpoint accessible")
+                print(f"   Response Data: {json.dumps(data, indent=2)}")
                 
-                print(f"\n   📋 Testing Assessment {assessment}:")
-                print(f"      Boundary Screenshot Field: '{filename}'")
+                # Check response structure
+                required_fields = ['updates_available', 'message', 'checked_at']
+                missing_fields = [field for field in required_fields if field not in data]
                 
-                if filename:
-                    # Simulate frontend URL construction
-                    # Frontend should construct: ${BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}
-                    constructed_url = f"{frontend_backend_url}/api/boundary-image/{filename}"
-                    print(f"      Constructed URL: {constructed_url}")
-                    
-                    # Test if this constructed URL works
-                    try:
-                        response = requests.get(constructed_url, timeout=30)
-                        
-                        print(f"      Status Code: {response.status_code}")
-                        
-                        if response.status_code == 200:
-                            content_type = response.headers.get('content-type', '')
-                            content_length = len(response.content)
-                            
-                            print(f"      ✅ SUCCESS: Frontend URL construction works")
-                            print(f"      Content-Type: {content_type}")
-                            print(f"      Content-Length: {content_length} bytes")
-                            
-                            results[assessment] = {
-                                'url_construction_correct': True,
-                                'constructed_url': constructed_url,
-                                'status_code': response.status_code,
-                                'content_type': content_type,
-                                'content_length': content_length
-                            }
-                        else:
-                            print(f"      ❌ FAILED: Frontend URL construction results in HTTP {response.status_code}")
-                            results[assessment] = {
-                                'url_construction_correct': False,
-                                'constructed_url': constructed_url,
-                                'status_code': response.status_code,
-                                'issue': f'HTTP {response.status_code} error'
-                            }
-                            all_constructions_correct = False
-                            
-                    except Exception as e:
-                        print(f"      ❌ REQUEST ERROR: {e}")
-                        results[assessment] = {
-                            'url_construction_correct': False,
-                            'constructed_url': constructed_url,
-                            'issue': f'Request error: {e}'
-                        }
-                        all_constructions_correct = False
+                if missing_fields:
+                    print(f"   ⚠️ WARNING: Missing fields: {missing_fields}")
                 else:
-                    print(f"      ❌ NO FILENAME: Cannot construct URL")
-                    results[assessment] = {
-                        'url_construction_correct': False,
-                        'issue': 'No boundary_screenshot filename'
-                    }
-                    all_constructions_correct = False
-        
-        print(f"\n   📊 URL CONSTRUCTION SUMMARY:")
-        correct_count = sum(1 for r in results.values() if r.get('url_construction_correct', False))
-        print(f"      Correct constructions: {correct_count}/{len(results)}")
-        print(f"      All correct: {'✅ YES' if all_constructions_correct else '❌ NO'}")
-        
-        return all_constructions_correct, results
-        
+                    print(f"   ✅ STRUCTURE: All required fields present")
+                
+                # Check updates availability
+                updates_available = data.get('updates_available', False)
+                print(f"   📦 Updates Available: {updates_available}")
+                
+                # Check if this matches user report of "Updates Available: No"
+                if not updates_available:
+                    print(f"   ✅ MATCHES USER REPORT: No updates available")
+                else:
+                    print(f"   ⚠️ DIFFERS FROM USER REPORT: Updates are available")
+                
+                return True, data
+                    
+            except json.JSONDecodeError as e:
+                print(f"   ❌ JSON DECODE ERROR: {e}")
+                print(f"   Raw Response: {response.text[:500]}...")
+                return False, {"error": "Invalid JSON response"}
+        else:
+            print(f"   ❌ HTTP ERROR: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error Details: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw Response: {response.text[:200]}...")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
     except Exception as e:
-        print(f"❌ URL construction test error: {e}")
-        return False, {}
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
 
-def test_victoria_county_image_routing_fix():
-    """Comprehensive test of Victoria County property image routing fix"""
-    print("\n🎯 COMPREHENSIVE VICTORIA COUNTY IMAGE ROUTING FIX TEST")
+def test_deployment_health_endpoint():
+    """Test GET /api/deployment/health endpoint"""
+    print("\n🏥 Testing Deployment Health Endpoint...")
+    print("🎯 FOCUS: GET /api/deployment/health - should return system health")
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/deployment/health", timeout=120)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                print(f"   ✅ SUCCESS: Deployment health endpoint accessible")
+                print(f"   Response Data: {json.dumps(data, indent=2)}")
+                
+                # Check response structure
+                required_fields = ['health_status', 'checked_at']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    print(f"   ⚠️ WARNING: Missing fields: {missing_fields}")
+                else:
+                    print(f"   ✅ STRUCTURE: All required fields present")
+                
+                # Check health status
+                health_status = data.get('health_status', '')
+                print(f"   🏥 Health Status: {health_status}")
+                
+                # Analyze health status
+                if health_status in ['excellent', 'good']:
+                    print(f"   ✅ HEALTH: System health is {health_status}")
+                    return True, data
+                elif health_status in ['poor', 'unknown']:
+                    print(f"   ⚠️ HEALTH: System health is {health_status} - may contribute to deployment errors")
+                    return False, data
+                else:
+                    print(f"   ❌ HEALTH: Unknown health status '{health_status}'")
+                    return False, data
+                    
+            except json.JSONDecodeError as e:
+                print(f"   ❌ JSON DECODE ERROR: {e}")
+                print(f"   Raw Response: {response.text[:500]}...")
+                return False, {"error": "Invalid JSON response"}
+        else:
+            print(f"   ❌ HTTP ERROR: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error Details: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw Response: {response.text[:200]}...")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
+
+def test_deployment_verify_endpoint():
+    """Test POST /api/deployment/verify endpoint"""
+    print("\n✅ Testing Deployment Verify Endpoint...")
+    print("🎯 FOCUS: POST /api/deployment/verify - verify it's still working after previous fix")
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/deployment/verify", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                print(f"   ✅ SUCCESS: Deployment verify endpoint accessible")
+                print(f"   Response Data: {json.dumps(data, indent=2)}")
+                
+                # Check response structure
+                required_fields = ['deployment_valid', 'message', 'verified_at']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    print(f"   ⚠️ WARNING: Missing fields: {missing_fields}")
+                else:
+                    print(f"   ✅ STRUCTURE: All required fields present")
+                
+                # Check deployment validity
+                deployment_valid = data.get('deployment_valid', False)
+                message = data.get('message', '')
+                
+                print(f"   🔍 Deployment Valid: {deployment_valid}")
+                print(f"   📝 Message: {message}")
+                
+                if deployment_valid:
+                    print(f"   ✅ VERIFICATION: Deployment is valid")
+                    return True, data
+                else:
+                    print(f"   ❌ VERIFICATION: Deployment verification failed")
+                    # Check for specific error details
+                    errors = data.get('errors', '')
+                    if errors:
+                        print(f"   🔍 Error Details: {errors}")
+                    return False, data
+                    
+            except json.JSONDecodeError as e:
+                print(f"   ❌ JSON DECODE ERROR: {e}")
+                print(f"   Raw Response: {response.text[:500]}...")
+                return False, {"error": "Invalid JSON response"}
+        else:
+            print(f"   ❌ HTTP ERROR: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error Details: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw Response: {response.text[:200]}...")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
+
+def analyze_deployment_error_source():
+    """Analyze which endpoint is causing the deployment error status"""
+    print("\n🔍 Analyzing Deployment Error Source...")
+    print("🎯 FOCUS: Identify which endpoint is returning error status causing 'Status: Error'")
+    
+    # Test all deployment endpoints
+    status_result, status_data = test_deployment_status_endpoint()
+    updates_result, updates_data = test_deployment_check_updates_endpoint()
+    health_result, health_data = test_deployment_health_endpoint()
+    verify_result, verify_data = test_deployment_verify_endpoint()
+    
+    print(f"\n📊 DEPLOYMENT ENDPOINTS ANALYSIS:")
+    print(f"   GET /api/deployment/status: {'✅ Working' if status_result else '❌ Error'}")
+    print(f"   POST /api/deployment/check-updates: {'✅ Working' if updates_result else '❌ Error'}")
+    print(f"   GET /api/deployment/health: {'✅ Working' if health_result else '❌ Error'}")
+    print(f"   POST /api/deployment/verify: {'✅ Working' if verify_result else '❌ Error'}")
+    
+    # Identify error sources
+    error_sources = []
+    
+    if not status_result:
+        error_sources.append("deployment/status")
+        print(f"\n❌ ERROR SOURCE IDENTIFIED: /api/deployment/status")
+        if 'status' in status_data and status_data['status'] == 'error':
+            print(f"   🔍 This endpoint returns status='error' - MATCHES USER REPORT!")
+            print(f"   📝 Error Message: {status_data.get('message', 'No message')}")
+    
+    if not updates_result:
+        error_sources.append("deployment/check-updates")
+        print(f"\n❌ ERROR SOURCE IDENTIFIED: /api/deployment/check-updates")
+    
+    if not health_result:
+        error_sources.append("deployment/health")
+        print(f"\n❌ ERROR SOURCE IDENTIFIED: /api/deployment/health")
+    
+    if not verify_result:
+        error_sources.append("deployment/verify")
+        print(f"\n❌ ERROR SOURCE IDENTIFIED: /api/deployment/verify")
+    
+    # Check for "Last Deployment: Never" issue
+    print(f"\n🕐 CHECKING 'Last Deployment: Never' ISSUE:")
+    
+    # Check if status endpoint provides deployment history
+    if status_result and 'last_deployment' in status_data:
+        last_deployment = status_data.get('last_deployment')
+        if not last_deployment or last_deployment == 'never':
+            print(f"   ❌ CONFIRMED: last_deployment is '{last_deployment}' - MATCHES USER REPORT!")
+        else:
+            print(f"   ✅ last_deployment: {last_deployment}")
+    else:
+        print(f"   ⚠️ No 'last_deployment' field found in status response")
+    
+    # Summary
+    print(f"\n📋 ERROR SOURCE SUMMARY:")
+    if error_sources:
+        print(f"   ❌ Problematic endpoints: {', '.join(error_sources)}")
+        print(f"   🔧 These endpoints need investigation/fixing")
+    else:
+        print(f"   ✅ All deployment endpoints are working")
+        print(f"   🤔 Error may be in frontend interpretation or data format")
+    
+    return {
+        'error_sources': error_sources,
+        'status_result': status_result,
+        'status_data': status_data,
+        'updates_result': updates_result,
+        'updates_data': updates_data,
+        'health_result': health_result,
+        'health_data': health_data,
+        'verify_result': verify_result,
+        'verify_data': verify_data
+    }
+
+def test_deployment_management_endpoints():
+    """Comprehensive test of all deployment management endpoints"""
+    print("\n🎯 COMPREHENSIVE DEPLOYMENT MANAGEMENT ENDPOINTS TEST")
     print("=" * 80)
-    print("🎯 REVIEW REQUEST: Test property image routing fix for Victoria County properties")
+    print("🎯 REVIEW REQUEST: Test all deployment management endpoints to identify error source")
     print("📋 SPECIFIC REQUIREMENTS:")
-    print("   1. Test Victoria County properties with assessment numbers 00254118, 00453706, 09541209")
-    print("   2. Verify boundary_screenshot field stores filenames (e.g., 'boundary_00254118.png') not full URLs")
-    print("   3. Test that /api/boundary-image/{filename} endpoints work properly")
-    print("   4. Check that frontend can access property images without 404 errors")
-    print("   5. Verify URL construction is correct in property data")
+    print("   1. Test GET /api/deployment/status - should return current deployment status")
+    print("   2. Test POST /api/deployment/check-updates - should check for available updates")
+    print("   3. Test GET /api/deployment/health - should return system health")
+    print("   4. Test POST /api/deployment/verify - verify it's still working after previous fix")
+    print("   5. Identify why status shows 'Error' and 'Last Deployment: Never'")
     print("=" * 80)
     
-    test_results = {}
-    
-    # Test 1: Victoria County Properties Exist
-    print("\n🔍 TEST 1: Victoria County Properties Existence")
-    properties_exist, property_data = test_victoria_county_properties()
-    test_results['properties_exist'] = properties_exist
-    
-    # Test 2: Boundary Screenshot Field Format
-    print("\n🔍 TEST 2: Boundary Screenshot Field Format")
-    format_correct, boundary_data = test_boundary_screenshot_field_format()
-    test_results['field_format_correct'] = format_correct
-    
-    # Test 3: Boundary Image Endpoints
-    print("\n🔍 TEST 3: Boundary Image Endpoints")
-    boundary_endpoints_working, boundary_results = test_boundary_image_endpoints()
-    test_results['boundary_endpoints_working'] = boundary_endpoints_working
-    
-    # Test 4: Property Image Endpoints
-    print("\n🔍 TEST 4: Property Image Endpoints")
-    property_endpoints_working, property_results = test_property_image_endpoints()
-    test_results['property_endpoints_working'] = property_endpoints_working
-    
-    # Test 5: URL Construction Correctness
-    print("\n🔍 TEST 5: URL Construction Correctness")
-    url_construction_correct, url_results = test_url_construction_correctness()
-    test_results['url_construction_correct'] = url_construction_correct
+    # Run comprehensive analysis
+    analysis_results = analyze_deployment_error_source()
     
     # Final Assessment
     print("\n" + "=" * 80)
-    print("📊 VICTORIA COUNTY IMAGE ROUTING FIX - FINAL ASSESSMENT")
+    print("📊 DEPLOYMENT MANAGEMENT ENDPOINTS - FINAL ASSESSMENT")
     print("=" * 80)
     
-    passed_tests = sum(1 for result in test_results.values() if result)
-    total_tests = len(test_results)
+    error_sources = analysis_results['error_sources']
+    all_working = len(error_sources) == 0
     
-    print(f"✅ Tests Passed: {passed_tests}/{total_tests}")
-    print(f"❌ Tests Failed: {total_tests - passed_tests}/{total_tests}")
+    print(f"✅ Working Endpoints: {4 - len(error_sources)}/4")
+    print(f"❌ Error Endpoints: {len(error_sources)}/4")
     
+    # Detailed results
     print(f"\n📋 DETAILED RESULTS:")
-    test_descriptions = {
-        'properties_exist': 'Victoria County Properties Exist',
-        'field_format_correct': 'Boundary Screenshot Field Format Correct',
-        'boundary_endpoints_working': 'Boundary Image Endpoints Working',
-        'property_endpoints_working': 'Property Image Endpoints Working',
-        'url_construction_correct': 'URL Construction Correct'
-    }
+    endpoints = [
+        ('deployment/status', analysis_results['status_result']),
+        ('deployment/check-updates', analysis_results['updates_result']),
+        ('deployment/health', analysis_results['health_result']),
+        ('deployment/verify', analysis_results['verify_result'])
+    ]
     
-    for test_name, result in test_results.items():
-        status = "✅ PASS" if result else "❌ FAIL"
-        description = test_descriptions.get(test_name, test_name)
-        print(f"   {status} - {description}")
+    for endpoint, result in endpoints:
+        status = "✅ WORKING" if result else "❌ ERROR"
+        print(f"   {status} - /api/{endpoint}")
     
-    # Specific Review Request Assessment
-    print(f"\n🎯 REVIEW REQUEST REQUIREMENTS ASSESSMENT:")
+    # Root cause analysis
+    print(f"\n🔍 ROOT CAUSE ANALYSIS:")
     
-    # Requirement 1: Test specific assessment numbers
-    req1_met = properties_exist
-    print(f"   1. {'✅' if req1_met else '❌'} Victoria County properties (00254118, 00453706, 09541209) - {'Found' if req1_met else 'Missing'}")
+    if 'deployment/status' in error_sources:
+        print(f"   ❌ CRITICAL: /api/deployment/status returns error - this causes 'Status: Error' in UI")
+        status_data = analysis_results['status_data']
+        if 'message' in status_data:
+            print(f"      Error Message: {status_data['message']}")
     
-    # Requirement 2: Boundary screenshot field format
-    req2_met = format_correct
-    print(f"   2. {'✅' if req2_met else '❌'} Boundary screenshot stores filenames not URLs - {'Correct' if req2_met else 'Incorrect'}")
+    if not analysis_results['status_result']:
+        print(f"   🔍 Status endpoint issue likely causes 'Last Deployment: Never' display")
     
-    # Requirement 3: Boundary image endpoints work
-    req3_met = boundary_endpoints_working
-    print(f"   3. {'✅' if req3_met else '❌'} /api/boundary-image/{{filename}} endpoints work - {'Working' if req3_met else 'Failed'}")
+    # User report matching
+    print(f"\n📊 USER REPORT MATCHING:")
+    print(f"   Status: Error - {'✅ CONFIRMED' if not analysis_results['status_result'] else '❌ NOT CONFIRMED'}")
+    print(f"   Updates Available: No - {'✅ CONFIRMED' if analysis_results['updates_result'] and not analysis_results['updates_data'].get('updates_available', True) else '❌ NOT CONFIRMED'}")
+    print(f"   Last Deployment: Never - {'✅ LIKELY' if not analysis_results['status_result'] else '❌ UNLIKELY'}")
     
-    # Requirement 4: Frontend can access without 404s
-    req4_met = url_construction_correct
-    print(f"   4. {'✅' if req4_met else '❌'} Frontend can access images without 404 errors - {'Success' if req4_met else 'Failed'}")
-    
-    # Requirement 5: URL construction correct
-    req5_met = property_endpoints_working and url_construction_correct
-    print(f"   5. {'✅' if req5_met else '❌'} URL construction correct in property data - {'Correct' if req5_met else 'Incorrect'}")
-    
-    requirements_met = sum([req1_met, req2_met, req3_met, req4_met, req5_met])
-    all_requirements_met = requirements_met == 5
-    
-    print(f"\n📊 REQUIREMENTS SUMMARY:")
-    print(f"   Requirements met: {requirements_met}/5")
-    print(f"   All requirements met: {'✅ YES' if all_requirements_met else '❌ NO'}")
-    
-    # Overall Assessment
-    if all_requirements_met:
-        print(f"\n🎉 VICTORIA COUNTY IMAGE ROUTING FIX: SUCCESSFUL!")
-        print(f"   ✅ All Victoria County properties found with correct assessment numbers")
-        print(f"   ✅ Boundary screenshot field stores filenames instead of full URLs")
-        print(f"   ✅ /api/boundary-image/{{filename}} endpoints working properly")
-        print(f"   ✅ Frontend can access property images without 404 errors")
-        print(f"   ✅ URL construction is correct in property data")
-        print(f"   🚀 Image routing fix is production-ready!")
-    else:
-        print(f"\n❌ VICTORIA COUNTY IMAGE ROUTING FIX: ISSUES IDENTIFIED")
-        print(f"   ❌ {5 - requirements_met} out of 5 requirements not met")
-        print(f"   🔧 Image routing fix needs additional work")
-        
-        # Detailed issue analysis
-        if not req1_met:
-            print(f"      ❌ Victoria County properties missing or incomplete")
-        if not req2_met:
-            print(f"      ❌ Boundary screenshot field still contains full URLs instead of filenames")
-        if not req3_met:
-            print(f"      ❌ /api/boundary-image/{{filename}} endpoints not working properly")
-        if not req4_met:
-            print(f"      ❌ Frontend URL construction still results in 404 errors")
-        if not req5_met:
-            print(f"      ❌ URL construction or property image endpoints have issues")
-    
-    success_rate = (passed_tests / total_tests) * 100
-    print(f"\n📊 Overall Success Rate: {success_rate:.1f}%")
-    
-    return all_requirements_met, {
-        'test_results': test_results,
-        'requirements_met': requirements_met,
-        'property_data': property_data if properties_exist else {},
-        'boundary_data': boundary_data if format_correct else {},
-        'boundary_results': boundary_results if boundary_endpoints_working else {},
-        'property_results': property_results if property_endpoints_working else {},
-        'url_results': url_results if url_construction_correct else {}
-    }
+    return all_working, analysis_results
 
 def main():
-    """Main test execution function - Focus on Victoria County Image Routing Fix"""
+    """Main test execution function - Focus on Deployment Management Endpoints"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Test Victoria County property image routing fix")
-    print("📋 REVIEW REQUEST: Test property image routing fix for Victoria County properties")
+    print("🎯 FOCUS: Test deployment management endpoints to identify error source")
+    print("📋 REVIEW REQUEST: Test all deployment management endpoints to identify why deployment status shows 'Error'")
     print("🔍 SPECIFIC TESTING REQUIREMENTS:")
-    print("   1. Test Victoria County properties with assessment numbers 00254118, 00453706, 09541209")
-    print("   2. Verify boundary_screenshot field stores filenames (e.g., 'boundary_00254118.png') not full URLs")
-    print("   3. Test that /api/boundary-image/{filename} endpoints work properly")
-    print("   4. Check that frontend can access property images without 404 errors")
-    print("   5. Verify URL construction is correct in property data")
+    print("   1. Test GET /api/deployment/status - should return current deployment status")
+    print("   2. Test POST /api/deployment/check-updates - should check for available updates")
+    print("   3. Test GET /api/deployment/health - should return system health")
+    print("   4. Test POST /api/deployment/verify - verify it's still working after previous fix")
+    print("   5. Check what data each endpoint returns and identify why status shows 'Error'")
+    print("   6. Verify the response formats match what the frontend expects")
     print("🎯 CONTEXT:")
-    print("   - Previously boundary_screenshot was storing full URLs causing 404 errors")
-    print("   - Fixed by changing boundary_screenshot to store filenames only")
-    print("   - Frontend constructs: ${BACKEND_URL}/api/boundary-image/${property.boundary_screenshot}")
+    print("   - User reports deployment interface shows 'Status: Error', 'Updates Available: No', 'Last Deployment: Never'")
+    print("   - We fixed the /api/deployment/verify timeout issue but other endpoints might have problems")
+    print("   - Need to identify which endpoint is returning error status and why")
     print("=" * 80)
     
     # Test 1: Basic API connectivity
@@ -605,78 +418,68 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Victoria County Image Routing Fix (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Victoria County Image Routing Fix Testing")
-    fix_successful, fix_data = test_victoria_county_image_routing_fix()
+    # Test 2: Deployment Management Endpoints (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Deployment Management Endpoints Testing")
+    all_working, analysis_data = test_deployment_management_endpoints()
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Victoria County Image Routing Fix")
+    print("📊 FINAL TEST RESULTS SUMMARY - Deployment Management Endpoints")
     print("=" * 80)
     
-    if fix_successful:
-        print(f"🎉 VICTORIA COUNTY IMAGE ROUTING FIX: SUCCESSFUL!")
-        print(f"   ✅ All 5 review request requirements met")
-        print(f"   ✅ Victoria County properties found with correct assessment numbers")
-        print(f"   ✅ Boundary screenshot field stores filenames instead of full URLs")
-        print(f"   ✅ /api/boundary-image/{{filename}} endpoints working properly")
-        print(f"   ✅ Frontend can access property images without 404 errors")
-        print(f"   ✅ URL construction is correct in property data")
-        print(f"   🚀 Image routing fix is production-ready!")
+    if all_working:
+        print(f"🎉 DEPLOYMENT MANAGEMENT ENDPOINTS: ALL WORKING!")
+        print(f"   ✅ All 4 deployment endpoints are functional")
+        print(f"   ✅ GET /api/deployment/status working properly")
+        print(f"   ✅ POST /api/deployment/check-updates working properly")
+        print(f"   ✅ GET /api/deployment/health working properly")
+        print(f"   ✅ POST /api/deployment/verify working properly")
+        print(f"   🤔 Error may be in frontend interpretation or data format")
         
         # Show detailed success data
-        test_results = fix_data.get('test_results', {})
-        requirements_met = fix_data.get('requirements_met', 0)
+        error_sources = analysis_data.get('error_sources', [])
         
         print(f"\n📊 DETAILED SUCCESS METRICS:")
-        print(f"   Requirements met: {requirements_met}/5")
-        print(f"   Test success rate: {(sum(test_results.values()) / len(test_results) * 100):.1f}%")
+        print(f"   Working endpoints: {4 - len(error_sources)}/4")
+        print(f"   Error endpoints: {len(error_sources)}/4")
         
-        # Show property data
-        property_data = fix_data.get('property_data', {})
-        if property_data:
-            print(f"\n📋 VERIFIED PROPERTIES:")
-            for assessment, prop in property_data.items():
-                print(f"   ✅ {assessment}: {prop.get('owner_name', 'N/A')} - {prop.get('boundary_screenshot', 'N/A')}")
+        # Show response data for analysis
+        print(f"\n📋 RESPONSE DATA ANALYSIS:")
+        if analysis_data.get('status_result'):
+            status_data = analysis_data.get('status_data', {})
+            print(f"   Status Response: {json.dumps(status_data, indent=2)}")
+        
+        if analysis_data.get('updates_result'):
+            updates_data = analysis_data.get('updates_data', {})
+            print(f"   Updates Response: {json.dumps(updates_data, indent=2)}")
         
     else:
-        print(f"❌ VICTORIA COUNTY IMAGE ROUTING FIX: ISSUES IDENTIFIED")
-        print(f"   ❌ Review request requirements not fully met")
-        print(f"   🔧 Image routing fix needs additional work")
+        print(f"❌ DEPLOYMENT MANAGEMENT ENDPOINTS: ISSUES IDENTIFIED")
+        print(f"   ❌ Some deployment endpoints have problems")
+        print(f"   🔧 These endpoints need investigation/fixing")
         
-        test_results = fix_data.get('test_results', {})
-        requirements_met = fix_data.get('requirements_met', 0)
+        error_sources = analysis_data.get('error_sources', [])
         
         print(f"\n📋 ISSUES IDENTIFIED:")
-        print(f"   Requirements met: {requirements_met}/5")
-        print(f"   Requirements failed: {5 - requirements_met}/5")
+        print(f"   Working endpoints: {4 - len(error_sources)}/4")
+        print(f"   Error endpoints: {len(error_sources)}/4")
         
         # Show specific failures
-        test_descriptions = {
-            'properties_exist': 'Victoria County Properties Missing',
-            'field_format_correct': 'Boundary Screenshot Field Format Incorrect',
-            'boundary_endpoints_working': 'Boundary Image Endpoints Not Working',
-            'property_endpoints_working': 'Property Image Endpoints Not Working',
-            'url_construction_correct': 'URL Construction Incorrect'
-        }
-        
-        failed_tests = [name for name, result in test_results.items() if not result]
-        if failed_tests:
-            print(f"\n   ❌ FAILED TESTS:")
-            for test_name in failed_tests:
-                description = test_descriptions.get(test_name, test_name)
-                print(f"      - {description}")
+        if error_sources:
+            print(f"\n   ❌ PROBLEMATIC ENDPOINTS:")
+            for endpoint in error_sources:
+                print(f"      - /api/{endpoint}")
         
         print(f"\n   🔧 RECOMMENDED ACTIONS:")
-        print(f"      1. Verify Victoria County properties exist in database")
-        print(f"      2. Check boundary_screenshot field format (should be filenames, not URLs)")
-        print(f"      3. Ensure /api/boundary-image/{{filename}} endpoints are accessible")
-        print(f"      4. Test frontend URL construction manually")
-        print(f"      5. Verify property image endpoints work for all assessment numbers")
+        print(f"      1. Check deployment script files exist and are executable")
+        print(f"      2. Verify system health check scripts are working")
+        print(f"      3. Check deployment status script output format")
+        print(f"      4. Ensure proper permissions for deployment scripts")
+        print(f"      5. Test deployment endpoints manually for detailed error messages")
     
     print("=" * 80)
     
-    return fix_successful
+    return all_working
 
 if __name__ == "__main__":
     success = main()
