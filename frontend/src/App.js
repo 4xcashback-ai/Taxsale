@@ -1015,14 +1015,18 @@ function PropertySearch() {
                             alt={`Property boundary map of ${property.property_address}`}
                             className="w-full h-full object-cover rounded-t-lg"
                             onError={(e) => {
-                              // Fallback to satellite image
-                              if (property.latitude && property.longitude) {
+                              // First fallback: try dynamic property image endpoint
+                              if (e.target.src.includes('/api/boundary-image/') && property.assessment_number) {
+                                e.target.src = `${BACKEND_URL}/api/property-image/${property.assessment_number}`;
+                              }
+                              // Second fallback: satellite image  
+                              else if (property.latitude && property.longitude) {
                                 e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=17&size=400x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
                               } else {
                                 e.target.style.display = 'none';
                                 e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
                               }
-                            }}
+                            }}}
                           />
                         ) : property.latitude && property.longitude ? (
                           <img
