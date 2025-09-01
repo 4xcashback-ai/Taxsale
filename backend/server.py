@@ -3904,7 +3904,7 @@ async def verify_auth(current_user: dict = Depends(verify_token)):
     return {"authenticated": True, "username": current_user["username"]}
 
 @api_router.get("/deployment/health")
-async def get_system_health():
+async def get_system_health(current_user: dict = Depends(verify_token)):
     """Get system health status"""
     try:
         import subprocess
