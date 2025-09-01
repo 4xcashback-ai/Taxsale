@@ -52,6 +52,85 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
+// Authentication Context
+const AuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for stored token on app load
+    const storedToken = localStorage.getItem('admin_token');
+    if (storedToken) {
+      setToken(storedToken);
+      verifyToken(storedToken);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const verifyToken = async (tokenToVerify) => {
+    try {
+      const response = await axios.get(`${API}/auth/verify`, {
+        headers: { Authorization: `Bearer ${tokenToVerify}` }
+      });
+      setIsAuthenticated(true);
+      setLoading(false);
+    } catch (error) {
+      localStorage.removeItem('admin_token');
+      setToken(null);
+      setIsAuthenticated(false);
+      setLoading(false);
+    }
+  };
+
+  const login = async (username, password) => {
+    try {
+      const response = await axios.post(`${API}/auth/login`, {
+        username,
+        password
+      });
+      
+      const { access_token } = response.data;
+      setToken(access_token);
+      setIsAuthenticated(true);
+      localStorage.setItem('admin_token', access_token);
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  };
+
+  const logout = () => {
+    setToken(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_token');
+  };
+
+  return (
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      token, 
+      login, 
+      logout, 
+      loading 
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
 // Google Maps component with NSPRD boundary overlays
 const GoogleMapComponent = ({ properties, onMarkerClick }) => {
   const mapRef = useRef();
