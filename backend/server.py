@@ -2062,7 +2062,7 @@ async def delete_municipality(municipality_id: str, current_user: dict = Depends
         raise HTTPException(status_code=500, detail=f"Error deleting municipality: {str(e)}")
 
 @api_router.put("/municipalities/{municipality_id}", response_model=Municipality)
-async def update_municipality_enhanced(municipality_id: str, update_data: MunicipalityUpdate):
+async def update_municipality_enhanced(municipality_id: str, update_data: MunicipalityUpdate, current_user: dict = Depends(verify_token)):
     """Update an existing municipality with enhanced scheduling options"""
     try:
         # Check if municipality exists
