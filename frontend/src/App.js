@@ -684,7 +684,13 @@ function PropertySearch() {
         setDeploymentMessage("No updates available. Application is up to date.");
       }
       
-      await fetchDeploymentStatus(); // Refresh status after checking
+      // Update deployment status with the updates_available info
+      setDeploymentStatus(prev => ({
+        ...prev,
+        updates_available: updateResult.updates_available,
+        last_update_check: updateResult.checked_at
+      }));
+      
     } catch (error) {
       console.error("Error checking for updates:", error);
       setDeploymentMessage("Failed to check for updates: " + (error.response?.data?.detail || error.message));
