@@ -603,11 +603,19 @@ function PropertySearch() {
   const handleEditMunicipality = async (municipality) => {
     if (!municipality.name.trim() || !municipality.website_url.trim()) return;
     
+    if (!token) {
+      alert('Please log in as admin to edit municipalities.');
+      return;
+    }
+    
     try {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${BACKEND_URL}/api/municipalities/${municipality.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(municipality)
       });
       
