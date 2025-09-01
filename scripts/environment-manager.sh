@@ -133,10 +133,15 @@ initialize_production_environment() {
     local jwt_secret=$(cat "$SECURE_ENV_DIR/jwt_secret.key" 2>/dev/null || echo "PLEASE_GENERATE_SECURE_KEY")
     local admin_password=$(cat "$SECURE_ENV_DIR/admin_password.key" 2>/dev/null || echo "PLEASE_CHANGE_PASSWORD")
     
-    # Create backend .env (using different delimiter to handle special characters)
-    sed -e "s|GENERATE_SECURE_KEY_IN_PRODUCTION|$jwt_secret|g" \
-        -e "s|CHANGE_THIS_IN_PRODUCTION|$admin_password|g" \
-        "$ENV_CONFIG_DIR/backend.env.template" > "$ENV_CONFIG_DIR/backend.env.production"
+    # Escape special characters in secrets for sed
+    local jwt_secret_escaped=$(printf '%s\n' "$jwt_secret" | sed 's/[\[\].*^$()+?{|]/\\&/g')
+    local admin_password_escaped=$(printf '%s\n' "$admin_password" | sed 's/[\[\].*^$()+?{|]/\\&/g')
+    
+    # Create backend .env using safe approach with temporary file and proper escaping
+    cp "$ENV_CONFIG_DIR/backend.env.template" "$ENV_CONFIG_DIR/backend.env.production.tmp"
+    sed -i "s|GENERATE_SECURE_KEY_IN_PRODUCTION|$jwt_secret_escaped|g" "$ENV_CONFIG_DIR/backend.env.production.tmp"
+    sed -i "s|CHANGE_THIS_IN_PRODUCTION|$admin_password_escaped|g" "$ENV_CONFIG_DIR/backend.env.production.tmp"
+    mv "$ENV_CONFIG_DIR/backend.env.production.tmp" "$ENV_CONFIG_DIR/backend.env.production"
     
     # Create frontend .env (no secrets to replace)
     cp "$ENV_CONFIG_DIR/frontend.env.template" "$ENV_CONFIG_DIR/frontend.env.production"
