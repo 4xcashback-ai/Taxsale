@@ -1952,7 +1952,7 @@ async def root():
     return {"message": "Nova Scotia Tax Sale Aggregator API - Enhanced with Real Scraping"}
 
 @api_router.post("/municipalities", response_model=Municipality)
-async def create_municipality(municipality: MunicipalityCreate):
+async def create_municipality(municipality: MunicipalityCreate, current_user: dict = Depends(verify_token)):
     municipality_dict = municipality.dict()
     municipality_obj = Municipality(**municipality_dict)
     await db.municipalities.insert_one(municipality_obj.dict())
