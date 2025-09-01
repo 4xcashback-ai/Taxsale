@@ -3705,7 +3705,7 @@ async def get_deployment_status():
         
         # Run the deployment status script
         result = subprocess.run(
-            ['/var/www/nstaxsales/scripts/deployment-status.sh'],
+            ['/app/scripts/deployment-status.sh'],
             capture_output=True,
             text=True,
             timeout=30
