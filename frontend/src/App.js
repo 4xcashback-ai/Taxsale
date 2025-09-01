@@ -1753,7 +1753,7 @@ function PropertySearch() {
                             disabled={loading}
                             size="sm"
                             className={`w-full ${
-                              muni.scraper_type === 'halifax' 
+                              (muni.scraper_type === 'halifax' || muni.scraper_type === 'victoria_county')
                                 ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                                 : 'bg-gray-600 hover:bg-gray-700 text-white'
                             }`}
