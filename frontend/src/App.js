@@ -650,10 +650,20 @@ function PropertySearch() {
   };
 
   const scrapeHalifax = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setLoading(true);
     setScrapeStatus("Scraping Halifax tax sales...");
     try {
-      const response = await axios.post(`${API}/scrape/halifax`);
+      const response = await axios.post(`${API}/scrape/halifax`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       console.log("Halifax scraping results:", response.data);
       await fetchTaxSales();
       await fetchMunicipalities(); // Refresh municipalities to show updated status
