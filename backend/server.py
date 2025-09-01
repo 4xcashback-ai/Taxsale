@@ -3884,6 +3884,25 @@ async def health_check():
     """Basic health check endpoint"""
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
+# Authentication Endpoints
+@api_router.post("/auth/login", response_model=Token)
+async def login(login_data: LoginRequest):
+    """Admin login endpoint"""
+    if not authenticate_admin(login_data.username, login_data.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = create_access_token(data={"sub": login_data.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@api_router.get("/auth/verify")
+async def verify_auth(current_user: dict = Depends(verify_token)):
+    """Verify if user is authenticated"""
+    return {"authenticated": True, "username": current_user["username"]}
+
 @api_router.get("/deployment/health")
 async def get_system_health():
     """Get system health status"""
