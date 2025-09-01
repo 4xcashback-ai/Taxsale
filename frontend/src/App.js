@@ -798,6 +798,11 @@ function PropertySearch() {
   };
 
   const deployApplication = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     if (!window.confirm("Are you sure you want to deploy the latest version? This will restart all services.")) {
       return;
     }
@@ -806,7 +811,11 @@ function PropertySearch() {
     setDeploymentMessage("Starting deployment...");
     try {
       const response = await axios.post(`${API}/deployment/deploy`, null, {
-        params: githubRepo ? { github_repo: githubRepo } : {}
+        params: githubRepo ? { github_repo: githubRepo } : {},
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
       setDeploymentMessage("Deployment started successfully! This may take a few minutes.");
       
