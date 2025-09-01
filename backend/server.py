@@ -196,6 +196,15 @@ async def get_optimized_property_image(assessment_number: str, width: int = 405,
 # Initialize scheduler
 scheduler = AsyncIOScheduler()
 
+# Authentication Models
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 # Define Models
 class Municipality(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
