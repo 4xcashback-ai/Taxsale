@@ -194,11 +194,11 @@ user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale da
 backend:
   - task: "Deployment Management API Endpoints"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "testing"
