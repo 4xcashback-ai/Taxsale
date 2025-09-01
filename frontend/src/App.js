@@ -1238,6 +1238,63 @@ function PropertySearch() {
           {/* Enhanced Admin Tab */}
           <TabsContent value="admin">
             <div className="space-y-6">
+              {/* Authentication Check */}
+              {!isAuthenticated ? (
+                <Card className="bg-yellow-50/80 backdrop-blur-sm border-yellow-200/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Lock className="h-5 w-5 text-yellow-600" />
+                      <span>Admin Access Required</span>
+                    </CardTitle>
+                    <CardDescription>
+                      You need to be authenticated to access admin features.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      onClick={() => setShowLoginModal(true)}
+                      className="flex items-center space-x-2"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      <span>Login as Admin</span>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Admin Header with Logout */}
+                  <Card className="bg-green-50/80 backdrop-blur-sm border-green-200/50">
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span className="text-green-800">Authenticated as Admin</span>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={logout}
+                        >
+                          Logout
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Status Messages */}
+                  {scrapeStatus && (
+                    <Card className="bg-blue-50/80 backdrop-blur-sm border-blue-200/50">
+                      <CardContent className="py-4">
+                        <div className="flex items-center space-x-2">
+                          <RefreshCw className="h-4 w-4 text-blue-600" />
+                          <span className="text-blue-800">{scrapeStatus}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
+
               {/* Status Messages */}
               {scrapeStatus && (
                 <Card className="bg-blue-50/80 backdrop-blur-sm border-blue-200/50">
