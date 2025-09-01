@@ -363,7 +363,6 @@ function MainApp() {
 function PropertySearch() {
   const [taxSales, setTaxSales] = useState([]);
   const [municipalities, setMunicipalities] = useState([]);
-  const [mapData, setMapData] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
