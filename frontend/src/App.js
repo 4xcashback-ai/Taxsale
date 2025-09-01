@@ -841,8 +841,16 @@ function PropertySearch() {
   };
 
   const fetchSystemHealth = async () => {
+    if (!isAuthenticated) {
+      return;
+    }
+    
     try {
-      const response = await axios.get(`${API}/deployment/health`);
+      const response = await axios.get(`${API}/deployment/health`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       setSystemHealth(response.data);
     } catch (error) {
       console.error("Error fetching system health:", error);
