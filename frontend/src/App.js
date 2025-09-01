@@ -2020,7 +2020,10 @@ function PropertySearch() {
                             deploymentStatus.status === 'idle' ? 'text-green-600' : 
                             deploymentStatus.status === 'error' ? 'text-red-600' : 'text-yellow-600'
                           }`}>
-                            {deploymentStatus.status.charAt(0).toUpperCase() + deploymentStatus.status.slice(1)}
+                            {deploymentStatus.status ? 
+                              deploymentStatus.status.charAt(0).toUpperCase() + deploymentStatus.status.slice(1) : 
+                              'Unknown'
+                            }
                           </div>
                         </div>
                         <div>
