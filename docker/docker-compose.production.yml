@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Main application
+  taxsale-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.production
+      args:
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-https://taxsalecompass.ca}
+        REACT_APP_GOOGLE_MAPS_API_KEY: ${REACT_APP_GOOGLE_MAPS_API_KEY}
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Backend environment
+      - MONGO_URL=${MONGO_URL:-mongodb://mongo:27017}
+      - DB_NAME=${DB_NAME:-taxsalecompass_production}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://taxsalecompass.ca,https://www.taxsalecompass.ca}
+    volumes:
+      - app-data:/app/data
+      - logs:/var/log/taxsale
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL certificates
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - taxsale-network
+
+  # MongoDB database
+  mongo:
+    image: mongo:7.0
+    environment:
+      - MONGO_INITDB_DATABASE=${DB_NAME:-taxsalecompass_production}
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    restart: unless-stopped
+    networks:
+      - taxsale-network
+    # Only expose port for development/maintenance
+    ports:
+      - "127.0.0.1:27017:27017"
+    
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - taxsale-network
+    command: redis-server --appendonly yes
+
+  # Nginx reverse proxy (for load balancing multiple app instances)
+  nginx-proxy:
+    image: nginx:alpine
+    ports:
+      - "8080:80"  # Admin/monitoring port
+    volumes:
+      - ./nginx.proxy.conf:/etc/nginx/nginx.conf:ro
+      - logs:/var/log/nginx
+    depends_on:
+      - taxsale-app
+    restart: unless-stopped
+    networks:
+      - taxsale-network
+
+  # Monitoring and log aggregation
+  monitoring:
+    image: prom/prometheus:latest
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - taxsale-network
+
+volumes:
+  mongo-data:
+    driver: local
+  mongo-config:
+    driver: local
+  redis-data:
+    driver: local
+  app-data:
+    driver: local
+  logs:
+    driver: local
+  prometheus-data:
+    driver: local
+
+networks:
+  taxsale-network:
+    driver: bridge
