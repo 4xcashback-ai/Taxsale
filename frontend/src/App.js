@@ -622,11 +622,19 @@ function PropertySearch() {
       return;
     }
     
+    if (!token) {
+      alert('Please log in as admin to delete municipalities.');
+      return;
+    }
+    
     try {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${BACKEND_URL}/api/municipalities/${municipalityId}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (response.ok) {
