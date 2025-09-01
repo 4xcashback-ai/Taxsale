@@ -2017,7 +2017,7 @@ function PropertySearch() {
                         <div>
                           <span className="text-gray-600">Status:</span>
                           <div className={`font-medium ${
-                            deploymentStatus.status === 'idle' ? 'text-green-600' : 
+                            !deploymentStatus.status || deploymentStatus.status === 'idle' ? 'text-green-600' : 
                             deploymentStatus.status === 'error' ? 'text-red-600' : 'text-yellow-600'
                           }`}>
                             {deploymentStatus.status ? 
