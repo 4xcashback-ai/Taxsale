@@ -739,8 +739,16 @@ function PropertySearch() {
 
   // Deployment management functions
   const fetchDeploymentStatus = async () => {
+    if (!isAuthenticated) {
+      return;
+    }
+    
     try {
-      const response = await axios.get(`${API}/deployment/status`);
+      const response = await axios.get(`${API}/deployment/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       setDeploymentStatus(response.data);
       // Clear any previous error messages on successful fetch
       if (deploymentMessage && deploymentMessage.includes("Failed to fetch")) {
