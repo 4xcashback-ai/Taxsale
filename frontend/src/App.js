@@ -563,11 +563,19 @@ function PropertySearch() {
   const handleAddMunicipality = async () => {
     if (!newMunicipality.name.trim() || !newMunicipality.website_url.trim()) return;
     
+    if (!token) {
+      alert('Please log in as admin to add municipalities.');
+      return;
+    }
+    
     try {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${BACKEND_URL}/api/municipalities`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(newMunicipality)
       });
       
