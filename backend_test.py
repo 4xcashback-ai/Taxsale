@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Deployment Management API Endpoints
+Focus on Victoria County Property Image Routing Fix
 """
 
 import requests
