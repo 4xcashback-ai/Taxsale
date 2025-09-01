@@ -102,7 +102,9 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete the robust PDF parsing for Halifax tax sale data, including finding, downloading, and correctly extracting all property details from the PDF. Address any remaining 'Property Details TBD' placeholders by properly scraping all property information from source documents."
+user_problem_statement: "Test the deployment check-updates endpoint on the production VPS to troubleshoot why it's not detecting recent GitHub changes."
+
+backend:
 
   - task: "Multi-Municipality Scraper Implementation"
     implemented: true
