@@ -1248,7 +1248,7 @@ async def scrape_victoria_county_tax_sales():
                                                     "property_description": "30 5413 (P) Rd., Middle River Land/Dwelling - 3,100 Sq. Feet +/-",
                                                     "latitude": 46.38261,
                                                     "longitude": -60.89387,
-                                                    "boundary_screenshot": f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-automation.preview.emergentagent.com')}/api/property-image/00453706",
+                                                    "boundary_screenshot": f"boundary_00453706.png",
                                                     "scraped_at": datetime.now(timezone.utc),
                                                     "source_url": "https://victoriacounty.com",
                                                     "raw_data": {"source": "direct_pdf_extraction", "tax_amount": f"${prop2_tax}"}
