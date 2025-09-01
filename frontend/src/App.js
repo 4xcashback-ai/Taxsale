@@ -1295,18 +1295,6 @@ function PropertySearch() {
                 </>
               )}
 
-              {/* Status Messages */}
-              {scrapeStatus && (
-                <Card className="bg-blue-50/80 backdrop-blur-sm border-blue-200/50">
-                  <CardContent className="py-4">
-                    <div className="flex items-center space-x-2">
-                      <RefreshCw className="h-4 w-4 text-blue-600" />
-                      <span className="text-blue-800">{scrapeStatus}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Enhanced Statistics Card */}
               {stats && (
                 <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
