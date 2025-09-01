@@ -1026,7 +1026,7 @@ function PropertySearch() {
                                 e.target.style.display = 'none';
                                 e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center rounded-t-lg"><div class="text-center text-gray-600"><div class="text-2xl mb-1">🏠</div><div class="text-sm">No Image Available</div></div></div>';
                               }
-                            }}}
+                            }}
                           />
                         ) : property.latitude && property.longitude ? (
                           <img
