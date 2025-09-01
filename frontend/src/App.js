@@ -613,7 +613,6 @@ function PropertySearch() {
       await fetchTaxSales();
       await fetchMunicipalities(); // Refresh municipalities to show updated status
       await fetchStats();
-      await fetchMapData();
       setScrapeStatus("Scraping completed for all municipalities!");
     } catch (error) {
       console.error("Error scraping municipalities:", error);
