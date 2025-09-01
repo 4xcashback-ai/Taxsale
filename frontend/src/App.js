@@ -2060,6 +2060,8 @@ function PropertySearch() {
                   </div>
                 </CardContent>
               </Card>
+              </>
+              )}
             </div>
           </TabsContent>
         </Tabs>
