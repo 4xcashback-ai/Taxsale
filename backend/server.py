@@ -2030,7 +2030,7 @@ async def get_municipality(municipality_id: str):
     return Municipality(**municipality)
 
 @api_router.delete("/municipalities/{municipality_id}")
-async def delete_municipality(municipality_id: str):
+async def delete_municipality(municipality_id: str, current_user: dict = Depends(verify_token)):
     """Delete a municipality and optionally its associated tax sale properties"""
     try:
         # First check if municipality exists
