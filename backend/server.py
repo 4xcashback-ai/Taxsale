@@ -3744,7 +3744,7 @@ async def check_for_updates():
         
         # Run the check-updates command
         result = subprocess.run(
-            ['sudo', '/var/www/nstaxsales/scripts/deployment.sh', 'check-updates'],
+            ['sudo', '/app/scripts/deployment.sh', 'check-updates'],
             capture_output=True,
             text=True,
             timeout=60
