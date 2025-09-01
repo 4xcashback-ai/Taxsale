@@ -453,7 +453,7 @@ function PropertySearch() {
   const [selectedProperty, setSelectedProperty] = useState(null);
   
   // Authentication state
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, token, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   
   // Municipality management state
