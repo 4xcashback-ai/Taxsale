@@ -3713,7 +3713,7 @@ async def get_deployment_status():
         
         # Run the deployment status script
         result = subprocess.run(
-            ['/app/scripts/deployment-status.sh'],
+            [f'{SCRIPT_DIR}/deployment-status.sh'],
             capture_output=True,
             text=True,
             timeout=30
