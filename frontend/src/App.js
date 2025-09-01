@@ -428,14 +428,16 @@ const MapWrapper = ({ properties, onMarkerClick }) => {
 
 function MainApp() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route path="/" element={<PropertySearch />} />
-          <Route path="/property/:assessmentNumber" element={<PropertyDetails />} />
-        </Routes>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route path="/" element={<PropertySearch />} />
+            <Route path="/property/:assessmentNumber" element={<PropertyDetails />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
