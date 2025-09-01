@@ -3781,7 +3781,7 @@ logger = logging.getLogger(__name__)
 
 # Deployment automation endpoints
 @api_router.get("/deployment/status")
-async def get_deployment_status():
+async def get_deployment_status(current_user: dict = Depends(verify_token)):
     """Get current deployment status"""
     try:
         import subprocess
