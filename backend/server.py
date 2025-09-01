@@ -3837,25 +3837,48 @@ async def get_system_health():
 
 @api_router.post("/deployment/verify")
 async def verify_deployment():
-    """Verify current deployment"""
+    """Verify current deployment using direct HTTP checks"""
     try:
-        import subprocess
+        import aiohttp
         
-        # Run the verify command
-        result = subprocess.run(
-            ['sudo', '/var/www/nstaxsales/scripts/deployment.sh', 'verify'],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+        # Initialize results
+        backend_status = False
+        frontend_status = False
+        output_messages = []
+        error_messages = []
         
-        deployment_valid = result.returncode == 0
+        # Check backend health
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get('http://localhost:8001/api/health', timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    if response.status == 200:
+                        backend_status = True
+                        output_messages.append("Backend health check: PASSED")
+                    else:
+                        error_messages.append(f"Backend health check failed with status {response.status}")
+        except Exception as e:
+            error_messages.append(f"Backend health check failed: {str(e)}")
+        
+        # Check frontend health
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get('http://localhost:3000', timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    if response.status == 200:
+                        frontend_status = True
+                        output_messages.append("Frontend health check: PASSED")
+                    else:
+                        error_messages.append(f"Frontend health check failed with status {response.status}")
+        except Exception as e:
+            error_messages.append(f"Frontend health check failed: {str(e)}")
+        
+        # Determine overall deployment validity
+        deployment_valid = backend_status and frontend_status
         
         return {
             "deployment_valid": deployment_valid,
             "message": "Deployment verified successfully" if deployment_valid else "Deployment verification failed",
-            "output": result.stdout,
-            "errors": result.stderr,
+            "output": "\n".join(output_messages),
+            "errors": "\n".join(error_messages),
             "verified_at": datetime.now(timezone.utc).isoformat()
         }
         
