@@ -3939,7 +3939,7 @@ async def get_system_health():
         raise HTTPException(status_code=500, detail=f"Failed to get system health: {str(e)}")
 
 @api_router.post("/deployment/verify")
-async def verify_deployment():
+async def verify_deployment(current_user: dict = Depends(verify_token)):
     """Verify current deployment using direct HTTP checks"""
     try:
         import aiohttp
