@@ -408,7 +408,8 @@ function PropertySearch() {
     fetchStats();
     fetchMunicipalities();
     fetchTaxSales();
-    fetchMapData();
+    // Removed fetchMapData() to prevent duplicate API calls
+    // Map will use the same data from taxSales state
   }, [selectedStatus, selectedMunicipality]); // Refetch when status or municipality changes
 
   const fetchStats = async () => {
