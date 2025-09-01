@@ -1784,7 +1784,7 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                 
                 # Generate boundary screenshot URL if coordinates are available
                 if latitude and longitude:
-                    boundary_screenshot = f"{os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-automation.preview.emergentagent.com')}/api/property-image/{assessment_number}"
+                    boundary_screenshot = f"boundary_{assessment_number}.png"
                     logger.info(f"✅ Boundary screenshot URL generated for {assessment_number}")
                 
                 # Create property object
