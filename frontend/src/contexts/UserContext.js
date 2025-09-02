@@ -41,33 +41,27 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
-      // Try to get user info from the regular user endpoint first
+      // Get user info from the regular user endpoint
       const response = await axios.get(`${API}/api/users/me`);
-      setUser(response.data);
+      const userData = response.data;
+      
+      // Check if this is admin user and upgrade their data
+      if (userData.email === 'admin@taxsalecompass.ca') {
+        const adminUser = {
+          ...userData,
+          subscription_tier: 'admin',
+          is_verified: true
+        };
+        setUser(adminUser);
+      } else {
+        setUser(userData);
+      }
+      
       setIsAuthenticated(true);
     } catch (error) {
-      // If that fails, try admin auth verification
-      try {
-        const adminResponse = await axios.get(`${API}/api/auth/verify`);
-        if (adminResponse.data.authenticated) {
-          // Create admin user object
-          const adminUser = {
-            id: 'admin',
-            email: 'admin',
-            subscription_tier: 'admin',
-            is_verified: true,
-            created_at: new Date()
-          };
-          setUser(adminUser);
-          setIsAuthenticated(true);
-        } else {
-          logout();
-        }
-      } catch (adminError) {
-        console.error('Auth check failed:', error, adminError);
-        // Token is invalid, clear it
-        logout();
-      }
+      console.error('Auth check failed:', error);
+      // Token is invalid, clear it
+      logout();
     } finally {
       setLoading(false);
     }
