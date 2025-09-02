@@ -538,7 +538,7 @@ function PropertySearch() {
       if (municipality) {
         params.append("municipality", municipality);
       }
-      if (selectedStatus) {
+      if (selectedStatus && selectedStatus !== 'all') {
         params.append("status", selectedStatus);
       }
       if (query) {
