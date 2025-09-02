@@ -292,6 +292,7 @@ class TaxSaleProperty(BaseModel):
     auction_result: Optional[str] = None  # pending, sold, canceled, deferred, taxes_paid
     auction_result_updated_at: Optional[datetime] = None
     winning_bid_amount: Optional[float] = None  # Final sale amount if sold
+    boundary_screenshot: Optional[str] = None  # Path to viewpoint.ca boundary screenshot
 
 # User Management Models
 class User(BaseModel):
@@ -327,7 +328,6 @@ class TokenResponse(BaseModel):
 
 class VerifyEmailRequest(BaseModel):
     token: str
-    boundary_screenshot: Optional[str] = None  # Path to viewpoint.ca boundary screenshot
 
 class TaxSalePropertyCreate(BaseModel):
     municipality_id: str
