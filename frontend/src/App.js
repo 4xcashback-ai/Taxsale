@@ -200,7 +200,15 @@ const AuthenticatedApp = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Tax Sale Compass</h1>
+              <div>
+                <button 
+                  onClick={logout}
+                  className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+                >
+                  Tax Sale Compass
+                </button>
+                <p className="text-sm text-gray-600 font-medium">All tax sales. One platform.</p>
+              </div>
               <Badge variant="secondary" className="ml-2">Alpha</Badge>
             </div>
             
