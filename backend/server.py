@@ -4355,7 +4355,19 @@ async def startup_event():
         id='weekly_scrape',
         replace_existing=True
     )
-    logger.info("Scheduler started - Weekly scraping on Sundays at 6 AM")
+    
+    # Schedule smart auction result updates
+    await schedule_next_auction_update()
+    
+    # Re-schedule auction updates daily at 1 AM to catch new auctions
+    scheduler.add_job(
+        schedule_next_auction_update,
+        CronTrigger(hour=1, minute=0),  # Daily at 1 AM
+        id='reschedule_auction_updates',
+        replace_existing=True
+    )
+    
+    logger.info("Scheduler started - Weekly scraping on Sundays at 6 AM and smart auction result updates")
 
 def calculate_center_from_bbox(bbox):
     """Calculate center coordinates from bounding box"""
