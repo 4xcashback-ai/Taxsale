@@ -165,7 +165,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.email === 'admin' || user?.subscription_tier === 'admin';
+    return user?.email === 'admin' || user?.subscription_tier === 'admin' || user?.id === 'admin';
   };
 
   const isPaidUser = () => {
