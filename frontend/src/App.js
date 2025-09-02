@@ -213,6 +213,13 @@ const AuthenticatedApp = () => {
               {/* Navigation matching live site */}
               <nav className="flex items-center space-x-6">
                 <button 
+                  onClick={logout}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center"
+                >
+                  <Home className="h-4 w-4 mr-1" />
+                  Home
+                </button>
+                <button 
                   onClick={() => setActiveView('search')}
                   className={`text-sm font-medium ${activeView === 'search' ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
                 >
