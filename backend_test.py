@@ -171,6 +171,9 @@ def test_admin_auction_result_endpoint():
             return False, {"error": "Cannot get test property"}
         
         properties = response.json().get('properties', [])
+        if isinstance(properties, list) and len(properties) == 0:
+            # API might return list directly
+            properties = response.json() if isinstance(response.json(), list) else []
         if not properties:
             print("   ❌ No properties available for testing")
             return False, {"error": "No properties available"}
