@@ -79,7 +79,7 @@ const AuthenticatedApp = () => {
   const [editingMunicipality, setEditingMunicipality] = useState(null);
 
   // Environment variables with fallbacks
-  const API = process.env.REACT_APP_BACKEND_URL || 'https://taxsale-mapper.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
   useEffect(() => {
     fetchStats();
