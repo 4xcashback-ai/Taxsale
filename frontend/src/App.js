@@ -654,7 +654,7 @@ const AuthenticatedApp = () => {
                   </CardHeader>
                 </Card>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-4 gap-6">
                   {/* Municipality Management */}
                   <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
                     <CardHeader>
