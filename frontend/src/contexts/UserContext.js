@@ -42,7 +42,7 @@ export const UserProvider = ({ children }) => {
 
     try {
       // Try to get user info from the regular user endpoint first
-      const response = await axios.get(`${API}/users/me`);
+      const response = await axios.get(`${API}/api/users/me`);
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
