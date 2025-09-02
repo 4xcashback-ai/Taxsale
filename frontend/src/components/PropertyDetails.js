@@ -829,6 +829,52 @@ const PropertyDetails = () => {
                 <span className="text-lg text-green-600 ml-2">CAD</span>
               </div>
               <p className="text-sm text-green-700 mt-2">Tax Owing Amount</p>
+              
+              {/* Auction Result Section */}
+              {property.auction_result && (
+                <div className="mt-4 pt-4 border-t border-green-200">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Auction Result</h4>
+                  <div className="flex items-center mb-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      property.auction_result === 'sold' ? 'bg-blue-100 text-blue-800' :
+                      property.auction_result === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      property.auction_result === 'canceled' ? 'bg-red-100 text-red-800' :
+                      property.auction_result === 'deferred' ? 'bg-orange-100 text-orange-800' :
+                      property.auction_result === 'taxes_paid' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {property.auction_result === 'sold' ? 'Sold' :
+                       property.auction_result === 'pending' ? 'Auction Results Pending' :
+                       property.auction_result === 'canceled' ? 'Auction Canceled' :
+                       property.auction_result === 'deferred' ? 'Auction Deferred' :
+                       property.auction_result === 'taxes_paid' ? 'Taxes Paid (Redeemed)' :
+                       property.auction_result}
+                    </span>
+                  </div>
+                  
+                  {/* Winning Bid Amount for Sold Properties */}
+                  {property.auction_result === 'sold' && property.winning_bid_amount && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
+                      <div className="flex items-baseline">
+                        <span className="text-2xl font-bold text-blue-800">
+                          {formatCurrency(property.winning_bid_amount)}
+                        </span>
+                        <span className="text-sm text-blue-600 ml-2">CAD</span>
+                      </div>
+                      <p className="text-sm text-blue-700 mt-1">Final Sale Price</p>
+                    </div>
+                  )}
+                  
+                  {/* Pending Results Message */}
+                  {property.auction_result === 'pending' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-2">
+                      <p className="text-sm text-yellow-800">
+                        The auction has ended. Official results will be posted once available.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* AdSense Ad Block */}
