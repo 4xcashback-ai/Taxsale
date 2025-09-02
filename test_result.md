@@ -94,7 +94,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the new auction result management system implementation for the Tax Sale Compass application. I've just implemented a comprehensive auction status tracking system with two-tier status management."
+user_problem_statement: "Implement comprehensive auction result tracking system for Tax Sale Compass application. Properties should automatically change from active to pending when sale date passes, with admin interface to update final auction results (sold, canceled, deferred, taxes_paid) and track winning bid amounts for sold properties."
 
 backend:
   - task: "Auction Result Management System"
