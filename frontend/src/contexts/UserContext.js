@@ -78,7 +78,7 @@ export const UserProvider = ({ children }) => {
       // Check if this is an admin login (email is "admin")
       if (email === 'admin') {
         // Use admin login endpoint
-        const response = await axios.post(`${API}/auth/login`, {
+        const response = await axios.post(`${API}/api/auth/login`, {
           username: email,
           password
         });
