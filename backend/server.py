@@ -3881,16 +3881,128 @@ async def fix_halifax_municipality():
 
 # Weekly scraping scheduler
 async def weekly_scrape_job():
-    """Weekly automated scraping job"""
-    logger.info("Starting weekly automated scraping...")
+    """Weekly scraping job that runs on Sundays at 6 AM"""
+    logger.info("Starting weekly scrape job")
     try:
-        # Scrape Halifax (priority municipality)
-        await scrape_halifax_tax_sales()
+        # Get all municipalities with scraping enabled
+        municipalities = await db.municipalities.find(
+            {"scrape_enabled": True}
+        ).to_list(length=None)
         
-        # Add other municipalities as scrapers are implemented
-        logger.info("Weekly scraping completed")
+        for municipality in municipalities:
+            try:
+                logger.info(f"Scraping {municipality['name']}")
+                # Call appropriate scraper based on scraper_type
+                scraper_type = municipality.get('scraper_type', 'halifax')
+                
+                if scraper_type == 'halifax':
+                    await scrape_halifax_tax_sales_for_municipality(municipality['id'])
+                elif scraper_type == 'victoria_county':
+                    await scrape_victoria_county_for_municipality(municipality['id'])
+                else:
+                    logger.warning(f"Unknown scraper type: {scraper_type} for {municipality['name']}")
+                    
+            except Exception as e:
+                logger.error(f"Error scraping {municipality['name']}: {e}")
+                
     except Exception as e:
-        logger.error(f"Weekly scraping failed: {e}")
+        logger.error(f"Weekly scrape job failed: {e}")
+
+async def update_auction_results_job():
+    """Smart job to update auction results - only runs day after auctions"""
+    logger.info("Starting auction results update job")
+    try:
+        # Get yesterday's date
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        yesterday_start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
+        yesterday_end = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        # Find properties that had auctions yesterday and don't have results yet
+        properties_to_update = await db.tax_sales.find({
+            "sale_date": {
+                "$gte": yesterday_start,
+                "$lte": yesterday_end
+            },
+            "status": "active",  # Still active (not manually updated)
+            "auction_result": {"$in": [None, ""]}  # No auction result yet
+        }).to_list(length=None)
+        
+        updated_count = 0
+        for prop in properties_to_update:
+            try:
+                # Set auction result to pending
+                await db.tax_sales.update_one(
+                    {"id": prop["id"]},
+                    {
+                        "$set": {
+                            "auction_result": "pending",
+                            "auction_result_updated_at": datetime.now(timezone.utc)
+                        }
+                    }
+                )
+                updated_count += 1
+                logger.info(f"Set auction result to pending for property {prop.get('assessment_number', prop['id'])}")
+                
+            except Exception as e:
+                logger.error(f"Error updating property {prop['id']}: {e}")
+        
+        if updated_count > 0:
+            logger.info(f"Updated {updated_count} properties to 'pending' auction result")
+        else:
+            logger.info("No properties needed auction result updates")
+            
+    except Exception as e:
+        logger.error(f"Auction results update job failed: {e}")
+
+async def schedule_next_auction_update():
+    """Smart scheduling: schedule auction update job for day after each upcoming auction"""
+    try:
+        # Get properties with upcoming auctions (next 30 days)
+        now = datetime.now(timezone.utc)
+        future_date = now + timedelta(days=30)
+        
+        upcoming_auctions = await db.tax_sales.find({
+            "sale_date": {
+                "$gte": now,
+                "$lte": future_date
+            },
+            "status": "active"
+        }).to_list(length=None)
+        
+        # Get unique auction dates
+        auction_dates = set()
+        for prop in upcoming_auctions:
+            if prop.get("sale_date"):
+                auction_date = prop["sale_date"].date()
+                auction_dates.add(auction_date)
+        
+        # Schedule update job for day after each auction
+        for auction_date in auction_dates:
+            update_date = auction_date + timedelta(days=1)
+            job_id = f"auction_update_{auction_date.strftime('%Y%m%d')}"
+            
+            # Remove existing job if any
+            try:
+                scheduler.remove_job(job_id)
+            except:
+                pass
+            
+            # Schedule new job
+            scheduler.add_job(
+                update_auction_results_job,
+                trigger='date',
+                run_date=datetime.combine(update_date, datetime.min.time().replace(hour=8)),  # 8 AM day after auction
+                id=job_id,
+                replace_existing=True
+            )
+            
+            logger.info(f"Scheduled auction results update for {update_date} (day after auction on {auction_date})")
+        
+        if not auction_dates:
+            logger.info("No upcoming auctions found - no auction update jobs scheduled")
+            
+    except Exception as e:
+        logger.error(f"Error scheduling auction updates: {e}")
 
 
 # Router will be included after all endpoints are defined
