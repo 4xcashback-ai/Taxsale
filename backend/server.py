@@ -2245,6 +2245,7 @@ async def get_tax_sale_properties(
 async def search_tax_sales(
     q: Optional[str] = Query(None, description="Search query"),
     municipality: Optional[str] = Query(None, description="Municipality filter"),
+    status: Optional[str] = Query(None, description="Status filter: active, pending, sold, all"),
     limit: int = Query(50, description="Results limit")
 ):
     query = {}
@@ -2262,6 +2263,15 @@ async def search_tax_sales(
     
     if municipality:
         query["municipality_name"] = {"$regex": municipality, "$options": "i"}
+    
+    # Handle status filtering (same logic as main endpoint)
+    if status and status != "all":
+        if status == "pending":
+            query["auction_result"] = "pending"
+        elif status == "sold":
+            query["auction_result"] = "sold"
+        else:
+            query["status"] = status
     
     properties = await db.tax_sales.find(query).limit(limit).to_list(limit)
     return [TaxSaleProperty(**prop) for prop in properties]
