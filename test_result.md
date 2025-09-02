@@ -674,7 +674,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Authentication and Access Control System"
+    - "Admin Login Flow Frontend Integration"
   stuck_tasks:
     - "Victoria County Property Image Routing Fix"
   test_all: false
