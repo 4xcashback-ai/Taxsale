@@ -13,13 +13,20 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
     setLoading(true);
     setError('');
 
+    console.log('Login attempt:', { email, isLogin, isAdmin: email === 'admin' });
+
     try {
       if (isLogin) {
+        console.log('Calling onLogin with:', email, password.length + ' char password');
         await onLogin(email, password);
+        console.log('Login successful');
       } else {
+        console.log('Calling onRegister with:', email, password.length + ' char password');
         await onRegister(email, password);
+        console.log('Registration successful');
       }
     } catch (err) {
+      console.error('Login/Registration error:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
