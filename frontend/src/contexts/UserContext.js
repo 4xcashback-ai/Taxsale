@@ -174,7 +174,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.email === 'admin' || user?.subscription_tier === 'admin' || user?.id === 'admin';
+    return user?.email === 'admin@taxsalecompass.ca' || user?.subscription_tier === 'admin' || user?.id === 'admin';
   };
 
   const isPaidUser = () => {
