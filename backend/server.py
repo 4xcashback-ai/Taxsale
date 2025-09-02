@@ -2698,7 +2698,15 @@ async def query_ns_government_parcel(pid_number: str):
                 if result.get('found') and result.get('geometry'):
                     if combined_geometry is None:
                         combined_geometry = result['geometry']
-                        combined_bbox = result.get('bbox')
+                        bbox = result.get('bbox')
+                        if bbox:
+                            # Convert bbox format from single PID (minLon/maxLon/minLat/maxLat) to multi-PID format (north/south/east/west)
+                            combined_bbox = {
+                                "north": bbox.get("maxLat"),
+                                "south": bbox.get("minLat"),
+                                "east": bbox.get("maxLon"),
+                                "west": bbox.get("minLon")
+                            }
                     else:
                         # Combine geometries by merging rings
                         if 'rings' in result['geometry']:
@@ -2707,11 +2715,18 @@ async def query_ns_government_parcel(pid_number: str):
                         # Expand bounding box
                         if combined_bbox and result.get('bbox'):
                             bbox = result['bbox']
+                            # Convert bbox format from single PID (minLon/maxLon/minLat/maxLat) to multi-PID format (north/south/east/west)
+                            current_bbox = {
+                                "north": bbox.get("maxLat"),
+                                "south": bbox.get("minLat"),
+                                "east": bbox.get("maxLon"),
+                                "west": bbox.get("minLon")
+                            }
                             combined_bbox = {
-                                "north": max(combined_bbox["north"], bbox["north"]),
-                                "south": min(combined_bbox["south"], bbox["south"]),
-                                "east": max(combined_bbox["east"], bbox["east"]),
-                                "west": min(combined_bbox["west"], bbox["west"])
+                                "north": max(combined_bbox["north"], current_bbox["north"]),
+                                "south": min(combined_bbox["south"], current_bbox["south"]),
+                                "east": max(combined_bbox["east"], current_bbox["east"]),
+                                "west": min(combined_bbox["west"], current_bbox["west"])
                             }
         
         # Return combined result for multiple PIDs
