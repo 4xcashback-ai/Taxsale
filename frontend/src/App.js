@@ -865,16 +865,7 @@ const AuthenticatedApp = () => {
         )}
       </div>
 
-      {/* Property Details Modal */}
-      {showPropertyDetails && selectedProperty && (
-        <PropertyDetails
-          property={selectedProperty}
-          onClose={() => {
-            setShowPropertyDetails(false);
-            setSelectedProperty(null);
-          }}
-        />
-      )}
+      {/* Property Details Modal - Removed in favor of routing */}
 
       {/* Auction Result Modal */}
       <UpgradeModal
