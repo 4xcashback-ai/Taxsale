@@ -4340,7 +4340,7 @@ async def health_check():
 
 # Authentication Endpoints
 @api_router.post("/auth/login", response_model=Token)
-async def login(login_data: LoginRequest):
+async def login(login_data: AdminLoginRequest):
     """Admin login endpoint"""
     if not authenticate_admin(login_data.username, login_data.password):
         raise HTTPException(
