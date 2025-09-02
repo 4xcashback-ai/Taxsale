@@ -1224,13 +1224,35 @@ function PropertySearch() {
                           </div>
                         )}
                         
-                        {/* Status Badge */}
-                        <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
-                          property.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {property.status || 'Unknown'}
+                        {/* Status and Auction Result Badges */}
+                        <div className="absolute top-2 right-2 flex flex-col gap-1">
+                          {/* Main Status Badge */}
+                          <div className={`px-2 py-1 rounded text-xs font-medium ${
+                            property.status === 'active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {property.status || 'Unknown'}
+                          </div>
+                          
+                          {/* Auction Result Badge */}
+                          {property.auction_result && (
+                            <div className={`px-2 py-1 rounded text-xs font-medium ${
+                              property.auction_result === 'sold' ? 'bg-blue-100 text-blue-800' :
+                              property.auction_result === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              property.auction_result === 'canceled' ? 'bg-red-100 text-red-800' :
+                              property.auction_result === 'deferred' ? 'bg-orange-100 text-orange-800' :
+                              property.auction_result === 'taxes_paid' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {property.auction_result === 'sold' ? 'Sold' :
+                               property.auction_result === 'pending' ? 'Results Pending' :
+                               property.auction_result === 'canceled' ? 'Canceled' :
+                               property.auction_result === 'deferred' ? 'Deferred' :
+                               property.auction_result === 'taxes_paid' ? 'Redeemed' :
+                               property.auction_result}
+                            </div>
+                          )}
                         </div>
                       </div>
 
