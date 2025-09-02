@@ -292,6 +292,41 @@ class TaxSaleProperty(BaseModel):
     auction_result: Optional[str] = None  # pending, sold, canceled, deferred, taxes_paid
     auction_result_updated_at: Optional[datetime] = None
     winning_bid_amount: Optional[float] = None  # Final sale amount if sold
+
+# User Management Models
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: EmailStr
+    password_hash: str
+    subscription_tier: str = "free"  # free, paid
+    is_verified: bool = False
+    verification_token: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    subscription_tier: str
+    is_verified: bool
+    created_at: datetime
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+class VerifyEmailRequest(BaseModel):
+    token: str
     boundary_screenshot: Optional[str] = None  # Path to viewpoint.ca boundary screenshot
 
 class TaxSalePropertyCreate(BaseModel):
