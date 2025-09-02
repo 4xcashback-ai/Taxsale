@@ -205,6 +205,30 @@ const AuthenticatedApp = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Navigation matching live site */}
+              <nav className="flex items-center space-x-6">
+                <button 
+                  onClick={() => setActiveView('search')}
+                  className={`text-sm font-medium ${activeView === 'search' ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
+                >
+                  Search
+                </button>
+                <button 
+                  onClick={() => setActiveView('map')}
+                  className={`text-sm font-medium ${activeView === 'map' ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
+                >
+                  Live Map
+                </button>
+                {isAdmin() && (
+                  <button 
+                    onClick={() => setActiveView('admin')}
+                    className={`text-sm font-medium ${activeView === 'admin' ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'}`}
+                  >
+                    Admin
+                  </button>
+                )}
+              </nav>
+              
               {/* User Info */}
               <div className="text-sm text-gray-600">
                 <span className="font-medium">{user?.email}</span>
