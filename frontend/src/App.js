@@ -2204,6 +2204,89 @@ function PropertySearch() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Auction Result Management */}
+              <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                <CardHeader>
+                  <CardTitle>Auction Result Management</CardTitle>
+                  <CardDescription>
+                    Update auction results for properties after sales
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Properties Pending Results */}
+                    {taxSales.filter(prop => prop.auction_result === 'pending').length > 0 && (
+                      <div className="bg-yellow-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-yellow-800 mb-3">Properties with Pending Results</h4>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {taxSales
+                            .filter(prop => prop.auction_result === 'pending')
+                            .map(property => (
+                              <div key={property.id} className="bg-white rounded border p-3">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="font-medium">{property.property_address}</div>
+                                    <div className="text-sm text-gray-600">
+                                      Assessment: {property.assessment_number} | 
+                                      Opening Bid: ${parseFloat(property.opening_bid || 0).toLocaleString()}
+                                    </div>
+                                    {property.sale_date && (
+                                      <div className="text-sm text-gray-500">
+                                        Auction Date: {formatDate(property.sale_date)}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setSelectedPropertyForResult(property)}
+                                    className="ml-2"
+                                  >
+                                    Update Result
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                      <div className="bg-yellow-50 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-yellow-800">
+                          {taxSales.filter(prop => prop.auction_result === 'pending').length}
+                        </div>
+                        <div className="text-sm text-yellow-600">Pending</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-blue-800">
+                          {taxSales.filter(prop => prop.auction_result === 'sold').length}
+                        </div>
+                        <div className="text-sm text-blue-600">Sold</div>
+                      </div>
+                      <div className="bg-red-50 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-red-800">
+                          {taxSales.filter(prop => prop.auction_result === 'canceled').length}
+                        </div>
+                        <div className="text-sm text-red-600">Canceled</div>
+                      </div>
+                      <div className="bg-orange-50 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-orange-800">
+                          {taxSales.filter(prop => prop.auction_result === 'deferred').length}
+                        </div>
+                        <div className="text-sm text-orange-600">Deferred</div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-green-800">
+                          {taxSales.filter(prop => prop.auction_result === 'taxes_paid').length}
+                        </div>
+                        <div className="text-sm text-green-600">Redeemed</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               </>
               )}
             </div>
