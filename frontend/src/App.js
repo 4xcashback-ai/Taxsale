@@ -915,6 +915,7 @@ const App = () => {
         <Router>
           <Routes>
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/property/:assessmentNumber" element={<PropertyDetails />} />
             <Route path="/*" element={<AppContent />} />
           </Routes>
         </Router>
