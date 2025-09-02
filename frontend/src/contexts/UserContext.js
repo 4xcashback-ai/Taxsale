@@ -75,43 +75,32 @@ export const UserProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Check if this is an admin login (email is "admin")
-      if (email === 'admin') {
-        // Use admin login endpoint
-        const response = await axios.post(`${API}/api/auth/login`, {
-          username: email,
-          password
-        });
+      // Always use regular user login endpoint
+      const response = await axios.post(`${API}/api/users/login`, {
+        email,
+        password
+      });
 
-        const { access_token } = response.data;
-        
-        // Store token
-        localStorage.setItem('authToken', access_token);
-        setToken(access_token);
-        
-        // Create admin user object
+      const { access_token, user: userData } = response.data;
+      
+      // Check if this is admin user and upgrade their data
+      if (email === 'admin@taxsalecompass.ca') {
+        // Create admin user object with elevated privileges
         const adminUser = {
-          id: 'admin',
-          email: 'admin',
+          ...userData,
           subscription_tier: 'admin',
-          is_verified: true,
-          created_at: new Date()
+          is_verified: true
         };
         
+        // Store token and admin user data
+        localStorage.setItem('authToken', access_token);
+        setToken(access_token);
         setUser(adminUser);
         setIsAuthenticated(true);
 
         return { success: true, user: adminUser };
       } else {
         // Regular user login
-        const response = await axios.post(`${API}/api/users/login`, {
-          email,
-          password
-        });
-
-        const { access_token, user: userData } = response.data;
-        
-        // Store token and user data
         localStorage.setItem('authToken', access_token);
         setToken(access_token);
         setUser(userData);
