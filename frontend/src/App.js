@@ -1277,6 +1277,14 @@ function PropertySearch() {
                           <span className="text-xl font-bold text-green-600">
                             ${parseFloat(property.opening_bid || 0).toLocaleString()}
                           </span>
+                          {property.auction_result === 'sold' && property.winning_bid_amount && (
+                            <div className="mt-1">
+                              <span className="text-sm text-gray-500">Final Sale: </span>
+                              <span className="text-lg font-semibold text-blue-600">
+                                ${parseFloat(property.winning_bid_amount).toLocaleString()}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Details */}
