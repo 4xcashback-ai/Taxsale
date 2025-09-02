@@ -41,24 +41,16 @@
 ##         -agent: "main"  # or "testing" or "user"
 ##         -comment: "Detailed comment about status"
 ##
-## metadata:
-##   created_by: "main_agent"
-##   version: "1.0"
-##   test_sequence: 0
-##   run_ui: false
-##
 ## test_plan:
 ##   current_focus:
-##     - "Task name 1"
-##     - "Task name 2"
-##   stuck_tasks:
-##     - "Task name with persistent issues"
+##     - "Multi-PID Backend API Logic Fix"
+##   stuck_tasks: []
 ##   test_all: false
-##   test_priority: "high_first"  # or "sequential" or "stuck_first"
+##   test_priority: "high_first"
 ##
 ## agent_communication:
-##     -agent: "main"  # or "testing" or "user"
-##     -message: "Communication message between agents"
+##     -agent: "main"
+##     -message: "Fixed critical bbox format mismatch in multi-PID logic. Single-PID returns {minLon,maxLon,minLat,maxLat} but multi-PID tried to access {north,south,east,west}. Implemented bbox format conversion. Need testing for both single-PID (85010866) and multi-PID (85010866/85074276) requests to verify fix works correctly."
 
 # Protocol Guidelines for Main agent
 #
