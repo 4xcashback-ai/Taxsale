@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Production VPS Deployment Check-Updates Endpoint Testing
+Focus on Multi-PID Backend API Logic Fix Testing
 """
 
 import requests
