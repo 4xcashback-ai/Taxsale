@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 # Authentication Configuration
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = HTTPBearer()
+oauth2_scheme_optional = HTTPBearer(auto_error=False)
 
 # JWT Configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret-key-change-in-production")
