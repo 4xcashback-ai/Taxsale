@@ -3882,10 +3882,14 @@ async def scrape_pvsc_details(assessment_number: str):
 
 # API endpoint to get enhanced property details with PVSC data
 @api_router.get("/property/{assessment_number}/enhanced")
-async def get_enhanced_property_details(assessment_number: str):
-    """Get property details enhanced with PVSC data"""
+async def get_enhanced_property_details(
+    assessment_number: str,
+    current_user: Optional[dict] = Depends(lambda token: get_current_user(token) if token else None)
+):
+    """Get property details enhanced with PVSC data (access control based on subscription)"""
     print(f"DEBUG: Enhanced endpoint called for {assessment_number}")
     logger.info(f"ENHANCED ENDPOINT CALLED for assessment {assessment_number}")
+    
     try:
         # Get basic property from database
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
@@ -3894,6 +3898,24 @@ async def get_enhanced_property_details(assessment_number: str):
         if not property_data:
             logger.warning(f"Property {assessment_number} not found in database")
             raise HTTPException(status_code=404, detail="Property not found")
+        
+        # Check access control based on property status and user subscription
+        if property_data.get("status") == "active":
+            # Active properties require authentication and paid subscription or admin
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required to view active property details"
+                )
+            
+            # Check if user is admin (bypass subscription check for admin)
+            is_admin = current_user.get("email") == ADMIN_USERNAME or current_user.get("username") == ADMIN_USERNAME
+            
+            if not is_admin and current_user.get("subscription_tier") != "paid":
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Paid subscription required to view active property details"
+                )
         
         # Convert ObjectId to string
         property_data["_id"] = str(property_data["_id"])
