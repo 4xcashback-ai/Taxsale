@@ -10,6 +10,7 @@ import { Badge } from "./components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import PropertyDetails from './components/PropertyDetails';
+import InteractiveMap from './components/InteractiveMap';
 import LandingPage from './components/LandingPage';
 import EmailVerification from './components/EmailVerification';
 import UpgradeModal from './components/UpgradeModal';
