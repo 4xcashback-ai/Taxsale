@@ -80,8 +80,9 @@ def test_property_status_fields():
         
         if response.status_code == 200:
             try:
-                data = response.json()
-                properties = data.get('properties', [])
+                properties = response.json()
+                if isinstance(properties, dict):
+                    properties = properties.get('properties', [])
                 
                 if not properties:
                     print("   ⚠️ WARNING: No properties found in database")
