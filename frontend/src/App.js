@@ -108,7 +108,7 @@ const AuthenticatedApp = () => {
   const fetchTaxSales = async (municipality = selectedMunicipality, query = searchQuery) => {
     setLoading(true);
     try {
-      let url = `${API}/tax-sales`;
+      let url = `${API}/api/tax-sales`;
       const params = new URLSearchParams();
       
       if (municipality) {
