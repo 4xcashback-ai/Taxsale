@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the deployment check-updates endpoint on the production VPS to troubleshoot why it's not detecting recent GitHub changes."
+user_problem_statement: "Fix multi-PID (Parcel Identification Number) support for the Tax Sale Compass application. The backend API endpoint /api/query-ns-government-parcel/{pid_number} should accept a /-separated string of PIDs, query each PID individually from NS Government parcel service, combine their geometries into a single unified boundary, and return consolidated data. The frontend should correctly format requests for multi-PID properties and display combined boundary data on the interactive map."
 
 backend:
   - task: "Production VPS Deployment Check-Updates Endpoint Testing"
