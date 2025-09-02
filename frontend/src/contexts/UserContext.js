@@ -45,17 +45,8 @@ export const UserProvider = ({ children }) => {
       const response = await axios.get(`${API}/api/users/me`);
       const userData = response.data;
       
-      // Check if this is admin user and upgrade their data
-      if (userData.email === 'admin@taxsalecompass.ca') {
-        const adminUser = {
-          ...userData,
-          subscription_tier: 'admin',
-          is_verified: true
-        };
-        setUser(adminUser);
-      } else {
-        setUser(userData);
-      }
+      // Use actual database user data for all users
+      setUser(userData);
       
       setIsAuthenticated(true);
     } catch (error) {
