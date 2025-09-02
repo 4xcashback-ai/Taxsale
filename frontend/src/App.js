@@ -1233,7 +1233,7 @@ function PropertySearch() {
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {property.status || 'Unknown'}
+                            {(property.status || 'Unknown').charAt(0).toUpperCase() + (property.status || 'Unknown').slice(1)}
                           </div>
                           
                           {/* Auction Result Badge */}
