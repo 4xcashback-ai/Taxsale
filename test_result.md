@@ -558,6 +558,30 @@ backend:
         comment: "BOUNDARY THUMBNAIL GENERATION ROUTING ISSUE IDENTIFIED! Review request testing reveals critical deployment configuration problem. DETAILED FINDINGS: 1) LOCAL FUNCTIONALITY VERIFIED: POST /api/generate-boundary-thumbnail/00079006 works perfectly on localhost:8001 - returns HTTP 200, generates boundary_00424945_00079006.png (81,048 bytes), includes red boundary overlays (color:0xff0000) in Google Maps Static API URL, successfully saves to /app/backend/static/property_screenshots/ directory. 2) EXTERNAL ROUTING FAILURE: Same endpoint returns HTTP 404 when accessed via https://taxsalecompass.ca/api/generate-boundary-thumbnail/00079006, indicates proxy/routing configuration issue preventing external access to boundary generation endpoints. 3) BOUNDARY IMAGE SERVING ISSUE: GET /api/boundary-image/{filename} also returns 404 externally but works locally, confirms routing problem affects all boundary-related endpoints. 4) EXISTING THUMBNAILS STATUS: System has 59/62 properties (95.2%) with boundary screenshots already generated, but frontend cannot access them due to routing issue. 5) NSPRD DATA INTEGRATION: GET /api/query-ns-government-parcel/00424945 works externally (HTTP 200), confirms NSPRD boundary data is available with 38 coordinate points and 2649.14625 sqm area. ROOT CAUSE: Boundary generation and image serving endpoints are not accessible through external proxy configuration, causing the reported issue where 'boundary thumbnails are showing on search page but without red boundary lines' - the thumbnails exist but cannot be served. SOLUTION NEEDED: Fix proxy/routing configuration to expose boundary generation and image serving endpoints externally."
 
 frontend:
+  - task: "Property Card Design and Layout"
+    implemented: true
+    working: "NA"
+    file: "src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated property card design to match reference image with map/satellite image at top, status badge in top-right, property address as title, Assessment # and PID info, price in green, owner/municipality/sale date details, and 'See More Details →' button. Need testing to verify visual layout matches design requirements."
+
+  - task: "Property Details Links and Routing"
+    implemented: true
+    working: "NA"
+    file: "src/App.js, src/components/PropertyDetails.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented property details links that open in new tab with URL /property/{assessment_number}. Updated handlePropertyClick to use window.open with '_blank' target. PropertyDetails component loads property data and displays comprehensive property information. Need testing to verify links work properly and property details page loads correctly."
+
   - task: "Landing Page Copy and Header Updates"
     implemented: true
     working: true
