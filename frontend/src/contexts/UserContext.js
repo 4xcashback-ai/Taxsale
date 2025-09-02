@@ -127,7 +127,7 @@ export const UserProvider = ({ children }) => {
 
   const register = async (email, password) => {
     try {
-      const response = await axios.post(`${API}/users/register`, {
+      const response = await axios.post(`${API}/api/users/register`, {
         email,
         password
       });
