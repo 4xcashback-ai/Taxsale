@@ -318,6 +318,8 @@ class TaxSalePropertyCreate(BaseModel):
     longitude: Optional[float] = None
     source_url: str
     raw_data: Optional[dict] = None
+    auction_result: Optional[str] = None
+    winning_bid_amount: Optional[float] = None
 
 class ScrapeStats(BaseModel):
     total_municipalities: int
