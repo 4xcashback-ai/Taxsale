@@ -55,20 +55,50 @@ export const UserProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API}/users/login`, {
-        email,
-        password
-      });
+      // Check if this is an admin login (email is "admin")
+      if (email === 'admin') {
+        // Use admin login endpoint
+        const response = await axios.post(`${API}/auth/login`, {
+          username: email,
+          password
+        });
 
-      const { access_token, user: userData } = response.data;
-      
-      // Store token and user data
-      localStorage.setItem('authToken', access_token);
-      setToken(access_token);
-      setUser(userData);
-      setIsAuthenticated(true);
+        const { access_token } = response.data;
+        
+        // Store token
+        localStorage.setItem('authToken', access_token);
+        setToken(access_token);
+        
+        // Create admin user object
+        const adminUser = {
+          id: 'admin',
+          email: 'admin',
+          subscription_tier: 'admin',
+          is_verified: true,
+          created_at: new Date()
+        };
+        
+        setUser(adminUser);
+        setIsAuthenticated(true);
 
-      return { success: true, user: userData };
+        return { success: true, user: adminUser };
+      } else {
+        // Regular user login
+        const response = await axios.post(`${API}/users/login`, {
+          email,
+          password
+        });
+
+        const { access_token, user: userData } = response.data;
+        
+        // Store token and user data
+        localStorage.setItem('authToken', access_token);
+        setToken(access_token);
+        setUser(userData);
+        setIsAuthenticated(true);
+
+        return { success: true, user: userData };
+      }
     } catch (error) {
       const message = error.response?.data?.detail || 'Login failed';
       throw new Error(message);
