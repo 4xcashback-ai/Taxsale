@@ -149,8 +149,22 @@ def create_user_access_token(user_data: dict, expires_delta: Optional[timedelta]
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
+async def get_current_user_optional(token: Optional[str] = Depends(oauth2_scheme)) -> Optional[dict]:
+    """Get current user from JWT token (optional - returns None if not authenticated)"""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        user = await get_user_by_id(user_id)
+        return user
+    except JWTError:
+        return None
+
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
-    """Get current user from JWT token"""
+    """Get current user from JWT token (required authentication)"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -167,6 +181,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         return user
     except JWTError:
         raise credentials_exception
+
+def check_property_access(property_data: dict, current_user: Optional[dict]) -> None:
+    """Check if user has access to property details based on subscription tier"""
+    if property_data.get("status") == "active":
+        # Active properties require authentication and paid subscription or admin
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to view active property details"
+            )
+        
+        # Check if user is admin (bypass subscription check for admin)
+        is_admin = (current_user.get("email") == ADMIN_USERNAME or 
+                   current_user.get("username") == ADMIN_USERNAME)
+        
+        if not is_admin and current_user.get("subscription_tier") != "paid":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Paid subscription required to view active property details"
+            )
 
 def generate_verification_token() -> str:
     """Generate random verification token"""
