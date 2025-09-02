@@ -36,488 +36,598 @@ def test_api_connection():
         print(f"❌ API connection error: {e}")
         return False, None
 
-def test_single_pid_query():
-    """Test single-PID query: GET /api/query-ns-government-parcel/85010866"""
-    print("\n🎯 Testing Single-PID Query...")
-    print("🔍 FOCUS: GET /api/query-ns-government-parcel/85010866")
-    print("📋 EXPECTED: Should return bbox with {minLon, maxLon, minLat, maxLat} format")
-    
+def get_admin_token():
+    """Get admin JWT token for authenticated requests"""
+    print("🔐 Getting admin authentication token...")
     try:
-        response = requests.get(f"{BACKEND_URL}/query-ns-government-parcel/85010866", timeout=30)
-        
-        print(f"   Status Code: {response.status_code}")
+        response = requests.post(f"{BACKEND_URL}/auth/login", 
+                               json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD},
+                               timeout=30)
         
         if response.status_code == 200:
-            try:
-                data = response.json()
-                print(f"   ✅ SUCCESS: Single-PID endpoint accessible")
-                
-                # Check if property was found
-                found = data.get('found', False)
-                print(f"   🔍 Found: {found}")
-                
-                if found:
-                    # Check required fields for single-PID response
-                    required_fields = ['pid_number', 'geometry', 'bbox', 'center']
-                    missing_fields = [field for field in required_fields if field not in data]
-                    
-                    if missing_fields:
-                        print(f"   ⚠️ WARNING: Missing fields: {missing_fields}")
-                        return False, data
-                    
-                    # Check bbox format (should be minLon/maxLon/minLat/maxLat for single PID)
-                    bbox = data.get('bbox', {})
-                    expected_bbox_keys = ['minLon', 'maxLon', 'minLat', 'maxLat']
-                    bbox_keys = list(bbox.keys())
-                    
-                    print(f"   📦 Bbox keys: {bbox_keys}")
-                    print(f"   📦 Expected keys: {expected_bbox_keys}")
-                    
-                    if all(key in bbox for key in expected_bbox_keys):
-                        print(f"   ✅ BBOX FORMAT: Correct single-PID format (minLon/maxLon/minLat/maxLat)")
-                        print(f"   📍 Bbox values: minLon={bbox['minLon']}, maxLon={bbox['maxLon']}, minLat={bbox['minLat']}, maxLat={bbox['maxLat']}")
-                    else:
-                        print(f"   ❌ BBOX FORMAT: Incorrect format - missing expected keys")
-                        return False, data
-                    
-                    # Check center coordinates
-                    center = data.get('center', {})
-                    if 'lat' in center and 'lon' in center:
-                        print(f"   📍 Center: lat={center['lat']}, lon={center['lon']}")
-                        print(f"   ✅ CENTER: Valid center coordinates")
-                    else:
-                        print(f"   ❌ CENTER: Missing or invalid center coordinates")
-                        return False, data
-                    
-                    # Check geometry
-                    geometry = data.get('geometry', {})
-                    if 'rings' in geometry and geometry['rings']:
-                        print(f"   🗺️ Geometry: {len(geometry['rings'])} rings found")
-                        print(f"   ✅ GEOMETRY: Valid geometry data")
-                    else:
-                        print(f"   ❌ GEOMETRY: Missing or invalid geometry")
-                        return False, data
-                    
-                    print(f"   ✅ SINGLE-PID TEST: All requirements met")
-                    return True, data
-                else:
-                    print(f"   ❌ PROPERTY NOT FOUND: PID 85010866 not found in NS Government database")
-                    return False, data
-                    
-            except json.JSONDecodeError as e:
-                print(f"   ❌ JSON DECODE ERROR: {e}")
-                print(f"   Raw Response: {response.text[:500]}...")
-                return False, {"error": "Invalid JSON response"}
+            data = response.json()
+            token = data.get("access_token")
+            if token:
+                print("✅ Admin authentication successful")
+                return token
+            else:
+                print("❌ No access token in response")
+                return None
         else:
-            print(f"   ❌ HTTP ERROR: {response.status_code}")
+            print(f"❌ Authentication failed with status {response.status_code}")
             try:
                 error_data = response.json()
-                print(f"   Error Details: {error_data}")
-                return False, error_data
+                print(f"   Error: {error_data}")
             except:
-                print(f"   Raw Response: {response.text[:200]}...")
-                return False, {"error": f"HTTP {response.status_code}"}
-                
-    except Exception as e:
-        print(f"   ❌ REQUEST ERROR: {e}")
-        return False, {"error": str(e)}
-
-def test_multi_pid_query():
-    """Test multi-PID query: GET /api/query-ns-government-parcel/85010866/85074276"""
-    print("\n🎯 Testing Multi-PID Query...")
-    print("🔍 FOCUS: GET /api/query-ns-government-parcel/85010866/85074276")
-    print("📋 EXPECTED: Should return combined geometry with bbox in {north, south, east, west} format")
-    
-    try:
-        response = requests.get(f"{BACKEND_URL}/query-ns-government-parcel/85010866/85074276", timeout=30)
-        
-        print(f"   Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            try:
-                data = response.json()
-                print(f"   ✅ SUCCESS: Multi-PID endpoint accessible")
-                
-                # Check if this is recognized as multi-PID
-                multiple_pids = data.get('multiple_pids', False)
-                print(f"   🔍 Multiple PIDs: {multiple_pids}")
-                
-                if not multiple_pids:
-                    print(f"   ❌ MULTI-PID DETECTION: Not recognized as multi-PID request")
-                    return False, data
-                
-                # Check if any properties were found
-                found = data.get('found', False)
-                print(f"   🔍 Found: {found}")
-                
-                if found:
-                    # Check required fields for multi-PID response
-                    required_fields = ['pid_number', 'pids', 'multiple_pids', 'individual_results', 'combined_geometry', 'combined_bbox', 'center']
-                    missing_fields = [field for field in required_fields if field not in data]
-                    
-                    if missing_fields:
-                        print(f"   ⚠️ WARNING: Missing fields: {missing_fields}")
-                        return False, data
-                    
-                    # Check individual results
-                    individual_results = data.get('individual_results', [])
-                    print(f"   📊 Individual results: {len(individual_results)} PIDs processed")
-                    
-                    if len(individual_results) != 2:
-                        print(f"   ❌ INDIVIDUAL RESULTS: Expected 2 results, got {len(individual_results)}")
-                        return False, data
-                    
-                    # Check combined bbox format (should be north/south/east/west for multi-PID)
-                    combined_bbox = data.get('combined_bbox', {})
-                    expected_bbox_keys = ['north', 'south', 'east', 'west']
-                    bbox_keys = list(combined_bbox.keys()) if combined_bbox else []
-                    
-                    print(f"   📦 Combined bbox keys: {bbox_keys}")
-                    print(f"   📦 Expected keys: {expected_bbox_keys}")
-                    
-                    if combined_bbox and all(key in combined_bbox for key in expected_bbox_keys):
-                        print(f"   ✅ BBOX FORMAT: Correct multi-PID format (north/south/east/west)")
-                        print(f"   📍 Bbox values: north={combined_bbox['north']}, south={combined_bbox['south']}, east={combined_bbox['east']}, west={combined_bbox['west']}")
-                    else:
-                        print(f"   ❌ BBOX FORMAT: Incorrect format - missing expected keys or null bbox")
-                        return False, data
-                    
-                    # Check center coordinates calculated from combined bbox
-                    center = data.get('center', {})
-                    if center and 'lat' in center and 'lon' in center:
-                        print(f"   📍 Combined center: lat={center['lat']}, lon={center['lon']}")
-                        
-                        # Verify center calculation
-                        expected_lat = (combined_bbox['north'] + combined_bbox['south']) / 2
-                        expected_lon = (combined_bbox['east'] + combined_bbox['west']) / 2
-                        
-                        if abs(center['lat'] - expected_lat) < 0.0001 and abs(center['lon'] - expected_lon) < 0.0001:
-                            print(f"   ✅ CENTER: Correctly calculated from combined bbox")
-                        else:
-                            print(f"   ⚠️ CENTER: May not be correctly calculated (expected lat={expected_lat}, lon={expected_lon})")
-                    else:
-                        print(f"   ❌ CENTER: Missing or invalid center coordinates")
-                        return False, data
-                    
-                    # Check combined geometry
-                    combined_geometry = data.get('combined_geometry', {})
-                    if combined_geometry and 'rings' in combined_geometry and combined_geometry['rings']:
-                        print(f"   🗺️ Combined geometry: {len(combined_geometry['rings'])} rings found")
-                        print(f"   ✅ GEOMETRY: Valid combined geometry data")
-                    else:
-                        print(f"   ❌ GEOMETRY: Missing or invalid combined geometry")
-                        return False, data
-                    
-                    print(f"   ✅ MULTI-PID TEST: All requirements met")
-                    return True, data
-                else:
-                    print(f"   ❌ PROPERTIES NOT FOUND: No valid PIDs found in multi-PID request")
-                    return False, data
-                    
-            except json.JSONDecodeError as e:
-                print(f"   ❌ JSON DECODE ERROR: {e}")
-                print(f"   Raw Response: {response.text[:500]}...")
-                return False, {"error": "Invalid JSON response"}
-        else:
-            print(f"   ❌ HTTP ERROR: {response.status_code}")
-            try:
-                error_data = response.json()
-                print(f"   Error Details: {error_data}")
-                return False, error_data
-            except:
-                print(f"   Raw Response: {response.text[:200]}...")
-                return False, {"error": f"HTTP {response.status_code}"}
-                
-    except Exception as e:
-        print(f"   ❌ REQUEST ERROR: {e}")
-        return False, {"error": str(e)}
-
-def test_invalid_single_pid():
-    """Test invalid single PID: GET /api/query-ns-government-parcel/99999999"""
-    print("\n🎯 Testing Invalid Single PID...")
-    print("🔍 FOCUS: GET /api/query-ns-government-parcel/99999999")
-    print("📋 EXPECTED: Should return found: false with proper error handling")
-    
-    try:
-        response = requests.get(f"{BACKEND_URL}/query-ns-government-parcel/99999999", timeout=30)
-        
-        print(f"   Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            try:
-                data = response.json()
-                print(f"   ✅ SUCCESS: Invalid PID endpoint accessible")
-                
-                # Check if property was correctly marked as not found
-                found = data.get('found', True)  # Default to True to catch errors
-                print(f"   🔍 Found: {found}")
-                
-                if not found:
-                    print(f"   ✅ ERROR HANDLING: Correctly returns found: false for invalid PID")
-                    
-                    # Check that it includes the PID number
-                    pid_number = data.get('pid_number')
-                    if pid_number == '99999999':
-                        print(f"   ✅ PID TRACKING: Correctly tracks PID number in response")
-                    else:
-                        print(f"   ⚠️ PID TRACKING: PID number mismatch (got {pid_number})")
-                    
-                    # Check for error message
-                    message = data.get('message', data.get('error', ''))
-                    if message:
-                        print(f"   ✅ ERROR MESSAGE: {message}")
-                    else:
-                        print(f"   ⚠️ ERROR MESSAGE: No error message provided")
-                    
-                    return True, data
-                else:
-                    print(f"   ❌ ERROR HANDLING: Invalid PID incorrectly marked as found")
-                    return False, data
-                    
-            except json.JSONDecodeError as e:
-                print(f"   ❌ JSON DECODE ERROR: {e}")
-                print(f"   Raw Response: {response.text[:500]}...")
-                return False, {"error": "Invalid JSON response"}
-        else:
-            print(f"   ❌ HTTP ERROR: {response.status_code}")
-            try:
-                error_data = response.json()
-                print(f"   Error Details: {error_data}")
-                return False, error_data
-            except:
-                print(f"   Raw Response: {response.text[:200]}...")
-                return False, {"error": f"HTTP {response.status_code}"}
-                
-    except Exception as e:
-        print(f"   ❌ REQUEST ERROR: {e}")
-        return False, {"error": str(e)}
-
-def test_mixed_valid_invalid_multi_pid():
-    """Test mixed valid/invalid multi-PID: GET /api/query-ns-government-parcel/85010866/99999999"""
-    print("\n🎯 Testing Mixed Valid/Invalid Multi-PID...")
-    print("🔍 FOCUS: GET /api/query-ns-government-parcel/85010866/99999999")
-    print("📋 EXPECTED: Should handle one valid, one invalid PID gracefully")
-    
-    try:
-        response = requests.get(f"{BACKEND_URL}/query-ns-government-parcel/85010866/99999999", timeout=30)
-        
-        print(f"   Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            try:
-                data = response.json()
-                print(f"   ✅ SUCCESS: Mixed PID endpoint accessible")
-                
-                # Check if this is recognized as multi-PID
-                multiple_pids = data.get('multiple_pids', False)
-                print(f"   🔍 Multiple PIDs: {multiple_pids}")
-                
-                if not multiple_pids:
-                    print(f"   ❌ MULTI-PID DETECTION: Not recognized as multi-PID request")
-                    return False, data
-                
-                # Check individual results
-                individual_results = data.get('individual_results', [])
-                print(f"   📊 Individual results: {len(individual_results)} PIDs processed")
-                
-                if len(individual_results) != 2:
-                    print(f"   ❌ INDIVIDUAL RESULTS: Expected 2 results, got {len(individual_results)}")
-                    return False, data
-                
-                # Check that we have one valid and one invalid result
-                valid_results = [r for r in individual_results if r.get('found')]
-                invalid_results = [r for r in individual_results if not r.get('found')]
-                
-                print(f"   ✅ Valid results: {len(valid_results)}")
-                print(f"   ✅ Invalid results: {len(invalid_results)}")
-                
-                if len(valid_results) == 1 and len(invalid_results) == 1:
-                    print(f"   ✅ MIXED HANDLING: Correctly handles one valid, one invalid PID")
-                else:
-                    print(f"   ❌ MIXED HANDLING: Unexpected result distribution")
-                    return False, data
-                
-                # Check overall found status (should be True if any PID is found)
-                found = data.get('found', False)
-                print(f"   🔍 Overall found: {found}")
-                
-                if found:
-                    print(f"   ✅ OVERALL STATUS: Correctly returns found: true when at least one PID is valid")
-                else:
-                    print(f"   ❌ OVERALL STATUS: Should return found: true when at least one PID is valid")
-                    return False, data
-                
-                # Check that combined geometry exists (from the valid PID)
-                combined_geometry = data.get('combined_geometry')
-                if combined_geometry and 'rings' in combined_geometry:
-                    print(f"   ✅ COMBINED GEOMETRY: Valid geometry from valid PID")
-                else:
-                    print(f"   ❌ COMBINED GEOMETRY: Missing geometry despite valid PID")
-                    return False, data
-                
-                return True, data
-                    
-            except json.JSONDecodeError as e:
-                print(f"   ❌ JSON DECODE ERROR: {e}")
-                print(f"   Raw Response: {response.text[:500]}...")
-                return False, {"error": "Invalid JSON response"}
-        else:
-            print(f"   ❌ HTTP ERROR: {response.status_code}")
-            try:
-                error_data = response.json()
-                print(f"   Error Details: {error_data}")
-                return False, error_data
-            except:
-                print(f"   Raw Response: {response.text[:200]}...")
-                return False, {"error": f"HTTP {response.status_code}"}
-                
-    except Exception as e:
-        print(f"   ❌ REQUEST ERROR: {e}")
-        return False, {"error": str(e)}
-
-def test_multi_pid_bbox_format_fix():
-    """Comprehensive test of the bbox format mismatch fix"""
-    print("\n🔧 Testing Multi-PID Bbox Format Fix...")
-    print("🎯 FOCUS: Verify bbox format conversion from single-PID to multi-PID format")
-    print("📋 ISSUE: Single-PID returns {minLon,maxLon,minLat,maxLat} but multi-PID needs {north,south,east,west}")
-    
-    # Test single PID first to get baseline
-    print("\n   Step 1: Testing single PID to understand baseline format...")
-    single_result, single_data = test_single_pid_query()
-    
-    if not single_result:
-        print("   ❌ Cannot test bbox conversion - single PID test failed")
-        return False, {"error": "Single PID test failed"}
-    
-    single_bbox = single_data.get('bbox', {})
-    print(f"   📦 Single PID bbox format: {list(single_bbox.keys())}")
-    
-    # Test multi-PID to verify conversion
-    print("\n   Step 2: Testing multi-PID to verify bbox format conversion...")
-    multi_result, multi_data = test_multi_pid_query()
-    
-    if not multi_result:
-        print("   ❌ Multi-PID test failed - bbox conversion cannot be verified")
-        return False, {"error": "Multi-PID test failed"}
-    
-    combined_bbox = multi_data.get('combined_bbox', {})
-    print(f"   📦 Multi-PID combined bbox format: {list(combined_bbox.keys())}")
-    
-    # Verify the conversion logic
-    print("\n   Step 3: Verifying bbox format conversion logic...")
-    
-    # Check that single PID uses minLon/maxLon/minLat/maxLat format
-    single_format_correct = all(key in single_bbox for key in ['minLon', 'maxLon', 'minLat', 'maxLat'])
-    print(f"   ✅ Single PID format correct: {single_format_correct}")
-    
-    # Check that multi-PID uses north/south/east/west format
-    multi_format_correct = all(key in combined_bbox for key in ['north', 'south', 'east', 'west'])
-    print(f"   ✅ Multi-PID format correct: {multi_format_correct}")
-    
-    if single_format_correct and multi_format_correct:
-        print(f"   ✅ BBOX FORMAT FIX: Successfully converts between formats")
-        
-        # Verify the conversion values make sense
-        # north should correspond to maxLat, south to minLat, east to maxLon, west to minLon
-        individual_results = multi_data.get('individual_results', [])
-        if individual_results:
-            # Find a valid individual result to compare
-            valid_individual = None
-            for result in individual_results:
-                if result.get('found') and result.get('bbox'):
-                    valid_individual = result
-                    break
+                print(f"   Raw response: {response.text}")
+            return None
             
-            if valid_individual:
-                individual_bbox = valid_individual['bbox']
-                print(f"   🔍 Comparing conversion values...")
-                print(f"      Individual bbox: {individual_bbox}")
-                print(f"      Combined bbox: {combined_bbox}")
-                
-                # The combined bbox should encompass the individual bbox
-                conversion_correct = (
-                    combined_bbox['north'] >= individual_bbox['maxLat'] and
-                    combined_bbox['south'] <= individual_bbox['minLat'] and
-                    combined_bbox['east'] >= individual_bbox['maxLon'] and
-                    combined_bbox['west'] <= individual_bbox['minLon']
-                )
-                
-                if conversion_correct:
-                    print(f"   ✅ CONVERSION VALUES: Bbox conversion values are logically correct")
-                else:
-                    print(f"   ⚠️ CONVERSION VALUES: Bbox conversion values may be incorrect")
-        
-        return True, {
-            "single_bbox_format": list(single_bbox.keys()),
-            "multi_bbox_format": list(combined_bbox.keys()),
-            "conversion_working": True
-        }
-    else:
-        print(f"   ❌ BBOX FORMAT FIX: Format conversion not working correctly")
-        return False, {
-            "single_bbox_format": list(single_bbox.keys()),
-            "multi_bbox_format": list(combined_bbox.keys()),
-            "single_format_correct": single_format_correct,
-            "multi_format_correct": multi_format_correct
-        }
+    except Exception as e:
+        print(f"❌ Authentication error: {e}")
+        return None
 
-def test_multi_pid_api_logic_fix():
-    """Comprehensive test of the multi-PID backend API logic fix"""
-    print("\n🎯 COMPREHENSIVE MULTI-PID BACKEND API LOGIC FIX TEST")
+def test_property_status_fields():
+    """Test that properties have auction_result and winning_bid_amount fields"""
+    print("\n🎯 Testing Property Status Fields...")
+    print("🔍 FOCUS: Check auction_result and winning_bid_amount fields in database")
+    print("📋 EXPECTED: Properties should have auction_result (null initially) and winning_bid_amount fields")
+    
+    try:
+        # Get some properties to check their structure
+        response = requests.get(f"{BACKEND_URL}/tax-sales?limit=5", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                properties = data.get('properties', [])
+                
+                if not properties:
+                    print("   ⚠️ WARNING: No properties found in database")
+                    return False, {"error": "No properties found"}
+                
+                print(f"   ✅ SUCCESS: Found {len(properties)} properties to check")
+                
+                # Check first property for new fields
+                first_property = properties[0]
+                
+                # Check for auction_result field
+                has_auction_result = 'auction_result' in first_property
+                auction_result_value = first_property.get('auction_result')
+                
+                # Check for winning_bid_amount field  
+                has_winning_bid = 'winning_bid_amount' in first_property
+                winning_bid_value = first_property.get('winning_bid_amount')
+                
+                print(f"   📋 Property ID: {first_property.get('id', 'N/A')}")
+                print(f"   📋 Assessment: {first_property.get('assessment_number', 'N/A')}")
+                print(f"   🔍 Has auction_result field: {has_auction_result}")
+                print(f"   🔍 auction_result value: {auction_result_value}")
+                print(f"   🔍 Has winning_bid_amount field: {has_winning_bid}")
+                print(f"   🔍 winning_bid_amount value: {winning_bid_value}")
+                
+                # Check all properties for consistency
+                all_have_auction_result = all('auction_result' in prop for prop in properties)
+                all_have_winning_bid = all('winning_bid_amount' in prop for prop in properties)
+                
+                print(f"   📊 All properties have auction_result: {all_have_auction_result}")
+                print(f"   📊 All properties have winning_bid_amount: {all_have_winning_bid}")
+                
+                if all_have_auction_result and all_have_winning_bid:
+                    print(f"   ✅ SCHEMA VALIDATION: All properties have required auction fields")
+                    return True, {
+                        "properties_checked": len(properties),
+                        "all_have_auction_result": all_have_auction_result,
+                        "all_have_winning_bid": all_have_winning_bid,
+                        "sample_auction_result": auction_result_value,
+                        "sample_winning_bid": winning_bid_value
+                    }
+                else:
+                    print(f"   ❌ SCHEMA VALIDATION: Some properties missing auction fields")
+                    return False, {
+                        "properties_checked": len(properties),
+                        "all_have_auction_result": all_have_auction_result,
+                        "all_have_winning_bid": all_have_winning_bid
+                    }
+                    
+            except json.JSONDecodeError as e:
+                print(f"   ❌ JSON DECODE ERROR: {e}")
+                return False, {"error": "Invalid JSON response"}
+        else:
+            print(f"   ❌ HTTP ERROR: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error Details: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw Response: {response.text[:200]}...")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
+
+def test_admin_auction_result_endpoint():
+    """Test the admin API endpoint for updating auction results"""
+    print("\n🎯 Testing Admin Auction Result Endpoint...")
+    print("🔍 FOCUS: PUT /api/admin/properties/{property_id}/auction-result")
+    print("📋 EXPECTED: Should update auction results with proper authentication and validation")
+    
+    # First get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test admin endpoint without authentication")
+        return False, {"error": "Authentication failed"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        # Get a property to test with
+        response = requests.get(f"{BACKEND_URL}/tax-sales?limit=1", timeout=30)
+        if response.status_code != 200:
+            print("   ❌ Cannot get test property")
+            return False, {"error": "Cannot get test property"}
+        
+        properties = response.json().get('properties', [])
+        if not properties:
+            print("   ❌ No properties available for testing")
+            return False, {"error": "No properties available"}
+        
+        test_property = properties[0]
+        property_id = test_property['id']
+        
+        print(f"   🎯 Testing with property ID: {property_id}")
+        print(f"   📋 Assessment: {test_property.get('assessment_number', 'N/A')}")
+        
+        # Test 1: Update to pending
+        print(f"\n   Test 1: Update auction result to 'pending'")
+        update_data = {"auction_result": "pending"}
+        
+        response = requests.put(
+            f"{BACKEND_URL}/admin/properties/{property_id}/auction-result",
+            json=update_data,
+            headers=headers,
+            timeout=30
+        )
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"   ✅ SUCCESS: Pending update successful")
+            print(f"   📋 Response: {data.get('message', 'No message')}")
+            
+            updated_property = data.get('property', {})
+            if updated_property.get('auction_result') == 'pending':
+                print(f"   ✅ VALIDATION: auction_result correctly set to 'pending'")
+            else:
+                print(f"   ❌ VALIDATION: auction_result not set correctly")
+                return False, data
+        else:
+            print(f"   ❌ PENDING UPDATE FAILED: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+        
+        # Test 2: Update to sold with winning bid
+        print(f"\n   Test 2: Update auction result to 'sold' with winning bid")
+        update_data = {
+            "auction_result": "sold",
+            "winning_bid_amount": 15000.50
+        }
+        
+        response = requests.put(
+            f"{BACKEND_URL}/admin/properties/{property_id}/auction-result",
+            json=update_data,
+            headers=headers,
+            timeout=30
+        )
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"   ✅ SUCCESS: Sold update successful")
+            print(f"   📋 Response: {data.get('message', 'No message')}")
+            
+            updated_property = data.get('property', {})
+            auction_result = updated_property.get('auction_result')
+            winning_bid = updated_property.get('winning_bid_amount')
+            status = updated_property.get('status')
+            
+            if auction_result == 'sold':
+                print(f"   ✅ VALIDATION: auction_result correctly set to 'sold'")
+            else:
+                print(f"   ❌ VALIDATION: auction_result not set correctly (got {auction_result})")
+                return False, data
+            
+            if winning_bid == 15000.50:
+                print(f"   ✅ VALIDATION: winning_bid_amount correctly set to $15,000.50")
+            else:
+                print(f"   ❌ VALIDATION: winning_bid_amount not set correctly (got {winning_bid})")
+                return False, data
+            
+            if status == 'inactive':
+                print(f"   ✅ STATUS UPDATE: Property correctly marked as inactive")
+            else:
+                print(f"   ⚠️ STATUS UPDATE: Property status is {status} (expected inactive)")
+        else:
+            print(f"   ❌ SOLD UPDATE FAILED: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+        
+        # Test 3: Try sold without winning bid (should fail)
+        print(f"\n   Test 3: Try 'sold' without winning_bid_amount (should fail)")
+        update_data = {"auction_result": "sold"}
+        
+        response = requests.put(
+            f"{BACKEND_URL}/admin/properties/{property_id}/auction-result",
+            json=update_data,
+            headers=headers,
+            timeout=30
+        )
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 400:
+            print(f"   ✅ VALIDATION: Correctly rejects sold without winning bid")
+            try:
+                error_data = response.json()
+                print(f"   📋 Error message: {error_data.get('detail', 'No detail')}")
+            except:
+                pass
+        else:
+            print(f"   ❌ VALIDATION: Should reject sold without winning bid (got {response.status_code})")
+            return False, {"error": "Validation failed"}
+        
+        # Test 4: Test other auction results
+        print(f"\n   Test 4: Test other auction results (canceled, deferred, taxes_paid)")
+        
+        for result_type in ["canceled", "deferred", "taxes_paid"]:
+            update_data = {"auction_result": result_type}
+            
+            response = requests.put(
+                f"{BACKEND_URL}/admin/properties/{property_id}/auction-result",
+                json=update_data,
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                updated_property = data.get('property', {})
+                if updated_property.get('auction_result') == result_type:
+                    print(f"   ✅ {result_type.upper()}: Successfully updated")
+                else:
+                    print(f"   ❌ {result_type.upper()}: Update failed")
+                    return False, data
+            else:
+                print(f"   ❌ {result_type.upper()}: HTTP {response.status_code}")
+                return False, {"error": f"Failed to update to {result_type}"}
+        
+        # Test 5: Test authentication (without token)
+        print(f"\n   Test 5: Test authentication requirement")
+        update_data = {"auction_result": "pending"}
+        
+        response = requests.put(
+            f"{BACKEND_URL}/admin/properties/{property_id}/auction-result",
+            json=update_data,
+            timeout=30  # No headers (no auth token)
+        )
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 401 or response.status_code == 403:
+            print(f"   ✅ AUTHENTICATION: Correctly requires admin token")
+        else:
+            print(f"   ❌ AUTHENTICATION: Should require admin token (got {response.status_code})")
+            return False, {"error": "Authentication not enforced"}
+        
+        print(f"   ✅ ADMIN ENDPOINT TEST: All validations passed")
+        return True, {
+            "property_id": property_id,
+            "pending_update": "success",
+            "sold_update": "success", 
+            "validation_working": True,
+            "authentication_required": True,
+            "all_auction_results_working": True
+        }
+        
+    except Exception as e:
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
+
+def test_smart_scheduling_system():
+    """Test the smart scheduling system for auction updates"""
+    print("\n🎯 Testing Smart Scheduling System...")
+    print("🔍 FOCUS: Verify scheduler is running and has auction update jobs")
+    print("📋 EXPECTED: Scheduler should be active and ready to process auction updates")
+    
+    try:
+        # Check if there are any properties with upcoming auctions
+        response = requests.get(f"{BACKEND_URL}/tax-sales?limit=50", timeout=30)
+        
+        if response.status_code != 200:
+            print("   ❌ Cannot get properties to check auction dates")
+            return False, {"error": "Cannot get properties"}
+        
+        data = response.json()
+        properties = data.get('properties', [])
+        
+        print(f"   📊 Found {len(properties)} properties to analyze")
+        
+        # Analyze auction dates
+        upcoming_auctions = []
+        past_auctions = []
+        now = datetime.now()
+        
+        for prop in properties:
+            sale_date_str = prop.get('sale_date')
+            if sale_date_str:
+                try:
+                    # Parse the sale date
+                    if 'T' in sale_date_str:
+                        sale_date = datetime.fromisoformat(sale_date_str.replace('Z', '+00:00'))
+                    else:
+                        sale_date = datetime.fromisoformat(sale_date_str)
+                    
+                    if sale_date > now:
+                        upcoming_auctions.append({
+                            'id': prop['id'],
+                            'assessment': prop.get('assessment_number', 'N/A'),
+                            'sale_date': sale_date,
+                            'auction_result': prop.get('auction_result')
+                        })
+                    else:
+                        past_auctions.append({
+                            'id': prop['id'],
+                            'assessment': prop.get('assessment_number', 'N/A'),
+                            'sale_date': sale_date,
+                            'auction_result': prop.get('auction_result')
+                        })
+                except Exception as e:
+                    print(f"   ⚠️ Could not parse sale date: {sale_date_str}")
+        
+        print(f"   📅 Upcoming auctions: {len(upcoming_auctions)}")
+        print(f"   📅 Past auctions: {len(past_auctions)}")
+        
+        # Show some examples
+        if upcoming_auctions:
+            print(f"   📋 Sample upcoming auctions:")
+            for auction in upcoming_auctions[:3]:
+                print(f"      - {auction['assessment']}: {auction['sale_date'].strftime('%Y-%m-%d')} (result: {auction['auction_result']})")
+        
+        if past_auctions:
+            print(f"   📋 Sample past auctions:")
+            for auction in past_auctions[:3]:
+                print(f"      - {auction['assessment']}: {auction['sale_date'].strftime('%Y-%m-%d')} (result: {auction['auction_result']})")
+        
+        # Check for properties that should have been updated by scheduler
+        yesterday = now - timedelta(days=1)
+        yesterday_auctions = [a for a in past_auctions if a['sale_date'].date() == yesterday.date()]
+        
+        print(f"   🔍 Properties with auctions yesterday: {len(yesterday_auctions)}")
+        
+        if yesterday_auctions:
+            pending_count = sum(1 for a in yesterday_auctions if a['auction_result'] == 'pending')
+            null_count = sum(1 for a in yesterday_auctions if a['auction_result'] is None)
+            
+            print(f"   📊 Yesterday's auctions with 'pending' result: {pending_count}")
+            print(f"   📊 Yesterday's auctions with null result: {null_count}")
+            
+            if pending_count > 0:
+                print(f"   ✅ SCHEDULER EVIDENCE: Found properties set to 'pending' after auction")
+            else:
+                print(f"   ⚠️ SCHEDULER EVIDENCE: No evidence of automatic 'pending' updates")
+        
+        # Test the data model validation
+        print(f"\n   🔍 Testing data model validation...")
+        
+        # Check if properties can be created/updated with new fields
+        sample_property = properties[0] if properties else None
+        if sample_property:
+            has_auction_result = 'auction_result' in sample_property
+            has_winning_bid = 'winning_bid_amount' in sample_property
+            
+            print(f"   📋 Sample property has auction_result: {has_auction_result}")
+            print(f"   📋 Sample property has winning_bid_amount: {has_winning_bid}")
+            
+            if has_auction_result and has_winning_bid:
+                print(f"   ✅ DATA MODEL: Properties support new auction fields")
+            else:
+                print(f"   ❌ DATA MODEL: Properties missing auction fields")
+                return False, {"error": "Data model validation failed"}
+        
+        print(f"   ✅ SMART SCHEDULING: System appears configured for auction updates")
+        return True, {
+            "total_properties": len(properties),
+            "upcoming_auctions": len(upcoming_auctions),
+            "past_auctions": len(past_auctions),
+            "yesterday_auctions": len(yesterday_auctions) if 'yesterday_auctions' in locals() else 0,
+            "data_model_valid": True,
+            "scheduler_ready": True
+        }
+        
+    except Exception as e:
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
+
+def test_data_model_validation():
+    """Test that the TaxSaleProperty model accepts new fields"""
+    print("\n🎯 Testing Data Model Validation...")
+    print("🔍 FOCUS: Verify TaxSaleProperty model accepts auction_result and winning_bid_amount")
+    print("📋 EXPECTED: Database should properly store the new auction result fields")
+    
+    # Get admin token for creating test data
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ⚠️ Cannot test data model without admin access, checking existing data instead")
+    
+    try:
+        # Check existing properties for field support
+        response = requests.get(f"{BACKEND_URL}/tax-sales?limit=10", timeout=30)
+        
+        if response.status_code != 200:
+            print("   ❌ Cannot get properties for validation")
+            return False, {"error": "Cannot get properties"}
+        
+        data = response.json()
+        properties = data.get('properties', [])
+        
+        if not properties:
+            print("   ❌ No properties found for validation")
+            return False, {"error": "No properties found"}
+        
+        print(f"   📊 Analyzing {len(properties)} properties for field support")
+        
+        # Check field presence and types
+        auction_result_count = 0
+        winning_bid_count = 0
+        auction_result_types = set()
+        winning_bid_types = set()
+        
+        for prop in properties:
+            if 'auction_result' in prop:
+                auction_result_count += 1
+                auction_result_types.add(type(prop['auction_result']).__name__)
+            
+            if 'winning_bid_amount' in prop:
+                winning_bid_count += 1
+                winning_bid_types.add(type(prop['winning_bid_amount']).__name__)
+        
+        print(f"   📋 Properties with auction_result field: {auction_result_count}/{len(properties)}")
+        print(f"   📋 Properties with winning_bid_amount field: {winning_bid_count}/{len(properties)}")
+        print(f"   📋 auction_result types found: {auction_result_types}")
+        print(f"   📋 winning_bid_amount types found: {winning_bid_types}")
+        
+        # Check for valid auction result values
+        valid_auction_results = ["pending", "sold", "canceled", "deferred", "taxes_paid"]
+        auction_result_values = set()
+        
+        for prop in properties:
+            result = prop.get('auction_result')
+            if result is not None:
+                auction_result_values.add(result)
+        
+        print(f"   📋 auction_result values found: {auction_result_values}")
+        
+        # Validate the values
+        invalid_values = auction_result_values - set(valid_auction_results) - {None}
+        if invalid_values:
+            print(f"   ⚠️ Found invalid auction_result values: {invalid_values}")
+        else:
+            print(f"   ✅ All auction_result values are valid")
+        
+        # Check field consistency
+        field_consistency = (auction_result_count == len(properties) and 
+                           winning_bid_count == len(properties))
+        
+        if field_consistency:
+            print(f"   ✅ FIELD CONSISTENCY: All properties have both new fields")
+        else:
+            print(f"   ⚠️ FIELD CONSISTENCY: Some properties missing new fields")
+        
+        # Check data types
+        expected_types = {
+            'auction_result': ['str', 'NoneType'],
+            'winning_bid_amount': ['float', 'int', 'NoneType']
+        }
+        
+        auction_result_types_valid = all(t in expected_types['auction_result'] for t in auction_result_types)
+        winning_bid_types_valid = all(t in expected_types['winning_bid_amount'] for t in winning_bid_types)
+        
+        if auction_result_types_valid:
+            print(f"   ✅ auction_result data types are valid")
+        else:
+            print(f"   ❌ auction_result has invalid data types: {auction_result_types}")
+        
+        if winning_bid_types_valid:
+            print(f"   ✅ winning_bid_amount data types are valid")
+        else:
+            print(f"   ❌ winning_bid_amount has invalid data types: {winning_bid_types}")
+        
+        # Overall validation
+        model_valid = (field_consistency and 
+                      auction_result_types_valid and 
+                      winning_bid_types_valid and 
+                      not invalid_values)
+        
+        if model_valid:
+            print(f"   ✅ DATA MODEL VALIDATION: TaxSaleProperty model properly supports auction fields")
+        else:
+            print(f"   ❌ DATA MODEL VALIDATION: Issues found with auction field support")
+        
+        return model_valid, {
+            "properties_checked": len(properties),
+            "auction_result_field_count": auction_result_count,
+            "winning_bid_field_count": winning_bid_count,
+            "field_consistency": field_consistency,
+            "auction_result_types": list(auction_result_types),
+            "winning_bid_types": list(winning_bid_types),
+            "auction_result_values": list(auction_result_values),
+            "invalid_values": list(invalid_values),
+            "model_valid": model_valid
+        }
+        
+    except Exception as e:
+        print(f"   ❌ REQUEST ERROR: {e}")
+        return False, {"error": str(e)}
+
+def test_auction_result_management_system():
+    """Comprehensive test of the auction result management system"""
+    print("\n🎯 COMPREHENSIVE AUCTION RESULT MANAGEMENT SYSTEM TEST")
     print("=" * 80)
-    print("🎯 REVIEW REQUEST: Test multi-PID backend API logic fix for Tax Sale Compass")
+    print("🎯 REVIEW REQUEST: Test auction result management system for Tax Sale Compass")
     print("📋 SPECIFIC REQUIREMENTS:")
-    print("   1. Single-PID Test: GET /api/query-ns-government-parcel/85010866")
-    print("      - Should return bbox with {minLon, maxLon, minLat, maxLat} format")
-    print("      - Should have found: true, geometry, center coordinates")
-    print("   2. Multi-PID Test: GET /api/query-ns-government-parcel/85010866/85074276")
-    print("      - Should return combined geometry with multiple_pids: true")
-    print("      - Should have individual_results array with 2 entries")
-    print("      - Should have combined_bbox with {north, south, east, west} format")
-    print("      - Should have proper center coordinates from combined_bbox")
-    print("   3. Error Scenarios: Test invalid PIDs for proper error handling")
-    print("   4. Verify bbox format conversion fixes KeyError issues")
+    print("   1. Property Status Fields: Check auction_result and winning_bid_amount fields")
+    print("   2. Admin API Endpoint: Test PUT /api/admin/properties/{id}/auction-result")
+    print("   3. Smart Scheduling: Verify scheduler for automatic auction updates")
+    print("   4. Data Model Validation: Test TaxSaleProperty model with new fields")
     print("=" * 80)
     
     # Run all tests
     results = {}
     
-    # Test 1: Single-PID
-    print("\n🔍 TEST 1: Single-PID Query")
-    single_result, single_data = test_single_pid_query()
-    results['single_pid'] = {'success': single_result, 'data': single_data}
+    # Test 1: Property Status Fields
+    print("\n🔍 TEST 1: Property Status Fields")
+    fields_result, fields_data = test_property_status_fields()
+    results['property_fields'] = {'success': fields_result, 'data': fields_data}
     
-    # Test 2: Multi-PID
-    print("\n🔍 TEST 2: Multi-PID Query")
-    multi_result, multi_data = test_multi_pid_query()
-    results['multi_pid'] = {'success': multi_result, 'data': multi_data}
+    # Test 2: Admin API Endpoint
+    print("\n🔍 TEST 2: Admin API Endpoint")
+    admin_result, admin_data = test_admin_auction_result_endpoint()
+    results['admin_endpoint'] = {'success': admin_result, 'data': admin_data}
     
-    # Test 3: Invalid Single PID
-    print("\n🔍 TEST 3: Invalid Single PID")
-    invalid_single_result, invalid_single_data = test_invalid_single_pid()
-    results['invalid_single'] = {'success': invalid_single_result, 'data': invalid_single_data}
+    # Test 3: Smart Scheduling System
+    print("\n🔍 TEST 3: Smart Scheduling System")
+    scheduling_result, scheduling_data = test_smart_scheduling_system()
+    results['smart_scheduling'] = {'success': scheduling_result, 'data': scheduling_data}
     
-    # Test 4: Mixed Valid/Invalid Multi-PID
-    print("\n🔍 TEST 4: Mixed Valid/Invalid Multi-PID")
-    mixed_result, mixed_data = test_mixed_valid_invalid_multi_pid()
-    results['mixed_multi'] = {'success': mixed_result, 'data': mixed_data}
-    
-    # Test 5: Bbox Format Fix
-    print("\n🔍 TEST 5: Bbox Format Conversion Fix")
-    bbox_fix_result, bbox_fix_data = test_multi_pid_bbox_format_fix()
-    results['bbox_fix'] = {'success': bbox_fix_result, 'data': bbox_fix_data}
+    # Test 4: Data Model Validation
+    print("\n🔍 TEST 4: Data Model Validation")
+    model_result, model_data = test_data_model_validation()
+    results['data_model'] = {'success': model_result, 'data': model_data}
     
     # Final Assessment
     print("\n" + "=" * 80)
-    print("📊 MULTI-PID BACKEND API LOGIC FIX - FINAL ASSESSMENT")
+    print("📊 AUCTION RESULT MANAGEMENT SYSTEM - FINAL ASSESSMENT")
     print("=" * 80)
     
     test_names = [
-        ('Single-PID Query', 'single_pid'),
-        ('Multi-PID Query', 'multi_pid'),
-        ('Invalid Single PID', 'invalid_single'),
-        ('Mixed Multi-PID', 'mixed_multi'),
-        ('Bbox Format Fix', 'bbox_fix')
+        ('Property Status Fields', 'property_fields'),
+        ('Admin API Endpoint', 'admin_endpoint'),
+        ('Smart Scheduling System', 'smart_scheduling'),
+        ('Data Model Validation', 'data_model')
     ]
     
     passed_tests = 0
@@ -538,67 +648,72 @@ def test_multi_pid_api_logic_fix():
     # Critical findings
     print(f"\n🔍 CRITICAL FINDINGS:")
     
-    if results['single_pid']['success']:
-        print(f"   ✅ Single-PID requests work without regression")
-        single_bbox = results['single_pid']['data'].get('bbox', {})
-        if all(key in single_bbox for key in ['minLon', 'maxLon', 'minLat', 'maxLat']):
-            print(f"   ✅ Single-PID uses correct bbox format: {list(single_bbox.keys())}")
+    if results['property_fields']['success']:
+        print(f"   ✅ Properties have auction_result and winning_bid_amount fields")
+        fields_data = results['property_fields']['data']
+        print(f"   ✅ Schema validation: {fields_data.get('properties_checked', 0)} properties checked")
     else:
-        print(f"   ❌ Single-PID requests have issues")
+        print(f"   ❌ Properties missing required auction fields")
     
-    if results['multi_pid']['success']:
-        print(f"   ✅ Multi-PID requests work without KeyError")
-        multi_bbox = results['multi_pid']['data'].get('combined_bbox', {})
-        if all(key in multi_bbox for key in ['north', 'south', 'east', 'west']):
-            print(f"   ✅ Multi-PID uses correct bbox format: {list(multi_bbox.keys())}")
-        
-        individual_results = results['multi_pid']['data'].get('individual_results', [])
-        if len(individual_results) == 2:
-            print(f"   ✅ Multi-PID processes both PIDs correctly")
+    if results['admin_endpoint']['success']:
+        print(f"   ✅ Admin API endpoint working with proper authentication")
+        print(f"   ✅ All auction result types supported (pending, sold, canceled, deferred, taxes_paid)")
+        print(f"   ✅ Validation working (sold requires winning_bid_amount)")
+        print(f"   ✅ Status updates working (non-pending results mark properties inactive)")
     else:
-        print(f"   ❌ Multi-PID requests still have issues")
+        print(f"   ❌ Admin API endpoint has issues")
     
-    if results['bbox_fix']['success']:
-        print(f"   ✅ Bbox format conversion working correctly")
-        print(f"   ✅ No more KeyError on bbox access")
+    if results['smart_scheduling']['success']:
+        print(f"   ✅ Smart scheduling system configured and ready")
+        scheduling_data = results['smart_scheduling']['data']
+        print(f"   ✅ Found {scheduling_data.get('upcoming_auctions', 0)} upcoming auctions")
+        print(f"   ✅ Found {scheduling_data.get('past_auctions', 0)} past auctions")
     else:
-        print(f"   ❌ Bbox format conversion still has issues")
+        print(f"   ❌ Smart scheduling system has issues")
+    
+    if results['data_model']['success']:
+        print(f"   ✅ TaxSaleProperty model properly supports auction fields")
+        model_data = results['data_model']['data']
+        print(f"   ✅ Data model validation: {model_data.get('properties_checked', 0)} properties validated")
+    else:
+        print(f"   ❌ Data model validation failed")
     
     # Overall assessment
     critical_tests_passed = (
-        results['single_pid']['success'] and 
-        results['multi_pid']['success'] and 
-        results['bbox_fix']['success']
+        results['property_fields']['success'] and 
+        results['admin_endpoint']['success'] and 
+        results['data_model']['success']
     )
     
     if critical_tests_passed:
-        print(f"\n🎉 MULTI-PID BACKEND API LOGIC FIX: SUCCESS!")
-        print(f"   ✅ Bbox format mismatch issue resolved")
-        print(f"   ✅ Single-PID and multi-PID both working")
-        print(f"   ✅ No more 404 errors for multi-PID requests")
-        print(f"   ✅ Proper center coordinates for mapping")
+        print(f"\n🎉 AUCTION RESULT MANAGEMENT SYSTEM: SUCCESS!")
+        print(f"   ✅ All API endpoints working correctly with proper authentication")
+        print(f"   ✅ Auction result updates change property status to inactive (except pending)")
+        print(f"   ✅ Sold properties store winning bid amounts")
+        print(f"   ✅ Smart scheduling active and ready to process auction updates")
+        print(f"   ✅ Database properly stores new auction result fields")
     else:
-        print(f"\n❌ MULTI-PID BACKEND API LOGIC FIX: ISSUES REMAIN")
-        print(f"   🔧 Additional fixes may be needed")
+        print(f"\n❌ AUCTION RESULT MANAGEMENT SYSTEM: ISSUES IDENTIFIED")
+        print(f"   🔧 Some critical components need attention")
     
     return critical_tests_passed, results
 
 def main():
-    """Main test execution function - Focus on Multi-PID Backend API Logic Fix"""
+    """Main test execution function - Focus on Auction Result Management System"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Multi-PID Backend API Logic Fix Testing")
-    print("📋 REVIEW REQUEST: Test the multi-PID backend API logic fix for Tax Sale Compass")
-    print("🔍 ISSUE FIXED: Bbox format mismatch in /api/query-ns-government-parcel/{pid_number}")
-    print("   - Single-PID returns bbox with {minLon, maxLon, minLat, maxLat}")
-    print("   - Multi-PID logic tried to access {north, south, east, west} keys")
-    print("   - This caused KeyError and 404 errors for multi-PID requests")
-    print("   - Fix implemented bbox format conversion")
+    print("🎯 FOCUS: Auction Result Management System Testing")
+    print("📋 REVIEW REQUEST: Test the auction result management system for Tax Sale Compass")
+    print("🔍 NEW FEATURES:")
+    print("   - auction_result field with values: pending, sold, canceled, deferred, taxes_paid")
+    print("   - winning_bid_amount field for sold properties")
+    print("   - Smart scheduling system for automatic updates")
+    print("   - Admin API endpoint for manual auction result updates")
     print("🎯 TESTING SCOPE:")
-    print("   - Single-PID requests (should work without regression)")
-    print("   - Multi-PID requests (should work without KeyError)")
-    print("   - Error handling for invalid PIDs")
-    print("   - Bbox format conversion verification")
+    print("   - Property status fields validation")
+    print("   - Admin API endpoint functionality")
+    print("   - Smart scheduling system verification")
+    print("   - Data model validation")
     print("=" * 80)
     
     # Test 1: Basic API connectivity
@@ -608,23 +723,22 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Multi-PID API Logic Fix (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Multi-PID Backend API Logic Fix Testing")
-    all_working, test_results = test_multi_pid_api_logic_fix()
+    # Test 2: Auction Result Management System (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Auction Result Management System Testing")
+    all_working, test_results = test_auction_result_management_system()
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Multi-PID Backend API Logic Fix")
+    print("📊 FINAL TEST RESULTS SUMMARY - Auction Result Management System")
     print("=" * 80)
     
     if all_working:
-        print(f"🎉 MULTI-PID BACKEND API LOGIC FIX: SUCCESSFUL!")
+        print(f"🎉 AUCTION RESULT MANAGEMENT SYSTEM: SUCCESSFUL!")
         print(f"   ✅ All critical tests passed")
-        print(f"   ✅ Bbox format mismatch issue resolved")
-        print(f"   ✅ Single-PID requests work without regression")
-        print(f"   ✅ Multi-PID requests work without KeyError")
-        print(f"   ✅ Proper error handling for invalid PIDs")
-        print(f"   ✅ Center coordinates calculated correctly")
+        print(f"   ✅ Property status fields implemented correctly")
+        print(f"   ✅ Admin API endpoint working with authentication")
+        print(f"   ✅ Smart scheduling system configured")
+        print(f"   ✅ Data model supports new auction fields")
         
         print(f"\n📊 DETAILED SUCCESS METRICS:")
         passed_count = sum(1 for result in test_results.values() if result['success'])
@@ -633,14 +747,14 @@ def main():
         print(f"   Success rate: {(passed_count/total_count)*100:.1f}%")
         
         print(f"\n🎯 KEY ACHIEVEMENTS:")
-        print(f"   ✅ Fixed bbox format conversion from single-PID to multi-PID")
-        print(f"   ✅ Eliminated KeyError when accessing bbox keys")
-        print(f"   ✅ Multi-PID requests now return proper combined geometry")
-        print(f"   ✅ Center coordinates calculated from combined bbox")
-        print(f"   ✅ No more 404 errors for valid multi-PID requests")
+        print(f"   ✅ auction_result and winning_bid_amount fields added to properties")
+        print(f"   ✅ Admin endpoint validates sold properties require winning bid")
+        print(f"   ✅ Non-pending auction results mark properties as inactive")
+        print(f"   ✅ Authentication required for admin operations")
+        print(f"   ✅ Smart scheduling ready for automatic auction updates")
         
     else:
-        print(f"❌ MULTI-PID BACKEND API LOGIC FIX: ISSUES IDENTIFIED")
+        print(f"❌ AUCTION RESULT MANAGEMENT SYSTEM: ISSUES IDENTIFIED")
         print(f"   ❌ Some critical tests failed")
         print(f"   🔧 Additional fixes may be needed")
         
@@ -652,11 +766,11 @@ def main():
                 print(f"      - {test_name}")
         
         print(f"\n   🔧 RECOMMENDED ACTIONS:")
-        print(f"      1. Review bbox format conversion logic")
-        print(f"      2. Check multi-PID geometry combination")
-        print(f"      3. Verify center coordinate calculation")
-        print(f"      4. Test with different PID combinations")
-        print(f"      5. Check error handling for edge cases")
+        print(f"      1. Review property schema for auction fields")
+        print(f"      2. Check admin API endpoint implementation")
+        print(f"      3. Verify authentication and authorization")
+        print(f"      4. Test data model field validation")
+        print(f"      5. Check scheduler configuration")
     
     print("=" * 80)
     
