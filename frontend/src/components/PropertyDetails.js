@@ -79,16 +79,34 @@ const PropertyDetails = () => {
     }
   };
 
-  // Fetch NSPRD boundary data
+  // Fetch NSPRD boundary data (supports multiple PIDs)
   const fetchBoundaryData = async (pidNumber) => {
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/query-ns-government-parcel/${pidNumber}`);
       const data = await response.json();
       
-      if (data.found && data.geometry && data.geometry.rings) {
-        setBoundaryData(data);
-        return data;
+      // Handle both single PID and multiple PID responses
+      if (data.found) {
+        // For multiple PIDs, use combined geometry
+        if (data.multiple_pids && data.combined_geometry && data.combined_geometry.rings) {
+          setBoundaryData({
+            ...data,
+            geometry: data.combined_geometry,
+            bbox: data.combined_bbox,
+            center: data.center,
+            pid_count: data.pids ? data.pids.length : 1
+          });
+          return data;
+        }
+        // For single PID, use regular geometry
+        else if (data.geometry && data.geometry.rings) {
+          setBoundaryData({
+            ...data,
+            pid_count: 1
+          });
+          return data;
+        }
       }
     } catch (error) {
       console.error('Error fetching boundary data:', error);
