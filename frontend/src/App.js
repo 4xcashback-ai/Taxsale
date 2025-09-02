@@ -70,6 +70,7 @@ const AuthenticatedApp = () => {
   const [selectedPropertyForResult, setSelectedPropertyForResult] = useState(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalProperty, setUpgradeModalProperty] = useState(null);
+  const [activeView, setActiveView] = useState('search');
   
   // Admin state
   const [newMunicipality, setNewMunicipality] = useState({
