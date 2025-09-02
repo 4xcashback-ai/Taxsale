@@ -150,8 +150,8 @@ const AuthenticatedApp = () => {
       return;
     }
     
-    setSelectedProperty(property);
-    setShowPropertyDetails(true);
+    // Navigate to property details page with assessment number
+    window.open(`/property/${property.assessment_number}`, '_blank');
   };
 
   const formatCurrency = (amount) => {
