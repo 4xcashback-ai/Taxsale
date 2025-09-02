@@ -14,7 +14,7 @@ import time
 
 # Get backend URL from environment
 import os
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://property-radar-3.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-mapper.preview.emergentagent.com') + '/api'
 
 # Production VPS URL for deployment testing
 PRODUCTION_VPS_URL = 'https://taxsalecompass.ca/api'

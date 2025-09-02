@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import datetime
 
-BACKEND_URL = "https://property-radar-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://taxsale-mapper.preview.emergentagent.com/api"
 
 def test_halifax_scrape_endpoint():
     """Test the /api/scrape/halifax endpoint"""

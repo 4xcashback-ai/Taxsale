@@ -1,94 +1,153 @@
 <analysis>
-The AI engineer's work primarily focused on stabilizing and enhancing the Tax Sale Compass application, moving from a basic MVP to a more robust, production-ready system. Initial efforts concentrated on implementing and debugging an in-app deployment automation feature, resolving critical  errors by refactoring backend subprocess calls to direct HTTP requests. Subsequently, significant time was spent fixing persistent UI and routing issues, including double-encoded property image URLs and frontend display inconsistencies for deployment statuses and scraper types. A major security vulnerability was addressed by implementing a comprehensive admin authentication system using JWT. The trajectory concluded with the development of a bulletproof deployment system designed to automate environment management, frontend builds, and service restarts, aiming to eliminate recurring manual fixes and ensure consistent deployments. This final task currently faces a  command failure due to special characters in a generated JWT secret.
+The AI engineer's work involved extensive debugging and feature implementation for the Tax Sale Compass application. Initial efforts centered on fixing a critical  command failure in the bulletproof deployment system, resolving conflicting usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
+
+These are common Git commands used in various situations:
+
+start a working area (see also: git help tutorial)
+   clone     Clone a repository into a new directory
+   init      Create an empty Git repository or reinitialize an existing one
+
+work on the current change (see also: git help everyday)
+   add       Add file contents to the index
+   mv        Move or rename a file, a directory, or a symlink
+   restore   Restore working tree files
+   rm        Remove files from the working tree and from the index
+
+examine the history and state (see also: git help revisions)
+   bisect    Use binary search to find the commit that introduced a bug
+   diff      Show changes between commits, commit and working tree, etc
+   grep      Print lines matching a pattern
+   log       Show commit logs
+   show      Show various types of objects
+   status    Show the working tree status
+
+grow, mark and tweak your common history
+   branch    List, create, or delete branches
+   commit    Record changes to the repository
+   merge     Join two or more development histories together
+   rebase    Reapply commits on top of another base tip
+   reset     Reset current HEAD to the specified state
+   switch    Switch branches
+   tag       Create, list, delete or verify a tag object signed with GPG
+
+collaborate (see also: git help workflows)
+   fetch     Download objects and refs from another repository
+   pull      Fetch from and integrate with another repository or a local branch
+   push      Update remote refs along with associated objects
+
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system. states, and migrating health checks from backend                          RUNNING   pid 27, uptime 0:00:05
+code-server                      RUNNING   pid 29, uptime 0:00:05
+frontend                         STOPPING  
+mongodb                          RUNNING   pid 35, uptime 0:00:05
+supervisor>  to . Subsequently, the focus shifted to rectifying a 403 Forbidden error for municipality management by implementing JWT-based admin authentication across relevant frontend actions. A major database issue (missing data) was resolved by correcting a database name mismatch ( to ). The absence of property images and URI malformed errors led to fixing Google Maps API key configuration and deploying the previously missing boundary image generation system. The trajectory concludes with the implementation of multi-PID support for property data and the interactive map, where the backend API and frontend display logic are being updated to handle multiple PIDs from a single request, with the current task focused on correctly refactoring backend multi-PID logic.
 </analysis>
 
 <product_requirements>
-The Tax Sale Compass application centralizes Nova Scotia tax sale data, offering an interactive map, PDF scraping, property filtering, and Google Maps integration. Key features include detailed property pages, Google AdSense monetization, and admin management for municipalities and scraping. Recent enhancements expanded to dynamic external links and municipality-specific descriptions. A primary focus was the in-app deployment automation from the admin page, with Check Updates, Deploy Latest, Verify Status, and Health Check functionalities, backed by FastAPI endpoints and shell scripts. The immediate goals were to fully debug this automation on a VPS, rectify 504 Gateway Timeout issues, resolve malformed image URLs, fix No updates available display discrepancies, and, critically, implement a robust admin authentication system to secure the site before public exposure. The most recent overarching goal is to establish a bulletproof deployment system to prevent recurring manual fixes.
+The Tax Sale Compass application centralizes Nova Scotia tax sale data, providing an interactive map, PDF scraping, property filtering, and Google Maps integration. It includes detailed property pages, Google AdSense for monetization, and an admin interface for managing municipalities and scraping tasks. Recent enhancements focused on dynamic external links and municipality-specific descriptions. A core feature developed was in-app deployment automation from the admin page, offering Check Updates, Deploy Latest, Verify Status, and Health Check. The AI engineer was explicitly tasked with debugging this automation, fixing  errors, resolving malformed image URLs and No updates available display discrepancies, and implementing robust admin authentication. The overarching goal was to create a bulletproof deployment system. The latest task involves enhancing property data handling to support properties with multiple Parcel Identification Numbers (PIDs), ensuring the backend API and frontend map correctly query, process, and display combined data for such properties.
 </product_requirements>
 
 <key_technical_concepts>
 - **Full-stack Development**: React (frontend), FastAPI (backend), MongoDB (database).
-- **Process Management**: PM2 (VPS), backend                          RUNNING   pid 27, uptime 0:00:05
-code-server                      RUNNING   pid 29, uptime 0:00:05
-frontend                         RUNNING   pid 30, uptime 0:00:05
-mongodb                          RUNNING   pid 33, uptime 0:00:05
-supervisor>  (development environment).
+- **Process Management**: PM2 (production), backend                          RUNNING   pid 27, uptime 0:00:06
+code-server                      RUNNING   pid 29, uptime 0:00:06
+frontend                         STOPPED   Sep 02 03:25 PM
+mongodb                          RUNNING   pid 35, uptime 0:00:06
+supervisor>  (development).
 - **Web Servers**: Nginx (reverse proxy), Uvicorn (ASGI server).
-- **Shell Scripting**: Bash for automation (, , etc.).
+- **Shell Scripting**: Bash for automation (, , , usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
+
+These are common Git commands used in various situations:
+
+start a working area (see also: git help tutorial)
+   clone     Clone a repository into a new directory
+   init      Create an empty Git repository or reinitialize an existing one
+
+work on the current change (see also: git help everyday)
+   add       Add file contents to the index
+   mv        Move or rename a file, a directory, or a symlink
+   restore   Restore working tree files
+   rm        Remove files from the working tree and from the index
+
+examine the history and state (see also: git help revisions)
+   bisect    Use binary search to find the commit that introduced a bug
+   diff      Show changes between commits, commit and working tree, etc
+   grep      Print lines matching a pattern
+   log       Show commit logs
+   show      Show various types of objects
+   status    Show the working tree status
+
+grow, mark and tweak your common history
+   branch    List, create, or delete branches
+   commit    Record changes to the repository
+   merge     Join two or more development histories together
+   rebase    Reapply commits on top of another base tip
+   reset     Reset current HEAD to the specified state
+   switch    Switch branches
+   tag       Create, list, delete or verify a tag object signed with GPG
+
+collaborate (see also: git help workflows)
+   fetch     Download objects and refs from another repository
+   pull      Fetch from and integrate with another repository or a local branch
+   push      Update remote refs along with associated objects
+
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system.).
 - **Authentication**: JWT, bcrypt hashing.
-- **Deployment**: CI/CD principles, Docker, Docker Compose, Blue-Green deployments.
+- **Deployment**: CI/CD, Docker, Docker Compose, Blue-Green deployments.
+- **API Integration**: Google Maps Static API.
 </key_technical_concepts>
 
 <code_architecture>
 
 
--   ****:
-    -   **Importance**: Core FastAPI application.
-    -   **Changes Made**:
-        -    now uses  for direct HTTP calls instead of  to prevent 504 timeouts.
-        -   Added  for environment-aware script path detection (uses  or ).
-        -   Implemented JWT-based admin authentication: , ,  functions.
-        -   Protected numerous admin endpoints (municipality management, scraping, deployment management) with .
-        -   Added  and  endpoints.
+- ****:
+    - **Importance**: Core FastAPI application, API endpoints, business logic, and database interaction.
+    - **Changes Made**:
+        - Implemented JWT-based admin authentication (, , ).
+        - Protected admin endpoints (e.g.,  POST/PUT/DELETE, ) with .
+        - Added  endpoint for admin login.
+        - Introduced  and  for generating and caching Google Maps boundary images.
+        - Modified  to parse  for multiple PIDs (e.g., ) and combine their geometries.
+        - Extracted original single-PID logic into  helper function.
 
--   ****:
-    -   **Importance**: Main React component, UI, routing, global state, admin interface.
-    -   **Changes Made**:
-        -   Implemented  helper for smart property image URL handling (detects and corrects malformed URLs, provides fallback).
-        -   Corrected logic for Live Scraper display for Victoria County ().
-        -   Fixed  in PropertySearch to remove duplicate  calls, improving performance.
-        -   Implemented an  for global authentication state.
-        -   Added  component for admin authentication.
-        -   Modified admin UI elements to be conditional on authentication status.
-        -   Updated all deployment and scraping functions to send JWT tokens.
-        -   Added robust error handling for  display (e.g.,  on ).
+- ****:
+    - **Importance**: Main React component, handles global state, routing, and integrates admin UI.
+    - **Changes Made**:
+        - Implemented  for global authentication state and .
+        - Modified , ,  functions to include  header for all API calls to protected endpoints.
+        - Updated all deployment and scraping functions to send JWT tokens.
 
--   ****:
-    -   **Importance**: Stores backend environment variables.
-    -   **Changes Made**: Added , ,  for JWT.
+- ****:
+    - **Importance**: Displays detailed property information, including the interactive map.
+    - **Changes Made**:
+        - Modified  to correctly parse and send multi-PID requests to the backend.
+        - Updated map rendering logic to handle combined geometries from multiple PIDs.
+        - Added visual indicators and updated legal description display for multi-PID properties.
 
--   **Usage: /app/scripts/deployment.sh {deploy|check-updates|rollback|verify} [github-repo-url]
+- ****:
+    - **Importance**: Stores backend environment variables.
+    - **Changes Made**: Added , ,  for JWT. Changed  from  to . Added .
 
-Commands:
-  deploy [repo-url]    - Deploy latest code from GitHub
-  check-updates        - Check if updates are available
-  rollback [backup]    - Rollback to a specific backup
-  verify              - Verify current deployment
+- ****:
+    - **Importance**: Stores frontend environment variables.
+    - **Changes Made**: Set  to point to production () and added .
 
-Examples:
-  /app/scripts/deployment.sh deploy https://github.com/user/nstaxsales.git
-  /app/scripts/deployment.sh check-updates
-  /app/scripts/deployment.sh verify, Usage: /app/scripts/system-health.sh {check|summary|info}
-
-Commands:
-  check    - Run complete health check
-  summary  - Show health summary only
-  info     - Show system information only**:
-    -   **Importance**: Core deployment and health scripts.
-    -   **Changes Made**: Updated with environment detection logic to correctly use  or  paths.
-
--   **New Files ([0;34m[2025-09-01 19:39:40] [INFO][0m Starting enhanced deployment process...
-[0;34m[2025-09-01 19:39:40] [INFO][0m Creating rollback point...
-[0;32m[2025-09-01 19:39:41] [SUCCESS][0m Rollback point created: /tmp/backups/nstaxsales/rollback_20250901_193940
-[0;34m[2025-09-01 19:39:41] [INFO][0m Backing up environment variables...
-[0;32m[2025-09-01 19:39:41] [SUCCESS][0m Backend .env backed up
-[0;32m[2025-09-01 19:39:41] [SUCCESS][0m Frontend .env backed up
-[0;32m[2025-09-01 19:39:41] [SUCCESS][0m Environment variables backed up to: /tmp/backups/nstaxsales/env-backups/env_backup_20250901_193941
-[0;34m[2025-09-01 19:39:41] [INFO][0m Pulling latest code from GitHub...
-[0;31m[2025-09-01 19:39:41] [ERROR][0m Failed to pull code from GitHub
-[1;33m[2025-09-01 19:39:41] [WARNING][0m Performing rollback...
-HEAD is now at aaa7407 auto-commit for 2b0ec6dd-cdb6-47d6-9f8f-85e146799984
-[0;32m[2025-09-01 19:39:41] [SUCCESS][0m Git state rolled back to: aaa74076d1d468d8fd8dcf2eae7807915778d0cd
-[0;32m[2025-09-01 19:39:41] [SUCCESS][0m Frontend build rolled back
-[0;34m[2025-09-01 19:39:41] [INFO][0m Performing comprehensive health checks...
-[1;33m[2025-09-01 19:39:41] [WARNING][0m PM2 not found - skipping PM2 service checks
-[0;34m[2025-09-01 19:39:41] [INFO][0m Testing backend endpoints...
-[0;31m[2025-09-01 19:39:41] [ERROR][0m Backend health endpoint not responding
-[0;31m[2025-09-01 19:39:42] [ERROR][0m Backend authentication endpoint not responding correctly
-[0;34m[2025-09-01 19:39:42] [INFO][0m Testing frontend...
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m Frontend build exists and contains index.html
-[0;31m[2025-09-01 19:39:42] [ERROR][0m Health check failed
-[0;31m[2025-09-01 19:39:42] [ERROR][0m Rollback verification failed, [0;34m[2025-09-01 19:39:42] [INFO][0m Environment Configuration Status
+- **[0;34m[2025-09-02 15:25:55] [INFO][0m Environment Configuration Status
 ==================================
 [0;34mConfiguration Directory:[0m /tmp/taxsale-config
 [0;34mSecure Directory:[0m /tmp/taxsale-secure
@@ -111,113 +170,147 @@ HEAD is now at aaa7407 auto-commit for 2b0ec6dd-cdb6-47d6-9f8f-85e146799984
   ✗ Admin password missing
 
 [0;34mCurrent Backend URL:[0m
-https://None.preview.emergentagent.com, [0;34mBlue-Green Deployment Status[0m
-============================
-[0;34mCurrent Active:[0m blue
-[0;34mNext Deployment:[0m green
+https://taxsale-mapper.preview.emergentagent.com**:
+    - **Importance**: Manages environment variables for deployments.
+    - **Changes Made**: Fixed  command to handle special characters in JWT secrets. Corrected the regex pattern for  validation and improved the URL extraction logic to correctly remove quotes.
 
-[0;34mRunning Services:[0m
-  Blue: Not running
-  Green: Not running
+- **[0;34m[2025-09-02 15:25:55] [INFO][0m Starting enhanced deployment process...
+[0;34m[2025-09-02 15:25:55] [INFO][0m Creating rollback point...
+[0;32m[2025-09-02 15:25:55] [SUCCESS][0m Rollback point created: /tmp/backups/nstaxsales/rollback_20250902_152555
+[0;34m[2025-09-02 15:25:55] [INFO][0m Backing up environment variables...
+[0;32m[2025-09-02 15:25:55] [SUCCESS][0m Backend .env backed up
+[0;32m[2025-09-02 15:25:56] [SUCCESS][0m Frontend .env backed up
+[0;32m[2025-09-02 15:25:56] [SUCCESS][0m Environment variables backed up to: /tmp/backups/nstaxsales/env-backups/env_backup_20250902_152555
+[0;34m[2025-09-02 15:25:56] [INFO][0m Pulling latest code from GitHub...
+[0;31m[2025-09-02 15:25:56] [ERROR][0m Failed to pull code from GitHub
+[1;33m[2025-09-02 15:25:56] [WARNING][0m Performing rollback...
+HEAD is now at 9fcdcba auto-commit for 11c78a0c-4a69-4709-a36c-609f31afbc20
+[0;32m[2025-09-02 15:25:56] [SUCCESS][0m Git state rolled back to: 9fcdcba020bebeb5b93aba17832046bd7dc2f763
+[0;32m[2025-09-02 15:25:56] [SUCCESS][0m Frontend build rolled back
+[0;34m[2025-09-02 15:25:56] [INFO][0m Performing comprehensive health checks...
+[1;33m[2025-09-02 15:25:56] [WARNING][0m PM2 not found - skipping PM2 service checks
+[0;34m[2025-09-02 15:25:56] [INFO][0m Testing backend endpoints...
+[0;31m[2025-09-02 15:25:56] [ERROR][0m Backend health endpoint not responding
+[0;32m[2025-09-02 15:25:56] [SUCCESS][0m Backend authentication endpoint working (main API confirmed)
+[0;34m[2025-09-02 15:25:56] [INFO][0m Testing frontend...
+[0;32m[2025-09-02 15:25:56] [SUCCESS][0m Frontend build exists and contains index.html
+[0;31m[2025-09-02 15:25:56] [ERROR][0m Health check failed
+[0;31m[2025-09-02 15:25:56] [ERROR][0m Rollback verification failed**:
+    - **Importance**: Core script for robust deployments and health checks.
+    - **Changes Made**: Migrated process management checks from backend                          RUNNING   pid 27, uptime 0:00:08
+code-server                      RUNNING   pid 29, uptime 0:00:08
+frontend                         STOPPED   Sep 02 03:25 PM
+mongodb                          RUNNING   pid 35, uptime 0:00:08
+supervisor>  to . Fixed the health check logic for the authentication endpoint to correctly interpret 401, 405, and 422 HTTP codes as successful responses for an authentication attempt. Removed problematic  assignments.
 
-[0;34mNginx Configuration:[0m
-  Nginx config: Not found, [0;35mTax Sale Compass - Deployment Status[0m
+- **[0;35mTax Sale Compass - Deployment Status[0m
 ====================================
 
 [0;34mConfiguration:[0m
   Strategy: enhanced
-  Environment: production
-  App Directory: /var/www/nstaxsales
+  Environment: development
+  App Directory: /app
 
-[0;34mGit Status:[0m, [0;35m🚀 Tax Sale Compass - Bulletproof Deployment System Setup[0m
-==============================================================
+[0;34mGit Status:[0m
+  Current Branch: main
+  Current Commit: 9fcdcba
+  Last Commit: 9fcdcba auto-commit for 11c78a0c-4a69-4709-a36c-609f31afbc20
 
-[0;34mDetected environment: Development[0m
-[0;34mApp Directory: /app[0m
-[0;34mScripts Directory: /app/scripts[0m
+[0;34mEnvironment Status:[0m
+  ✗ Backend template
+  ✗ Frontend template
+  ✗ Backend production
+  ✗ Frontend production
+  ✓ Backend deployed
+  ✓ Frontend deployed
+  ✗ JWT secret missing
+  ✗ Admin password missing
 
-[1;33mStep 1: Installing system dependencies...[0m
-[0;32m✓ Development environment - skipping system dependencies[0m
-[1;33mStep 2: Initializing environment management...[0m
-[0;34m[2025-09-01 19:39:42] [INFO][0m Initializing production environment configuration...
-[0;34m[2025-09-01 19:39:42] [INFO][0m Creating production environment templates...
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m Environment templates created in /tmp/taxsale-config
-[0;34m[2025-09-01 19:39:42] [INFO][0m Generating secure secrets...
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m Secure secrets generated and stored in /tmp/taxsale-secure
-[1;33m[2025-09-01 19:39:42] [WARNING][0m Admin password: YElE3YF9qJDoYzzR7wK+ynEwoKxkTpyl
-[1;33m[2025-09-01 19:39:42] [WARNING][0m Please save this password securely and change the default!
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m Production environment files created
-[0;32m✓ Environment management initialized[0m
-[1;33mStep 3: Setting up logging directories...[0m
-[0;32m✓ Development logging directories created[0m
-[1;33mStep 4: Configuring deployment strategy...[0m
+[0;34mRecent Deployments:[0m
+  No deployment history found
 
-Available deployment strategies:
-1. Enhanced Deployment (Recommended for current setup)
-2. Blue-Green Deployment (Zero downtime, requires Docker)
-3. Docker-based Deployment (Containerized, advanced)
+[0;34mCurrent Deployment Strategy Status:[0m
+[0;34m[2025-09-02 15:25:57] [INFO][0m Performing comprehensive health checks...
+[1;33m[2025-09-02 15:25:57] [WARNING][0m PM2 not found - skipping PM2 service checks
+[0;34m[2025-09-02 15:25:57] [INFO][0m Testing backend endpoints...
+[0;31m[2025-09-02 15:25:57] [ERROR][0m Backend health endpoint not responding
+[0;32m[2025-09-02 15:25:58] [SUCCESS][0m Backend authentication endpoint working (main API confirmed)
+[0;34m[2025-09-02 15:25:58] [INFO][0m Testing frontend...
+[0;32m[2025-09-02 15:25:58] [SUCCESS][0m Frontend build exists and contains index.html
+[0;31m[2025-09-02 15:25:58] [ERROR][0m Health check failed
+  All systems operational - Health checks passing**:
+    - **Importance**: Master script orchestrating the deployment process.
+    - **Changes Made**: Updated environment detection logic. Removed calls to the non-existent  script to prevent post-deployment validation failures. Fixed the syntax of the deployment status message. Resolved usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
 
-[0;32m✓ Enhanced Deployment strategy selected[0m
-[1;33mStep 5: Updating backend deployment endpoints...[0m
-[1;33mUpdating backend to use enhanced deployment script...[0m
-[1;33mStep 6: Testing deployment system...[0m
-[0;34m[2025-09-01 19:39:42] [INFO][0m Running pre-deployment validation...
-[0;34m[2025-09-01 19:39:42] [INFO][0m Validating environment configuration...
-[0;34m[2025-09-01 19:39:42] [INFO][0m Validating backend environment...
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m Backend environment validation completed
-[0;34m[2025-09-01 19:39:42] [INFO][0m Validating frontend environment...
-[1;33m[2025-09-01 19:39:42] [WARNING][0m Frontend backend URL appears to be for development: https://None.preview.emergentagent.com
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m Frontend environment validation completed
-[0;32m[2025-09-01 19:39:42] [SUCCESS][0m All environment validation checks passed
-[0;31m✗ Deployment system validation failed[0m
-[1;33mYou may need to configure environment variables manually[0m
-[1;33mStep 7: Creating deployment shortcuts...[0m
+These are common Git commands used in various situations:
 
-[0;35m🎉 Bulletproof Deployment System Setup Complete![0m
-==================================================
+start a working area (see also: git help tutorial)
+   clone     Clone a repository into a new directory
+   init      Create an empty Git repository or reinitialize an existing one
 
-[0;34mDeployment Strategy: enhanced[0m
-[0;34mEnvironment: development[0m
+work on the current change (see also: git help everyday)
+   add       Add file contents to the index
+   mv        Move or rename a file, a directory, or a symlink
+   restore   Restore working tree files
+   rm        Remove files from the working tree and from the index
 
-[1;33mUsage:[0m
+examine the history and state (see also: git help revisions)
+   bisect    Use binary search to find the commit that introduced a bug
+   diff      Show changes between commits, commit and working tree, etc
+   grep      Print lines matching a pattern
+   log       Show commit logs
+   show      Show various types of objects
+   status    Show the working tree status
 
-Development Commands:
-  [0;32m/app/scripts/deploy-orchestrator.sh deploy[0m    - Full deployment
-  [0;32m/app/scripts/deploy-orchestrator.sh status[0m    - Show status
-  [0;32m/app/scripts/environment-manager.sh validate[0m  - Validate environment
-  [0;32m/app/scripts/enhanced-deployment.sh deploy[0m    - Enhanced deployment only
+grow, mark and tweak your common history
+   branch    List, create, or delete branches
+   commit    Record changes to the repository
+   merge     Join two or more development histories together
+   rebase    Reapply commits on top of another base tip
+   reset     Reset current HEAD to the specified state
+   switch    Switch branches
+   tag       Create, list, delete or verify a tag object signed with GPG
 
-[1;33mFeatures Enabled:[0m
-  ✅ Automatic environment variable backup/restore
-  ✅ Smart frontend rebuild detection
-  ✅ Comprehensive health checks
-  ✅ Automatic rollback on failure
-  ✅ Pre and post deployment validation
-  ✅ Deployment history tracking
-  ✅ Configuration drift detection
+collaborate (see also: git help workflows)
+   fetch     Download objects and refs from another repository
+   pull      Fetch from and integrate with another repository or a local branch
+   push      Update remote refs along with associated objects
 
-[1;33mNext Steps:[0m
-1. Configure environment variables in development
-2. Test the enhanced deployment system
-3. Deploy to production using the new system
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system. merge conflicts.
 
-[0;32m🚀 Your bulletproof deployment system is ready![0m
-[0;32mNo more manual environment fixes needed! 🎯[0m, , )**:
-    -   **Importance**: These files collectively form the new bulletproof deployment system designed for robust, automated, and consistent deployments across environments. They handle environment variable management, Dockerization, blue-green deployment strategies, and orchestration.
-    -   **Changes Made**: All newly created to implement the comprehensive deployment strategy.
-
+- ****:
+    - **Importance**: Stores securely generated admin passwords in production.
+    - **Changes Made**: Created and updated by  during setup.
 </code_architecture>
 
 <pending_tasks>
 - Implement email alerts for new tax sales.
 - Implement property history tracking and analytics.
-- Finalize the Kubernetes ingress/proxy routing issue for boundary generation endpoints (if the smart URL handler isn't a complete solution for *all* routing issues related to this).
+- Finalize the Kubernetes ingress/proxy routing issue for boundary generation endpoints (if the smart URL handler isn't a complete solution).
+- Ensure multi-PID logic in  correctly uses  and handles combined geometry.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was in the process of setting up a new bulletproof deployment system on the VPS. This system aims to automate environment management, frontend rebuilds, and service restarts to prevent recurring deployment issues. The  script was executed on the VPS. However, this script encountered a  during the Initializing environment management step. Specifically, a  command within the  script failed with the error , followed by Environment management initialization failed. This error is diagnosed as being caused by special characters (like ) in the newly generated JWT secret conflicting with 's default delimiter. The  command was also not found, indicating the setup was incomplete. The current task is to fix this  command failure to allow the robust deployment system to be initialized successfully.
+Immediately before this summary, the AI engineer was working on implementing multi-PID (Parcel Identification Number) support for the Tax Sale Compass application. This involved modifying the backend API endpoint  in  to accept a -separated string of PIDs. The goal is for this endpoint to query each PID individually from the NS Government parcel service, combine their geometries into a single, unified boundary, and return this consolidated data.
+
+The corresponding frontend component, , was updated to correctly format requests for multi-PID properties and to visually represent the combined boundary data on the interactive map. It also includes visual indicators () and updates the legal description display.
+
+However, after these changes, a persistent  error was observed when testing the multi-PID endpoint from the frontend in the development environment. Diagnosis revealed two primary issues:
+1.  The  in  had reverted to  instead of , causing frontend requests to go to the wrong backend instance. This was manually corrected.
+2.  Even after correcting the frontend URL, the backend API still returned  for multi-PID requests, although single-PID requests worked. This indicates a logical error in the newly implemented multi-PID backend code. The AI engineer deduced that the existing logic for querying a single PID was not correctly encapsulated into the  helper function, leading to incorrect parsing or processing of multi-PID requests within the main endpoint.
+
+The immediate next step is to correctly refactor the  to ensure the  function properly contains the single-PID logic and the main multi-PID endpoint accurately uses this helper or its own logic to combine results.
 </current_work>
 
 <optional_next_step>
-Fix the  command in  to correctly handle special characters in the JWT secret during environment initialization.
+Correctly refactor the  function in  to properly handle single PIDs and ensure the main endpoint dispatches correctly for multi-PID requests.
 </optional_next_step>
+
