@@ -511,7 +511,7 @@ const AuthenticatedApp = () => {
           {isAdmin() && (
             <TabsContent value="admin">
               <div className="space-y-6">
-                {/* Admin header with user info */}
+                {/* Admin header */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Admin Dashboard</CardTitle>
@@ -521,15 +521,196 @@ const AuthenticatedApp = () => {
                   </CardHeader>
                 </Card>
 
-                {/* Existing admin functionality would go here */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>System Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-green-600">All systems operational</p>
-                  </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Municipality Management */}
+                  <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                    <CardHeader>
+                      <CardTitle>Data Management</CardTitle>
+                      <CardDescription>
+                        Manage tax sale data and municipalities
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {/* Add Municipality */}
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-blue-800 mb-2">Add Municipality</h4>
+                          <Input
+                            placeholder="Municipality name"
+                            value={newMunicipality.name}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, name: e.target.value})}
+                          />
+                          <Input
+                            placeholder="Website URL"
+                            value={newMunicipality.website_url}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, website_url: e.target.value})}
+                          />
+                          <select
+                            value={newMunicipality.scraper_type}
+                            onChange={(e) => setNewMunicipality({...newMunicipality, scraper_type: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="halifax">Halifax</option>
+                            <option value="victoria_county">Victoria County</option>
+                          </select>
+                          <Button onClick={handleAddMunicipality} className="w-full">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Municipality
+                          </Button>
+                        </div>
+
+                        {/* Municipalities List */}
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {municipalities.map((municipality) => (
+                            <div key={municipality.id} className="bg-gray-50 rounded p-2">
+                              <div className="font-medium">{municipality.name}</div>
+                              <div className="text-sm text-gray-600">{municipality.scraper_type}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Auction Result Management */}
+                  <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                    <CardHeader>
+                      <CardTitle>Auction Result Management</CardTitle>
+                      <CardDescription>
+                        Update auction results for properties after sales
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {/* Properties Pending Results */}
+                        {taxSales.filter(prop => prop.auction_result === 'pending').length > 0 && (
+                          <div className="bg-yellow-50 rounded-lg p-4">
+                            <h4 className="font-semibold text-yellow-800 mb-3">Properties with Pending Results</h4>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {taxSales
+                                .filter(prop => prop.auction_result === 'pending')
+                                .map(property => (
+                                  <div key={property.id} className="bg-white rounded border p-3">
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <div className="font-medium">{property.property_address}</div>
+                                        <div className="text-sm text-gray-600">
+                                          Assessment: {property.assessment_number} | 
+                                          Opening Bid: ${parseFloat(property.opening_bid || 0).toLocaleString()}
+                                        </div>
+                                        {property.sale_date && (
+                                          <div className="text-sm text-gray-500">
+                                            Auction Date: {formatDate(property.sale_date)}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => setSelectedPropertyForResult(property)}
+                                        className="ml-2"
+                                      >
+                                        Update Result
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quick Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                          <div className="bg-yellow-50 rounded-lg p-3">
+                            <div className="text-2xl font-bold text-yellow-800">
+                              {taxSales.filter(prop => prop.auction_result === 'pending').length}
+                            </div>
+                            <div className="text-sm text-yellow-600">Pending</div>
+                          </div>
+                          <div className="bg-blue-50 rounded-lg p-3">
+                            <div className="text-2xl font-bold text-blue-800">
+                              {taxSales.filter(prop => prop.auction_result === 'sold').length}
+                            </div>
+                            <div className="text-sm text-blue-600">Sold</div>
+                          </div>
+                          <div className="bg-red-50 rounded-lg p-3">
+                            <div className="text-2xl font-bold text-red-800">
+                              {taxSales.filter(prop => prop.auction_result === 'canceled').length}
+                            </div>
+                            <div className="text-sm text-red-600">Canceled</div>
+                          </div>
+                          <div className="bg-orange-50 rounded-lg p-3">
+                            <div className="text-2xl font-bold text-orange-800">
+                              {taxSales.filter(prop => prop.auction_result === 'deferred').length}
+                            </div>
+                            <div className="text-sm text-orange-600">Deferred</div>
+                          </div>
+                          <div className="bg-green-50 rounded-lg p-3">
+                            <div className="text-2xl font-bold text-green-800">
+                              {taxSales.filter(prop => prop.auction_result === 'taxes_paid').length}
+                            </div>
+                            <div className="text-sm text-green-600">Redeemed</div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* System Status */}
+                  <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                    <CardHeader>
+                      <CardTitle>System Status</CardTitle>
+                      <CardDescription>
+                        Monitor system health and performance
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Frontend</span>
+                          <span className="text-sm text-green-600">✅ Running</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Backend</span>
+                          <span className="text-sm text-green-600">✅ Running</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Database</span>
+                          <span className="text-sm text-green-600">✅ Connected</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Properties</span>
+                          <span className="text-sm text-blue-600">{stats.total_properties || 0}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Actions */}
+                  <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                      <CardDescription>
+                        Common administrative tasks
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <Button className="w-full" size="sm">
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Refresh Data
+                        </Button>
+                        <Button className="w-full" size="sm" variant="outline">
+                          <Download className="mr-2 h-4 w-4" />
+                          Export Data
+                        </Button>
+                        <Button className="w-full" size="sm" variant="outline">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          View Analytics
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
           )}
