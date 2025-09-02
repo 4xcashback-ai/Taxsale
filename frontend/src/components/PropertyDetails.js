@@ -742,7 +742,16 @@ const PropertyDetails = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Legal Description</h3>
               <p className="text-gray-700 leading-relaxed">
-                {property.assessment_number}; {property.owner_name || 'Owner Not Listed'}; {property.property_address || 'Address Not Available'}; {property.pid_number}; {formatCurrency(property.opening_bid)}; {property.hst_applicable || 'No HST'}
+                {property.assessment_number}; {property.owner_name || 'Owner Not Listed'}; {property.property_address || 'Address Not Available'}; 
+                <span className="font-medium">
+                  PID: {property.pid_number}
+                  {property.pid_number && property.pid_number.includes('/') && (
+                    <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                      Multiple PIDs
+                    </span>
+                  )}
+                </span>
+                ; {formatCurrency(property.opening_bid)}; {property.hst_applicable || 'No HST'}
               </p>
             </div>
 
