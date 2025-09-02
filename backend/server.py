@@ -4008,6 +4008,84 @@ async def fix_property_images(current_user: dict = Depends(verify_token)):
         logger.error(f"Error fixing property images: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fix property images: {str(e)}")
 
+class UpdateAuctionResultRequest(BaseModel):
+    auction_result: str  # pending, sold, canceled, deferred, taxes_paid
+    winning_bid_amount: Optional[float] = None
+
+@api_router.put("/admin/properties/{property_id}/auction-result")
+async def update_auction_result(
+    property_id: str, 
+    request: UpdateAuctionResultRequest,
+    current_user: dict = Depends(verify_token)
+):
+    """Update auction result for a property"""
+    try:
+        # Validate auction result
+        valid_results = ["pending", "sold", "canceled", "deferred", "taxes_paid"]
+        if request.auction_result not in valid_results:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid auction result. Must be one of: {', '.join(valid_results)}"
+            )
+        
+        # Validate winning bid amount for sold properties
+        if request.auction_result == "sold" and not request.winning_bid_amount:
+            raise HTTPException(
+                status_code=400,
+                detail="Winning bid amount is required for sold properties"
+            )
+        
+        # Find the property
+        property_doc = await db.tax_sales.find_one({"id": property_id})
+        if not property_doc:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        # Prepare update data
+        update_data = {
+            "auction_result": request.auction_result,
+            "auction_result_updated_at": datetime.now(timezone.utc)
+        }
+        
+        # Add winning bid amount if provided
+        if request.winning_bid_amount:
+            update_data["winning_bid_amount"] = request.winning_bid_amount
+        
+        # If auction result is not pending, mark property as inactive
+        if request.auction_result != "pending":
+            update_data["status"] = "inactive"
+            update_data["status_updated_at"] = datetime.now(timezone.utc)
+        
+        # Update the property
+        result = await db.tax_sales.update_one(
+            {"id": property_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        # Get updated property for response
+        updated_property = await db.tax_sales.find_one({"id": property_id})
+        
+        return {
+            "status": "success",
+            "message": f"Auction result updated to '{request.auction_result}'",
+            "property": {
+                "id": updated_property["id"],
+                "assessment_number": updated_property.get("assessment_number"),
+                "property_address": updated_property.get("property_address"),
+                "auction_result": updated_property.get("auction_result"),
+                "winning_bid_amount": updated_property.get("winning_bid_amount"),
+                "status": updated_property.get("status")
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating auction result: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update auction result: {str(e)}")
+
 @api_router.get("/deployment/health")
 async def get_system_health(current_user: dict = Depends(verify_token)):
     """Get system health status"""
