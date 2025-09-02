@@ -84,7 +84,10 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold text-gray-900">Tax Sale Compass</h1>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Tax Sale Compass</h1>
+                <p className="text-sm text-gray-600 font-medium">All tax sales. One platform.</p>
+              </div>
               <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                 Alpha
               </span>
