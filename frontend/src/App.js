@@ -118,7 +118,7 @@ const AuthenticatedApp = () => {
         params.append("status", selectedStatus);
       }
       if (query) {
-        url = `${API}/tax-sales/search`;
+        url = `${API}/api/tax-sales/search`;
         params.append("q", query);
       }
       
