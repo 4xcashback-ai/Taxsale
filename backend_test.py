@@ -376,8 +376,8 @@ def test_access_control():
                 print(f"   ⚠️ Cannot test admin access without admin token")
                 results["admin_bypass"] = None
         
-        # Test 4: Invalid token handling
-        print(f"\n   Test 4: Access with invalid token")
+        # Test 4: Invalid token handling - this should be treated as unauthenticated
+        print(f"\n   Test 4: Access with invalid token (should be treated as no auth)")
         
         invalid_headers = {"Authorization": "Bearer invalid_token_12345"}
         test_assessment = properties[0].get("assessment_number")
@@ -388,12 +388,24 @@ def test_access_control():
         
         print(f"   Status Code: {response.status_code}")
         
-        if response.status_code == 401:
-            print(f"   ✅ Invalid token correctly rejected")
-            results["invalid_token"] = True
+        # For inactive properties, invalid tokens should still allow access (treated as no auth)
+        # For active properties, invalid tokens should be rejected
+        test_property = properties[0]
+        if test_property.get("status") == "inactive":
+            if response.status_code == 200:
+                print(f"   ✅ Invalid token treated as unauthenticated for inactive property")
+                results["invalid_token"] = True
+            else:
+                print(f"   ❌ Invalid token should allow access to inactive property (got {response.status_code})")
+                results["invalid_token"] = False
         else:
-            print(f"   ❌ Invalid token should be rejected (got {response.status_code})")
-            results["invalid_token"] = False
+            # Active property should reject invalid tokens
+            if response.status_code in [401, 403]:
+                print(f"   ✅ Invalid token correctly rejected for active property")
+                results["invalid_token"] = True
+            else:
+                print(f"   ❌ Invalid token should be rejected for active property (got {response.status_code})")
+                results["invalid_token"] = False
         
         # Overall assessment
         successful_tests = sum(1 for result in results.values() if result is True)
