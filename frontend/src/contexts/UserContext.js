@@ -48,7 +48,7 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       // If that fails, try admin auth verification
       try {
-        const adminResponse = await axios.get(`${API}/auth/verify`);
+        const adminResponse = await axios.get(`${API}/api/auth/verify`);
         if (adminResponse.data.authenticated) {
           // Create admin user object
           const adminUser = {
