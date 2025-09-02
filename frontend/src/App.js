@@ -463,7 +463,120 @@ const AuthenticatedApp = () => {
             </div>
           </TabsContent>
 
-          {/* Statistics Tab */}
+          {/* Enhanced Interactive Map Tab */}
+          <TabsContent value="map">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="mr-2 h-5 w-5" />
+                  Interactive Map with Property Boundaries
+                </CardTitle>
+                <CardDescription>
+                  Explore tax sale properties on an interactive map with precise boundary visualization
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Map Controls */}
+                  <div className="flex flex-wrap gap-4 items-center bg-slate-50 p-4 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium">Municipality:</label>
+                      <select
+                        value={selectedMunicipality}
+                        onChange={(e) => setSelectedMunicipality(e.target.value)}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">All Municipalities</option>
+                        {municipalities.map((municipality) => (
+                          <option key={municipality.id} value={municipality.name}>
+                            {municipality.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium">Status:</label>
+                      <select
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="sold">Sold</option>
+                        <option value="all">All</option>
+                      </select>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => fetchTaxSales()} 
+                      size="sm"
+                      className="ml-auto"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh Map
+                    </Button>
+                  </div>
+
+                  {/* Interactive Map */}
+                  <div className="relative">
+                    <Wrapper 
+                      apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"}
+                      render={(status) => {
+                        switch (status) {
+                          case Status.LOADING:
+                            return (
+                              <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+                                <div className="text-center">
+                                  <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-2" />
+                                  <p className="text-gray-600">Loading Google Maps...</p>
+                                </div>
+                              </div>
+                            );
+                          case Status.FAILURE:
+                            return (
+                              <div className="flex items-center justify-center h-96 bg-red-50 border border-red-200 rounded-lg">
+                                <div className="text-center">
+                                  <MapPin className="h-8 w-8 mx-auto text-red-400 mb-2" />
+                                  <p className="text-red-600">Failed to load Google Maps</p>
+                                  <p className="text-sm text-red-500 mt-1">Please check your API key</p>
+                                </div>
+                              </div>
+                            );
+                          default:
+                            return <InteractiveMap properties={taxSales} onPropertySelect={handlePropertyClick} />;
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Map Legend */}
+                  <div className="bg-white border rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Map Legend</h4>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                        <span>Active Properties</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-gray-500 rounded-full mr-2"></div>
+                        <span>Inactive Properties</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                        <span>Sold Properties</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                        <span>Results Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           <TabsContent value="stats">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
