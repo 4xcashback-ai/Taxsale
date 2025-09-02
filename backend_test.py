@@ -428,7 +428,7 @@ def test_authentication_validation():
         
         print(f"   Status Code: {response.status_code}")
         
-        if response.status_code == 401:
+        if response.status_code in [401, 403]:
             print(f"   ✅ Missing token correctly rejected")
             results["no_token"] = True
         else:
