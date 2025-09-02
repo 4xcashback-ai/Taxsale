@@ -2226,10 +2226,7 @@ async def get_tax_sale_properties(
     
     # Handle status filtering
     if status and status != "all":
-        if status == "pending":
-            # Show properties with auction_result = "pending"
-            query["auction_result"] = "pending"
-        elif status == "sold":
+        if status == "sold":
             # Show properties with auction_result = "sold"  
             query["auction_result"] = "sold"
         else:
