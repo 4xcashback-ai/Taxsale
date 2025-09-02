@@ -3934,22 +3934,7 @@ async def get_enhanced_property_details(
             raise HTTPException(status_code=404, detail="Property not found")
         
         # Check access control based on property status and user subscription
-        if property_data.get("status") == "active":
-            # Active properties require authentication and paid subscription or admin
-            if not current_user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required to view active property details"
-                )
-            
-            # Check if user is admin (bypass subscription check for admin)
-            is_admin = current_user.get("email") == ADMIN_USERNAME or current_user.get("username") == ADMIN_USERNAME
-            
-            if not is_admin and current_user.get("subscription_tier") != "paid":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Paid subscription required to view active property details"
-                )
+        check_property_access(property_data, current_user)
         
         # Convert ObjectId to string
         property_data["_id"] = str(property_data["_id"])
