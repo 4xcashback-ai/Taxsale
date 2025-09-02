@@ -2226,10 +2226,16 @@ async def get_tax_sale_properties(
     
     # Handle status filtering
     if status and status != "all":
-        query["status"] = status
-    elif status != "all":
-        # Default to active only if no status specified
-        query["status"] = "active"
+        if status == "pending":
+            # Show properties with auction_result = "pending"
+            query["auction_result"] = "pending"
+        elif status == "sold":
+            # Show properties with auction_result = "sold"  
+            query["auction_result"] = "sold"
+        else:
+            # For other statuses (active, inactive), filter by status field
+            query["status"] = status
+    # If status == "all" or no status specified, don't add any status filters (show all)
     
     # Get properties with filtering
     properties = await db.tax_sales.find(query).skip(skip).limit(limit).to_list(limit)
