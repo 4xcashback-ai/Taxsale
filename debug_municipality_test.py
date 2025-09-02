@@ -7,7 +7,7 @@ import requests
 import json
 from datetime import datetime
 
-BACKEND_URL = "https://taxsale-mapper.preview.emergentagent.com/api"
+BACKEND_URL = "https://taxcompass.preview.emergentagent.com/api"
 
 def debug_municipality_scheduling():
     """Debug the scheduling fields in municipality management"""
