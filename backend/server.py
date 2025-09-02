@@ -150,7 +150,7 @@ def create_user_access_token(user_data: dict, expires_delta: Optional[timedelta]
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
-async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(oauth2_scheme)) -> Optional[dict]:
+async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(oauth2_scheme_optional)) -> Optional[dict]:
     """Get current user from JWT token (optional - returns None if not authenticated)"""
     if not credentials:
         return None
