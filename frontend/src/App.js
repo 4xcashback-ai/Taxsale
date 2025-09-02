@@ -345,111 +345,106 @@ const AuthenticatedApp = () => {
                   {taxSales.map((property, index) => (
                     <div key={property.id}>
                       <Card 
-                        className="cursor-pointer hover:shadow-lg transition-shadow duration-200 relative"
+                        className="cursor-pointer hover:shadow-lg transition-shadow duration-200 relative bg-white rounded-lg overflow-hidden"
                         onClick={() => handlePropertyClick(property)}
                       >
-                        {/* Status and Auction Result Badges */}
-                        <div className="absolute top-2 right-2 flex flex-col gap-1">
-                          {/* Main Status Badge */}
-                          <div className={`px-2 py-1 rounded text-xs font-medium ${
-                            property.status === 'active' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {(property.status || 'Unknown').charAt(0).toUpperCase() + (property.status || 'Unknown').slice(1)}
-                          </div>
-                          
-                          {/* Auction Result Badge */}
-                          {property.auction_result && (
-                            <div className={`px-2 py-1 rounded text-xs font-medium ${
-                              property.auction_result === 'sold' ? 'bg-blue-100 text-blue-800' :
-                              property.auction_result === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              property.auction_result === 'canceled' ? 'bg-red-100 text-red-800' :
-                              property.auction_result === 'deferred' ? 'bg-orange-100 text-orange-800' :
-                              property.auction_result === 'taxes_paid' ? 'bg-green-100 text-green-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {property.auction_result === 'sold' ? 'Sold' :
-                               property.auction_result === 'pending' ? 'Results Pending' :
-                               property.auction_result === 'canceled' ? 'Canceled' :
-                               property.auction_result === 'deferred' ? 'Deferred' :
-                               property.auction_result === 'taxes_paid' ? 'Redeemed' :
-                               property.auction_result}
+                        {/* Property Map Image */}
+                        <div className="relative h-48 bg-gray-200">
+                          {property.boundary_screenshot || property.latitude ? (
+                            <img
+                              src={property.boundary_screenshot?.startsWith('http') 
+                                ? property.boundary_screenshot 
+                                : `${API}/api/property-image/${property.assessment_number}`
+                              }
+                              alt={`Property map for ${property.property_address}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to Google Maps static image if boundary image fails
+                                const lat = property.latitude || 44.6488;
+                                const lng = property.longitude || -63.5752;
+                                e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=400x300&maptype=satellite&markers=color:blue%7C${lat},${lng}&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                              <MapPin className="h-12 w-12 text-gray-400" />
                             </div>
                           )}
+                          
+                          {/* Status Badge */}
+                          <div className="absolute top-3 right-3">
+                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              property.status === 'active' 
+                                ? 'bg-green-100 text-green-800 border border-green-200' 
+                                : property.status === 'inactive'
+                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                : 'bg-gray-100 text-gray-800 border border-gray-200'
+                            }`}>
+                              {property.status || 'active'}
+                            </div>
+                          </div>
                         </div>
 
-                        <CardContent className="p-4">
-                          {/* Property Image */}
-                          {property.boundary_screenshot && (
-                            <div className="mb-4 relative overflow-hidden rounded-lg">
-                              <img
-                                src={property.boundary_screenshot.startsWith('http') 
-                                  ? property.boundary_screenshot 
-                                  : `${API}/api/boundary-image/${property.boundary_screenshot}`
-                                }
-                                alt={`Property boundary for ${property.property_address}`}
-                                className="w-full h-48 object-cover"
-                                onError={(e) => {
-                                  // Fallback to property-image endpoint if boundary-image fails
-                                  e.target.src = `${API}/api/property-image/${property.assessment_number}`;
-                                }}
-                              />
-                            </div>
-                          )}
-
+                        <CardContent className="p-6">
                           {/* Property Address */}
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2 pr-16">
+                          <h3 className="text-xl font-bold text-gray-900 mb-4">
                             {property.property_address}
                           </h3>
 
-                          {/* Municipality */}
-                          <p className="text-sm text-gray-600 mb-3 flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {property.municipality_name}
-                          </p>
+                          {/* Property Details */}
+                          <div className="space-y-2 text-gray-600 mb-4">
+                            <div className="flex justify-between">
+                              <span>Assessment #:</span>
+                              <span className="font-medium">{property.assessment_number}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>PID:</span>
+                              <span className="font-medium">{property.pid_number}</span>
+                            </div>
+                          </div>
 
                           {/* Price */}
-                          <div className="mb-3">
-                            <span className="text-xl font-bold text-green-600">
-                              ${parseFloat(property.opening_bid || 0).toLocaleString()}
-                            </span>
+                          <div className="mb-4">
+                            <div className="text-3xl font-bold text-green-600">
+                              ${parseFloat(property.opening_bid || 0).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
+                            </div>
                             {property.auction_result === 'sold' && property.winning_bid_amount && (
                               <div className="mt-1">
                                 <span className="text-sm text-gray-500">Final Sale: </span>
                                 <span className="text-lg font-semibold text-blue-600">
-                                  ${parseFloat(property.winning_bid_amount).toLocaleString()}
+                                  ${parseFloat(property.winning_bid_amount).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                  })}
                                 </span>
                               </div>
                             )}
                           </div>
 
                           {/* Additional Info */}
-                          <div className="space-y-1 text-sm text-gray-600 mb-4">
-                            {property.assessment_number && (
-                              <p>Assessment: {property.assessment_number}</p>
-                            )}
-                            {property.pid_number && (
-                              <div className="flex items-center">
-                                <span>PID: {property.pid_number}</span>
-                                {property.pid_number.includes('/') && (
-                                  <Badge variant="secondary" className="ml-2 text-xs">
-                                    Multiple PIDs
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
+                          <div className="space-y-2 text-gray-600 mb-6">
+                            <div className="flex justify-between">
+                              <span>Owner:</span>
+                              <span className="font-medium text-right">{property.owner_name || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Municipality:</span>
+                              <span className="font-medium">{property.municipality_name}</span>
+                            </div>
                             {property.sale_date && (
-                              <p className="flex items-center">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                {formatDate(property.sale_date)}
-                              </p>
+                              <div className="flex justify-between">
+                                <span>Sale Date:</span>
+                                <span className="font-medium">{formatDate(property.sale_date)}</span>
+                              </div>
                             )}
                           </div>
 
                           {/* Access Control Notice */}
                           {property.status === 'active' && !canViewActiveProperties() && (
-                            <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
+                            <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
                               <div className="flex items-center">
                                 <Lock className="h-4 w-4 text-blue-600 mr-2" />
                                 <span className="text-sm text-blue-800 font-medium">
@@ -463,12 +458,12 @@ const AuthenticatedApp = () => {
                           )}
 
                           <Button 
-                            className="w-full" 
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg"
                             variant={property.status === 'active' && !canViewActiveProperties() ? "outline" : "default"}
                           >
                             {property.status === 'active' && !canViewActiveProperties() 
                               ? 'Upgrade to View Details' 
-                              : 'See More Details'
+                              : 'See More Details →'
                             }
                           </Button>
                         </CardContent>
