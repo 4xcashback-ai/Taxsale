@@ -728,7 +728,7 @@ const AuthenticatedApp = () => {
         />
       )}
 
-      {/* Upgrade Modal */}
+      {/* Auction Result Modal */}
       <UpgradeModal
         isOpen={upgradeModalOpen}
         onClose={() => {
@@ -741,6 +741,20 @@ const AuthenticatedApp = () => {
         }}
         propertyAddress={upgradeModalProperty?.property_address}
       />
+
+      {/* Auction Result Update Modal */}
+      {selectedPropertyForResult && (
+        <AuctionResultModal
+          isOpen={selectedPropertyForResult !== null}
+          property={selectedPropertyForResult}
+          onClose={() => setSelectedPropertyForResult(null)}
+          onUpdate={() => {
+            fetchTaxSales();
+            fetchStats();
+            setSelectedPropertyForResult(null);
+          }}
+        />
+      )}
     </div>
   );
 };
