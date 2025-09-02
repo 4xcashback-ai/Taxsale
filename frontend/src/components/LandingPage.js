@@ -17,8 +17,10 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
 
     try {
       if (isLogin) {
-        console.log('Calling onLogin with:', email, password.length + ' char password');
-        await onLogin(email, password);
+        // Convert 'admin' username to full admin email for backend
+        const loginEmail = email === 'admin' ? 'admin@taxsalecompass.ca' : email;
+        console.log('Calling onLogin with:', loginEmail, password.length + ' char password');
+        await onLogin(loginEmail, password);
         console.log('Login successful');
       } else {
         console.log('Calling onRegister with:', email, password.length + ' char password');
@@ -27,7 +29,8 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
       }
     } catch (err) {
       console.error('Login/Registration error:', err);
-      setError(err.message || 'An error occurred');
+      // Ensure we're displaying the error message, not the error object
+      setError(typeof err === 'string' ? err : err.message || err.toString() || 'An error occurred');
     } finally {
       setLoading(false);
     }
