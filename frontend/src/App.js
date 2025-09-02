@@ -2299,6 +2299,17 @@ function PropertySearch() {
           isOpen={showLoginModal} 
           onClose={() => setShowLoginModal(false)} 
         />
+        
+        {/* Auction Result Modal */}
+        <AuctionResultModal
+          isOpen={selectedPropertyForResult !== null}
+          property={selectedPropertyForResult}
+          onClose={() => setSelectedPropertyForResult(null)}
+          onUpdate={() => {
+            fetchTaxSales();
+            fetchStats();
+          }}
+        />
       </div>
     </div>
   );
