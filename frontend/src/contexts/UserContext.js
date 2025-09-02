@@ -41,13 +41,33 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
+      // Try to get user info from the regular user endpoint first
       const response = await axios.get(`${API}/users/me`);
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Auth check failed:', error);
-      // Token is invalid, clear it
-      logout();
+      // If that fails, try admin auth verification
+      try {
+        const adminResponse = await axios.get(`${API}/auth/verify`);
+        if (adminResponse.data.authenticated) {
+          // Create admin user object
+          const adminUser = {
+            id: 'admin',
+            email: 'admin',
+            subscription_tier: 'admin',
+            is_verified: true,
+            created_at: new Date()
+          };
+          setUser(adminUser);
+          setIsAuthenticated(true);
+        } else {
+          logout();
+        }
+      } catch (adminError) {
+        console.error('Auth check failed:', error, adminError);
+        // Token is invalid, clear it
+        logout();
+      }
     } finally {
       setLoading(false);
     }
