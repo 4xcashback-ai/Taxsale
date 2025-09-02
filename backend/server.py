@@ -2674,7 +2674,7 @@ async def test_viewpoint_accessibility():
             "ready_for_automation": False
         }
 
-@api_router.get("/query-ns-government-parcel/{pid_number}")
+@api_router.get("/query-ns-government-parcel/{pid_number:path}")
 async def query_ns_government_parcel(pid_number: str):
     """Query official Nova Scotia government ArcGIS service for property boundary
     
