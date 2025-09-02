@@ -4315,6 +4315,117 @@ async def verify_auth(current_user: dict = Depends(verify_token)):
     """Verify if user is authenticated"""
     return {"authenticated": True, "username": current_user["username"]}
 
+# User Authentication Endpoints
+@api_router.post("/users/register", response_model=TokenResponse)
+async def register_user(user_data: UserCreate):
+    """Register a new user"""
+    # Check if user already exists
+    existing_user = await get_user_by_email(user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    verification_token = generate_verification_token()
+    user_doc = {
+        "id": str(uuid.uuid4()),
+        "email": user_data.email,
+        "password_hash": hash_password(user_data.password),
+        "subscription_tier": "free",
+        "is_verified": False,
+        "verification_token": verification_token,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    # Save to database
+    await db.users.insert_one(user_doc)
+    
+    # Send verification email
+    email_sent = send_verification_email(user_data.email, verification_token)
+    if not email_sent:
+        logger.warning(f"Failed to send verification email to {user_data.email}")
+    
+    # Create access token
+    access_token = create_user_access_token(user_doc)
+    
+    return TokenResponse(
+        access_token=access_token,
+        user=UserResponse(
+            id=user_doc["id"],
+            email=user_doc["email"],
+            subscription_tier=user_doc["subscription_tier"],
+            is_verified=user_doc["is_verified"],
+            created_at=user_doc["created_at"]
+        )
+    )
+
+@api_router.post("/users/login", response_model=TokenResponse)
+async def login_user(login_data: LoginRequest):
+    """User login endpoint"""
+    user = await authenticate_user(login_data.email, login_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Update last login
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_login": datetime.now(timezone.utc)}}
+    )
+    
+    access_token = create_user_access_token(user)
+    
+    return TokenResponse(
+        access_token=access_token,
+        user=UserResponse(
+            id=user["id"],
+            email=user["email"],
+            subscription_tier=user["subscription_tier"],
+            is_verified=user["is_verified"],
+            created_at=user["created_at"]
+        )
+    )
+
+@api_router.post("/users/verify-email")
+async def verify_email(verify_data: VerifyEmailRequest):
+    """Verify user email with token"""
+    user = await db.users.find_one({"verification_token": verify_data.token})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    # Update user as verified
+    await db.users.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {
+                "is_verified": True,
+                "verification_token": None,
+                "updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {"message": "Email verified successfully"}
+
+@api_router.get("/users/me", response_model=UserResponse)
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    """Get current user information"""
+    return UserResponse(
+        id=current_user["id"],
+        email=current_user["email"],
+        subscription_tier=current_user["subscription_tier"],
+        is_verified=current_user["is_verified"],
+        created_at=current_user["created_at"]
+    )
+
 @api_router.post("/admin/fix-property-images")
 async def fix_property_images(current_user: dict = Depends(verify_token)):
     """Fix property images with malformed URLs (migration helper)"""
