@@ -1,0 +1,396 @@
+import React, { useState, useEffect } from 'react';
+import { Eye, Search, MapPin, Users, CheckCircle, ArrowRight, Star, TrendingUp } from 'lucide-react';
+
+const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (isLogin) {
+        await onLogin(email, password);
+      } else {
+        await onRegister(email, password);
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const features = [
+    {
+      icon: <Search className="h-8 w-8 text-blue-600" />,
+      title: "Search Properties",
+      description: "Find tax sale properties across all Canadian provinces with detailed filters and real-time updates."
+    },
+    {
+      icon: <MapPin className="h-8 w-8 text-green-600" />,
+      title: "Interactive Maps",
+      description: "View property boundaries, locations, and nearby amenities with our integrated mapping system."
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8 text-purple-600" />,
+      title: "Market Analysis",
+      description: "Get insights on opening bids, property values, and market trends to make informed decisions."
+    },
+    {
+      icon: <Users className="h-8 w-8 text-orange-600" />,
+      title: "Expert Research",
+      description: "Access detailed property information, ownership history, and legal documentation."
+    }
+  ];
+
+  const howItWorks = [
+    {
+      step: "1",
+      title: "Search Properties",
+      description: "Browse our comprehensive database of tax sale properties across Canada."
+    },
+    {
+      step: "2",
+      title: "Research Details",
+      description: "Get detailed property information, legal descriptions, and market analysis."
+    },
+    {
+      step: "3",
+      title: "Make Your Move",
+      description: "Use our insights to make informed bidding decisions at tax sale auctions."
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center">
+              <h1 className="text-3xl font-bold text-gray-900">Tax Sale Compass</h1>
+              <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                Alpha
+              </span>
+            </div>
+            <nav className="hidden md:flex space-x-8">
+              <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">How It Works</a>
+              <a href="#properties" className="text-gray-600 hover:text-gray-900">Properties</a>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-5xl font-bold text-gray-900 mb-6">
+                Your Complete Tax Sale Research Platform
+              </h2>
+              <p className="text-xl text-gray-600 mb-8">
+                Find properties cheap across Canada. Access comprehensive tax sale data, 
+                interactive maps, and detailed property research tools to discover your next investment opportunity.
+              </p>
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">3</div>
+                  <div className="text-sm text-gray-600">Properties Tracked</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">2</div>
+                  <div className="text-sm text-gray-600">Provinces Covered</div>
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setIsLogin(false)}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setIsLogin(true)}
+                  className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Sign In
+                </button>
+              </div>
+            </div>
+
+            {/* Auth Form */}
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  {isLogin ? 'Welcome Back' : 'Start Your Search'}
+                </h3>
+                <p className="text-gray-600">
+                  {isLogin ? 'Sign in to access your account' : 'Create your free account to get started'}
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                {error && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading 
+                    ? (isLogin ? 'Signing In...' : 'Creating Account...') 
+                    : (isLogin ? 'Sign In' : 'Create Free Account')
+                  }
+                </button>
+
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(!isLogin);
+                      setError('');
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm"
+                  >
+                    {isLogin 
+                      ? "Don't have an account? Sign up" 
+                      : "Already have an account? Sign in"
+                    }
+                  </button>
+                </div>
+              </form>
+
+              {!isLogin && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Free Account Includes:</p>
+                      <ul className="space-y-1">
+                        <li>• View all property listings</li>
+                        <li>• Access inactive property details</li>
+                        <li>• Basic search and filtering</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sample Properties Section */}
+      {sampleProperties.length > 0 && (
+        <section id="properties" className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">Featured Properties</h3>
+              <p className="text-xl text-gray-600">
+                Discover investment opportunities across Canada
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {sampleProperties.slice(0, 6).map((property) => (
+                <div key={property.id} className="bg-white rounded-lg shadow-lg overflow-hidden border">
+                  {/* Property Image */}
+                  <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
+                    {property.boundary_screenshot ? (
+                      <img
+                        src={property.boundary_screenshot}
+                        alt={property.property_address}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <MapPin className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        property.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {property.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Property Details */}
+                  <div className="p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2 truncate">
+                      {property.property_address}
+                    </h4>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {property.municipality_name}
+                    </p>
+
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <p className="text-2xl font-bold text-green-600">
+                          ${parseFloat(property.opening_bid || 0).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600">Opening Bid</p>
+                      </div>
+                      {property.assessment_number && (
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-900">
+                            #{property.assessment_number}
+                          </p>
+                          <p className="text-xs text-gray-600">Assessment</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <button className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <button
+                onClick={() => setIsLogin(false)}
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Create Free Account to View All Properties
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Features Section */}
+      <section id="features" className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">
+              Everything You Need to Find Your Next Investment
+            </h3>
+            <p className="text-xl text-gray-600">
+              Comprehensive tools and data to help you discover profitable tax sale opportunities
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-lg shadow-md mb-4">
+                  {feature.icon}
+                </div>
+                <h4 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h4>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">How It Works</h3>
+            <p className="text-xl text-gray-600">
+              Three simple steps to start finding profitable tax sale properties
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {howItWorks.map((step, index) => (
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full text-xl font-bold mb-4">
+                  {step.step}
+                </div>
+                <h4 className="text-xl font-semibold text-gray-900 mb-2">{step.title}</h4>
+                <p className="text-gray-600">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-3xl font-bold text-white mb-4">
+            Ready to Start Finding Great Deals?
+          </h3>
+          <p className="text-xl text-blue-100 mb-8">
+            Join thousands of investors using Tax Sale Compass to find their next opportunity
+          </p>
+          <button
+            onClick={() => setIsLogin(false)}
+            className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Get Started Free Today
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h4 className="text-2xl font-bold mb-4">Tax Sale Compass</h4>
+            <p className="text-gray-400 mb-6">
+              Your Complete Tax Sale Research Platform - Find properties cheap across Canada
+            </p>
+            <p className="text-sm text-gray-500">
+              © 2025 Tax Sale Compass. All rights reserved. Alpha Version.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default LandingPage;
