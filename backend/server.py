@@ -2263,9 +2263,7 @@ async def search_tax_sales(
     
     # Handle status filtering (same logic as main endpoint)
     if status and status != "all":
-        if status == "pending":
-            query["auction_result"] = "pending"
-        elif status == "sold":
+        if status == "sold":
             query["auction_result"] = "sold"
         else:
             query["status"] = status
