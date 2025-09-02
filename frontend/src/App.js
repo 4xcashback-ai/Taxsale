@@ -870,9 +870,8 @@ const AuthenticatedApp = () => {
                   </Card>
                 </div>
               </div>
-            </TabsContent>
-          )}
-        </Tabs>
+          </div>
+        )}
       </div>
 
       {/* Property Details Modal */}
