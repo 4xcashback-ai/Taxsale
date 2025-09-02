@@ -371,17 +371,39 @@ const AuthenticatedApp = () => {
                             </div>
                           )}
                           
-                          {/* Status Badge */}
-                          <div className="absolute top-3 right-3">
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          {/* Status Badges */}
+                          <div className="absolute top-3 right-3 flex flex-col gap-2">
+                            {/* Main Status Badge */}
+                            <div className={`px-3 py-1 rounded-full text-sm font-bold ${
                               property.status === 'active' 
                                 ? 'bg-green-100 text-green-800 border border-green-200' 
                                 : property.status === 'inactive'
                                 ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                : property.status === 'sold'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
                                 : 'bg-gray-100 text-gray-800 border border-gray-200'
                             }`}>
-                              {property.status || 'active'}
+                              {(property.status || 'active').toUpperCase()}
                             </div>
+                            
+                            {/* Auction Result Badge - Only show for inactive/sold properties */}
+                            {(property.status === 'inactive' || property.status === 'sold') && property.auction_result && (
+                              <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                property.auction_result === 'sold' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                property.auction_result === 'pending' ? 'bg-orange-100 text-orange-800 border border-orange-200' :
+                                property.auction_result === 'canceled' ? 'bg-red-100 text-red-800 border border-red-200' :
+                                property.auction_result === 'deferred' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                                property.auction_result === 'taxes_paid' ? 'bg-green-100 text-green-800 border border-green-200' :
+                                'bg-gray-100 text-gray-800 border border-gray-200'
+                              }`}>
+                                {property.auction_result === 'sold' ? 'SOLD' :
+                                 property.auction_result === 'pending' ? 'PENDING' :
+                                 property.auction_result === 'canceled' ? 'CANCELED' :
+                                 property.auction_result === 'deferred' ? 'DEFERRED' :
+                                 property.auction_result === 'taxes_paid' ? 'REDEEMED' :
+                                 property.auction_result.toUpperCase()}
+                              </div>
+                            )}
                           </div>
                         </div>
 
