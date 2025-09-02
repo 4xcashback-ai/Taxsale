@@ -4091,6 +4091,16 @@ async def startup_event():
     )
     logger.info("Scheduler started - Weekly scraping on Sundays at 6 AM")
 
+def calculate_center_from_bbox(bbox):
+    """Calculate center coordinates from bounding box"""
+    if not bbox:
+        return None
+    
+    center_lat = (bbox["north"] + bbox["south"]) / 2
+    center_lon = (bbox["east"] + bbox["west"]) / 2
+    
+    return {"lat": center_lat, "lon": center_lon}
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     scheduler.shutdown()
