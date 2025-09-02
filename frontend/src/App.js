@@ -595,7 +595,7 @@ const AppContent = () => {
   const fetchSampleProperties = async () => {
     try {
       const API = process.env.REACT_APP_BACKEND_URL || 'https://taxsale-mapper.preview.emergentagent.com';
-      const response = await axios.get(`${API}/tax-sales?limit=8`);
+      const response = await axios.get(`${API}/api/tax-sales?limit=8`);
       setSampleProperties(response.data);
     } catch (error) {
       console.error("Error fetching sample properties:", error);
