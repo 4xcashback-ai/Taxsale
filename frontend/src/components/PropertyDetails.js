@@ -766,6 +766,11 @@ const PropertyDetails = () => {
                     {boundaryData && (
                       <span className="ml-4 text-green-600">
                         🔴 NSPRD Boundaries: {Math.round(boundaryData.property_info?.area_sqm || 0).toLocaleString()} sqm
+                        {boundaryData.pid_count > 1 && (
+                          <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                            {boundaryData.pid_count} PIDs Combined
+                          </span>
+                        )}
                       </span>
                     )}
                   </p>
