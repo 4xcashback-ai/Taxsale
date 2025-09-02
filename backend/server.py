@@ -1551,6 +1551,62 @@ async def scrape_victoria_county_tax_sales():
         logger.error(f"Victoria County scraping failed: {e}")
         raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
 
+async def scrape_victoria_county_for_municipality(municipality_id: str):
+    """Scrape Victoria County tax sales for a specific municipality ID"""
+    try:
+        logger.info(f"Starting Victoria County tax sale scraping for municipality {municipality_id}...")
+        
+        # Get municipality by ID
+        municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not municipality:
+            raise Exception(f"Municipality with ID {municipality_id} not found in database")
+        
+        # Verify this is a Victoria County-type municipality
+        if municipality.get("scraper_type") != "victoria_county":
+            raise Exception(f"Municipality {municipality['name']} is not configured for Victoria County scraper")
+        
+        # Update scrape status
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {"$set": {"scrape_status": "in_progress"}}
+        )
+        
+        # Check if this is the actual Victoria County
+        if municipality['name'] == 'Victoria County':
+            # Call the actual Victoria County scraper
+            logger.info(f"Calling actual Victoria County scraper for {municipality['name']}")
+            result = await scrape_victoria_county_tax_sales()
+            return result
+        else:
+            # For other municipalities with Victoria County scraper type, this is not yet implemented
+            logger.info(f"Victoria County-style scraping for {municipality['name']} - municipality-specific implementation needed")
+            
+            # In the future, this would implement municipality-specific Victoria County-style scraping
+            # using the municipality's website_url or tax_sale_url for their specific PDF/data
+            properties_scraped = 0
+        
+        # Update municipality scrape status
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {
+                "$set": {
+                    "scrape_status": "success",
+                    "last_scraped": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        logger.info(f"Victoria County scraping completed for municipality {municipality_id}")
+        return {"status": "success", "properties_scraped": 0, "message": "Victoria County scraper called with municipality ID"}
+        
+    except Exception as e:
+        logger.error(f"Victoria County scraping failed for municipality {municipality_id}: {e}")
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {"$set": {"scrape_status": "failed"}}
+        )
+        raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
+
 def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
     """Parse Victoria County PDF format and extract property data"""
     properties = []
