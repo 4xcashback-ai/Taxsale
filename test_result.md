@@ -94,7 +94,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the new user authentication and access control system for the Tax Sale Compass platform. Comprehensive user management system with registration, login, email verification, and subscription-based access control."
+user_problem_statement: "Fix the layout and functionality of Tax Sale Compass to match the live site (https://taxsalecompass.ca/) while keeping authentication system. The live site shows header navigation with Search/Live Map/Admin buttons (not tabs), displays 65 properties directly with search functionality, has proper municipality/status filters, and property cards with boundary images. Development environment currently shows landing page requiring login but authenticated app should match live site layout exactly."
 
 backend:
   - task: "User Authentication and Access Control System"
