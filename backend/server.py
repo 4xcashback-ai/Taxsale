@@ -287,8 +287,11 @@ class TaxSaleProperty(BaseModel):
     scraped_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_url: str
     raw_data: Optional[dict] = None  # Store original scraped data
-    status: str = "active"  # active, inactive, sold
+    status: str = "active"  # active, inactive (search availability)
     status_updated_at: Optional[datetime] = None
+    auction_result: Optional[str] = None  # pending, sold, canceled, deferred, taxes_paid
+    auction_result_updated_at: Optional[datetime] = None
+    winning_bid_amount: Optional[float] = None  # Final sale amount if sold
     boundary_screenshot: Optional[str] = None  # Path to viewpoint.ca boundary screenshot
 
 class TaxSalePropertyCreate(BaseModel):
