@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Nova Scotia Tax Sale Aggregator
-Focus on Auction Result Management System Testing
+Focus on User Authentication and Access Control System Testing
 """
 
 import requests
@@ -11,6 +11,7 @@ import re
 import math
 from datetime import datetime, timedelta
 import time
+import uuid
 
 # Get backend URL from environment
 import os
@@ -19,6 +20,10 @@ BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-mapper.pr
 # Admin credentials for testing
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "TaxSale2025!SecureAdmin"
+
+# Test user credentials
+TEST_USER_EMAIL = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
+TEST_USER_PASSWORD = "TestPassword123!"
 
 def test_api_connection():
     """Test basic API connectivity"""
