@@ -157,7 +157,7 @@ export const UserProvider = ({ children }) => {
 
   const verifyEmail = async (token) => {
     try {
-      await axios.post(`${API}/users/verify-email`, { token });
+      await axios.post(`${API}/api/users/verify-email`, { token });
       
       // Refresh user data after verification
       if (isAuthenticated) {
