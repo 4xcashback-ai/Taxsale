@@ -77,31 +77,13 @@ export const UserProvider = ({ children }) => {
 
       const { access_token, user: userData } = response.data;
       
-      // Check if this is admin user and upgrade their data
-      if (email === 'admin@taxsalecompass.ca') {
-        // Create admin user object with elevated privileges
-        const adminUser = {
-          ...userData,
-          subscription_tier: 'admin',
-          is_verified: true
-        };
-        
-        // Store token and admin user data
-        localStorage.setItem('authToken', access_token);
-        setToken(access_token);
-        setUser(adminUser);
-        setIsAuthenticated(true);
+      // Store token and user data for all users
+      localStorage.setItem('authToken', access_token);
+      setToken(access_token);
+      setUser(userData);
+      setIsAuthenticated(true);
 
-        return { success: true, user: adminUser };
-      } else {
-        // Regular user login
-        localStorage.setItem('authToken', access_token);
-        setToken(access_token);
-        setUser(userData);
-        setIsAuthenticated(true);
-
-        return { success: true, user: userData };
-      }
+      return { success: true, user: userData };
     } catch (error) {
       const message = error.response?.data?.detail || 'Login failed';
       throw new Error(message);
