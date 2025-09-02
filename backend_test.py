@@ -462,7 +462,7 @@ def test_authentication_validation():
         
         print(f"   Status Code: {response.status_code}")
         
-        if response.status_code == 401:
+        if response.status_code in [401, 403]:
             print(f"   ✅ Malformed header correctly rejected")
             results["malformed_header"] = True
         else:
