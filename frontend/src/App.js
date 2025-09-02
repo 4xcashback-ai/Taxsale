@@ -366,6 +366,24 @@ const AuthenticatedApp = () => {
                         </div>
 
                         <CardContent className="p-4">
+                          {/* Property Image */}
+                          {property.boundary_screenshot && (
+                            <div className="mb-4 relative overflow-hidden rounded-lg">
+                              <img
+                                src={property.boundary_screenshot.startsWith('http') 
+                                  ? property.boundary_screenshot 
+                                  : `${API}/api/boundary-image/${property.boundary_screenshot}`
+                                }
+                                alt={`Property boundary for ${property.property_address}`}
+                                className="w-full h-48 object-cover"
+                                onError={(e) => {
+                                  // Fallback to property-image endpoint if boundary-image fails
+                                  e.target.src = `${API}/api/property-image/${property.assessment_number}`;
+                                }}
+                              />
+                            </div>
+                          )}
+
                           {/* Property Address */}
                           <h3 className="text-lg font-semibold text-gray-900 mb-2 pr-16">
                             {property.property_address}
