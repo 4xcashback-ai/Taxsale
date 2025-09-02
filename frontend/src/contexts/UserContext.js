@@ -4,7 +4,7 @@ import axios from 'axios';
 const UserContext = createContext();
 
 // Environment variables with fallbacks
-const API = process.env.REACT_APP_BACKEND_URL || 'https://taxsale-mapper.preview.emergentagent.com';
+const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 export const useUser = () => {
   const context = useContext(UserContext);
