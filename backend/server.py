@@ -359,7 +359,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-class LoginRequest(BaseModel):
+class AdminLoginRequest(BaseModel):
     username: str
     password: str
 
