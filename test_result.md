@@ -94,7 +94,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Fix the layout and functionality of Tax Sale Compass to match the live site (https://taxsalecompass.ca/) while keeping authentication system. The live site shows header navigation with Search/Live Map/Admin buttons (not tabs), displays 65 properties directly with search functionality, has proper municipality/status filters, and property cards with boundary images. Development environment currently shows landing page requiring login but authenticated app should match live site layout exactly."
+user_problem_statement: "Fix property card design to match reference image and ensure property details links work properly. Property cards should have map/satellite image at top, status badge, Assessment # and PID info, green price display, and working 'See More Details' buttons that open property details in new tabs. Two test accounts configured: admin@taxsalecompass.ca (paid subscription) and sales@cloudydaysvape.ca (free subscription) both with password TaxSale2025!SecureAdmin for testing subscription-based access control."
 
 backend:
   - task: "User Authentication and Access Control System"
