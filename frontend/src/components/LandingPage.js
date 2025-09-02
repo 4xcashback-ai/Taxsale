@@ -104,11 +104,10 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-5xl font-bold text-gray-900 mb-6">
-                Your Complete Tax Sale Research Platform
+                Your Compass to Canadian Tax Sale Investing
               </h2>
               <p className="text-xl text-gray-600 mb-8">
-                Find properties cheap across Canada. Access comprehensive tax sale data, 
-                interactive maps, and detailed property research tools to discover your next investment opportunity.
+                Stop searching and start finding. Tax Sales Compass is your all-in-one platform for navigating the world of Canadian tax sale properties. We provide you with the data, maps, and tools you need to confidently discover and acquire your next investment opportunity.
               </p>
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="text-center">
