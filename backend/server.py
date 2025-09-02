@@ -3918,7 +3918,7 @@ async def scrape_pvsc_details(assessment_number: str):
 @api_router.get("/property/{assessment_number}/enhanced")
 async def get_enhanced_property_details(
     assessment_number: str,
-    current_user: Optional[dict] = Depends(lambda token: get_current_user(token) if token else None)
+    current_user: Optional[dict] = Depends(get_current_user_optional)
 ):
     """Get property details enhanced with PVSC data (access control based on subscription)"""
     print(f"DEBUG: Enhanced endpoint called for {assessment_number}")
