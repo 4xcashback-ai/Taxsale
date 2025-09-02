@@ -662,11 +662,12 @@ const AuthenticatedApp = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Admin Tab */}
-          {isAdmin() && (
-            <TabsContent value="admin">
+        {/* Admin View */}
+        {activeView === 'admin' && isAdmin() && (
+          <div>
               <div className="space-y-6">
                 {/* Admin header */}
                 <Card>
