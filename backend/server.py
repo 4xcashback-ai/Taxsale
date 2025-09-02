@@ -2676,7 +2676,62 @@ async def test_viewpoint_accessibility():
 
 @api_router.get("/query-ns-government-parcel/{pid_number}")
 async def query_ns_government_parcel(pid_number: str):
-    """Query official Nova Scotia government ArcGIS service for property boundary"""
+    """Query official Nova Scotia government ArcGIS service for property boundary
+    
+    Supports multiple PIDs separated by forward slash (/) for properties with multiple PIDs
+    Example: /query-ns-government-parcel/85010866/85074276
+    """
+    # Handle multiple PIDs separated by forward slash
+    if '/' in pid_number:
+        pids = pid_number.split('/')
+        results = []
+        combined_geometry = None
+        combined_bbox = None
+        
+        for pid in pids:
+            pid = pid.strip()
+            if pid:  # Skip empty strings
+                result = await query_single_pid(pid)
+                results.append(result)
+                
+                # Combine geometries and bounding boxes if found
+                if result.get('found') and result.get('geometry'):
+                    if combined_geometry is None:
+                        combined_geometry = result['geometry']
+                        combined_bbox = result.get('bbox')
+                    else:
+                        # Combine geometries by merging rings
+                        if 'rings' in result['geometry']:
+                            combined_geometry['rings'].extend(result['geometry']['rings'])
+                        
+                        # Expand bounding box
+                        if combined_bbox and result.get('bbox'):
+                            bbox = result['bbox']
+                            combined_bbox = {
+                                "north": max(combined_bbox["north"], bbox["north"]),
+                                "south": min(combined_bbox["south"], bbox["south"]),
+                                "east": max(combined_bbox["east"], bbox["east"]),
+                                "west": min(combined_bbox["west"], bbox["west"])
+                            }
+        
+        # Return combined result for multiple PIDs
+        return {
+            "found": any(r.get('found') for r in results),
+            "pid_number": pid_number,
+            "pids": pids,
+            "multiple_pids": True,
+            "individual_results": results,
+            "combined_geometry": combined_geometry,
+            "combined_bbox": combined_bbox,
+            "center": calculate_center_from_bbox(combined_bbox) if combined_bbox else None,
+            "source": "Nova Scotia Government NSPRD (Multiple PIDs)"
+        }
+    else:
+        # Single PID - use existing logic
+        return await query_single_pid(pid_number)
+
+async def query_single_pid(pid_number: str):
+    """Query single PID from Nova Scotia government ArcGIS service"""
     try:
         import aiohttp
         
