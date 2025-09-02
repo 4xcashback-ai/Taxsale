@@ -256,16 +256,9 @@ const AuthenticatedApp = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="search">Property Search</TabsTrigger>
-            <TabsTrigger value="map">Interactive Map</TabsTrigger>
-            <TabsTrigger value="stats">Statistics</TabsTrigger>
-            {isAdmin() && <TabsTrigger value="admin">Admin</TabsTrigger>}
-          </TabsList>
-
-          {/* Property Search Tab */}
-          <TabsContent value="search" className="space-y-6">
+        {/* Property Search View */}
+        {activeView === 'search' && (
+          <div className="space-y-6">
             {/* Search Controls */}
             <Card>
               <CardHeader>
