@@ -498,10 +498,12 @@ const AuthenticatedApp = () => {
                 </div>
               )}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Enhanced Interactive Map Tab */}
-          <TabsContent value="map">
+        {/* Enhanced Interactive Map View */}
+        {activeView === 'map' && (
+          <div>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
