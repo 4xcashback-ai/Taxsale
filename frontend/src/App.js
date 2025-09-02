@@ -451,6 +451,7 @@ function PropertySearch() {
   const [selectedStatus, setSelectedStatus] = useState('active'); // New status filter state
   const [scrapeStatus, setScrapeStatus] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedPropertyForResult, setSelectedPropertyForResult] = useState(null);
   
   // Authentication state
   const { isAuthenticated, token, logout } = useAuth();
