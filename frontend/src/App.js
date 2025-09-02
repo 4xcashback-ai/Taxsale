@@ -89,7 +89,7 @@ const AuthenticatedApp = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API}/stats`);
+      const response = await axios.get(`${API}/api/stats`);
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching stats:", error);
