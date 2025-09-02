@@ -141,16 +141,21 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    {email === 'admin' ? 'Username' : 'Email Address'}
                   </label>
                   <input
-                    type="email"
+                    type={email === 'admin' ? 'text' : 'email'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your email"
+                    placeholder={email === 'admin' ? 'Enter username' : 'Enter your email'}
                     required
                   />
+                  {email === 'admin' && (
+                    <p className="text-sm text-blue-600 mt-1">
+                      Admin login detected
+                    </p>
+                  )}
                 </div>
 
                 <div className="mb-6">
