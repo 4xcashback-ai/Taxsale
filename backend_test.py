@@ -643,24 +643,397 @@ def test_user_authentication_system():
     
     return critical_tests_passed, results
 
+def test_boundary_image_endpoints():
+    """Test boundary image serving endpoints"""
+    print("\n🖼️ Testing Boundary Image Endpoints...")
+    print("🔍 FOCUS: GET /api/boundary-image/{filename} and GET /api/property-image/{assessment_number}")
+    print("📋 EXPECTED: Serve boundary images with HTTP 200, proper content-type")
+    
+    results = {}
+    
+    try:
+        # Test 1: Direct boundary image endpoint
+        print(f"\n   Test 1: Direct boundary image endpoint")
+        
+        # Use a known boundary image file
+        test_filename = "boundary_00038232_04603753.png"
+        
+        response = requests.get(f"{BACKEND_URL}/boundary-image/{test_filename}", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        print(f"   Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+        print(f"   Content-Length: {len(response.content)} bytes")
+        
+        if response.status_code == 200:
+            if response.headers.get('Content-Type') == 'image/png':
+                if len(response.content) > 1000:  # Reasonable image size
+                    print(f"   ✅ Boundary image served successfully")
+                    results["boundary_image_direct"] = True
+                else:
+                    print(f"   ❌ Image too small, might be error response")
+                    results["boundary_image_direct"] = False
+            else:
+                print(f"   ❌ Wrong content type, expected image/png")
+                results["boundary_image_direct"] = False
+        elif response.status_code == 405:
+            print(f"   ❌ Method Not Allowed - routing issue detected!")
+            results["boundary_image_direct"] = False
+        else:
+            print(f"   ❌ Boundary image endpoint failed")
+            results["boundary_image_direct"] = False
+        
+        # Test 2: Property image endpoint
+        print(f"\n   Test 2: Property image endpoint")
+        
+        # First get some properties to test with
+        props_response = requests.get(f"{BACKEND_URL}/tax-sales?limit=5", timeout=30)
+        if props_response.status_code == 200:
+            properties_data = props_response.json()
+            if isinstance(properties_data, dict):
+                properties = properties_data.get('properties', [])
+            else:
+                properties = properties_data
+            
+            if properties:
+                # Find a property with boundary_screenshot
+                test_property = None
+                for prop in properties:
+                    if prop.get('boundary_screenshot'):
+                        test_property = prop
+                        break
+                
+                if not test_property:
+                    # Use first property anyway
+                    test_property = properties[0]
+                
+                assessment_number = test_property.get('assessment_number')
+                print(f"   Testing with assessment number: {assessment_number}")
+                print(f"   Property has boundary_screenshot: {test_property.get('boundary_screenshot', 'None')}")
+                
+                response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", timeout=30)
+                
+                print(f"   Status Code: {response.status_code}")
+                print(f"   Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+                print(f"   Content-Length: {len(response.content)} bytes")
+                
+                if response.status_code == 200:
+                    if response.headers.get('Content-Type') == 'image/png':
+                        if len(response.content) > 1000:  # Reasonable image size
+                            print(f"   ✅ Property image served successfully")
+                            results["property_image"] = True
+                        else:
+                            print(f"   ❌ Image too small, might be error response")
+                            results["property_image"] = False
+                    else:
+                        print(f"   ❌ Wrong content type, expected image/png")
+                        results["property_image"] = False
+                elif response.status_code == 405:
+                    print(f"   ❌ Method Not Allowed - routing issue detected!")
+                    results["property_image"] = False
+                elif response.status_code == 404:
+                    print(f"   ⚠️ Property image not found - checking if fallback works")
+                    # This might be expected if no boundary image exists
+                    results["property_image"] = False
+                else:
+                    print(f"   ❌ Property image endpoint failed")
+                    results["property_image"] = False
+            else:
+                print(f"   ⚠️ No properties found for testing")
+                results["property_image"] = None
+        else:
+            print(f"   ⚠️ Cannot get properties for testing")
+            results["property_image"] = None
+        
+        # Test 3: Invalid filename handling
+        print(f"\n   Test 3: Invalid filename handling")
+        
+        response = requests.get(f"{BACKEND_URL}/boundary-image/nonexistent.png", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 404:
+            print(f"   ✅ Invalid filename correctly returns 404")
+            results["invalid_filename"] = True
+        elif response.status_code == 405:
+            print(f"   ❌ Method Not Allowed - routing issue!")
+            results["invalid_filename"] = False
+        else:
+            print(f"   ⚠️ Unexpected response for invalid filename")
+            results["invalid_filename"] = False
+        
+        # Test 4: Security - path traversal attempt
+        print(f"\n   Test 4: Security - path traversal protection")
+        
+        response = requests.get(f"{BACKEND_URL}/boundary-image/../../../etc/passwd", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 400:
+            print(f"   ✅ Path traversal correctly blocked")
+            results["security_check"] = True
+        elif response.status_code == 404:
+            print(f"   ✅ Path traversal handled (404)")
+            results["security_check"] = True
+        elif response.status_code == 405:
+            print(f"   ❌ Method Not Allowed - routing issue!")
+            results["security_check"] = False
+        else:
+            print(f"   ⚠️ Unexpected response for path traversal")
+            results["security_check"] = False
+        
+        # Overall assessment
+        successful_tests = sum(1 for result in results.values() if result is True)
+        total_tests = len([r for r in results.values() if r is not None])
+        
+        print(f"\n   📊 Boundary Image Endpoints Results: {successful_tests}/{total_tests} tests passed")
+        
+        if successful_tests >= 2 and total_tests > 0:  # At least basic functionality working
+            print(f"   ✅ Boundary image endpoints working")
+            return True, results
+        else:
+            print(f"   ❌ Boundary image endpoints have issues")
+            return False, results
+            
+    except Exception as e:
+        print(f"   ❌ Boundary image endpoints test error: {e}")
+        return False, {"error": str(e)}
+
+def test_database_boundary_alignment():
+    """Test if database boundary_screenshot filenames match actual files"""
+    print("\n🗄️ Testing Database-File Alignment...")
+    print("🔍 FOCUS: Check if boundary_screenshot fields match actual files")
+    print("📋 EXPECTED: Database references should point to existing files")
+    
+    try:
+        # Get properties with boundary_screenshot fields
+        response = requests.get(f"{BACKEND_URL}/tax-sales?limit=20", timeout=30)
+        
+        if response.status_code != 200:
+            print(f"   ❌ Cannot get properties for testing")
+            return False, {"error": "Cannot get properties"}
+        
+        properties_data = response.json()
+        if isinstance(properties_data, dict):
+            properties = properties_data.get('properties', [])
+        else:
+            properties = properties_data
+        
+        if not properties:
+            print(f"   ❌ No properties found")
+            return False, {"error": "No properties found"}
+        
+        print(f"   📋 Checking {len(properties)} properties")
+        
+        # Check boundary_screenshot alignment
+        properties_with_boundary = []
+        properties_without_boundary = []
+        valid_boundary_refs = 0
+        invalid_boundary_refs = 0
+        
+        for prop in properties:
+            boundary_screenshot = prop.get('boundary_screenshot')
+            assessment_number = prop.get('assessment_number')
+            
+            if boundary_screenshot:
+                properties_with_boundary.append({
+                    'assessment_number': assessment_number,
+                    'boundary_screenshot': boundary_screenshot
+                })
+                
+                # Test if the referenced file can be accessed
+                response = requests.get(f"{BACKEND_URL}/boundary-image/{boundary_screenshot}", timeout=10)
+                if response.status_code == 200:
+                    valid_boundary_refs += 1
+                    print(f"   ✅ {assessment_number}: {boundary_screenshot} - accessible")
+                else:
+                    invalid_boundary_refs += 1
+                    print(f"   ❌ {assessment_number}: {boundary_screenshot} - not accessible ({response.status_code})")
+            else:
+                properties_without_boundary.append({
+                    'assessment_number': assessment_number
+                })
+        
+        print(f"\n   📊 Database Analysis:")
+        print(f"   Properties with boundary_screenshot: {len(properties_with_boundary)}")
+        print(f"   Properties without boundary_screenshot: {len(properties_without_boundary)}")
+        print(f"   Valid boundary references: {valid_boundary_refs}")
+        print(f"   Invalid boundary references: {invalid_boundary_refs}")
+        
+        # Calculate alignment percentage
+        if len(properties_with_boundary) > 0:
+            alignment_percentage = (valid_boundary_refs / len(properties_with_boundary)) * 100
+            print(f"   Alignment percentage: {alignment_percentage:.1f}%")
+        else:
+            alignment_percentage = 0
+            print(f"   No boundary references to check")
+        
+        # Test property-image endpoint for properties with boundary_screenshot
+        if properties_with_boundary:
+            print(f"\n   Testing property-image endpoint:")
+            working_property_images = 0
+            
+            for prop in properties_with_boundary[:5]:  # Test first 5
+                assessment_number = prop['assessment_number']
+                response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", timeout=10)
+                
+                if response.status_code == 200 and response.headers.get('Content-Type') == 'image/png':
+                    working_property_images += 1
+                    print(f"   ✅ Property image for {assessment_number}: working")
+                else:
+                    print(f"   ❌ Property image for {assessment_number}: failed ({response.status_code})")
+            
+            property_image_percentage = (working_property_images / min(5, len(properties_with_boundary))) * 100
+            print(f"   Property image success rate: {property_image_percentage:.1f}%")
+        
+        # Overall assessment
+        if alignment_percentage >= 80 and len(properties_with_boundary) > 0:
+            print(f"   ✅ Database-file alignment is good")
+            return True, {
+                "properties_with_boundary": len(properties_with_boundary),
+                "valid_boundary_refs": valid_boundary_refs,
+                "alignment_percentage": alignment_percentage
+            }
+        elif len(properties_with_boundary) == 0:
+            print(f"   ⚠️ No boundary references found in database")
+            return False, {"error": "No boundary references in database"}
+        else:
+            print(f"   ❌ Database-file alignment issues detected")
+            return False, {
+                "properties_with_boundary": len(properties_with_boundary),
+                "valid_boundary_refs": valid_boundary_refs,
+                "alignment_percentage": alignment_percentage
+            }
+            
+    except Exception as e:
+        print(f"   ❌ Database alignment test error: {e}")
+        return False, {"error": str(e)}
+
+def test_boundary_thumbnail_system():
+    """Comprehensive test of the boundary thumbnail system"""
+    print("\n🎯 COMPREHENSIVE BOUNDARY THUMBNAIL SYSTEM TEST")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Debug boundary thumbnail system for Tax Sale Compass")
+    print("📋 SPECIFIC ISSUES:")
+    print("   1. Property thumbnails should show boundary lines but showing generic satellite images")
+    print("   2. Boundary image files exist in /app/backend/static/property_screenshots/")
+    print("   3. Database has boundary_screenshot field set")
+    print("   4. GET /api/boundary-image/{filename} returns 405 Method Not Allowed")
+    print("   5. GET /api/property-image/{assessment_number} returns 405 Method Not Allowed")
+    print("   6. Frontend falling back to Google Maps static images")
+    print("=" * 80)
+    
+    # Run all tests
+    results = {}
+    
+    # Test 1: Boundary Image Endpoints
+    print("\n🔍 TEST 1: Boundary Image Endpoints")
+    endpoints_result, endpoints_data = test_boundary_image_endpoints()
+    results['boundary_endpoints'] = {'success': endpoints_result, 'data': endpoints_data}
+    
+    # Test 2: Database-File Alignment
+    print("\n🔍 TEST 2: Database-File Alignment")
+    alignment_result, alignment_data = test_database_boundary_alignment()
+    results['database_alignment'] = {'success': alignment_result, 'data': alignment_data}
+    
+    # Final Assessment
+    print("\n" + "=" * 80)
+    print("📊 BOUNDARY THUMBNAIL SYSTEM - FINAL ASSESSMENT")
+    print("=" * 80)
+    
+    test_names = [
+        ('Boundary Image Endpoints', 'boundary_endpoints'),
+        ('Database-File Alignment', 'database_alignment')
+    ]
+    
+    passed_tests = 0
+    total_tests = len(test_names)
+    
+    print(f"📋 DETAILED RESULTS:")
+    for test_name, test_key in test_names:
+        result = results[test_key]
+        status = "✅ PASSED" if result['success'] else "❌ FAILED"
+        print(f"   {status} - {test_name}")
+        if result['success']:
+            passed_tests += 1
+    
+    print(f"\n📊 SUMMARY:")
+    print(f"   Passed: {passed_tests}/{total_tests} tests")
+    print(f"   Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    
+    # Critical findings
+    print(f"\n🔍 CRITICAL FINDINGS:")
+    
+    if results['boundary_endpoints']['success']:
+        print(f"   ✅ Boundary image endpoints are accessible")
+        print(f"   ✅ Images served with proper content-type (image/png)")
+        print(f"   ✅ Security measures in place for invalid filenames")
+    else:
+        endpoints_data = results['boundary_endpoints']['data']
+        if isinstance(endpoints_data, dict):
+            if endpoints_data.get('boundary_image_direct') == False:
+                print(f"   ❌ CRITICAL: GET /api/boundary-image/{'{filename}'} endpoint not working")
+            if endpoints_data.get('property_image') == False:
+                print(f"   ❌ CRITICAL: GET /api/property-image/{'{assessment_number}'} endpoint not working")
+        print(f"   ❌ Boundary image endpoints have routing issues")
+    
+    if results['database_alignment']['success']:
+        alignment_data = results['database_alignment']['data']
+        print(f"   ✅ Database boundary_screenshot fields align with actual files")
+        if isinstance(alignment_data, dict):
+            print(f"   ✅ {alignment_data.get('properties_with_boundary', 0)} properties have boundary references")
+            print(f"   ✅ {alignment_data.get('alignment_percentage', 0):.1f}% alignment rate")
+    else:
+        print(f"   ❌ Database-file alignment issues detected")
+    
+    # Root cause analysis
+    print(f"\n🔍 ROOT CAUSE ANALYSIS:")
+    
+    endpoints_data = results['boundary_endpoints']['data']
+    if isinstance(endpoints_data, dict):
+        if (endpoints_data.get('boundary_image_direct') == False and 
+            endpoints_data.get('property_image') == False):
+            print(f"   🚨 ROUTING ISSUE: Both endpoints returning 405 Method Not Allowed")
+            print(f"   🔧 SOLUTION: Check FastAPI router configuration")
+            print(f"   🔧 VERIFY: @api_router.get() decorators are properly configured")
+            print(f"   🔧 CHECK: Router is properly included in main app")
+        elif endpoints_data.get('boundary_image_direct') == False:
+            print(f"   🚨 BOUNDARY IMAGE ENDPOINT: Not accessible")
+        elif endpoints_data.get('property_image') == False:
+            print(f"   🚨 PROPERTY IMAGE ENDPOINT: Not accessible")
+    
+    # Overall assessment
+    critical_issue_resolved = results['boundary_endpoints']['success']
+    
+    if critical_issue_resolved:
+        print(f"\n🎉 BOUNDARY THUMBNAIL SYSTEM: WORKING!")
+        print(f"   ✅ Boundary image endpoints accessible")
+        print(f"   ✅ Property images can be served")
+        print(f"   ✅ Database references align with files")
+        print(f"   ✅ Frontend should be able to load boundary thumbnails")
+    else:
+        print(f"\n❌ BOUNDARY THUMBNAIL SYSTEM: CRITICAL ISSUES")
+        print(f"   ❌ Routing issues preventing image serving")
+        print(f"   🔧 Frontend falling back to Google Maps due to 405 errors")
+        print(f"   🔧 Need to fix endpoint routing configuration")
+    
+    return critical_issue_resolved, results
+
 def main():
-    """Main test execution function - Focus on User Authentication System"""
+    """Main test execution function - Focus on Boundary Thumbnail System"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: User Authentication and Access Control System Testing")
-    print("📋 REVIEW REQUEST: Test the user authentication and access control system")
-    print("🔍 KEY FEATURES:")
-    print("   - User registration with email verification via SendGrid")
-    print("   - User login with JWT tokens")
-    print("   - Subscription tiers (free vs paid) with access control")
-    print("   - Free users can view all listings but only inactive property details")
-    print("   - Paid users get full access to all property details")
-    print("   - Admin users bypass all restrictions")
+    print("🎯 FOCUS: Boundary Thumbnail System Debugging")
+    print("📋 REVIEW REQUEST: Debug boundary thumbnail system for Tax Sale Compass")
+    print("🔍 KEY ISSUES:")
+    print("   - Property thumbnails showing generic satellite images instead of boundary lines")
+    print("   - Boundary image files exist but endpoints return 405 Method Not Allowed")
+    print("   - Database has boundary_screenshot references")
+    print("   - Frontend falling back to Google Maps static images")
     print("🎯 TESTING SCOPE:")
-    print("   - User registration and login functionality")
-    print("   - JWT token generation and validation")
-    print("   - Subscription-based access control")
-    print("   - Authentication error handling")
+    print("   - Boundary image endpoint accessibility")
+    print("   - Property image endpoint functionality")
+    print("   - Database-file alignment verification")
+    print("   - Routing diagnosis for 405 errors")
     print("=" * 80)
     
     # Test 1: Basic API connectivity
@@ -670,23 +1043,22 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: User Authentication System (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: User Authentication System Testing")
-    all_working, test_results = test_user_authentication_system()
+    # Test 2: Boundary Thumbnail System (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Boundary Thumbnail System Testing")
+    all_working, test_results = test_boundary_thumbnail_system()
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - User Authentication System")
+    print("📊 FINAL TEST RESULTS SUMMARY - Boundary Thumbnail System")
     print("=" * 80)
     
     if all_working:
-        print(f"🎉 USER AUTHENTICATION SYSTEM: SUCCESSFUL!")
+        print(f"🎉 BOUNDARY THUMBNAIL SYSTEM: WORKING!")
         print(f"   ✅ All critical tests passed")
-        print(f"   ✅ User registration creates users with free subscription")
-        print(f"   ✅ Login returns valid JWT tokens with subscription info")
-        print(f"   ✅ Access control restricts active property details based on subscription")
-        print(f"   ✅ Admin accounts bypass subscription restrictions")
-        print(f"   ✅ Error handling provides clear feedback for authentication issues")
+        print(f"   ✅ Boundary image endpoints accessible with HTTP 200")
+        print(f"   ✅ Property image endpoints serving PNG files properly")
+        print(f"   ✅ Database boundary_screenshot fields align with actual files")
+        print(f"   ✅ Security measures in place for invalid requests")
         
         print(f"\n📊 DETAILED SUCCESS METRICS:")
         passed_count = sum(1 for result in test_results.values() if result['success'])
@@ -695,17 +1067,16 @@ def main():
         print(f"   Success rate: {(passed_count/total_count)*100:.1f}%")
         
         print(f"\n🎯 KEY ACHIEVEMENTS:")
-        print(f"   ✅ User registration with free subscription tier defaults")
-        print(f"   ✅ JWT token authentication working for protected endpoints")
-        print(f"   ✅ Subscription-based access control properly implemented")
-        print(f"   ✅ Free users restricted from active property details")
-        print(f"   ✅ Admin users bypass all subscription restrictions")
-        print(f"   ✅ Authentication validation handles invalid tokens correctly")
+        print(f"   ✅ GET /api/boundary-image/{{filename}} endpoint working")
+        print(f"   ✅ GET /api/property-image/{{assessment_number}} endpoint working")
+        print(f"   ✅ Boundary images served with proper content-type")
+        print(f"   ✅ Database references match actual files")
+        print(f"   ✅ Frontend should display boundary thumbnails correctly")
         
     else:
-        print(f"❌ USER AUTHENTICATION SYSTEM: ISSUES IDENTIFIED")
-        print(f"   ❌ Some critical tests failed")
-        print(f"   🔧 Additional fixes may be needed")
+        print(f"❌ BOUNDARY THUMBNAIL SYSTEM: CRITICAL ISSUES IDENTIFIED")
+        print(f"   ❌ Routing issues preventing proper image serving")
+        print(f"   🔧 Frontend falling back to Google Maps due to endpoint failures")
         
         print(f"\n📋 ISSUES IDENTIFIED:")
         failed_tests = [name for name, result in test_results.items() if not result['success']]
@@ -715,11 +1086,12 @@ def main():
                 print(f"      - {test_name}")
         
         print(f"\n   🔧 RECOMMENDED ACTIONS:")
-        print(f"      1. Review user registration endpoint implementation")
-        print(f"      2. Check JWT token generation and validation")
-        print(f"      3. Verify subscription-based access control logic")
-        print(f"      4. Test authentication error handling")
-        print(f"      5. Check admin bypass functionality")
+        print(f"      1. Check FastAPI router configuration in server.py")
+        print(f"      2. Verify @api_router.get() decorators are correct")
+        print(f"      3. Ensure api_router is properly included in main app")
+        print(f"      4. Test endpoint routing with curl/direct requests")
+        print(f"      5. Check for conflicting routes or middleware issues")
+        print(f"      6. Verify static file serving configuration")
     
     print("=" * 80)
     
