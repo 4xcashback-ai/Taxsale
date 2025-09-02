@@ -733,8 +733,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Landing Page Copy and Header Updates"
-    - "Admin Login Credentials Update"
+    - "Property Card Design and Layout"
+    - "Property Details Links and Routing"
   stuck_tasks:
     - "Victoria County Property Image Routing Fix"
   test_all: false
