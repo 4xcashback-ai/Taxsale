@@ -107,6 +107,129 @@ def authenticate_admin(username: str, password: str) -> bool:
         return password == ADMIN_PASSWORD
     return False
 
+# User Authentication Functions
+async def get_user_by_email(email: str) -> Optional[dict]:
+    """Get user by email from database"""
+    return await db.users.find_one({"email": email})
+
+async def get_user_by_id(user_id: str) -> Optional[dict]:
+    """Get user by ID from database"""
+    return await db.users.find_one({"id": user_id})
+
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt"""
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password against hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+async def authenticate_user(email: str, password: str) -> Optional[dict]:
+    """Authenticate user with email and password"""
+    user = await get_user_by_email(email)
+    if not user:
+        return None
+    if not verify_password(password, user["password_hash"]):
+        return None
+    return user
+
+def create_user_access_token(user_data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create access token for user"""
+    to_encode = {
+        "sub": user_data["id"],
+        "email": user_data["email"],
+        "subscription_tier": user_data["subscription_tier"],
+        "is_verified": user_data["is_verified"]
+    }
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    """Get current user from JWT token"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+        user = await get_user_by_id(user_id)
+        if user is None:
+            raise credentials_exception
+        return user
+    except JWTError:
+        raise credentials_exception
+
+def generate_verification_token() -> str:
+    """Generate random verification token"""
+    return str(uuid.uuid4())
+
+# Email Service using SendGrid
+import sendgrid
+from sendgrid.helpers.mail import Mail
+
+def send_verification_email(email: str, verification_token: str) -> bool:
+    """Send verification email using SendGrid"""
+    try:
+        sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
+        
+        # Get the frontend URL for verification link
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+        verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+                    <h1 style="color: #2c3e50;">Welcome to Tax Sale Compass</h1>
+                </div>
+                <div style="padding: 20px;">
+                    <h2>Verify Your Email Address</h2>
+                    <p>Thank you for registering with Tax Sale Compass - Your Complete Tax Sale Research Platform!</p>
+                    <p>To complete your registration and start finding properties cheap across Canada, please verify your email address by clicking the button below:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{verification_link}" 
+                           style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Verify Email Address
+                        </a>
+                    </div>
+                    
+                    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #007bff;">{verification_link}</p>
+                    
+                    <p style="margin-top: 30px; font-size: 14px; color: #666;">
+                        If you didn't create an account with Tax Sale Compass, you can safely ignore this email.
+                    </p>
+                </div>
+                <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+                    © 2025 Tax Sale Compass. All rights reserved.
+                </div>
+            </body>
+        </html>
+        """
+        
+        message = Mail(
+            from_email=os.environ.get('SENDER_EMAIL', 'noreply@taxsalecompass.ca'),
+            to_emails=email,
+            subject='Verify Your Tax Sale Compass Account',
+            html_content=html_content
+        )
+        
+        response = sg.send(message)
+        return response.status_code == 202
+    except Exception as e:
+        logger.error(f"Failed to send verification email: {e}")
+        return False
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
