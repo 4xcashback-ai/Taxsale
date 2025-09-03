@@ -375,9 +375,11 @@ class Municipality(BaseModel):
     scrape_status: str = "pending"  # pending, success, failed
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-    scraper_type: str = "generic"  # generic, halifax, cbrm, etc.
+    scraper_type: str = "generic"  # generic, halifax, victoria_county, cumberland_county, cape_breton, etc.
     # Scraping Schedule Configuration
     scrape_enabled: bool = True
+    scrape_schedule: Optional[str] = None  # cron-like schedule: "weekly_monday", "monthly_1st", "daily", etc.
+    schedule_enabled: bool = False
     scrape_frequency: str = "weekly"  # daily, weekly, monthly
     scrape_day_of_week: Optional[int] = 1  # 0=Monday, 6=Sunday (for weekly)
     scrape_day_of_month: Optional[int] = 1  # 1-28 (for monthly)
