@@ -429,6 +429,7 @@ class MunicipalityUpdate(BaseModel):
     longitude: Optional[float] = None
     scraper_type: Optional[str] = None
     scrape_enabled: Optional[bool] = None
+    schedule_enabled: Optional[bool] = None  # MISSING FIELD ADDED
     scrape_frequency: Optional[str] = None
     scrape_day_of_week: Optional[int] = None
     scrape_day_of_month: Optional[int] = None
