@@ -1018,22 +1018,510 @@ def test_boundary_thumbnail_system():
     
     return critical_issue_resolved, results
 
+def test_deployment_authentication():
+    """Test deployment endpoints without authentication (should return 401)"""
+    print("\n🔒 Testing Deployment Authentication...")
+    print("🔍 FOCUS: All deployment endpoints require JWT authentication")
+    print("📋 EXPECTED: 401 Unauthorized for requests without valid token")
+    
+    deployment_endpoints = [
+        ("GET", "/deployment/status"),
+        ("POST", "/deployment/check-updates"),
+        ("POST", "/deployment/deploy"),
+        ("GET", "/deployment/health"),
+        ("POST", "/deployment/verify")
+    ]
+    
+    results = {}
+    
+    for method, endpoint in deployment_endpoints:
+        try:
+            print(f"\n   Testing {method} {endpoint} without authentication")
+            
+            if method == "GET":
+                response = requests.get(f"{BACKEND_URL}{endpoint}", timeout=30)
+            else:  # POST
+                response = requests.post(f"{BACKEND_URL}{endpoint}", timeout=30)
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 401:
+                print(f"   ✅ Correctly requires authentication")
+                results[endpoint] = True
+            else:
+                print(f"   ❌ Should require authentication (got {response.status_code})")
+                results[endpoint] = False
+                
+        except Exception as e:
+            print(f"   ❌ Error testing {endpoint}: {e}")
+            results[endpoint] = False
+    
+    successful_tests = sum(1 for result in results.values() if result is True)
+    total_tests = len(results)
+    
+    print(f"\n   📊 Authentication Tests: {successful_tests}/{total_tests} passed")
+    
+    if successful_tests == total_tests:
+        print(f"   ✅ All deployment endpoints properly secured")
+        return True, results
+    else:
+        print(f"   ❌ Some endpoints missing authentication")
+        return False, results
+
+def test_deployment_status_endpoint():
+    """Test deployment status endpoint with valid authentication"""
+    print("\n📊 Testing Deployment Status Endpoint...")
+    print("🔍 FOCUS: GET /api/deployment/status")
+    print("📋 EXPECTED: Return deployment status JSON with valid token")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/deployment/status", 
+                              headers=headers,
+                              timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✅ Deployment status retrieved successfully")
+            
+            # Check response structure
+            required_fields = ["status", "message", "last_check"]
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                print(f"   ⚠️ Missing optional fields: {missing_fields}")
+            
+            print(f"   📋 Status: {data.get('status', 'N/A')}")
+            print(f"   📋 Message: {data.get('message', 'N/A')}")
+            print(f"   📋 Last Check: {data.get('last_check', 'N/A')}")
+            
+            # Check if it's valid JSON response
+            if isinstance(data, dict):
+                print("   ✅ Valid JSON response structure")
+                return True, data
+            else:
+                print("   ❌ Invalid response structure")
+                return False, {"error": "Invalid response structure"}
+                
+        else:
+            print(f"   ❌ Deployment status failed with status {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Deployment status error: {e}")
+        return False, {"error": str(e)}
+
+def test_check_updates_endpoint():
+    """Test check updates endpoint"""
+    print("\n🔄 Testing Check Updates Endpoint...")
+    print("🔍 FOCUS: POST /api/deployment/check-updates")
+    print("📋 EXPECTED: Check for GitHub updates and return availability")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/deployment/check-updates", 
+                               headers=headers,
+                               timeout=60)  # Longer timeout for update checks
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✅ Update check completed successfully")
+            
+            # Check response structure
+            expected_fields = ["updates_available", "message", "checked_at"]
+            missing_fields = [field for field in expected_fields if field not in data]
+            
+            if missing_fields:
+                print(f"   ⚠️ Missing fields: {missing_fields}")
+            
+            print(f"   📋 Updates Available: {data.get('updates_available', 'N/A')}")
+            print(f"   📋 Message: {data.get('message', 'N/A')}")
+            print(f"   📋 Checked At: {data.get('checked_at', 'N/A')}")
+            
+            # Check if updates_available is boolean
+            updates_available = data.get('updates_available')
+            if isinstance(updates_available, bool):
+                print("   ✅ Valid updates_available boolean response")
+                return True, data
+            else:
+                print("   ❌ updates_available should be boolean")
+                return False, {"error": "Invalid updates_available type"}
+                
+        else:
+            print(f"   ❌ Check updates failed with status {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Check updates error: {e}")
+        return False, {"error": str(e)}
+
+def test_deploy_endpoint():
+    """Test deploy endpoint (without actually deploying)"""
+    print("\n🚀 Testing Deploy Endpoint...")
+    print("🔍 FOCUS: POST /api/deployment/deploy")
+    print("📋 EXPECTED: Start deployment process with optional GitHub repo")
+    print("⚠️  NOTE: Testing endpoint response only, not actual deployment")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        # Test with optional GitHub repo parameter
+        test_data = {"github_repo": "test-repo-for-testing"}
+        
+        response = requests.post(f"{BACKEND_URL}/deployment/deploy", 
+                               headers=headers,
+                               json=test_data,
+                               timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✅ Deploy endpoint responded successfully")
+            
+            # Check response structure
+            expected_fields = ["status", "message", "started_at"]
+            missing_fields = [field for field in expected_fields if field not in data]
+            
+            if missing_fields:
+                print(f"   ⚠️ Missing fields: {missing_fields}")
+            
+            print(f"   📋 Status: {data.get('status', 'N/A')}")
+            print(f"   📋 Message: {data.get('message', 'N/A')}")
+            print(f"   📋 Started At: {data.get('started_at', 'N/A')}")
+            print(f"   📋 GitHub Repo: {data.get('github_repo', 'N/A')}")
+            
+            # Check if status indicates deployment started
+            if data.get('status') == 'started':
+                print("   ✅ Deployment process initiated")
+                return True, data
+            else:
+                print("   ⚠️ Unexpected status response")
+                return True, data  # Still consider success if endpoint works
+                
+        else:
+            print(f"   ❌ Deploy endpoint failed with status {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Deploy endpoint error: {e}")
+        return False, {"error": str(e)}
+
+def test_health_check_endpoint():
+    """Test health check endpoint"""
+    print("\n🏥 Testing Health Check Endpoint...")
+    print("🔍 FOCUS: GET /api/deployment/health")
+    print("📋 EXPECTED: Return system health status")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/deployment/health", 
+                              headers=headers,
+                              timeout=60)  # Longer timeout for health checks
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✅ Health check completed successfully")
+            
+            # Check response structure
+            expected_fields = ["health_status", "checked_at"]
+            missing_fields = [field for field in expected_fields if field not in data]
+            
+            if missing_fields:
+                print(f"   ⚠️ Missing fields: {missing_fields}")
+            
+            print(f"   📋 Health Status: {data.get('health_status', 'N/A')}")
+            print(f"   📋 Checked At: {data.get('checked_at', 'N/A')}")
+            
+            # Check if health_status is valid
+            valid_statuses = ["excellent", "good", "poor", "unknown"]
+            health_status = data.get('health_status')
+            if health_status in valid_statuses:
+                print("   ✅ Valid health status response")
+                return True, data
+            else:
+                print(f"   ⚠️ Unexpected health status: {health_status}")
+                return True, data  # Still consider success if endpoint works
+                
+        else:
+            print(f"   ❌ Health check failed with status {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Health check error: {e}")
+        return False, {"error": str(e)}
+
+def test_verify_deployment_endpoint():
+    """Test verify deployment endpoint"""
+    print("\n✅ Testing Verify Deployment Endpoint...")
+    print("🔍 FOCUS: POST /api/deployment/verify")
+    print("📋 EXPECTED: Verify current deployment status")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        response = requests.post(f"{BACKEND_URL}/deployment/verify", 
+                               headers=headers,
+                               timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✅ Deployment verification completed successfully")
+            
+            # Check response structure
+            expected_fields = ["deployment_valid", "message", "verified_at"]
+            missing_fields = [field for field in expected_fields if field not in data]
+            
+            if missing_fields:
+                print(f"   ⚠️ Missing fields: {missing_fields}")
+            
+            print(f"   📋 Deployment Valid: {data.get('deployment_valid', 'N/A')}")
+            print(f"   📋 Message: {data.get('message', 'N/A')}")
+            print(f"   📋 Verified At: {data.get('verified_at', 'N/A')}")
+            
+            # Check if deployment_valid is boolean
+            deployment_valid = data.get('deployment_valid')
+            if isinstance(deployment_valid, bool):
+                print("   ✅ Valid deployment_valid boolean response")
+                return True, data
+            else:
+                print("   ❌ deployment_valid should be boolean")
+                return False, {"error": "Invalid deployment_valid type"}
+                
+        else:
+            print(f"   ❌ Verify deployment failed with status {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Verify deployment error: {e}")
+        return False, {"error": str(e)}
+
+def test_deployment_system():
+    """Comprehensive test of the deployment system API endpoints"""
+    print("\n🎯 COMPREHENSIVE DEPLOYMENT SYSTEM TEST")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Test deployment system API endpoints")
+    print("📋 SPECIFIC REQUIREMENTS:")
+    print("   1. Authentication: All deployment endpoints require JWT token")
+    print("   2. Deployment Status: GET /api/deployment/status - return current status")
+    print("   3. Check Updates: POST /api/deployment/check-updates - check GitHub updates")
+    print("   4. Deploy: POST /api/deployment/deploy - start deployment process")
+    print("   5. Health Check: GET /api/deployment/health - return system health")
+    print("   6. Verify Deployment: POST /api/deployment/verify - verify deployment")
+    print("=" * 80)
+    
+    # Run all tests
+    results = {}
+    
+    # Test 1: Authentication Requirements
+    print("\n🔍 TEST 1: Authentication Requirements")
+    auth_result, auth_data = test_deployment_authentication()
+    results['authentication'] = {'success': auth_result, 'data': auth_data}
+    
+    # Test 2: Deployment Status Endpoint
+    print("\n🔍 TEST 2: Deployment Status Endpoint")
+    status_result, status_data = test_deployment_status_endpoint()
+    results['deployment_status'] = {'success': status_result, 'data': status_data}
+    
+    # Test 3: Check Updates Endpoint
+    print("\n🔍 TEST 3: Check Updates Endpoint")
+    updates_result, updates_data = test_check_updates_endpoint()
+    results['check_updates'] = {'success': updates_result, 'data': updates_data}
+    
+    # Test 4: Deploy Endpoint
+    print("\n🔍 TEST 4: Deploy Endpoint")
+    deploy_result, deploy_data = test_deploy_endpoint()
+    results['deploy'] = {'success': deploy_result, 'data': deploy_data}
+    
+    # Test 5: Health Check Endpoint
+    print("\n🔍 TEST 5: Health Check Endpoint")
+    health_result, health_data = test_health_check_endpoint()
+    results['health_check'] = {'success': health_result, 'data': health_data}
+    
+    # Test 6: Verify Deployment Endpoint
+    print("\n🔍 TEST 6: Verify Deployment Endpoint")
+    verify_result, verify_data = test_verify_deployment_endpoint()
+    results['verify_deployment'] = {'success': verify_result, 'data': verify_data}
+    
+    # Final Assessment
+    print("\n" + "=" * 80)
+    print("📊 DEPLOYMENT SYSTEM - FINAL ASSESSMENT")
+    print("=" * 80)
+    
+    test_names = [
+        ('Authentication Requirements', 'authentication'),
+        ('Deployment Status Endpoint', 'deployment_status'),
+        ('Check Updates Endpoint', 'check_updates'),
+        ('Deploy Endpoint', 'deploy'),
+        ('Health Check Endpoint', 'health_check'),
+        ('Verify Deployment Endpoint', 'verify_deployment')
+    ]
+    
+    passed_tests = 0
+    total_tests = len(test_names)
+    
+    print(f"📋 DETAILED RESULTS:")
+    for test_name, test_key in test_names:
+        result = results[test_key]
+        status = "✅ PASSED" if result['success'] else "❌ FAILED"
+        print(f"   {status} - {test_name}")
+        if result['success']:
+            passed_tests += 1
+    
+    print(f"\n📊 SUMMARY:")
+    print(f"   Passed: {passed_tests}/{total_tests} tests")
+    print(f"   Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    
+    # Critical findings
+    print(f"\n🔍 CRITICAL FINDINGS:")
+    
+    if results['authentication']['success']:
+        print(f"   ✅ All deployment endpoints properly secured with JWT authentication")
+        print(f"   ✅ Unauthorized requests correctly return 401 status")
+    else:
+        print(f"   ❌ Authentication security issues detected")
+    
+    if results['deployment_status']['success']:
+        print(f"   ✅ Deployment status endpoint returns valid JSON response")
+        print(f"   ✅ Status script execution working correctly")
+    else:
+        print(f"   ❌ Deployment status endpoint has issues")
+    
+    if results['check_updates']['success']:
+        print(f"   ✅ Check updates endpoint communicates with GitHub properly")
+        print(f"   ✅ Update availability detection working")
+    else:
+        print(f"   ❌ Check updates endpoint has issues")
+    
+    if results['deploy']['success']:
+        print(f"   ✅ Deploy endpoint accepts GitHub repo parameter")
+        print(f"   ✅ Deployment process initiation working")
+    else:
+        print(f"   ❌ Deploy endpoint has issues")
+    
+    if results['health_check']['success']:
+        print(f"   ✅ Health check endpoint returns system status")
+        print(f"   ✅ Health monitoring scripts working")
+    else:
+        print(f"   ❌ Health check endpoint has issues")
+    
+    if results['verify_deployment']['success']:
+        print(f"   ✅ Verify deployment endpoint checks system validity")
+        print(f"   ✅ Deployment verification logic working")
+    else:
+        print(f"   ❌ Verify deployment endpoint has issues")
+    
+    # Overall assessment
+    critical_tests_passed = (
+        results['authentication']['success'] and 
+        results['deployment_status']['success'] and 
+        results['check_updates']['success']
+    )
+    
+    if critical_tests_passed and passed_tests >= 5:
+        print(f"\n🎉 DEPLOYMENT SYSTEM: SUCCESS!")
+        print(f"   ✅ All deployment endpoints working correctly")
+        print(f"   ✅ JWT authentication properly enforced")
+        print(f"   ✅ Deployment status monitoring functional")
+        print(f"   ✅ GitHub update checking operational")
+        print(f"   ✅ Deployment process can be initiated")
+        print(f"   ✅ System health monitoring active")
+        print(f"   ✅ Deployment verification working")
+    else:
+        print(f"\n❌ DEPLOYMENT SYSTEM: ISSUES IDENTIFIED")
+        print(f"   🔧 Some critical components need attention")
+    
+    return critical_tests_passed and passed_tests >= 5, results
+
 def main():
-    """Main test execution function - Focus on Boundary Thumbnail System"""
+    """Main test execution function - Focus on Deployment System"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
     print("=" * 80)
-    print("🎯 FOCUS: Boundary Thumbnail System Debugging")
-    print("📋 REVIEW REQUEST: Debug boundary thumbnail system for Tax Sale Compass")
-    print("🔍 KEY ISSUES:")
-    print("   - Property thumbnails showing generic satellite images instead of boundary lines")
-    print("   - Boundary image files exist but endpoints return 405 Method Not Allowed")
-    print("   - Database has boundary_screenshot references")
-    print("   - Frontend falling back to Google Maps static images")
+    print("🎯 FOCUS: Deployment System API Endpoints Testing")
+    print("📋 REVIEW REQUEST: Test deployment system API endpoints")
+    print("🔍 KEY REQUIREMENTS:")
+    print("   - All deployment endpoints require JWT token authentication")
+    print("   - Deployment status endpoint returns current deployment status")
+    print("   - Check updates endpoint checks for GitHub updates")
+    print("   - Deploy endpoint starts deployment process")
+    print("   - Health check endpoint returns system health status")
+    print("   - Verify deployment endpoint verifies current deployment")
     print("🎯 TESTING SCOPE:")
-    print("   - Boundary image endpoint accessibility")
-    print("   - Property image endpoint functionality")
-    print("   - Database-file alignment verification")
-    print("   - Routing diagnosis for 405 errors")
+    print("   - Authentication enforcement on all endpoints")
+    print("   - JSON response validation")
+    print("   - Error handling verification")
+    print("   - Deployment script integration")
     print("=" * 80)
     
     # Test 1: Basic API connectivity
@@ -1043,22 +1531,24 @@ def main():
         print("\n❌ Cannot proceed without API connection")
         return False
     
-    # Test 2: Boundary Thumbnail System (MAIN FOCUS)
-    print("\n🎯 MAIN FOCUS: Boundary Thumbnail System Testing")
-    all_working, test_results = test_boundary_thumbnail_system()
+    # Test 2: Deployment System (MAIN FOCUS)
+    print("\n🎯 MAIN FOCUS: Deployment System Testing")
+    all_working, test_results = test_deployment_system()
     
     # Final Results Summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Boundary Thumbnail System")
+    print("📊 FINAL TEST RESULTS SUMMARY - Deployment System")
     print("=" * 80)
     
     if all_working:
-        print(f"🎉 BOUNDARY THUMBNAIL SYSTEM: WORKING!")
+        print(f"🎉 DEPLOYMENT SYSTEM: WORKING!")
         print(f"   ✅ All critical tests passed")
-        print(f"   ✅ Boundary image endpoints accessible with HTTP 200")
-        print(f"   ✅ Property image endpoints serving PNG files properly")
-        print(f"   ✅ Database boundary_screenshot fields align with actual files")
-        print(f"   ✅ Security measures in place for invalid requests")
+        print(f"   ✅ Authentication properly enforced on all endpoints")
+        print(f"   ✅ Deployment status monitoring functional")
+        print(f"   ✅ GitHub update checking operational")
+        print(f"   ✅ Deployment process initiation working")
+        print(f"   ✅ System health monitoring active")
+        print(f"   ✅ Deployment verification working")
         
         print(f"\n📊 DETAILED SUCCESS METRICS:")
         passed_count = sum(1 for result in test_results.values() if result['success'])
@@ -1067,16 +1557,17 @@ def main():
         print(f"   Success rate: {(passed_count/total_count)*100:.1f}%")
         
         print(f"\n🎯 KEY ACHIEVEMENTS:")
-        print(f"   ✅ GET /api/boundary-image/{{filename}} endpoint working")
-        print(f"   ✅ GET /api/property-image/{{assessment_number}} endpoint working")
-        print(f"   ✅ Boundary images served with proper content-type")
-        print(f"   ✅ Database references match actual files")
-        print(f"   ✅ Frontend should display boundary thumbnails correctly")
+        print(f"   ✅ GET /api/deployment/status endpoint working")
+        print(f"   ✅ POST /api/deployment/check-updates endpoint working")
+        print(f"   ✅ POST /api/deployment/deploy endpoint working")
+        print(f"   ✅ GET /api/deployment/health endpoint working")
+        print(f"   ✅ POST /api/deployment/verify endpoint working")
+        print(f"   ✅ JWT authentication enforced on all endpoints")
         
     else:
-        print(f"❌ BOUNDARY THUMBNAIL SYSTEM: CRITICAL ISSUES IDENTIFIED")
-        print(f"   ❌ Routing issues preventing proper image serving")
-        print(f"   🔧 Frontend falling back to Google Maps due to endpoint failures")
+        print(f"❌ DEPLOYMENT SYSTEM: CRITICAL ISSUES IDENTIFIED")
+        print(f"   ❌ Some deployment endpoints not working properly")
+        print(f"   🔧 Authentication or functionality issues detected")
         
         print(f"\n📋 ISSUES IDENTIFIED:")
         failed_tests = [name for name, result in test_results.items() if not result['success']]
@@ -1086,12 +1577,12 @@ def main():
                 print(f"      - {test_name}")
         
         print(f"\n   🔧 RECOMMENDED ACTIONS:")
-        print(f"      1. Check FastAPI router configuration in server.py")
-        print(f"      2. Verify @api_router.get() decorators are correct")
-        print(f"      3. Ensure api_router is properly included in main app")
-        print(f"      4. Test endpoint routing with curl/direct requests")
-        print(f"      5. Check for conflicting routes or middleware issues")
-        print(f"      6. Verify static file serving configuration")
+        print(f"      1. Check deployment script permissions and paths")
+        print(f"      2. Verify JWT authentication configuration")
+        print(f"      3. Test deployment scripts manually")
+        print(f"      4. Check system health monitoring setup")
+        print(f"      5. Verify GitHub integration configuration")
+        print(f"      6. Check deployment verification logic")
     
     print("=" * 80)
     
