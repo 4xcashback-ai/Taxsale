@@ -182,6 +182,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(o
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
+        
+        # Handle admin users - they don't exist in the users database
+        if user_id == ADMIN_USERNAME:
+            return {
+                "id": user_id,
+                "username": user_id, 
+                "email": user_id + "@taxsalecompass.ca", 
+                "subscription_tier": "paid",
+                "is_verified": True,
+                "created_at": datetime.now(timezone.utc)
+            }
+        
         user = await get_user_by_id(user_id)
         if user is None:
             raise credentials_exception
