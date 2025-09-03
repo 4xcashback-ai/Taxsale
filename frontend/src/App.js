@@ -63,7 +63,7 @@ const AuthenticatedApp = () => {
   const [stats, setStats] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMunicipality, setSelectedMunicipality] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('active');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
