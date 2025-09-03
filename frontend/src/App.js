@@ -419,7 +419,7 @@ const AuthenticatedApp = () => {
   const verifyDeployment = async () => {
     try {
       setDeploymentLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.post(`${API}/api/deployment/verify`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
