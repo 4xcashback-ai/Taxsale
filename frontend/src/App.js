@@ -488,6 +488,15 @@ const AuthenticatedApp = () => {
                 >
                   Live Map
                 </button>
+                {user && user.subscription_tier === 'paid' && (
+                  <button 
+                    onClick={() => setActiveView('favorites')}
+                    className={`text-sm font-medium ${activeView === 'favorites' ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'} flex items-center`}
+                  >
+                    <Bookmark className="h-4 w-4 mr-1" />
+                    My Favorites
+                  </button>
+                )}
                 {isAdmin() && (
                   <button 
                     onClick={() => setActiveView('admin')}
