@@ -109,18 +109,18 @@ backend:
           agent: "main"
           comment: "FIXED: Enhanced property details endpoint now working correctly. Root cause was duplicate endpoint definitions - one using @app.get and another using @api_router.get with the same path. The first endpoint (Playwright-based viewpoint.ca scraping) was taking precedence but failing, while the second endpoint (direct PVSC API scraping) was more reliable but unreachable. Solution: Removed the duplicate @app.get endpoint and kept the @api_router.get version. Also fixed authentication issue where admin JWT tokens couldn't be validated because get_current_user_optional was trying to look up admin users in the database. Modified the function to handle admin users specially, returning proper user object with subscription_tier: 'admin'. Testing confirmed endpoint now returns comprehensive PVSC data: current_assessment: $682,400, taxable_assessment: $613,700, building_style: '1 Storey', year_built: 1956, living_area: 2512, bedrooms: 3, bathrooms: 1, quality_of_construction: 'Average', etc. All data matches production site perfectly."
 
-backend:
-  - task: "Halifax Boundary Thumbnail Generation"
+frontend:
+  - task: "Enhanced Property Details Display"
     implemented: true
     working: true
-    file: "backend/server.py"
+    file: "frontend/src/components/PropertyDetails.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: true
           agent: "main"
-          comment: "FIXED: Halifax boundary thumbnail generation issue completely resolved. Root cause was that Halifax properties had government_boundary_data but actual boundary thumbnail images weren't being generated with visible boundaries. Solution: Triggered /api/generate-all-boundary-thumbnails endpoint which successfully generated 62 boundary thumbnails for Halifax properties using the unified thumbnail generation system. Halifax properties now use the same thumbnail generation process as Victoria County with proper naming format boundary_{pid}_{assessment_number}.png. Halifax thumbnails: 00079006→boundary_00424945_00079006.png, 00125326→boundary_00174664_00125326.png, 10692563→boundary_00475327_10692563.png. All Halifax boundary images now being served correctly via /api/property-image/{assessment_number} endpoint."
+          comment: "Frontend PropertyDetails.js component already has code to fetch enhanced property details from /api/property/{assessment_number}/enhanced endpoint. With the backend endpoint now working correctly, the frontend should display the 'Detailed Assessment Information' section with all PVSC data including current assessment, taxable assessment, building style, year built, living area, bedrooms, bathrooms, quality of construction, etc. Need frontend testing to verify the detailed assessment information section displays correctly with the comprehensive PVSC data."
 
 frontend:
   - task: "Halifax Boundary Thumbnail Display"
