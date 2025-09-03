@@ -484,6 +484,25 @@ class User(BaseModel):
     updated_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
 
+# Favorites Models
+class Favorite(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    property_id: str  # assessment_number
+    municipality_name: str
+    property_address: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FavoriteCreate(BaseModel):
+    property_id: str  # assessment_number
+
+class FavoriteResponse(BaseModel):
+    id: str
+    property_id: str
+    municipality_name: str
+    property_address: str
+    created_at: datetime
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
