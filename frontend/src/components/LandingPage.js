@@ -257,7 +257,7 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
                   <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
                     {property.boundary_screenshot ? (
                       <img
-                        src={property.boundary_screenshot}
+                        src={`${process.env.REACT_APP_BACKEND_URL}/api/property-image/${property.assessment_number}?v=${Date.now()}`}
                         alt={property.property_address}
                         className="w-full h-full object-cover"
                       />
