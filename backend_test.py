@@ -2116,6 +2116,173 @@ def test_ns_government_parcel_api():
         print(f"   ❌ NS Government parcel API test error: {e}")
         return False, {"error": str(e)}
 
+def test_cumberland_county_property_images():
+    """Test Cumberland County property image 404 fix for specific properties"""
+    print("\n🖼️ Testing Cumberland County Property Image 404 Fix...")
+    print("🔍 FOCUS: GET /api/property-image/{assessment_number}")
+    print("📋 EXPECTED: 200 OK with satellite images for 3 problematic properties")
+    print("🎯 REVIEW REQUEST: Test fix for assessment numbers: 07486596, 01578626, 10802059")
+    
+    # The 3 problematic Cumberland County properties
+    test_properties = [
+        "07486596",
+        "01578626", 
+        "10802059"
+    ]
+    
+    results = {}
+    
+    # Get admin token for authentication
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    print(f"\n   Testing {len(test_properties)} Cumberland County properties...")
+    
+    for assessment_number in test_properties:
+        try:
+            print(f"\n   🔍 Testing property {assessment_number}:")
+            
+            response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", 
+                                  headers=headers, timeout=30)
+            
+            print(f"      Status Code: {response.status_code}")
+            print(f"      Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+            print(f"      Content-Length: {len(response.content)} bytes")
+            
+            if response.status_code == 200:
+                content_type = response.headers.get('Content-Type', '')
+                content_length = len(response.content)
+                
+                # Check if it's a valid image
+                if content_type in ['image/png', 'image/jpeg']:
+                    # Check if image size is reasonable (should be > 50KB for satellite images)
+                    if content_length > 50000:  # 50KB minimum
+                        print(f"      ✅ SUCCESS: Valid satellite image served")
+                        print(f"         - Content-Type: {content_type}")
+                        print(f"         - Size: {content_length:,} bytes ({content_length/1024:.1f} KB)")
+                        results[assessment_number] = {
+                            "success": True,
+                            "status_code": response.status_code,
+                            "content_type": content_type,
+                            "size_bytes": content_length,
+                            "size_kb": round(content_length/1024, 1)
+                        }
+                    else:
+                        print(f"      ❌ FAIL: Image too small ({content_length} bytes)")
+                        print(f"         Expected > 50KB for satellite images")
+                        results[assessment_number] = {
+                            "success": False,
+                            "error": "Image too small",
+                            "size_bytes": content_length
+                        }
+                else:
+                    print(f"      ❌ FAIL: Invalid content type: {content_type}")
+                    print(f"         Expected: image/png or image/jpeg")
+                    results[assessment_number] = {
+                        "success": False,
+                        "error": "Invalid content type",
+                        "content_type": content_type
+                    }
+            else:
+                print(f"      ❌ FAIL: HTTP {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"         Error: {error_data}")
+                except:
+                    print(f"         Raw response: {response.text[:100]}...")
+                
+                results[assessment_number] = {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "error": f"HTTP {response.status_code}"
+                }
+                
+        except Exception as e:
+            print(f"      ❌ ERROR: {e}")
+            results[assessment_number] = {
+                "success": False,
+                "error": str(e)
+            }
+    
+    # Test a few other properties to ensure fix didn't break existing functionality
+    print(f"\n   🔍 Testing other properties to verify no regression:")
+    
+    try:
+        # Get some other properties for regression testing
+        props_response = requests.get(f"{BACKEND_URL}/tax-sales?limit=5", timeout=30)
+        if props_response.status_code == 200:
+            properties_data = props_response.json()
+            if isinstance(properties_data, dict):
+                properties = properties_data.get('properties', [])
+            else:
+                properties = properties_data
+            
+            # Test 2-3 other properties
+            other_properties = []
+            for prop in properties:
+                assessment_num = prop.get('assessment_number')
+                if assessment_num and assessment_num not in test_properties:
+                    other_properties.append(assessment_num)
+                    if len(other_properties) >= 3:
+                        break
+            
+            regression_results = {}
+            for assessment_number in other_properties:
+                try:
+                    response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", 
+                                          headers=headers, timeout=15)
+                    
+                    if response.status_code == 200:
+                        content_type = response.headers.get('Content-Type', '')
+                        if content_type in ['image/png', 'image/jpeg']:
+                            print(f"      ✅ {assessment_number}: Working ({len(response.content)} bytes)")
+                            regression_results[assessment_number] = True
+                        else:
+                            print(f"      ❌ {assessment_number}: Invalid content type")
+                            regression_results[assessment_number] = False
+                    elif response.status_code == 404:
+                        print(f"      ⚠️ {assessment_number}: No image available (404) - expected for some properties")
+                        regression_results[assessment_number] = True  # 404 is acceptable
+                    else:
+                        print(f"      ❌ {assessment_number}: HTTP {response.status_code}")
+                        regression_results[assessment_number] = False
+                        
+                except Exception as e:
+                    print(f"      ❌ {assessment_number}: Error - {e}")
+                    regression_results[assessment_number] = False
+            
+            results["regression_test"] = regression_results
+            
+    except Exception as e:
+        print(f"      ⚠️ Could not perform regression testing: {e}")
+        results["regression_test"] = {"error": str(e)}
+    
+    # Calculate success rate
+    successful_properties = sum(1 for prop_result in results.values() 
+                               if isinstance(prop_result, dict) and prop_result.get("success") is True)
+    total_properties = len(test_properties)
+    
+    print(f"\n   📊 Cumberland County Property Image Results:")
+    print(f"      Target Properties: {successful_properties}/{total_properties} working")
+    print(f"      Success Rate: {(successful_properties/total_properties)*100:.1f}%")
+    
+    # Overall assessment
+    if successful_properties == total_properties:
+        print(f"   ✅ CUMBERLAND COUNTY 404 FIX: SUCCESS!")
+        print(f"      All 3 problematic properties now serve satellite images")
+        print(f"      Images are proper size (>50KB) and correct content-type")
+        return True, results
+    else:
+        failed_properties = [prop for prop, result in results.items() 
+                           if isinstance(result, dict) and not result.get("success")]
+        print(f"   ❌ CUMBERLAND COUNTY 404 FIX: PARTIAL SUCCESS")
+        print(f"      Failed properties: {failed_properties}")
+        return False, results
+
 def test_deployment_system():
     """Comprehensive test of the Halifax boundary data system"""
     print("\n🎯 COMPREHENSIVE HALIFAX BOUNDARY DATA SYSTEM TEST")
