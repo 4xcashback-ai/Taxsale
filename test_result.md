@@ -163,6 +163,21 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Municipality Scheduling System Bug Fix"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported that scheduling update and enable only works on Cumberland County, but not on Halifax or Victoria County municipalities"
+        - working: true
+          agent: "main"
+          comment: "FIXED: Root cause was missing schedule_enabled field in MunicipalityUpdate model. The API was accepting scheduling updates but ignoring the schedule_enabled field, so Halifax and Victoria County remained schedule_enabled: false. Fixed by adding 'schedule_enabled: Optional[bool] = None' to MunicipalityUpdate model in server.py. Now all municipalities can have scheduling enabled/disabled and updated properly. Verified: Cumberland County (weekly Tuesday 14:30), Victoria County (monthly day 15 at 14:00), Halifax (weekly Monday 10:30) all working."
+
   - task: "Cumberland County Property Image 404 Fix"
     implemented: true
     working: true
