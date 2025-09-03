@@ -3024,12 +3024,13 @@ async def create_tax_sale_property(property_data: TaxSalePropertyCreate):
     return property_obj
 
 # API endpoint for getting tax sale properties with filtering
-@api_router.get("/tax-sales", response_model=List[TaxSaleProperty])
+@api_router.get("/tax-sales", response_model=List[dict])
 async def get_tax_sale_properties(
     municipality: Optional[str] = Query(None, description="Filter by municipality name"),
     limit: int = Query(100, description="Number of results to return"),
     skip: int = Query(0, description="Number of results to skip"),
-    status: Optional[str] = Query(None, description="Filter by status: active, inactive, all")
+    status: Optional[str] = Query(None, description="Filter by status: active, inactive, all"),
+    current_user: Optional[dict] = Depends(get_current_user_optional)
 ):
     # Build query filter
     query = {}
@@ -3049,7 +3050,32 @@ async def get_tax_sale_properties(
     
     # Get properties with filtering
     properties = await db.tax_sales.find(query).skip(skip).limit(limit).to_list(limit)
-    return [TaxSaleProperty(**prop) for prop in properties]
+    
+    # Add favorite information to each property
+    enhanced_properties = []
+    user_favorites = set()
+    
+    # Get user's favorites if authenticated and paid
+    if current_user and current_user.get("subscription_tier") == "paid":
+        user_favorites_docs = await db.favorites.find({"user_id": current_user["id"]}).to_list(100)
+        user_favorites = {fav["property_id"] for fav in user_favorites_docs}
+    
+    for prop in properties:
+        # Get favorite count for this property
+        favorite_count = await db.favorites.count_documents({"property_id": prop["assessment_number"]})
+        
+        # Create enhanced property dict
+        enhanced_prop = dict(prop)
+        enhanced_prop["favorite_count"] = favorite_count
+        enhanced_prop["is_favorited"] = prop["assessment_number"] in user_favorites
+        
+        # Remove MongoDB _id if present
+        if "_id" in enhanced_prop:
+            del enhanced_prop["_id"]
+            
+        enhanced_properties.append(enhanced_prop)
+    
+    return enhanced_properties
 
 @api_router.get("/tax-sales/search")
 async def search_tax_sales(
