@@ -164,19 +164,22 @@ test_plan:
   test_priority: "high_first"
 
   - task: "Cumberland County Property Image 404 Fix"
-    implemented: false
-    working: false
-    file: "backend/server.py"
+    implemented: true
+    working: true
+    file: "backend/server.py, fix_cumberland_coordinates.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
           agent: "user"
           comment: "User reported 404 errors for property images for 3 Cumberland County properties (07486596, 01578626, 10802059) when accessing /api/property-image/{assessment_number} endpoint"
         - working: false
-          agent: "main"
+          agent: "main"  
           comment: "PROBLEM DIAGNOSED: The 3 Cumberland County properties have incorrect boundary_screenshot filenames in database. Database has 'boundary_07486596.png' format but filesystem has 'boundary_25330655_07486596.png' format (PID_assessment pattern). Properties have valid PIDs (25330655, 25254327, 25240243), government boundary data exists, but missing lat/lng coordinates due to empty property addresses. Solution: Update database boundary_screenshot filenames to match actual filesystem pattern."
+        - working: true
+          agent: "main"
+          comment: "FIXED: Root cause was missing coordinates (latitude/longitude) for the 3 Cumberland County properties. Properties had valid PIDs and government boundary data, but coordinates were null. Fixed by: 1) Running /api/batch-process-ns-government-boundaries to update boundary_screenshot filenames to correct format (boundary_25330655_07486596.png, boundary_25240243_01578626.png, boundary_25254327_10802059.png). 2) Created fix_cumberland_coordinates.py script to extract coordinates from government boundary data and update database (07486596: 45.41093, -64.31877; 01578626: 45.64899, -64.05637; 10802059: 45.98123, -64.04294). 3) Property image endpoint now works - fallback to Google Maps satellite images using the coordinates. All 3 properties now return 200 OK for /api/property-image/{assessment_number} requests."
 
 agent_communication:
     - agent: "main"
