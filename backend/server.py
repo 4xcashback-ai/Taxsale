@@ -1014,6 +1014,10 @@ async def scrape_halifax_tax_sales():
                 redeemable_status = prop.get("redeemable_status", "Contact HRM for redemption details")
                 hst_status = prop.get("hst_status", "Contact HRM for HST details")
                 
+                # Format sale date for display
+                sale_date_obj = datetime.fromisoformat(sale_date.replace('Z', '+00:00'))
+                formatted_date = sale_date_obj.strftime("%B %d, %Y")
+                
                 # Create property record with status tracking
                 property_data = {
                     "municipality_id": municipality_id,
@@ -1023,7 +1027,7 @@ async def scrape_halifax_tax_sales():
                     "opening_bid": opening_bid,
                     "sale_date": sale_date,
                     "sale_time": "10:01 AM",
-                    "sale_location": "Halifax Regional Municipality - Public Tender (Open until closing date)",
+                    "sale_location": f"Halifax Regional Municipality - Public Tender (Closes {formatted_date} at 10:01 AM)",
                     "assessment_number": assessment_num,
                     "property_type": property_type,
                     "owner_name": owner_name,
