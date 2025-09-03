@@ -59,6 +59,7 @@ const AuthenticatedApp = () => {
   
   // All the existing app state and functions
   const [taxSales, setTaxSales] = useState([]);
+  const [allProperties, setAllProperties] = useState([]); // For statistics header - always shows all properties
   const [municipalities, setMunicipalities] = useState([]);
   const [stats, setStats] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
