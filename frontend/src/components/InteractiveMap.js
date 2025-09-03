@@ -263,11 +263,32 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
   }, [map, properties, onPropertySelect]);
 
   return (
-    <div 
-      ref={mapRef} 
-      style={{ width: '100%', height: '500px' }}
-      className="rounded-lg border border-gray-300"
-    />
+    <div className="relative">
+      <div 
+        ref={mapRef} 
+        style={{ width: '100%', height: '500px' }}
+        className="rounded-lg border border-gray-300"
+      />
+      
+      {/* Property count indicator */}
+      {properties && properties.length > 0 && (
+        <div className="absolute top-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md">
+          <div className="text-sm font-medium text-gray-700">
+            {properties.filter(p => p.latitude && p.longitude).length} properties on map
+          </div>
+        </div>
+      )}
+      
+      {/* Loading indicator */}
+      {!map && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading map...</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
