@@ -227,6 +227,9 @@ const AuthenticatedApp = () => {
     try {
       const response = await axios.post(`${API}/api/municipalities`, newMunicipality);
       setMunicipalities([...municipalities, response.data]);
+      
+      // Refresh municipalities to ensure scheduling info is up to date
+      fetchMunicipalities();
       setNewMunicipality({
         name: '',
         website_url: '',
