@@ -451,6 +451,7 @@ class TaxSaleProperty(BaseModel):
     auction_result_updated_at: Optional[datetime] = None
     winning_bid_amount: Optional[float] = None  # Final sale amount if sold
     boundary_screenshot: Optional[str] = None  # Path to viewpoint.ca boundary screenshot
+    government_boundary_data: Optional[dict] = None  # Boundary data from NS Government NSPRD service
 
 # User Management Models
 class User(BaseModel):
