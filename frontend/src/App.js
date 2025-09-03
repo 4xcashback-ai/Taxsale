@@ -119,7 +119,7 @@ const AuthenticatedApp = () => {
   // Fetch ALL properties for statistics header (unfiltered)
   const fetchAllProperties = async () => {
     try {
-      const response = await axios.get(`${API}/api/tax-sales`); // No filters - get all properties
+      const response = await axios.get(`${API}/api/tax-sales?status=all&limit=1000`); // Get ALL properties including inactive
       setAllProperties(response.data);
     } catch (error) {
       console.error("Error fetching all properties:", error);
