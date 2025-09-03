@@ -201,6 +201,35 @@ const AuthenticatedApp = () => {
     window.open(`/property/${property.assessment_number}`, '_blank');
   };
 
+  const toggleFavorite = async (property) => {
+    if (!user || user.subscription_tier !== 'paid') {
+      setUpgradeModalProperty(property);
+      setUpgradeModalOpen(true);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.post(
+        `${API}/api/favorites/toggle`,
+        { assessment_number: property.assessment_number },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update the property in the taxSales array
+      setTaxSales(prevSales => 
+        prevSales.map(p => 
+          p.assessment_number === property.assessment_number 
+            ? { ...p, is_favorited: response.data.is_favorited, favorite_count: response.data.favorite_count }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      alert('Error updating favorite status. Please try again.');
+    }
+  };
+
   const formatCurrency = (amount) => {
     if (!amount) return "$0";
     return new Intl.NumberFormat('en-CA', {
