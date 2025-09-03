@@ -5121,6 +5121,84 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user)):
         created_at=current_user["created_at"]
     )
 
+# Favorites Endpoints
+@api_router.get("/favorites", response_model=List[FavoriteResponse])
+async def get_user_favorites(current_user: dict = Depends(get_current_user)):
+    """Get current user's favorite properties (paid users only)"""
+    check_paid_user_access(current_user)
+    
+    favorites = await db.favorites.find({"user_id": current_user["id"]}).to_list(100)
+    
+    return [FavoriteResponse(
+        id=fav["id"],
+        property_id=fav["property_id"],
+        municipality_name=fav["municipality_name"],
+        property_address=fav["property_address"],
+        created_at=fav["created_at"]
+    ) for fav in favorites]
+
+@api_router.post("/favorites")
+async def add_to_favorites(favorite_data: FavoriteCreate, current_user: dict = Depends(get_current_user)):
+    """Add property to favorites (paid users only, max 50)"""
+    check_paid_user_access(current_user)
+    
+    # Check if user already has 50 favorites
+    favorites_count = await db.favorites.count_documents({"user_id": current_user["id"]})
+    if favorites_count >= 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 properties can be favorited")
+    
+    # Check if property exists
+    property_doc = await db.tax_sales.find_one({"assessment_number": favorite_data.property_id})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    # Check if already favorited
+    existing = await db.favorites.find_one({
+        "user_id": current_user["id"],
+        "property_id": favorite_data.property_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Property already in favorites")
+    
+    # Create favorite
+    favorite = Favorite(
+        user_id=current_user["id"],
+        property_id=favorite_data.property_id,
+        municipality_name=property_doc["municipality_name"],
+        property_address=property_doc["property_address"]
+    )
+    
+    await db.favorites.insert_one(favorite.dict())
+    
+    return {"message": "Property added to favorites", "favorite_id": favorite.id}
+
+@api_router.delete("/favorites/{property_id}")
+async def remove_from_favorites(property_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove property from favorites (paid users only)"""
+    check_paid_user_access(current_user)
+    
+    result = await db.favorites.delete_one({
+        "user_id": current_user["id"],
+        "property_id": property_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Property not in favorites")
+    
+    return {"message": "Property removed from favorites"}
+
+@api_router.get("/favorites/check/{property_id}")
+async def check_if_favorited(property_id: str, current_user: dict = Depends(get_current_user)):
+    """Check if property is in user's favorites (paid users only)"""
+    check_paid_user_access(current_user)
+    
+    favorite = await db.favorites.find_one({
+        "user_id": current_user["id"],
+        "property_id": property_id
+    })
+    
+    return {"is_favorited": favorite is not None}
+
 @api_router.post("/admin/fix-property-images")
 async def fix_property_images(current_user: dict = Depends(verify_token)):
     """Fix property images with malformed URLs (migration helper)"""
