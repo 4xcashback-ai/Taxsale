@@ -81,6 +81,13 @@ const AuthenticatedApp = () => {
   });
   const [editingMunicipality, setEditingMunicipality] = useState(null);
 
+  // Deployment state
+  const [deploymentStatus, setDeploymentStatus] = useState({});
+  const [deploymentLoading, setDeploymentLoading] = useState(false);
+  const [githubRepo, setGithubRepo] = useState('');
+  const [systemHealth, setSystemHealth] = useState({});
+  const [updateCheckResult, setUpdateCheckResult] = useState({});
+
   // Environment variables with fallbacks
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
