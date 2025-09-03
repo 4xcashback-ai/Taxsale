@@ -3294,8 +3294,8 @@ async def capture_satellite_thumbnails_batch(batch_size: int = 5):
         logger.error(f"Error capturing satellite thumbnails: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/property/{assessment_number}/boundary-image")
-async def get_property_boundary_image(assessment_number: str):
+@api_router.get("/property/{assessment_number}/boundary-info")
+async def get_property_boundary_info(assessment_number: str):
     """Get boundary screenshot for a specific property"""
     try:
         property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
