@@ -3057,8 +3057,11 @@ async def get_tax_sale_properties(
     
     # Get user's favorites if authenticated and paid
     if current_user and current_user.get("subscription_tier") == "paid":
-        user_favorites_docs = await db.favorites.find({"user_id": current_user["id"]}).to_list(100)
-        user_favorites = {fav["property_id"] for fav in user_favorites_docs}
+        # Handle both regular users (with "id") and admin users (with "username")
+        user_id = current_user.get("id") or current_user.get("username")
+        if user_id:
+            user_favorites_docs = await db.favorites.find({"user_id": user_id}).to_list(100)
+            user_favorites = {fav["property_id"] for fav in user_favorites_docs}
     
     for prop in properties:
         # Get favorite count for this property
