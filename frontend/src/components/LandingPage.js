@@ -4,6 +4,8 @@ import { Eye, Search, MapPin, Users, CheckCircle, ArrowRight, Star, TrendingUp }
 const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+
   // Function to get province flag emoji
   const getProvinceFlag = (provinceName) => {
     const provinceFlags = {
