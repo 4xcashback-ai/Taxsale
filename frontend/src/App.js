@@ -275,6 +275,9 @@ const AuthenticatedApp = () => {
         m.id === editingMunicipality.id ? response.data : m
       ));
       
+      // Refresh municipalities to ensure scheduling info is up to date
+      fetchMunicipalities();
+      
       // Reset form
       setEditingMunicipality(null);
       setNewMunicipality({
