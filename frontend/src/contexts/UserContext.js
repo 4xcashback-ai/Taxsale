@@ -60,7 +60,7 @@ export const UserProvider = ({ children }) => {
             const adminUser = {
               id: 'admin',
               email: 'admin@taxsalecompass.ca',
-              subscription_tier: 'admin'
+              subscription_tier: 'paid'
             };
             setUser(adminUser);
             setIsAuthenticated(true);
