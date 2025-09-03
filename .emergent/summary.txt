@@ -1,24 +1,24 @@
 <analysis>
-The AI engineer's work on Tax Sale Compass involved extensive feature development, bug fixes, and system stabilization following an accidental code rewrite. Initial efforts focused on restoring critical UI components like interactive maps and the admin panel, resolving environment variable conflicts, and ensuring proper API routing. A major deliverable was a robust VPS deployment system, complete with backend endpoints, shell scripts, and an intuitive frontend UI. Authentication was a recurring challenge, requiring meticulous debugging of login flows and  issues. Significant work went into data consistency and media generation, including fixing Halifax boundary data extraction, thumbnail generation, and preserving these images during scraper updates. New features such as a Cumberland County scraper and a comprehensive scheduling system were implemented. Frontend issues like a statistics header bug and AdSense duplication were also resolved. The current focus is on restoring detailed PVSC assessment information on property detail pages by creating a new backend API endpoint.
+The trajectory details an extensive development and debugging phase for the Tax Sale Compass application. Initially, the AI engineer addressed a user report about missing PVSC data, leading to the discovery of duplicate backend endpoints for enhanced property details. This involved removing the problematic Playwright-based endpoint, then fixing subsequent 401 authentication errors for admin users by unifying token usage and adjusting  logic. The AI engineer also corrected the admin's subscription status from free to paid across frontend contexts. User feedback prompted fixes for Victoria County properties, which were incorrectly set to active and lacked auction results; these were updated to inactive with a pending auction status. The UI's statistics display was then updated to correctly reflect inactive properties by adjusting API calls. Further, a province-tracking system with authentic Nova Scotia flags was implemented on the landing page and authenticated header. Finally, the AI engineer systematically resolved several console errors, including authentication 401s and token inconsistencies, leaving the property image 404s (due to geocoding issues) as a recognized pending task.
 </analysis>
 
 <product_requirements>
-The Tax Sale Compass application aims to be a central hub for Nova Scotia tax sale data, providing an interactive map, PDF scraping, property filtering, Google Maps integration, and detailed property pages. Initial requirements included Google AdSense and an admin interface for municipality management and scraping, with a key feature being in-app deployment automation. Subsequent tasks involved debugging  errors, malformed image URLs, No updates available discrepancies, and implementing robust admin authentication for a bulletproof deployment system. The system required enhanced property data handling for multiple Parcel Identification Numbers (PIDs) for combined display on maps. Further enhancements included a sophisticated auction status system, tracking winning bids, and a smart scheduler. A comprehensive landing page was requested, featuring user accounts (free/paid tiers), displaying limited properties/thumbnails, and requiring account creation for detailed views. User tiers (free/paid/admin) dictate access to property details. Recent additions include a Cumberland County scraper and a generic scraper scheduling system.
+The Tax Sale Compass application aims to centralize Nova Scotia tax sale data, offering an interactive map, PDF scraping, property filtering, and detailed property pages. Key features include Google AdSense, an admin interface for municipality and scraper management, and in-app deployment automation. Initial requirements involved resolving s, malformed image URLs, data discrepancies, and robust admin authentication for a bulletproof deployment system. The system handles multiple Parcel Identification Numbers (PIDs) for map display, tracks auction statuses (winning bids), and features a smart scheduler. A comprehensive landing page was requested with user accounts (free/paid tiers), displaying limited properties/thumbnails, and requiring account creation for detailed views. User tiers (free/paid/admin) dictate access. Recent additions include a Cumberland County scraper and a generic scraper scheduling system. Subsequent requests in the trajectory involved restoring detailed PVSC assessment information, setting admin as a subscribing member, accurately displaying Victoria County property statuses (from active to pending inactive), implementing province tracking with flags on the landing page and header, and adding comprehensive scraper scheduling (daily/weekly/monthly).
 </product_requirements>
 
 <key_technical_concepts>
 - Full-stack Development: React (frontend), FastAPI (backend), MongoDB (database).
-- Authentication: JWT, bcrypt hashing, React UserContext.
-- API Integration: Google Maps Static API, Google Maps JavaScript API, SendGrid, viewpoint.ca (PVSC).
-- Frontend Frameworks: React Router, Tailwind CSS, Lucide React icons.
-- Backend Libraries: , , .
-- Deployment: backend                          RUNNING   pid 27, uptime 0:00:04
-code-server                      RUNNING   pid 29, uptime 0:00:04
-frontend                         STOPPING  
-mongodb                          RUNNING   pid 35, uptime 0:00:04
-supervisor> , shell scripting for VPS deployment.
-- GeoSpatial Data: PIDs, boundary geometries, thumbnail generation.
-- Scheduling: Background tasks for scraper automation.
+- Authentication: JWT, React UserContext, admin-specific logic.
+- API Integration: Google Maps, viewpoint.ca (PVSC).
+- Data Scraping: Playwright and aiohttp/BeautifulSoup.
+- UI/UX: Tailwind CSS, dynamic data display, conditional rendering.
+- Deployment: backend                          RUNNING   pid 28, uptime 0:00:05
+code-server                      RUNNING   pid 30, uptime 0:00:05
+frontend                         RUNNING   pid 31, uptime 0:00:05
+mongodb                          RUNNING   pid 34, uptime 0:00:05
+supervisor> , environment variables for URLs.
+- GeoSpatial Data: PIDs, boundary image generation (pending geocoding).
+- Scheduling: Backend infrastructure and frontend UI for scraper automation.
 </key_technical_concepts>
 
 <code_architecture>
@@ -27,88 +27,54 @@ supervisor> , shell scripting for VPS deployment.
 - ****:
     - **Importance**: The core FastAPI application, handling all API endpoints and database interactions.
     - **Changes Made**:
-        - Implemented JWT authentication and admin login endpoints ().
-        - Added  endpoints and associated shell script execution logic for VPS deployment.
-        - Enhanced Halifax scraper to fetch NS Government boundary data and populate  field in  model.
-        - Modified Halifax scraper to preserve existing, correct boundary screenshot filenames during updates.
-        - Created a dedicated  scraper, integrated into the main  function, and added browser-like headers for requests.
-        - Extended  model with , , and  for automated scheduling.
-        - Implemented API endpoints for managing and viewing scraper schedules and a background task for execution.
-        - Added  to  and updated Halifax, Victoria County, and Cumberland County scrapers to set this field correctly.
-        - Fixed timezone comparison issues in scheduling status calculation.
-        - *Currently implementing*:  to fetch detailed PVSC assessment data.
+        - Removed duplicate  endpoint (Playwright-based).
+        - Fixed  and  to properly handle admin users by providing a  object instead of looking them up in the user database.
+        - Fixed an exception handling bug where 401/403 errors were converted to 500.
+        - Modified the  endpoint to accept  to return all properties, including inactive ones.
+        - Updated Victoria County properties'  to inactive and  to pending.
 
 - ****:
     - **Importance**: Main React component managing global state, routing, and UI layout.
     - **Changes Made**:
-        - Fixed API calls to use  and  prefix.
-        - Implemented conditional rendering for  vs .
-        - Added the Deployment Management section to the admin panel UI.
-        - Fixed the statistics header to always display total counts, independent of filters, by using a separate  state.
-        - Added import for  icon to resolve a .
-        - Fixed AdSense duplication errors by ensuring  runs only once.
-        - Modified the property list rendering to dynamically insert search page ads (AdSense) between property rows every 6 items, spanning full width.
+        - Updated statistics header to accurately reflect 3 Inactive properties by ensuring  uses  when querying the backend.
+        - Implemented UI for scraper scheduling (daily, weekly, monthly options) within the municipality management section.
+        - Updated , , and  to include and reset new scheduling fields, and added  for real-time UI refresh.
+        - Unified  to  for deployment functions for consistency.
+        - Updated the authenticated app's header to display Provinces Covered with a dynamic count and a real Nova Scotia flag image, consistent with the landing page.
 
 - ****:
-    - **Importance**: Displays detailed property information including maps and assessment data.
-    - **Changes Made**: Now attempts to fetch enhanced property details from the new  endpoint.
+    - **Importance**: Displays detailed property information.
+    - **Changes Made**: Added  header to the fetch request for the enhanced property details endpoint, as it now requires authentication.
 
 - ****:
     - **Importance**: Manages global user authentication state.
-    - **Changes Made**: Updated to correctly handle admin login using  and standard user login via , and improved  function.
+    - **Changes Made**: Modified the hardcoded admin user object to have  in  and  functions to treat admin as a paid subscriber.
 
 - ****:
-    - **Importance**: Stores backend environment variables.
-    - **Changes Made**: Added/updated , , , , , , .
-
-- ****:
-    - **Importance**: Stores frontend environment variables.
-    - **Changes Made**: Repeatedly fixed  to  and .
-
-- **Usage: /app/scripts/deployment.sh {deploy|check-updates|rollback|verify} [github-repo-url]
-
-Commands:
-  deploy [repo-url]    - Deploy latest code from GitHub
-  check-updates        - Check if updates are available
-  rollback [backup]    - Rollback to a specific backup
-  verify              - Verify current deployment
-
-Examples:
-  /app/scripts/deployment.sh deploy https://github.com/user/nstaxsales.git
-  /app/scripts/deployment.sh check-updates
-  /app/scripts/deployment.sh verify**:
-    - **Importance**: Core script for automated VPS deployments.
-    - **Changes Made**: Enhanced with safety features like automatic backup, rollback, and health checks.
-
-- **{
-    "status": "idle",
-    "last_deployment": "",
-    "last_check": "2025-09-03T16:15:17+00:00",
-    "updates_available": false,
-    "health_status": "unknown",
-    "current_commit": "414bbcf",
-    "remote_commit": "unknown",
-    "message": "Deployment is operational"
-}**:
-    - **Importance**: Provides deployment status and diagnostics.
-    - **Changes Made**: Enhanced to provide more detailed system information.
+    - **Importance**: The entry point for unauthenticated users, displaying high-level statistics.
+    - **Changes Made**:
+        - Removed Properties Tracked section.
+        - Moved Provinces Covered to the primary statistics position.
+        - Added dynamic province count (currently 1) and a real Nova Scotia flag image ().
+        - Updated  to include  to ensure inactive properties are included in sample data for statistics.
 
 </code_architecture>
 
 <pending_tasks>
+- Fix geocoding for 3 Cumberland County properties (07486596, 01578626, 10802059) to enable thumbnail generation and resolve 404 errors for property images.
 - Implement email alerts for new tax sales.
 - Implement property history tracking and analytics.
 - Finalize Kubernetes ingress/proxy routing for boundary generation endpoints.
-- Ensure development environment stability and functionality.
-- Fix geocoding for 3 Cumberland County properties (07486596, 01578626, 10802059) to enable thumbnail generation.
-- Reconcile  for Victoria County properties (currently ).
-- Clarify desired status for Victoria County properties (active/inactive).
+- Ensure development environment stability and functionality (minor Google Maps async loading warning).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was working on restoring the Detailed Assessment Information (PVSC data) on the property details page. This information was missing because the frontend component  was attempting to fetch it from a non-existent backend endpoint: . The AI engineer had just identified this missing endpoint and confirmed existing backend integration with  (PVSC). The current task involved creating this new  endpoint in  to fetch and provide the detailed PVSC assessment data to the frontend. The last action was successfully adding the initial logic for this new endpoint.
+Immediately before this summary, the AI engineer was focused on resolving multiple JavaScript console errors observed in the preview environment. This included addressing  errors from  and  endpoints by:
+1.  **Updating **: Modified the  function (and re-verified ) to properly handle admin users, ensuring the admin's  is correctly set to paid and that JWT tokens are processed for admin access.
+2.  **Updating **: Standardized the token key used in  from  to  across all deployment-related frontend functions to resolve authentication inconsistencies.
+The Google Maps API loading warning was noted as a minor performance issue but not a critical error. The  errors for Cumberland County property images were identified as a known, pending geocoding issue, not a direct application error. All major authentication-related console errors were successfully resolved, resulting in a cleaner, more robust application.
 </current_work>
 
 <optional_next_step>
-Restart the backend service to make the newly created  endpoint available.
+The next step is to address the pending task of fixing geocoding for the 3 Cumberland County properties.
 </optional_next_step>

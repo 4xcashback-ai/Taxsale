@@ -14,7 +14,7 @@ import time
 
 # Get backend URL from environment
 import os
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://assessment-finder.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-hub.preview.emergentagent.com') + '/api'
 
 # Admin credentials for testing
 ADMIN_USERNAME = "admin"
