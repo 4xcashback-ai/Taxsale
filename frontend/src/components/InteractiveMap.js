@@ -188,16 +188,48 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
               position: { 
                 lat: parseFloat(property.latitude), 
                 lng: parseFloat(property.longitude) 
-            },
-            map: map,
-            title: property.property_address,
-            icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: markerColor,
-              fillOpacity: 0.8,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 2
+              },
+              map: map,
+              title: `${property.property_address} - $${parseFloat(property.opening_bid || 0).toLocaleString()}`,
+              icon: {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: markerColor,
+                fillOpacity: 0.8,
+                strokeColor: '#FFFFFF',
+                strokeWeight: 2
+              }
+            });
+
+            // Add click listener to fallback marker
+            marker.addListener('click', () => {
+              if (onPropertySelect) {
+                onPropertySelect(property);
+              }
+            });
+
+            newMarkers.push(marker);
+          }
+        }
+
+        setMarkers(newMarkers);
+        setPolygons(newPolygons);
+      };
+
+      loadPropertiesWithBoundaries();
+    }
+  }, [map, properties, onPropertySelect]);
+
+  return (
+    <div 
+      ref={mapRef} 
+      style={{ width: '100%', height: '500px' }}
+      className="rounded-lg border border-gray-300"
+    />
+  );
+};
+
+export default InteractiveMap;
             }
           });
 
