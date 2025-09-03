@@ -1055,6 +1055,30 @@ async def scrape_halifax_tax_sales():
                 else:
                     logger.warning(f"Could not geocode {assessment_num}: {address_for_geocoding}")
                 
+                # Fetch boundary data using PID if available
+                boundary_data = None
+                if pid:
+                    try:
+                        logger.info(f"Fetching boundary data for Halifax property {assessment_num}, PID: {pid}")
+                        boundary_response = await query_ns_government_parcel(pid)
+                        if boundary_response.get('found'):
+                            # Accept response if it has either regular geometry or combined_geometry (for multi-PID)
+                            if (boundary_response.get('geometry') or 
+                                boundary_response.get('combined_geometry')):
+                                boundary_data = boundary_response
+                                property_data["government_boundary_data"] = boundary_data
+                                logger.info(f"Successfully fetched boundary data for {assessment_num}")
+                            else:
+                                logger.warning(f"Boundary response found but no geometry data for {assessment_num}")
+                        else:
+                            logger.warning(f"No boundary data found for Halifax property {assessment_num}, PID: {pid}")
+                    except Exception as boundary_error:
+                        logger.warning(f"Error fetching boundary data for Halifax property {assessment_num}: {boundary_error}")
+                
+                # Set boundary screenshot filename if boundary data exists
+                if boundary_data:
+                    property_data["boundary_screenshot"] = f"boundary_{assessment_num}.png"
+                
                 # Check if property already exists using a unique combination
                 # Use assessment number if available, otherwise use owner name + description
                 if assessment_num:
