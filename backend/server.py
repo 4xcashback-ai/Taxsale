@@ -2710,6 +2710,7 @@ def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
                     "property_type": property_type,
                     "lot_size": lot_size,
                     "sale_location": sale_location,  # Use extracted sale location
+                    "sale_type": "public_auction",  # Victoria County uses traditional public auction
                     "status": "active",
                     "redeemable": redeemable,
                     "hst_applicable": "No" if "+ HST" not in section else "Yes",
