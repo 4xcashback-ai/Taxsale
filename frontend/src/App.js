@@ -213,10 +213,104 @@ const AuthenticatedApp = () => {
         scrape_enabled: false,
         scraper_type: 'halifax'
       });
+      alert('Municipality added successfully!');
     } catch (error) {
       console.error('Error adding municipality:', error);
       alert('Error adding municipality. Please try again.');
     }
+  };
+
+  const handleEditMunicipality = (municipality) => {
+    setEditingMunicipality(municipality);
+    setNewMunicipality({
+      name: municipality.name,
+      website_url: municipality.website_url,
+      scrape_enabled: municipality.scrape_enabled,
+      scraper_type: municipality.scraper_type
+    });
+  };
+
+  const handleUpdateMunicipality = async () => {
+    if (!editingMunicipality || !newMunicipality.name.trim() || !newMunicipality.website_url.trim()) return;
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.put(`${API}/api/municipalities/${editingMunicipality.id}`, newMunicipality, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setMunicipalities(municipalities.map(m => 
+        m.id === editingMunicipality.id ? response.data : m
+      ));
+      
+      // Reset form
+      setEditingMunicipality(null);
+      setNewMunicipality({
+        name: '',
+        website_url: '',
+        scrape_enabled: false,
+        scraper_type: 'halifax'
+      });
+      
+      alert('Municipality updated successfully!');
+    } catch (error) {
+      console.error('Error updating municipality:', error);
+      alert('Error updating municipality. Please try again.');
+    }
+  };
+
+  const handleDeleteMunicipality = async (municipalityId, municipalityName) => {
+    if (!window.confirm(`Are you sure you want to delete "${municipalityName}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.delete(`${API}/api/municipalities/${municipalityId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setMunicipalities(municipalities.filter(m => m.id !== municipalityId));
+      alert('Municipality deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting municipality:', error);
+      alert('Error deleting municipality. Please try again.');
+    }
+  };
+
+  const handleScrapeData = async (municipalityId, municipalityName) => {
+    if (!window.confirm(`Start scraping data for "${municipalityName}"? This may take several minutes.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.post(`${API}/api/scrape/${municipalityId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert(`Scraping started for ${municipalityName}. Check back in a few minutes for updated data.`);
+      
+      // Refresh data after scraping
+      setTimeout(() => {
+        fetchTaxSales();
+        fetchAllProperties();
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error starting scrape:', error);
+      alert('Error starting scrape: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingMunicipality(null);
+    setNewMunicipality({
+      name: '',
+      website_url: '',
+      scrape_enabled: false,
+      scraper_type: 'halifax'
+    });
   };
 
   // Deployment functions
