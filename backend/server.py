@@ -2308,13 +2308,20 @@ async def get_scheduled_scrapes_status(current_user: dict = Depends(verify_token
         scheduled_municipalities = []
         for municipality in municipalities:
             next_scrape = municipality.get("next_scheduled_scrape")
+            overdue = False
+            if next_scrape:
+                # Ensure both datetimes are timezone-aware for comparison
+                if next_scrape.tzinfo is None:
+                    next_scrape = next_scrape.replace(tzinfo=timezone.utc)
+                overdue = next_scrape < now
+            
             scheduled_municipalities.append({
                 "municipality_id": municipality["id"],
                 "municipality_name": municipality["name"],
                 "schedule": municipality.get("scrape_schedule"),
                 "next_scheduled_scrape": next_scrape,
                 "scrape_enabled": municipality.get("scrape_enabled", True),
-                "overdue": next_scrape and next_scrape < now if next_scrape else False
+                "overdue": overdue
             })
         
         # Sort by next scrape time
