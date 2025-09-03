@@ -2285,6 +2285,42 @@ async def get_municipality_scraping_schedule(
         logger.error(f"Error getting municipality schedule: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get schedule: {str(e)}")
 
+@api_router.get("/scheduled-scrapes/status")
+async def get_scheduled_scrapes_status(current_user: dict = Depends(verify_token)):
+    """Get status of all scheduled scrapes"""
+    try:
+        now = datetime.now(timezone.utc)
+        
+        # Get all municipalities with scheduling enabled
+        municipalities = await db.municipalities.find({
+            "schedule_enabled": True
+        }).to_list(length=None)
+        
+        scheduled_municipalities = []
+        for municipality in municipalities:
+            next_scrape = municipality.get("next_scheduled_scrape")
+            scheduled_municipalities.append({
+                "municipality_id": municipality["id"],
+                "municipality_name": municipality["name"],
+                "schedule": municipality.get("scrape_schedule"),
+                "next_scheduled_scrape": next_scrape,
+                "scrape_enabled": municipality.get("scrape_enabled", True),
+                "overdue": next_scrape and next_scrape < now if next_scrape else False
+            })
+        
+        # Sort by next scrape time
+        scheduled_municipalities.sort(key=lambda x: x["next_scheduled_scrape"] or datetime.max.replace(tzinfo=timezone.utc))
+        
+        return {
+            "total_scheduled": len(scheduled_municipalities),
+            "municipalities": scheduled_municipalities,
+            "current_time": now
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting scheduled scrapes status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+
 # Background task scheduler
 async def scheduled_scraping_background_task():
     """Background task that runs every hour to check for scheduled scrapes"""
