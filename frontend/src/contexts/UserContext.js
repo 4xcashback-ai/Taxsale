@@ -82,14 +82,19 @@ export const UserProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('UserContext login attempt:', { email, password: '***' });
+      
       // Check if this is admin login
       if (email === 'admin@taxsalecompass.ca' || email === 'admin') {
+        console.log('Admin login detected, using /api/auth/login');
+        
         // Use admin login endpoint
         const response = await axios.post(`${API}/api/auth/login`, {
           username: 'admin',
           password
         });
 
+        console.log('Admin login response received:', response.status);
         const { access_token } = response.data;
         
         // Store token and create admin user object
@@ -106,14 +111,18 @@ export const UserProvider = ({ children }) => {
         setUser(adminUser);
         setIsAuthenticated(true);
 
+        console.log('Admin authentication successful, state updated');
         return { success: true, user: adminUser };
       } else {
+        console.log('Regular user login, using /api/users/login');
+        
         // Use regular user login endpoint
         const response = await axios.post(`${API}/api/users/login`, {
           email,
           password
         });
 
+        console.log('User login response received:', response.status);
         const { access_token, user: userData } = response.data;
         
         // Store token and user data for all users
@@ -122,9 +131,11 @@ export const UserProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
 
+        console.log('User authentication successful, state updated');
         return { success: true, user: userData };
       }
     } catch (error) {
+      console.error('Login error in UserContext:', error);
       const message = error.response?.data?.detail || 'Login failed';
       throw new Error(message);
     }
