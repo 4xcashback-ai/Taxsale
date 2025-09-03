@@ -1080,9 +1080,21 @@ async def scrape_halifax_tax_sales():
                     except Exception as boundary_error:
                         logger.warning(f"Error fetching boundary data for Halifax property {assessment_num}: {boundary_error}")
                 
-                # Set boundary screenshot filename if boundary data exists
+                # Set boundary screenshot filename if boundary data exists, but preserve existing proper thumbnails
                 if boundary_data:
-                    property_data["boundary_screenshot"] = f"boundary_{assessment_num}.png"
+                    # Check if property already exists to preserve existing boundary screenshots
+                    existing_property = await db.tax_sales.find_one({
+                        "assessment_number": assessment_num,
+                        "municipality_name": "Halifax Regional Municipality"
+                    })
+                    
+                    # Only set basic filename if no existing boundary screenshot or if it's the basic format
+                    if not existing_property or not existing_property.get('boundary_screenshot') or existing_property.get('boundary_screenshot') == f"boundary_{assessment_num}.png":
+                        property_data["boundary_screenshot"] = f"boundary_{assessment_num}.png"
+                    else:
+                        # Preserve existing proper boundary screenshot (e.g., boundary_pid_assessment.png)
+                        property_data["boundary_screenshot"] = existing_property.get('boundary_screenshot')
+                        logger.info(f"Preserving existing boundary screenshot for {assessment_num}: {existing_property.get('boundary_screenshot')}")
                 
                 # Check if property already exists using a unique combination
                 # Use assessment number if available, otherwise use owner name + description
