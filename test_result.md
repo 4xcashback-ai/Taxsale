@@ -94,7 +94,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Restore the detailed PVSC assessment information (enhanced property details) on property detail pages. The frontend component PropertyDetails.js was attempting to fetch from /api/property/{assessment_number}/enhanced endpoint but the correct endpoint was not being reached due to routing conflicts between duplicate endpoints."
+user_problem_statement: "Debug and fix the admin login and subscription status display issue on http://localhost:3000. Issues to investigate: 1. Admin login with credentials admin/TaxSale2025!SecureAdmin doesn't seem to complete successfully - login form keeps showing 2. Admin account should display 'Premium' badge instead of 'Free' after successful login"
 
 backend:
   - task: "Enhanced Property Details API Endpoint"
