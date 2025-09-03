@@ -448,6 +448,7 @@ class TaxSaleProperty(BaseModel):
     scraped_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_url: str
     raw_data: Optional[dict] = None  # Store original scraped data
+    sale_type: Optional[str] = None  # "public_auction", "public_tender", "sealed_bid", etc.
     status: str = "active"  # active, inactive (search availability)
     status_updated_at: Optional[datetime] = None
     auction_result: Optional[str] = None  # pending, sold, canceled, deferred, taxes_paid
