@@ -45,6 +45,39 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
     }
   };
 
+  // Load statistics data
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const backendUrl = process.env.REACT_APP_BACKEND_URL;
+        
+        // Load municipalities
+        const munResponse = await fetch(`${backendUrl}/api/municipalities`);
+        if (munResponse.ok) {
+          const munData = await munResponse.json();
+          setMunicipalities(munData);
+        }
+        
+        // Calculate stats from sample properties
+        const active = sampleProperties.filter(p => p.status === 'active').length;
+        const inactive = sampleProperties.filter(p => p.status === 'inactive').length;
+        
+        setStats({
+          municipalities: municipalities.length || 3, // Fallback to 3
+          active: active,
+          inactive: inactive,
+          total: sampleProperties.length,
+          scrapedToday: 0,
+          lastScrape: '2025-09-03'
+        });
+      } catch (error) {
+        console.error('Error loading statistics:', error);
+      }
+    };
+
+    loadStats();
+  }, [sampleProperties, municipalities.length]);
+
   const features = [
     {
       icon: <Search className="h-8 w-8 text-blue-600" />,
