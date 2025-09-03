@@ -2990,6 +2990,246 @@ def test_municipality_scheduling_system():
     
     return critical_tests_passed, results
 
+def test_municipality_scheduling_display():
+    """Test Municipality Scheduling Frontend Display Issue"""
+    print("\n🗓️ Testing Municipality Scheduling Display...")
+    print("🔍 FOCUS: GET /api/municipalities - verify scheduling data display")
+    print("📋 EXPECTED: All municipalities show correct scheduling information")
+    print("🎯 REVIEW REQUEST: Despite backend fixes, scheduling shows 'Manual scheduling only'")
+    
+    results = {}
+    
+    try:
+        # Test 1: Get municipalities without authentication
+        print(f"\n   Test 1: Get municipalities without authentication")
+        
+        response = requests.get(f"{BACKEND_URL}/municipalities", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            municipalities = response.json()
+            print(f"   ✅ Municipalities retrieved successfully")
+            print(f"   📋 Found {len(municipalities)} municipalities")
+            
+            # Check each municipality for scheduling data
+            expected_municipalities = {
+                "Cumberland County": {
+                    "schedule_enabled": True,
+                    "scrape_frequency": "weekly",
+                    "scrape_day_of_week": 2,  # Tuesday
+                    "scrape_time_hour": 14,
+                    "scrape_time_minute": 30
+                },
+                "Victoria County": {
+                    "schedule_enabled": True,
+                    "scrape_frequency": "weekly", 
+                    "scrape_day_of_week": 3,  # Wednesday
+                    "scrape_time_hour": 16,
+                    "scrape_time_minute": 0
+                },
+                "Halifax Regional Municipality": {
+                    "schedule_enabled": True,
+                    "scrape_frequency": "weekly",
+                    "scrape_day_of_week": 1,  # Monday
+                    "scrape_time_hour": 10,
+                    "scrape_time_minute": 30
+                }
+            }
+            
+            found_municipalities = {}
+            scheduling_issues = []
+            
+            for municipality in municipalities:
+                name = municipality.get("name", "Unknown")
+                found_municipalities[name] = municipality
+                
+                print(f"\n   📋 Municipality: {name}")
+                print(f"      Schedule Enabled: {municipality.get('schedule_enabled', 'NOT SET')}")
+                print(f"      Scrape Enabled: {municipality.get('scrape_enabled', 'NOT SET')}")
+                print(f"      Frequency: {municipality.get('scrape_frequency', 'NOT SET')}")
+                print(f"      Day of Week: {municipality.get('scrape_day_of_week', 'NOT SET')}")
+                print(f"      Time: {municipality.get('scrape_time_hour', 'NOT SET')}:{municipality.get('scrape_time_minute', 'NOT SET'):02d}")
+                
+                # Check if this municipality matches expected values
+                if name in expected_municipalities:
+                    expected = expected_municipalities[name]
+                    issues = []
+                    
+                    for field, expected_value in expected.items():
+                        actual_value = municipality.get(field)
+                        if actual_value != expected_value:
+                            issues.append(f"{field}: expected {expected_value}, got {actual_value}")
+                    
+                    if issues:
+                        scheduling_issues.extend([f"{name}: {issue}" for issue in issues])
+                        print(f"      ❌ Issues: {', '.join(issues)}")
+                    else:
+                        print(f"      ✅ Scheduling data matches expected values")
+            
+            # Check for missing municipalities
+            missing_municipalities = []
+            for expected_name in expected_municipalities.keys():
+                if expected_name not in found_municipalities:
+                    missing_municipalities.append(expected_name)
+            
+            if missing_municipalities:
+                print(f"\n   ❌ Missing municipalities: {missing_municipalities}")
+                scheduling_issues.extend([f"Missing municipality: {name}" for name in missing_municipalities])
+            
+            # Overall assessment for unauthenticated access
+            if not scheduling_issues:
+                print(f"\n   ✅ All municipalities have correct scheduling data (unauthenticated)")
+                results["unauthenticated_access"] = True
+            else:
+                print(f"\n   ❌ Scheduling issues found (unauthenticated): {len(scheduling_issues)}")
+                for issue in scheduling_issues:
+                    print(f"      - {issue}")
+                results["unauthenticated_access"] = False
+            
+            results["unauthenticated_data"] = {
+                "municipalities_count": len(municipalities),
+                "scheduling_issues": scheduling_issues,
+                "municipalities": found_municipalities
+            }
+            
+        else:
+            print(f"   ❌ Failed to get municipalities without auth: {response.status_code}")
+            results["unauthenticated_access"] = False
+            results["unauthenticated_data"] = {"error": f"HTTP {response.status_code}"}
+        
+        # Test 2: Get municipalities with admin authentication
+        print(f"\n   Test 2: Get municipalities with admin authentication")
+        
+        admin_token = get_admin_token()
+        if admin_token:
+            headers = {"Authorization": f"Bearer {admin_token}"}
+            
+            response = requests.get(f"{BACKEND_URL}/municipalities", 
+                                  headers=headers, timeout=30)
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                municipalities = response.json()
+                print(f"   ✅ Municipalities retrieved successfully with auth")
+                print(f"   📋 Found {len(municipalities)} municipalities")
+                
+                # Check scheduling data with authentication
+                auth_scheduling_issues = []
+                
+                for municipality in municipalities:
+                    name = municipality.get("name", "Unknown")
+                    
+                    print(f"\n   📋 Municipality (Auth): {name}")
+                    print(f"      Schedule Enabled: {municipality.get('schedule_enabled', 'NOT SET')}")
+                    print(f"      Scrape Enabled: {municipality.get('scrape_enabled', 'NOT SET')}")
+                    print(f"      Frequency: {municipality.get('scrape_frequency', 'NOT SET')}")
+                    print(f"      Day of Week: {municipality.get('scrape_day_of_week', 'NOT SET')}")
+                    print(f"      Time: {municipality.get('scrape_time_hour', 'NOT SET')}:{municipality.get('scrape_time_minute', 'NOT SET'):02d}")
+                    
+                    # Check if this municipality matches expected values
+                    if name in expected_municipalities:
+                        expected = expected_municipalities[name]
+                        issues = []
+                        
+                        for field, expected_value in expected.items():
+                            actual_value = municipality.get(field)
+                            if actual_value != expected_value:
+                                issues.append(f"{field}: expected {expected_value}, got {actual_value}")
+                        
+                        if issues:
+                            auth_scheduling_issues.extend([f"{name}: {issue}" for issue in issues])
+                            print(f"      ❌ Issues: {', '.join(issues)}")
+                        else:
+                            print(f"      ✅ Scheduling data matches expected values")
+                
+                if not auth_scheduling_issues:
+                    print(f"\n   ✅ All municipalities have correct scheduling data (authenticated)")
+                    results["authenticated_access"] = True
+                else:
+                    print(f"\n   ❌ Scheduling issues found (authenticated): {len(auth_scheduling_issues)}")
+                    for issue in auth_scheduling_issues:
+                        print(f"      - {issue}")
+                    results["authenticated_access"] = False
+                
+                results["authenticated_data"] = {
+                    "municipalities_count": len(municipalities),
+                    "scheduling_issues": auth_scheduling_issues,
+                    "municipalities": {m.get("name", "Unknown"): m for m in municipalities}
+                }
+                
+            else:
+                print(f"   ❌ Failed to get municipalities with auth: {response.status_code}")
+                results["authenticated_access"] = False
+                results["authenticated_data"] = {"error": f"HTTP {response.status_code}"}
+        else:
+            print(f"   ⚠️ Cannot test authenticated access without admin token")
+            results["authenticated_access"] = None
+        
+        # Test 3: Check response format compatibility
+        print(f"\n   Test 3: Response format compatibility check")
+        
+        if "unauthenticated_data" in results and "municipalities" in results["unauthenticated_data"]:
+            municipalities = results["unauthenticated_data"]["municipalities"]
+            
+            # Check if response has all fields frontend expects
+            required_fields = [
+                "id", "name", "scrape_enabled", "schedule_enabled", 
+                "scrape_frequency", "scrape_day_of_week", "scrape_time_hour", "scrape_time_minute"
+            ]
+            
+            format_issues = []
+            
+            for name, municipality in municipalities.items():
+                missing_fields = []
+                for field in required_fields:
+                    if field not in municipality:
+                        missing_fields.append(field)
+                
+                if missing_fields:
+                    format_issues.append(f"{name}: missing fields {missing_fields}")
+                else:
+                    print(f"   ✅ {name}: All required fields present")
+            
+            if not format_issues:
+                print(f"   ✅ Response format compatible with frontend expectations")
+                results["format_compatibility"] = True
+            else:
+                print(f"   ❌ Response format issues:")
+                for issue in format_issues:
+                    print(f"      - {issue}")
+                results["format_compatibility"] = False
+            
+            results["format_data"] = {
+                "required_fields": required_fields,
+                "format_issues": format_issues
+            }
+        else:
+            print(f"   ⚠️ Cannot check format compatibility without municipality data")
+            results["format_compatibility"] = None
+        
+        # Overall assessment
+        successful_tests = sum(1 for result in [results.get("unauthenticated_access"), 
+                                              results.get("authenticated_access"), 
+                                              results.get("format_compatibility")] if result is True)
+        total_tests = len([r for r in [results.get("unauthenticated_access"), 
+                                     results.get("authenticated_access"), 
+                                     results.get("format_compatibility")] if r is not None])
+        
+        print(f"\n   📊 Municipality Scheduling Tests: {successful_tests}/{total_tests} passed")
+        
+        if successful_tests == total_tests and total_tests > 0:
+            print(f"   ✅ Municipality scheduling data is correct")
+            return True, results
+        else:
+            print(f"   ❌ Municipality scheduling has issues")
+            return False, results
+            
+    except Exception as e:
+        print(f"   ❌ Municipality scheduling test error: {e}")
+        return False, {"error": str(e)}
+
 def main():
     """Run comprehensive backend API tests - Focus on Municipality Scheduling System"""
     print("🚀 STARTING COMPREHENSIVE BACKEND API TESTING")
