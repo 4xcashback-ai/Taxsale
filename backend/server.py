@@ -1987,6 +1987,7 @@ async def scrape_cumberland_county_for_municipality(municipality_id: str):
                     "sale_date": sale_date,
                     "sale_time": "10:00 AM",
                     "sale_location": f"Cumberland County - Public Auction ({formatted_date} at 10:00 AM, {sale_location})",
+                    "sale_type": "public_auction",  # Cumberland County uses public auction
                     "assessment_number": assessment_num,
                     "property_type": property_type,
                     "owner_name": owner_name,
