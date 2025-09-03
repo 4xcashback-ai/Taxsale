@@ -940,42 +940,42 @@ const AuthenticatedApp = () => {
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                           <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
                             <div className="text-3xl font-bold text-yellow-800">
-                              {taxSales.filter(prop => prop.auction_result === 'pending').length}
+                              {allProperties.filter(prop => prop.auction_result === 'pending').length}
                             </div>
                             <div className="text-sm text-yellow-600 font-medium">Pending</div>
                           </div>
                           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                             <div className="text-3xl font-bold text-blue-800">
-                              {taxSales.filter(prop => prop.auction_result === 'sold').length}
+                              {allProperties.filter(prop => prop.auction_result === 'sold').length}
                             </div>
                             <div className="text-sm text-blue-600 font-medium">Sold</div>
                           </div>
                           <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                             <div className="text-3xl font-bold text-red-800">
-                              {taxSales.filter(prop => prop.auction_result === 'canceled').length}
+                              {allProperties.filter(prop => prop.auction_result === 'canceled').length}
                             </div>
                             <div className="text-sm text-red-600 font-medium">Canceled</div>
                           </div>
                           <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
                             <div className="text-3xl font-bold text-orange-800">
-                              {taxSales.filter(prop => prop.auction_result === 'deferred').length}
+                              {allProperties.filter(prop => prop.auction_result === 'deferred').length}
                             </div>
                             <div className="text-sm text-orange-600 font-medium">Deferred</div>
                           </div>
                           <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                             <div className="text-3xl font-bold text-green-800">
-                              {taxSales.filter(prop => prop.auction_result === 'taxes_paid').length}
+                              {allProperties.filter(prop => prop.auction_result === 'taxes_paid').length}
                             </div>
                             <div className="text-sm text-green-600 font-medium">Redeemed</div>
                           </div>
                         </div>
 
                         {/* Properties Pending Results */}
-                        {taxSales.filter(prop => prop.auction_result === 'pending').length > 0 && (
+                        {allProperties.filter(prop => prop.auction_result === 'pending').length > 0 && (
                           <div className="bg-yellow-50 rounded-lg p-6 border border-yellow-200">
                             <h4 className="font-semibold text-yellow-800 mb-4 text-lg">Properties with Pending Results</h4>
                             <div className="space-y-3 max-h-80 overflow-y-auto">
-                              {taxSales
+                              {allProperties
                                 .filter(prop => prop.auction_result === 'pending')
                                 .map(property => (
                                   <div key={property.id} className="bg-white rounded border p-4 shadow-sm">
