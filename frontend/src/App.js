@@ -400,7 +400,7 @@ const AuthenticatedApp = () => {
 
     try {
       setDeploymentLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.post(`${API}/api/deployment/deploy`, 
         { github_repo: githubRepo },
         { headers: { Authorization: `Bearer ${token}` } }
