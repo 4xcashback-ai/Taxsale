@@ -163,6 +163,21 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Cumberland County Property Image 404 Fix"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported 404 errors for property images for 3 Cumberland County properties (07486596, 01578626, 10802059) when accessing /api/property-image/{assessment_number} endpoint"
+        - working: false
+          agent: "main"
+          comment: "PROBLEM DIAGNOSED: The 3 Cumberland County properties have incorrect boundary_screenshot filenames in database. Database has 'boundary_07486596.png' format but filesystem has 'boundary_25330655_07486596.png' format (PID_assessment pattern). Properties have valid PIDs (25330655, 25254327, 25240243), government boundary data exists, but missing lat/lng coordinates due to empty property addresses. Solution: Update database boundary_screenshot filenames to match actual filesystem pattern."
+
 agent_communication:
     - agent: "main"
       message: "Successfully fixed the enhanced property details endpoint by resolving duplicate endpoint routing conflict and authentication issues. Backend now returns comprehensive PVSC assessment data matching production site. Frontend PropertyDetails.js component is already implemented to display this data. Need frontend testing to verify the 'Detailed Assessment Information' section displays correctly with all the PVSC data including current assessment ($682,400), taxable assessment ($613,700), building details (1 Storey, 1956, 2512 sq ft), bedrooms (3), bathrooms (1), quality (Average), basement (Y), garage (Y), etc."
