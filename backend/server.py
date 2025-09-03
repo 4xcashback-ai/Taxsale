@@ -516,6 +516,7 @@ class TaxSalePropertyCreate(BaseModel):
     longitude: Optional[float] = None
     source_url: str
     raw_data: Optional[dict] = None
+    sale_type: Optional[str] = None  # "public_auction", "public_tender", "sealed_bid", etc.
     auction_result: Optional[str] = None
     winning_bid_amount: Optional[float] = None
 
