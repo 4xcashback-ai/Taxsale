@@ -491,11 +491,27 @@ const AuthenticatedApp = () => {
       <div className="bg-gray-900 text-white py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center space-x-8 text-sm">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-2">
               <span className="text-gray-300">
-                {[...new Set(municipalities.map(m => m.province))].filter(Boolean).length || 1} Provinces
+                {getUniqueProvinces().length || 1} Provinces
               </span>
-              <span className="ml-1 text-blue-300">🔷</span>
+              {getUniqueProvinces().map((province, index) => {
+                const flagImage = getProvinceFlagImage(province);
+                return flagImage ? (
+                  <img 
+                    key={index}
+                    src={flagImage}
+                    alt={`${province} flag`}
+                    title={province}
+                    className="w-6 h-4 object-cover border border-gray-400 rounded-sm ml-1"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <span key={index} className="ml-1 text-blue-300" title={province}>🍁</span>
+                );
+              })}
             </div>
             <div className="flex items-center">
               <span className="text-gray-300">{municipalities.length} Municipalities</span>
