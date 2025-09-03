@@ -94,7 +94,20 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Halifax property boundary thumbnails not showing boundaries on images or not refreshing properly. Halifax scraping should use the same function to get boundary data and make thumbnails like Victoria County function since that is working. Need to unify the boundary thumbnail generation process between Halifax and Victoria County."
+user_problem_statement: "Restore the detailed PVSC assessment information (enhanced property details) on property detail pages. The frontend component PropertyDetails.js was attempting to fetch from /api/property/{assessment_number}/enhanced endpoint but the correct endpoint was not being reached due to routing conflicts between duplicate endpoints."
+
+backend:
+  - task: "Enhanced Property Details API Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "FIXED: Enhanced property details endpoint now working correctly. Root cause was duplicate endpoint definitions - one using @app.get and another using @api_router.get with the same path. The first endpoint (Playwright-based viewpoint.ca scraping) was taking precedence but failing, while the second endpoint (direct PVSC API scraping) was more reliable but unreachable. Solution: Removed the duplicate @app.get endpoint and kept the @api_router.get version. Also fixed authentication issue where admin JWT tokens couldn't be validated because get_current_user_optional was trying to look up admin users in the database. Modified the function to handle admin users specially, returning proper user object with subscription_tier: 'admin'. Testing confirmed endpoint now returns comprehensive PVSC data: current_assessment: $682,400, taxable_assessment: $613,700, building_style: '1 Storey', year_built: 1956, living_area: 2512, bedrooms: 3, bathrooms: 1, quality_of_construction: 'Average', etc. All data matches production site perfectly."
 
 backend:
   - task: "Halifax Boundary Thumbnail Generation"
