@@ -138,25 +138,42 @@ const MyFavorites = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.map((favorite) => (
             <div key={favorite.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              {/* Property Thumbnail */}
+              <div className="relative h-32 bg-gray-200 rounded-t-lg overflow-hidden">
+                <img
+                  src={`${API}/api/property-image/${favorite.property_id}?v=${Date.now()}`}
+                  alt={`Property thumbnail for ${favorite.property_address}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // If image fails, show placeholder
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjE2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOWNhM2FmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+UHJvcGVydHkgSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=';
+                  }}
+                />
+                
+                {/* Remove Button Overlay */}
+                <button
+                  onClick={() => removeFavorite(favorite.property_id)}
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-colors"
+                  title="Remove from favorites"
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-semibold text-gray-900 text-sm">
                     #{favorite.property_id}
                   </h3>
-                  <button
-                    onClick={() => removeFavorite(favorite.property_id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                    title="Remove from favorites"
-                  >
-                    ✕
-                  </button>
                 </div>
                 
                 <p className="text-gray-600 text-sm mb-2">
                   {favorite.municipality_name}
                 </p>
                 
-                <p className="text-gray-800 text-sm mb-3">
+                <p className="text-gray-800 text-sm mb-3 line-clamp-2">
                   {favorite.property_address}
                 </p>
                 
@@ -166,7 +183,7 @@ const MyFavorites = () => {
                   </span>
                   <a
                     href={`/property/${favorite.property_id}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:underline font-medium"
                   >
                     View Details →
                   </a>
