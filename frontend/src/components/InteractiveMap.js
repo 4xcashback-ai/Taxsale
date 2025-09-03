@@ -7,21 +7,57 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
   const [polygons, setPolygons] = useState([]);
 
   useEffect(() => {
-    if (mapRef.current && !map) {
-      // Initialize map centered on Nova Scotia
-      const googleMap = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 45.0, lng: -63.0 },
-        zoom: 7,
-        mapTypeId: 'satellite',
-        styles: [
-          {
-            featureType: 'all',
-            elementType: 'labels',
-            stylers: [{ visibility: 'on' }]
-          }
-        ]
-      });
-      setMap(googleMap);
+    const initializeMap = () => {
+      if (!mapRef.current) {
+        console.log('MapRef not available yet');
+        return;
+      }
+      
+      if (!window.google?.maps) {
+        console.log('Google Maps not loaded yet');
+        return;
+      }
+
+      if (map) {
+        console.log('Map already initialized');
+        return;
+      }
+
+      try {
+        console.log('Initializing Google Map...');
+        const googleMap = new window.google.maps.Map(mapRef.current, {
+          center: { lat: 45.0, lng: -63.0 },
+          zoom: 7,
+          mapTypeId: 'satellite',
+          styles: [
+            {
+              featureType: 'all',
+              elementType: 'labels',
+              stylers: [{ visibility: 'on' }]
+            }
+          ]
+        });
+        
+        console.log('Google Map initialized successfully');
+        setMap(googleMap);
+      } catch (error) {
+        console.error('Error initializing Google Map:', error);
+      }
+    };
+
+    // Try to initialize immediately
+    initializeMap();
+
+    // If Google Maps isn't ready, set up a retry mechanism
+    if (!window.google?.maps) {
+      const checkGoogleMaps = setInterval(() => {
+        if (window.google?.maps) {
+          clearInterval(checkGoogleMaps);
+          initializeMap();
+        }
+      }, 100);
+
+      return () => clearInterval(checkGoogleMaps);
     }
   }, [map]);
 
