@@ -7,6 +7,15 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [municipalities, setMunicipalities] = useState([]);
+  const [stats, setStats] = useState({
+    municipalities: 0,
+    active: 0,
+    inactive: 0,
+    total: 0,
+    scrapedToday: 0,
+    lastScrape: '2025-09-03'
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
