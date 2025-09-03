@@ -380,7 +380,7 @@ const AuthenticatedApp = () => {
   const checkForUpdates = async () => {
     try {
       setDeploymentLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.post(`${API}/api/deployment/check-updates`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
