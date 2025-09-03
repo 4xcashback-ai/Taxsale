@@ -9,16 +9,16 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
   // Function to get province flag emoji
   const getProvinceFlag = (provinceName) => {
     const provinceFlags = {
-      'Nova Scotia': '🏴‍🟩',  // Nova Scotia flag colors
-      'Ontario': '🏴‍⬜',      // Ontario flag
-      'British Columbia': '🏴‍🟥', // BC flag
-      'Alberta': '🏴‍🟦',     // Alberta flag
+      'Nova Scotia': '🔷',     // Blue square for NS (cross of St. Andrew colors)
+      'Ontario': '🔳',        // White square for Ontario
+      'British Columbia': '🔴', // Red circle for BC
+      'Alberta': '🟦',        // Blue square for Alberta 
       'Quebec': '⚜️',        // Quebec fleur-de-lis
-      'Manitoba': '🏴‍🟨',    // Manitoba flag
-      'Saskatchewan': '🏴‍🟩', // Saskatchewan flag
-      'New Brunswick': '🏴‍🟨', // New Brunswick flag
-      'Newfoundland and Labrador': '🏴‍🟪', // NL flag
-      'Prince Edward Island': '🏴‍🟥' // PEI flag
+      'Manitoba': '🟨',       // Yellow square for Manitoba
+      'Saskatchewan': '🟩',   // Green square for Saskatchewan
+      'New Brunswick': '🟨',  // Yellow for New Brunswick
+      'Newfoundland and Labrador': '🟪', // Purple for NL
+      'Prince Edward Island': '🟥' // Red for PEI
     };
     return provinceFlags[provinceName] || '🍁'; // Default to maple leaf
   };
