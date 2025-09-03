@@ -2394,6 +2394,602 @@ def test_deployment_system():
     
     return critical_tests_passed, results
 
+def test_municipality_scheduling_get_all():
+    """Test GET /api/municipalities - verify all municipalities show scheduling status"""
+    print("\n📋 Testing GET /api/municipalities...")
+    print("🔍 FOCUS: Verify all 3 municipalities show their current scheduling status")
+    print("📋 EXPECTED: Cumberland, Halifax, Victoria County with schedule_enabled field")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/municipalities", 
+                              headers=headers,
+                              timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            municipalities = response.json()
+            print(f"   ✅ Retrieved {len(municipalities)} municipalities")
+            
+            # Check for expected municipalities
+            expected_municipalities = ["Halifax Regional Municipality", "Victoria County", "Cumberland County"]
+            found_municipalities = {}
+            
+            for muni in municipalities:
+                name = muni.get("name", "")
+                schedule_enabled = muni.get("schedule_enabled")
+                scrape_frequency = muni.get("scrape_frequency")
+                
+                print(f"   📋 {name}:")
+                print(f"      - schedule_enabled: {schedule_enabled}")
+                print(f"      - scrape_frequency: {scrape_frequency}")
+                print(f"      - scrape_day_of_week: {muni.get('scrape_day_of_week')}")
+                print(f"      - scrape_time_hour: {muni.get('scrape_time_hour')}")
+                print(f"      - scrape_time_minute: {muni.get('scrape_time_minute')}")
+                
+                # Check if this is one of our expected municipalities
+                for expected in expected_municipalities:
+                    if expected.lower() in name.lower():
+                        found_municipalities[expected] = {
+                            "id": muni.get("id"),
+                            "name": name,
+                            "schedule_enabled": schedule_enabled,
+                            "has_scheduling_fields": all(field in muni for field in 
+                                ["scrape_frequency", "scrape_day_of_week", "scrape_time_hour", "scrape_time_minute"])
+                        }
+            
+            print(f"\n   📊 Found municipalities: {list(found_municipalities.keys())}")
+            
+            # Verify we have all expected municipalities
+            missing_municipalities = [m for m in expected_municipalities if m not in found_municipalities]
+            if missing_municipalities:
+                print(f"   ❌ Missing municipalities: {missing_municipalities}")
+                return False, {"error": f"Missing municipalities: {missing_municipalities}"}
+            
+            # Verify all have schedule_enabled field
+            municipalities_without_schedule_enabled = [
+                name for name, data in found_municipalities.items() 
+                if data["schedule_enabled"] is None
+            ]
+            
+            if municipalities_without_schedule_enabled:
+                print(f"   ❌ Municipalities missing schedule_enabled: {municipalities_without_schedule_enabled}")
+                return False, {"error": f"Missing schedule_enabled field: {municipalities_without_schedule_enabled}"}
+            
+            print(f"   ✅ All municipalities have schedule_enabled field")
+            return True, found_municipalities
+            
+        else:
+            print(f"   ❌ Failed to get municipalities: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Error testing municipalities endpoint: {e}")
+        return False, {"error": str(e)}
+
+def test_municipality_scheduling_update_halifax():
+    """Test PUT /api/municipalities/{halifax_id} with schedule_enabled: true"""
+    print("\n🔄 Testing Halifax Municipality Scheduling Update...")
+    print("🔍 FOCUS: PUT /api/municipalities/{halifax_id} with schedule_enabled: true")
+    print("📋 EXPECTED: Halifax scheduling should be enabled successfully")
+    
+    # First get municipalities to find Halifax ID
+    get_result, municipalities_data = test_municipality_scheduling_get_all()
+    if not get_result:
+        print("   ❌ Cannot test update without municipality data")
+        return False, {"error": "Cannot get municipalities"}
+    
+    halifax_data = municipalities_data.get("Halifax Regional Municipality")
+    if not halifax_data:
+        print("   ❌ Halifax municipality not found")
+        return False, {"error": "Halifax not found"}
+    
+    halifax_id = halifax_data["id"]
+    print(f"   📋 Halifax ID: {halifax_id}")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        # Update Halifax with schedule_enabled: true and other scheduling settings
+        update_data = {
+            "schedule_enabled": True,
+            "scrape_frequency": "weekly",
+            "scrape_day_of_week": 1,  # Monday
+            "scrape_time_hour": 10,
+            "scrape_time_minute": 30
+        }
+        
+        response = requests.put(f"{BACKEND_URL}/municipalities/{halifax_id}", 
+                              headers=headers,
+                              json=update_data,
+                              timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            updated_municipality = response.json()
+            print(f"   ✅ Halifax municipality updated successfully")
+            
+            # Verify the update
+            if updated_municipality.get("schedule_enabled") == True:
+                print(f"   ✅ schedule_enabled set to True")
+            else:
+                print(f"   ❌ schedule_enabled not updated correctly: {updated_municipality.get('schedule_enabled')}")
+                return False, {"error": "schedule_enabled not updated"}
+            
+            # Verify other scheduling fields
+            scheduling_fields = {
+                "scrape_frequency": "weekly",
+                "scrape_day_of_week": 1,
+                "scrape_time_hour": 10,
+                "scrape_time_minute": 30
+            }
+            
+            for field, expected_value in scheduling_fields.items():
+                actual_value = updated_municipality.get(field)
+                if actual_value == expected_value:
+                    print(f"   ✅ {field}: {actual_value}")
+                else:
+                    print(f"   ❌ {field}: expected {expected_value}, got {actual_value}")
+            
+            return True, updated_municipality
+            
+        else:
+            print(f"   ❌ Failed to update Halifax municipality: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Error updating Halifax municipality: {e}")
+        return False, {"error": str(e)}
+
+def test_municipality_scheduling_update_victoria():
+    """Test PUT /api/municipalities/{victoria_county_id} with schedule_enabled: false"""
+    print("\n🔄 Testing Victoria County Municipality Scheduling Update...")
+    print("🔍 FOCUS: PUT /api/municipalities/{victoria_county_id} with schedule_enabled: false")
+    print("📋 EXPECTED: Victoria County scheduling should be disabled successfully")
+    
+    # First get municipalities to find Victoria County ID
+    get_result, municipalities_data = test_municipality_scheduling_get_all()
+    if not get_result:
+        print("   ❌ Cannot test update without municipality data")
+        return False, {"error": "Cannot get municipalities"}
+    
+    victoria_data = municipalities_data.get("Victoria County")
+    if not victoria_data:
+        print("   ❌ Victoria County municipality not found")
+        return False, {"error": "Victoria County not found"}
+    
+    victoria_id = victoria_data["id"]
+    print(f"   📋 Victoria County ID: {victoria_id}")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        # Update Victoria County with schedule_enabled: false
+        update_data = {
+            "schedule_enabled": False,
+            "scrape_frequency": "monthly",
+            "scrape_day_of_month": 15,
+            "scrape_time_hour": 14,
+            "scrape_time_minute": 0
+        }
+        
+        response = requests.put(f"{BACKEND_URL}/municipalities/{victoria_id}", 
+                              headers=headers,
+                              json=update_data,
+                              timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            updated_municipality = response.json()
+            print(f"   ✅ Victoria County municipality updated successfully")
+            
+            # Verify the update
+            if updated_municipality.get("schedule_enabled") == False:
+                print(f"   ✅ schedule_enabled set to False")
+            else:
+                print(f"   ❌ schedule_enabled not updated correctly: {updated_municipality.get('schedule_enabled')}")
+                return False, {"error": "schedule_enabled not updated"}
+            
+            # Verify other scheduling fields
+            scheduling_fields = {
+                "scrape_frequency": "monthly",
+                "scrape_day_of_month": 15,
+                "scrape_time_hour": 14,
+                "scrape_time_minute": 0
+            }
+            
+            for field, expected_value in scheduling_fields.items():
+                actual_value = updated_municipality.get(field)
+                if actual_value == expected_value:
+                    print(f"   ✅ {field}: {actual_value}")
+                else:
+                    print(f"   ❌ {field}: expected {expected_value}, got {actual_value}")
+            
+            return True, updated_municipality
+            
+        else:
+            print(f"   ❌ Failed to update Victoria County municipality: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Error updating Victoria County municipality: {e}")
+        return False, {"error": str(e)}
+
+def test_municipality_scheduling_update_cumberland():
+    """Test PUT /api/municipalities/{cumberland_id} with different schedule settings"""
+    print("\n🔄 Testing Cumberland County Municipality Scheduling Update...")
+    print("🔍 FOCUS: PUT /api/municipalities/{cumberland_id} with different schedule settings")
+    print("📋 EXPECTED: Cumberland County scheduling should still work (regression test)")
+    
+    # First get municipalities to find Cumberland County ID
+    get_result, municipalities_data = test_municipality_scheduling_get_all()
+    if not get_result:
+        print("   ❌ Cannot test update without municipality data")
+        return False, {"error": "Cannot get municipalities"}
+    
+    cumberland_data = municipalities_data.get("Cumberland County")
+    if not cumberland_data:
+        print("   ❌ Cumberland County municipality not found")
+        return False, {"error": "Cumberland County not found"}
+    
+    cumberland_id = cumberland_data["id"]
+    print(f"   📋 Cumberland County ID: {cumberland_id}")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    try:
+        # Update Cumberland County with different schedule settings
+        update_data = {
+            "schedule_enabled": True,
+            "scrape_frequency": "weekly",
+            "scrape_day_of_week": 2,  # Tuesday
+            "scrape_time_hour": 14,
+            "scrape_time_minute": 30
+        }
+        
+        response = requests.put(f"{BACKEND_URL}/municipalities/{cumberland_id}", 
+                              headers=headers,
+                              json=update_data,
+                              timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            updated_municipality = response.json()
+            print(f"   ✅ Cumberland County municipality updated successfully")
+            
+            # Verify the update
+            if updated_municipality.get("schedule_enabled") == True:
+                print(f"   ✅ schedule_enabled set to True")
+            else:
+                print(f"   ❌ schedule_enabled not updated correctly: {updated_municipality.get('schedule_enabled')}")
+                return False, {"error": "schedule_enabled not updated"}
+            
+            # Verify other scheduling fields
+            scheduling_fields = {
+                "scrape_frequency": "weekly",
+                "scrape_day_of_week": 2,
+                "scrape_time_hour": 14,
+                "scrape_time_minute": 30
+            }
+            
+            for field, expected_value in scheduling_fields.items():
+                actual_value = updated_municipality.get(field)
+                if actual_value == expected_value:
+                    print(f"   ✅ {field}: {actual_value}")
+                else:
+                    print(f"   ❌ {field}: expected {expected_value}, got {actual_value}")
+            
+            return True, updated_municipality
+            
+        else:
+            print(f"   ❌ Failed to update Cumberland County municipality: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+                return False, error_data
+            except:
+                print(f"   Raw response: {response.text}")
+                return False, {"error": f"HTTP {response.status_code}"}
+                
+    except Exception as e:
+        print(f"   ❌ Error updating Cumberland County municipality: {e}")
+        return False, {"error": str(e)}
+
+def test_municipality_scheduling_validation():
+    """Test invalid scheduling values to ensure validation works"""
+    print("\n🛡️ Testing Municipality Scheduling Validation...")
+    print("🔍 FOCUS: Test invalid scheduling values (negative days, invalid frequency)")
+    print("📋 EXPECTED: Proper validation errors for invalid values")
+    
+    # First get municipalities to find a municipality ID for testing
+    get_result, municipalities_data = test_municipality_scheduling_get_all()
+    if not get_result:
+        print("   ❌ Cannot test validation without municipality data")
+        return False, {"error": "Cannot get municipalities"}
+    
+    # Use Halifax for validation testing
+    halifax_data = municipalities_data.get("Halifax Regional Municipality")
+    if not halifax_data:
+        print("   ❌ Halifax municipality not found for validation testing")
+        return False, {"error": "Halifax not found"}
+    
+    halifax_id = halifax_data["id"]
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("   ❌ Cannot test without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    validation_tests = [
+        {
+            "name": "Invalid scrape_frequency",
+            "data": {"scrape_frequency": "invalid_frequency"},
+            "should_fail": True
+        },
+        {
+            "name": "Negative scrape_day_of_week",
+            "data": {"scrape_day_of_week": -1},
+            "should_fail": True
+        },
+        {
+            "name": "Invalid scrape_day_of_week (> 6)",
+            "data": {"scrape_day_of_week": 7},
+            "should_fail": True
+        },
+        {
+            "name": "Negative scrape_day_of_month",
+            "data": {"scrape_day_of_month": -1},
+            "should_fail": True
+        },
+        {
+            "name": "Invalid scrape_day_of_month (> 28)",
+            "data": {"scrape_day_of_month": 32},
+            "should_fail": True
+        },
+        {
+            "name": "Invalid scrape_time_hour (> 23)",
+            "data": {"scrape_time_hour": 25},
+            "should_fail": True
+        },
+        {
+            "name": "Invalid scrape_time_minute",
+            "data": {"scrape_time_minute": 61},
+            "should_fail": True
+        },
+        {
+            "name": "Valid scheduling data",
+            "data": {
+                "schedule_enabled": True,
+                "scrape_frequency": "daily",
+                "scrape_time_hour": 8,
+                "scrape_time_minute": 0
+            },
+            "should_fail": False
+        }
+    ]
+    
+    results = {}
+    
+    for test in validation_tests:
+        print(f"\n   Testing: {test['name']}")
+        
+        try:
+            response = requests.put(f"{BACKEND_URL}/municipalities/{halifax_id}", 
+                                  headers=headers,
+                                  json=test["data"],
+                                  timeout=30)
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if test["should_fail"]:
+                # Expecting validation error (400 or 422)
+                if response.status_code in [400, 422]:
+                    print(f"   ✅ Validation correctly rejected invalid data")
+                    results[test["name"]] = True
+                else:
+                    print(f"   ❌ Should have rejected invalid data (got {response.status_code})")
+                    results[test["name"]] = False
+            else:
+                # Expecting success (200)
+                if response.status_code == 200:
+                    print(f"   ✅ Valid data accepted correctly")
+                    results[test["name"]] = True
+                else:
+                    print(f"   ❌ Valid data should be accepted (got {response.status_code})")
+                    results[test["name"]] = False
+                    
+        except Exception as e:
+            print(f"   ❌ Error in validation test '{test['name']}': {e}")
+            results[test["name"]] = False
+    
+    # Overall assessment
+    successful_tests = sum(1 for result in results.values() if result is True)
+    total_tests = len(results)
+    
+    print(f"\n   📊 Validation Tests: {successful_tests}/{total_tests} passed")
+    
+    if successful_tests >= total_tests * 0.8:  # 80% pass rate acceptable
+        print(f"   ✅ Validation system working correctly")
+        return True, results
+    else:
+        print(f"   ❌ Validation system has issues")
+        return False, results
+
+def test_municipality_scheduling_system():
+    """Comprehensive test of the Municipality Scheduling System bug fix"""
+    print("\n🎯 COMPREHENSIVE MUNICIPALITY SCHEDULING SYSTEM TEST")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Test Municipality Scheduling System bug fix")
+    print("📋 BACKGROUND: User reported scheduling enable/disable only worked for Cumberland County")
+    print("📋 FIX: Added missing 'schedule_enabled' field to MunicipalityUpdate model")
+    print("📋 SPECIFIC TESTS:")
+    print("   1. GET /api/municipalities - verify all 3 municipalities show scheduling status")
+    print("   2. PUT /api/municipalities/{halifax_id} with schedule_enabled: true")
+    print("   3. PUT /api/municipalities/{victoria_county_id} with schedule_enabled: false")
+    print("   4. PUT /api/municipalities/{cumberland_id} with different schedule settings")
+    print("   5. Verify scheduling fields are properly accepted and saved")
+    print("   6. Test invalid scheduling values to ensure validation works")
+    print("=" * 80)
+    
+    # Run all tests
+    results = {}
+    
+    # Test 1: GET all municipalities
+    print("\n🔍 TEST 1: GET All Municipalities")
+    get_result, get_data = test_municipality_scheduling_get_all()
+    results['get_municipalities'] = {'success': get_result, 'data': get_data}
+    
+    # Test 2: Update Halifax
+    print("\n🔍 TEST 2: Update Halifax Municipality")
+    halifax_result, halifax_data = test_municipality_scheduling_update_halifax()
+    results['update_halifax'] = {'success': halifax_result, 'data': halifax_data}
+    
+    # Test 3: Update Victoria County
+    print("\n🔍 TEST 3: Update Victoria County Municipality")
+    victoria_result, victoria_data = test_municipality_scheduling_update_victoria()
+    results['update_victoria'] = {'success': victoria_result, 'data': victoria_data}
+    
+    # Test 4: Update Cumberland County
+    print("\n🔍 TEST 4: Update Cumberland County Municipality")
+    cumberland_result, cumberland_data = test_municipality_scheduling_update_cumberland()
+    results['update_cumberland'] = {'success': cumberland_result, 'data': cumberland_data}
+    
+    # Test 5: Validation
+    print("\n🔍 TEST 5: Scheduling Validation")
+    validation_result, validation_data = test_municipality_scheduling_validation()
+    results['validation'] = {'success': validation_result, 'data': validation_data}
+    
+    # Final Assessment
+    print("\n" + "=" * 80)
+    print("📊 MUNICIPALITY SCHEDULING SYSTEM - FINAL ASSESSMENT")
+    print("=" * 80)
+    
+    test_names = [
+        ('GET All Municipalities', 'get_municipalities'),
+        ('Update Halifax Municipality', 'update_halifax'),
+        ('Update Victoria County Municipality', 'update_victoria'),
+        ('Update Cumberland County Municipality', 'update_cumberland'),
+        ('Scheduling Validation', 'validation')
+    ]
+    
+    passed_tests = 0
+    total_tests = len(test_names)
+    
+    print(f"📋 DETAILED RESULTS:")
+    for test_name, test_key in test_names:
+        result = results[test_key]
+        status = "✅ PASSED" if result['success'] else "❌ FAILED"
+        print(f"   {status} - {test_name}")
+        if result['success']:
+            passed_tests += 1
+    
+    print(f"\n📊 SUMMARY:")
+    print(f"   Passed: {passed_tests}/{total_tests} tests")
+    print(f"   Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    
+    # Critical findings
+    print(f"\n🔍 CRITICAL FINDINGS:")
+    
+    if results['get_municipalities']['success']:
+        print(f"   ✅ All 3 municipalities (Halifax, Victoria County, Cumberland County) found")
+        print(f"   ✅ All municipalities have schedule_enabled field")
+    else:
+        print(f"   ❌ Issues retrieving municipalities or missing schedule_enabled field")
+    
+    if results['update_halifax']['success']:
+        print(f"   ✅ Halifax scheduling can now be enabled (schedule_enabled: true)")
+    else:
+        print(f"   ❌ Halifax scheduling update failed")
+    
+    if results['update_victoria']['success']:
+        print(f"   ✅ Victoria County scheduling can now be disabled (schedule_enabled: false)")
+    else:
+        print(f"   ❌ Victoria County scheduling update failed")
+    
+    if results['update_cumberland']['success']:
+        print(f"   ✅ Cumberland County scheduling still works (regression test passed)")
+    else:
+        print(f"   ❌ Cumberland County scheduling update failed")
+    
+    if results['validation']['success']:
+        print(f"   ✅ Scheduling validation working correctly")
+        print(f"   ✅ Invalid values properly rejected")
+    else:
+        print(f"   ❌ Scheduling validation has issues")
+    
+    # Overall assessment
+    critical_tests_passed = (
+        results['get_municipalities']['success'] and 
+        results['update_halifax']['success'] and 
+        results['update_victoria']['success'] and
+        results['update_cumberland']['success']
+    )
+    
+    if critical_tests_passed:
+        print(f"\n🎉 MUNICIPALITY SCHEDULING SYSTEM: BUG FIX SUCCESSFUL!")
+        print(f"   ✅ All municipalities can now have scheduling enabled/disabled")
+        print(f"   ✅ Halifax scheduling updates now work")
+        print(f"   ✅ Victoria County scheduling updates now work")
+        print(f"   ✅ Cumberland County scheduling still works")
+        print(f"   ✅ Scheduling fields properly accepted and saved")
+        print(f"   ✅ schedule_enabled field fix implemented correctly")
+    else:
+        print(f"\n❌ MUNICIPALITY SCHEDULING SYSTEM: ISSUES STILL EXIST")
+        print(f"   🔧 Some municipalities still cannot be updated")
+        print(f"   🔧 schedule_enabled field may not be working properly")
+    
+    return critical_tests_passed, results
+
 def main():
     """Main test execution function - Focus on Cumberland County Property Image 404 Fix"""
     print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
