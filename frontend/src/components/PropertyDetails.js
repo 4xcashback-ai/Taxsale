@@ -470,7 +470,11 @@ const PropertyDetails = () => {
                 </div>
                 <div>
                   <span className="block text-sm text-gray-500">Sale Type</span>
-                  <span className="text-gray-900">Public Tender</span>
+                  <span className="text-gray-900">
+                    {property.sale_type === 'public_auction' ? 'Public Auction' : 
+                     property.sale_type === 'public_tender' ? 'Public Tender' : 
+                     'Public Sale'}
+                  </span>
                 </div>
                 <div>
                   <span className="block text-sm text-gray-500">Tax Sale Date</span>
