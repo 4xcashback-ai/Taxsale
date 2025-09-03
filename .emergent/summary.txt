@@ -1,115 +1,114 @@
 <analysis>
-The trajectory outlines the AI engineer's intensive journey in stabilizing and enhancing the Tax Sale Compass application. The initial phase involved rectifying an accidental  rewrite that destroyed core functionalities, followed by painstaking restoration of interactive maps, image displays, and the admin panel, alongside persistent  and  prefix debugging. Critical pivots included clarifying user intent (keeping authentication but matching the *authenticated* experience to the live site) and resolving complex issues such as Google Maps Static API limitations with coordinate precision for boundary thumbnails. Iterative debugging, often using sub-agents like  and automated testing, was essential to identify root causes like filter mismatches, database-file discrepancies, and routing conflicts. The process highlights a blend of UI/UX refinement, backend logic fixes, and persistent environment variable issues, culminating in a largely functional, visually refined, and securely authenticated application, with key features like dynamic property boundaries and consistent statistics now working.
+The AI engineer's work on Tax Sale Compass involved extensive feature development, bug fixes, and system stabilization following an accidental code rewrite. Initial efforts focused on restoring critical UI components like interactive maps and the admin panel, resolving environment variable conflicts, and ensuring proper API routing. A major deliverable was a robust VPS deployment system, complete with backend endpoints, shell scripts, and an intuitive frontend UI. Authentication was a recurring challenge, requiring meticulous debugging of login flows and  issues. Significant work went into data consistency and media generation, including fixing Halifax boundary data extraction, thumbnail generation, and preserving these images during scraper updates. New features such as a Cumberland County scraper and a comprehensive scheduling system were implemented. Frontend issues like a statistics header bug and AdSense duplication were also resolved. The current focus is on restoring detailed PVSC assessment information on property detail pages by creating a new backend API endpoint.
 </analysis>
 
 <product_requirements>
-The Tax Sale Compass application aims to be a central hub for Nova Scotia tax sale data, offering an interactive map, PDF scraping, property filtering, Google Maps integration, and detailed property pages. Initial requirements included Google AdSense and an admin interface for municipality management and scraping, with a key feature being in-app deployment automation. Subsequent tasks involved debugging  errors, malformed image URLs, No updates available discrepancies, and implementing robust admin authentication for a bulletproof deployment system. The system required enhanced property data handling for multiple Parcel Identification Numbers (PIDs) for combined display on maps. Further enhancements included a sophisticated auction status system (, /, , , , ), tracking winning bids, and a smart scheduler. A comprehensive landing page was requested, featuring user accounts (free/paid tiers), displaying limited properties/thumbnails, and requiring account creation for detailed views. Free users should view all listings and inactive property details, paid users access all properties and details, and admin users access everything.
+The Tax Sale Compass application aims to be a central hub for Nova Scotia tax sale data, providing an interactive map, PDF scraping, property filtering, Google Maps integration, and detailed property pages. Initial requirements included Google AdSense and an admin interface for municipality management and scraping, with a key feature being in-app deployment automation. Subsequent tasks involved debugging  errors, malformed image URLs, No updates available discrepancies, and implementing robust admin authentication for a bulletproof deployment system. The system required enhanced property data handling for multiple Parcel Identification Numbers (PIDs) for combined display on maps. Further enhancements included a sophisticated auction status system, tracking winning bids, and a smart scheduler. A comprehensive landing page was requested, featuring user accounts (free/paid tiers), displaying limited properties/thumbnails, and requiring account creation for detailed views. User tiers (free/paid/admin) dictate access to property details. Recent additions include a Cumberland County scraper and a generic scraper scheduling system.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack Development**: React (frontend), FastAPI (backend), MongoDB (database).
-- **Authentication**: JWT, bcrypt hashing for user and admin login.
-- **API Integration**: Google Maps Static API, Google Maps JavaScript API, SendGrid (emails).
-- **Frontend Frameworks**: React Router, Tailwind CSS.
-- **Backend Libraries**: , .
-- **Deployment**: backend                          RUNNING   pid 27, uptime 0:00:04
+- Full-stack Development: React (frontend), FastAPI (backend), MongoDB (database).
+- Authentication: JWT, bcrypt hashing, React UserContext.
+- API Integration: Google Maps Static API, Google Maps JavaScript API, SendGrid, viewpoint.ca (PVSC).
+- Frontend Frameworks: React Router, Tailwind CSS, Lucide React icons.
+- Backend Libraries: , , .
+- Deployment: backend                          RUNNING   pid 27, uptime 0:00:04
 code-server                      RUNNING   pid 29, uptime 0:00:04
-frontend                         STOPPED   Sep 03 03:09 AM
+frontend                         STOPPING  
 mongodb                          RUNNING   pid 35, uptime 0:00:04
-supervisor>  for service management.
-- **GeoSpatial Data**: Handling Parcel Identification Numbers (PIDs) and boundary geometries.
+supervisor> , shell scripting for VPS deployment.
+- GeoSpatial Data: PIDs, boundary geometries, thumbnail generation.
+- Scheduling: Background tasks for scraper automation.
 </key_technical_concepts>
 
 <code_architecture>
 
 
 - ****:
-    - **Importance**: The core FastAPI application, handling all API endpoints and database interactions, including user authentication, property data, and boundary image generation.
+    - **Importance**: The core FastAPI application, handling all API endpoints and database interactions.
     - **Changes Made**:
-        - Fixed initial multi-PID logic and bbox format.
-        - Implemented JWT-based user authentication and related endpoints (, , ).
-        - Added SendGrid integration.
-        - Modified  for subscription-based access.
-        - Enhanced auction status system.
-        - , , , , , , ,  management.
-        - Fixed route conflict for boundary image endpoints.
-        - Corrected boundary generation logic for multi-PID properties (using ).
-        - Sanitized multi-PID filenames (replacing  with ).
-        - Optimized Google Maps Static API calls for thumbnails (zoom level, stroke weight, fill opacity, coordinate precision).
+        - Implemented JWT authentication and admin login endpoints ().
+        - Added  endpoints and associated shell script execution logic for VPS deployment.
+        - Enhanced Halifax scraper to fetch NS Government boundary data and populate  field in  model.
+        - Modified Halifax scraper to preserve existing, correct boundary screenshot filenames during updates.
+        - Created a dedicated  scraper, integrated into the main  function, and added browser-like headers for requests.
+        - Extended  model with , , and  for automated scheduling.
+        - Implemented API endpoints for managing and viewing scraper schedules and a background task for execution.
+        - Added  to  and updated Halifax, Victoria County, and Cumberland County scrapers to set this field correctly.
+        - Fixed timezone comparison issues in scheduling status calculation.
+        - *Currently implementing*:  to fetch detailed PVSC assessment data.
 
 - ****:
-    - **Importance**: The main React component, managing global state, routing, and overall UI layout. It acts as the container for both the LandingPage and the AuthenticatedApp.
+    - **Importance**: Main React component managing global state, routing, and UI layout.
     - **Changes Made**:
+        - Fixed API calls to use  and  prefix.
         - Implemented conditional rendering for  vs .
-        - Restored original admin panel, , and image display.
-        - Fixed numerous API calls to include  prefix and .
-        - Updated property card rendering for auction result badges and winning bids.
-        - Added a global statistics header for both authenticated and unauthenticated views.
-        - Refactored property detail links to use React Router () instead of a modal.
-        - Fixed admin page layout to have Quick Actions as a left sidebar and other sections as full-width rows.
-        - Changed default property status filter from  to  to ensure consistent statistics display.
-        - Added cache-busting for property thumbnail URLs.
+        - Added the Deployment Management section to the admin panel UI.
+        - Fixed the statistics header to always display total counts, independent of filters, by using a separate  state.
+        - Added import for  icon to resolve a .
+        - Fixed AdSense duplication errors by ensuring  runs only once.
+        - Modified the property list rendering to dynamically insert search page ads (AdSense) between property rows every 6 items, spanning full width.
 
 - ****:
-    - **Importance**: Displays detailed property information, including interactive map with boundary data.
-    - **Changes Made**:
-        - Updated  and map rendering to handle combined geometries for multi-PID properties.
-        - Adjusted to receive  via URL parameters.
+    - **Importance**: Displays detailed property information including maps and assessment data.
+    - **Changes Made**: Now attempts to fetch enhanced property details from the new  endpoint.
 
 - ****:
-    - **Importance**: The initial view for unauthenticated users, featuring hero section, feature highlights, and login/registration forms.
-    - **Changes Made**:
-        - Updated hero section title (Your Compass to Canadian Tax Sale Investing) and description.
-        - Added the slogan All tax sales. One platform. to the header.
-        - Fixed admin email detection in login form ( -> ).
-        - Updated Featured Properties section to show both primary status and auction result badges correctly.
-        - Updated Featured Properties to load images via API endpoint with cache-busting.
-        - Integrated the global statistics header component.
-
-- ****:
-    - **Importance**: Manages global user authentication state, including login, registration, and user data.
-    - **Changes Made**:
-        - Fixed admin login logic to correctly use .
-        - Corrected  and  functions to use the actual  from the database instead of hardcoding  for admin users.
-        - Improved error handling to display proper messages.
-
-- ****:
-    - **Importance**: Displays an interactive Google Map with property markers and boundaries.
-    - **Changes Made**:
-        - Rewritten to fetch and display property boundary polygons (like ) instead of just markers.
-        - Integrated boundary data fetching and drawing logic.
-        - Added improved error handling and loading states.
+    - **Importance**: Manages global user authentication state.
+    - **Changes Made**: Updated to correctly handle admin login using  and standard user login via , and improved  function.
 
 - ****:
     - **Importance**: Stores backend environment variables.
-    - **Changes Made**: ,  (updated to ), , , , ,  were added/updated.
+    - **Changes Made**: Added/updated , , , , , , .
 
 - ****:
     - **Importance**: Stores frontend environment variables.
-    - **Changes Made**:  (repeatedly fixed to ), .
+    - **Changes Made**: Repeatedly fixed  to  and .
 
-- ****:
-    - **Importance**: Lists Python dependencies for the backend.
-    - **Changes Made**: Added , , , .
+- **Usage: /app/scripts/deployment.sh {deploy|check-updates|rollback|verify} [github-repo-url]
 
-- ****:
-    - **Importance**: Lists Node.js dependencies for the frontend.
-    - **Changes Made**: Added .
+Commands:
+  deploy [repo-url]    - Deploy latest code from GitHub
+  check-updates        - Check if updates are available
+  rollback [backup]    - Rollback to a specific backup
+  verify              - Verify current deployment
+
+Examples:
+  /app/scripts/deployment.sh deploy https://github.com/user/nstaxsales.git
+  /app/scripts/deployment.sh check-updates
+  /app/scripts/deployment.sh verify**:
+    - **Importance**: Core script for automated VPS deployments.
+    - **Changes Made**: Enhanced with safety features like automatic backup, rollback, and health checks.
+
+- **{
+    "status": "idle",
+    "last_deployment": "",
+    "last_check": "2025-09-03T16:15:17+00:00",
+    "updates_available": false,
+    "health_status": "unknown",
+    "current_commit": "414bbcf",
+    "remote_commit": "unknown",
+    "message": "Deployment is operational"
+}**:
+    - **Importance**: Provides deployment status and diagnostics.
+    - **Changes Made**: Enhanced to provide more detailed system information.
+
 </code_architecture>
 
 <pending_tasks>
 - Implement email alerts for new tax sales.
 - Implement property history tracking and analytics.
-- Finalize the Kubernetes ingress/proxy routing issue for boundary generation endpoints (if the smart URL handler isn't a complete solution).
-- Ensure the development environment is stable and fully functional, accurately reflecting the live site's core features while incorporating new landing page and user authentication.
+- Finalize Kubernetes ingress/proxy routing for boundary generation endpoints.
+- Ensure development environment stability and functionality.
+- Fix geocoding for 3 Cumberland County properties (07486596, 01578626, 10802059) to enable thumbnail generation.
+- Reconcile  for Victoria County properties (currently ).
+- Clarify desired status for Victoria County properties (active/inactive).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was addressing a bug where the statistics header, while visible on the landing page, would disappear or show incorrect data when a user logged into the authenticated application. This was identified as a filter default behavior issue within the  component, where the authenticated app's property list (and thus its statistics calculation) defaulted to filtering , but all current properties in the database were .
-
-The AI engineer's actions focused on fixing this by modifying  to change the  state's initial value from  to . This ensures that upon login, the authenticated app correctly fetches and displays statistics for all available properties, regardless of their 'active' or 'inactive' status, thus making the statistics bar consistent across both the landing page and the authenticated user's view. This was the final step in a series of fixes related to the statistics header's consistent display and data accuracy.
+Immediately before this summary request, the AI engineer was working on restoring the Detailed Assessment Information (PVSC data) on the property details page. This information was missing because the frontend component  was attempting to fetch it from a non-existent backend endpoint: . The AI engineer had just identified this missing endpoint and confirmed existing backend integration with  (PVSC). The current task involved creating this new  endpoint in  to fetch and provide the detailed PVSC assessment data to the frontend. The last action was successfully adding the initial logic for this new endpoint.
 </current_work>
 
 <optional_next_step>
-There are no explicit next steps requested by the user at this point. The last task regarding the statistics header was fully completed.
+Restart the backend service to make the newly created  endpoint available.
 </optional_next_step>
