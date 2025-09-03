@@ -97,6 +97,13 @@ const AuthenticatedApp = () => {
     fetchTaxSales();
   }, [selectedStatus, selectedMunicipality]);
 
+  // Fetch deployment status when admin view is active
+  useEffect(() => {
+    if (activeView === 'admin' && isAdmin()) {
+      fetchDeploymentStatus();
+    }
+  }, [activeView]);
+
   const fetchStats = async () => {
     try {
       const response = await axios.get(`${API}/api/stats`);
