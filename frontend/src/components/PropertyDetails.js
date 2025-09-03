@@ -589,7 +589,9 @@ const PropertyDetails = () => {
                     <span className="text-green-600 font-bold text-lg">
                       {formatCurrency(property.tax_owing || property.opening_bid)}
                     </span>
-                    <span className="block text-xs text-gray-500 mt-1">Required minimum tender amount</span>
+                    <span className="block text-xs text-gray-500 mt-1">
+                      Required minimum {property.sale_type === 'public_auction' ? 'bid' : 'tender'} amount
+                    </span>
                   </div>
                   <div>
                     <span className="block text-sm text-gray-500 mb-1">Sale Date & Time</span>
