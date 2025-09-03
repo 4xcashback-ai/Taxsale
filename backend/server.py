@@ -159,6 +159,12 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
         user_id: str = payload.get("sub")
         if user_id is None:
             return None
+        
+        # Handle admin users - they don't exist in the users database
+        if user_id == ADMIN_USERNAME:
+            return {"username": user_id, "email": user_id, "subscription_tier": "admin"}
+        
+        # Handle regular users
         user = await get_user_by_id(user_id)
         return user
     except JWTError:
