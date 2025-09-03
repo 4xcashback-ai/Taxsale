@@ -22,22 +22,30 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
     setLoading(true);
     setError('');
 
-    console.log('Login attempt:', { email, isLogin, isAdmin: email === 'admin' });
+    console.log('LandingPage login attempt:', { email, isLogin, isAdmin: email === 'admin' });
 
     try {
       if (isLogin) {
         // Convert 'admin' username to full admin email for backend
         const loginEmail = email === 'admin' ? 'admin@taxsalecompass.ca' : email;
-        console.log('Calling onLogin with:', loginEmail, password.length + ' char password');
-        await onLogin(loginEmail, password);
-        console.log('Login successful');
+        console.log('LandingPage calling onLogin with:', loginEmail, password.length + ' char password');
+        
+        const result = await onLogin(loginEmail, password);
+        console.log('LandingPage login result:', result);
+        
+        if (result && result.success) {
+          console.log('Login successful, user should be authenticated now');
+          // The authentication state change should trigger a re-render in App.js
+        } else {
+          throw new Error('Login failed - no success result');
+        }
       } else {
-        console.log('Calling onRegister with:', email, password.length + ' char password');
-        await onRegister(email, password);
-        console.log('Registration successful');
+        console.log('LandingPage calling onRegister with:', email, password.length + ' char password');
+        const result = await onRegister(email, password);
+        console.log('LandingPage registration result:', result);
       }
     } catch (err) {
-      console.error('Login/Registration error:', err);
+      console.error('LandingPage Login/Registration error:', err);
       // Ensure we're displaying the error message, not the error object
       setError(typeof err === 'string' ? err : err.message || err.toString() || 'An error occurred');
     } finally {
