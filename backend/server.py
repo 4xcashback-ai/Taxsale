@@ -2101,6 +2101,177 @@ async def scrape_cumberland_county_for_municipality(municipality_id: str):
             )
         raise HTTPException(status_code=500, detail=f"Cumberland County scraping failed: {str(e)}")
 
+# Scheduling utility functions
+def calculate_next_scrape_time(schedule: str) -> datetime:
+    """Calculate the next scrape time based on schedule string"""
+    now = datetime.now(timezone.utc)
+    
+    if schedule == "daily":
+        # Next day at 2 AM
+        next_time = now.replace(hour=2, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    elif schedule.startswith("weekly_"):
+        # Extract day of week (monday=0, sunday=6)
+        day_name = schedule.split("_")[1].lower()
+        day_mapping = {
+            "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
+            "friday": 4, "saturday": 5, "sunday": 6
+        }
+        target_day = day_mapping.get(day_name, 0)
+        
+        # Calculate days until target day
+        current_day = now.weekday()
+        days_ahead = target_day - current_day
+        if days_ahead <= 0:  # Target day already happened this week
+            days_ahead += 7
+        
+        next_time = now + timedelta(days=days_ahead)
+        next_time = next_time.replace(hour=2, minute=0, second=0, microsecond=0)
+    elif schedule.startswith("monthly_"):
+        # Extract day of month (1st, 15th, etc.)
+        day_str = schedule.split("_")[1]
+        if day_str.endswith(("st", "nd", "rd", "th")):
+            target_day = int(day_str[:-2])
+        else:
+            target_day = int(day_str)
+        
+        # Next occurrence of target day
+        if now.day < target_day:
+            # This month
+            next_time = now.replace(day=target_day, hour=2, minute=0, second=0, microsecond=0)
+        else:
+            # Next month
+            if now.month == 12:
+                next_time = now.replace(year=now.year + 1, month=1, day=target_day, hour=2, minute=0, second=0, microsecond=0)
+            else:
+                next_time = now.replace(month=now.month + 1, day=target_day, hour=2, minute=0, second=0, microsecond=0)
+    else:
+        # Default to weekly on Monday
+        current_day = now.weekday()
+        days_ahead = 0 - current_day
+        if days_ahead <= 0:
+            days_ahead += 7
+        next_time = now + timedelta(days=days_ahead)
+        next_time = next_time.replace(hour=2, minute=0, second=0, microsecond=0)
+    
+    return next_time
+
+async def update_municipality_schedule(municipality_id: str, schedule: str, enabled: bool):
+    """Update municipality scraping schedule"""
+    try:
+        update_data = {
+            "scrape_schedule": schedule,
+            "schedule_enabled": enabled
+        }
+        
+        if enabled and schedule:
+            next_scrape = calculate_next_scrape_time(schedule)
+            update_data["next_scheduled_scrape"] = next_scrape
+        else:
+            update_data["next_scheduled_scrape"] = None
+        
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {"$set": update_data}
+        )
+        
+        logger.info(f"Updated schedule for municipality {municipality_id}: {schedule}, enabled: {enabled}")
+        
+    except Exception as e:
+        logger.error(f"Error updating municipality schedule: {e}")
+        raise
+
+async def check_and_run_scheduled_scrapes():
+    """Check for municipalities that need scheduled scraping and run them"""
+    try:
+        now = datetime.now(timezone.utc)
+        
+        # Find municipalities that need scraping
+        municipalities = await db.municipalities.find({
+            "schedule_enabled": True,
+            "scrape_enabled": True,
+            "next_scheduled_scrape": {"$lte": now}
+        }).to_list(length=None)
+        
+        for municipality in municipalities:
+            try:
+                logger.info(f"Running scheduled scrape for {municipality['name']}")
+                
+                # Run the scraper
+                await scrape_municipality_by_id(municipality["id"])
+                
+                # Update next scheduled scrape time
+                if municipality.get("scrape_schedule"):
+                    next_scrape = calculate_next_scrape_time(municipality["scrape_schedule"])
+                    await db.municipalities.update_one(
+                        {"id": municipality["id"]},
+                        {"$set": {"next_scheduled_scrape": next_scrape}}
+                    )
+                
+            except Exception as e:
+                logger.error(f"Error in scheduled scrape for {municipality['name']}: {e}")
+                continue
+        
+        logger.info(f"Completed scheduled scrape check: {len(municipalities)} municipalities processed")
+        
+    except Exception as e:
+        logger.error(f"Error checking scheduled scrapes: {e}")
+
+# API endpoint for managing municipality schedules
+@app.put("/api/municipalities/{municipality_id}/schedule")
+async def update_municipality_scraping_schedule(
+    municipality_id: str, 
+    schedule_data: dict,
+    current_user: dict = Depends(verify_token)
+):
+    """Update scraping schedule for a municipality"""
+    try:
+        schedule = schedule_data.get("schedule", "")
+        enabled = schedule_data.get("enabled", False)
+        
+        # Validate schedule format
+        valid_schedules = [
+            "daily",
+            "weekly_monday", "weekly_tuesday", "weekly_wednesday", "weekly_thursday",
+            "weekly_friday", "weekly_saturday", "weekly_sunday",
+            "monthly_1st", "monthly_15th"
+        ]
+        
+        if enabled and schedule not in valid_schedules:
+            raise HTTPException(status_code=400, detail=f"Invalid schedule format. Valid options: {valid_schedules}")
+        
+        await update_municipality_schedule(municipality_id, schedule, enabled)
+        
+        municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not municipality:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        return {
+            "status": "success",
+            "municipality": municipality["name"],
+            "schedule": schedule,
+            "enabled": enabled,
+            "next_scheduled_scrape": municipality.get("next_scheduled_scrape")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating municipality schedule: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update schedule: {str(e)}")
+
+# Background task scheduler
+async def scheduled_scraping_background_task():
+    """Background task that runs every hour to check for scheduled scrapes"""
+    while True:
+        try:
+            await check_and_run_scheduled_scrapes()
+            # Wait 1 hour before next check
+            await asyncio.sleep(3600)
+        except Exception as e:
+            logger.error(f"Error in scheduled scraping background task: {e}")
+            # Wait 5 minutes before retrying on error
+            await asyncio.sleep(300)
+
 def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
     """Parse Victoria County PDF format and extract property data"""
     properties = []
