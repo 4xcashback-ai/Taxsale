@@ -4433,6 +4433,8 @@ async def weekly_scrape_job():
                     await scrape_halifax_tax_sales_for_municipality(municipality['id'])
                 elif scraper_type == 'victoria_county':
                     await scrape_victoria_county_for_municipality(municipality['id'])
+                elif scraper_type == 'cumberland_county':
+                    await scrape_cumberland_county_for_municipality(municipality['id'])
                 else:
                     logger.warning(f"Unknown scraper type: {scraper_type} for {municipality['name']}")
                     
