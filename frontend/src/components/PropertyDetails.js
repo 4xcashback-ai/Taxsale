@@ -294,7 +294,15 @@ const PropertyDetails = () => {
         
         // Try to fetch enhanced property details
         try {
-          const enhancedResponse = await fetch(`${backendUrl}/api/property/${assessmentNumber}/enhanced`);
+          const token = localStorage.getItem('authToken');
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          
+          const enhancedResponse = await fetch(`${backendUrl}/api/property/${assessmentNumber}/enhanced`, {
+            headers: headers
+          });
           if (enhancedResponse.ok) {
             const enhanced = await enhancedResponse.json();
             setPropertyDetails(enhanced);
