@@ -217,6 +217,20 @@ def check_property_access(property_data: dict, current_user: Optional[dict]) -> 
                 detail="Paid subscription required to view active property details"
             )
 
+def check_paid_user_access(current_user: dict) -> None:
+    """Check if user has paid subscription for premium features"""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    if current_user.get("subscription_tier") != "paid":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Paid subscription required for this feature"
+        )
+
 def generate_verification_token() -> str:
     """Generate random verification token"""
     return str(uuid.uuid4())
