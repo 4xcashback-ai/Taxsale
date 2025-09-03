@@ -267,6 +267,41 @@ const AuthenticatedApp = () => {
         </div>
       </header>
 
+      {/* Statistics Header */}
+      <div className="bg-gray-900 text-white py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center space-x-8 text-sm">
+            <div className="flex items-center">
+              <span className="text-gray-300">{municipalities.length} Municipalities</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-semibold text-green-400">
+                {taxSales.filter(p => p.status === 'active').length}
+              </span>
+              <span className="ml-1 text-gray-300">Active</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-semibold text-yellow-400">
+                {taxSales.filter(p => p.status === 'inactive').length}
+              </span>
+              <span className="ml-1 text-gray-300">Inactive</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-semibold text-blue-400">{taxSales.length}</span>
+              <span className="ml-1 text-gray-300">Total Properties</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-semibold text-white">0</span>
+              <span className="ml-1 text-gray-300">Scraped Today</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-300">Last:</span>
+              <span className="ml-1 font-semibold text-white">2025-09-03</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Property Search View */}
         {activeView === 'search' && (
