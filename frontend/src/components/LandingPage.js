@@ -70,8 +70,13 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
         const active = sampleProperties.filter(p => p.status === 'active').length;
         const inactive = sampleProperties.filter(p => p.status === 'inactive').length;
         
+        // Get unique provinces from municipalities
+        const uniqueProvinces = [...new Set(municipalities.map(m => m.province))].filter(Boolean);
+        const provinceCount = uniqueProvinces.length || 1; // Fallback to 1 for Nova Scotia
+        
         setStats({
           municipalities: municipalities.length || 3, // Fallback to 3
+          provinces: provinceCount,
           active: active,
           inactive: inactive,
           total: sampleProperties.length,
