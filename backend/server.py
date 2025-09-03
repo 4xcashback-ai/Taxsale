@@ -3459,8 +3459,11 @@ async def generate_boundary_thumbnail(assessment_number: str):
         if property_doc.get('pid_number'):
             try:
                 boundary_response = await query_ns_government_parcel(property_doc['pid_number'])
-                if boundary_response.get('found') and boundary_response.get('geometry'):
-                    boundary_data = boundary_response
+                if boundary_response.get('found'):
+                    # Accept response if it has either regular geometry or combined_geometry (for multi-PID)
+                    if (boundary_response.get('geometry') or 
+                        boundary_response.get('combined_geometry')):
+                        boundary_data = boundary_response
             except Exception as e:
                 logger.warning(f"Could not fetch boundary data for PID {property_doc['pid_number']}: {e}")
         
