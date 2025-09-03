@@ -436,7 +436,7 @@ const AuthenticatedApp = () => {
   const checkSystemHealth = async () => {
     try {
       setDeploymentLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.get(`${API}/api/deployment/health`, {
         headers: { Authorization: `Bearer ${token}` }
       });
