@@ -3464,7 +3464,17 @@ async def generate_boundary_thumbnail(assessment_number: str):
             except Exception as e:
                 logger.warning(f"Could not fetch boundary data for PID {property_doc['pid_number']}: {e}")
         
-        if not boundary_data or not boundary_data.get('geometry', {}).get('rings'):
+        # Handle both single PID and multi-PID boundary data
+        rings = None
+        if boundary_data:
+            # For multi-PID properties, use combined_geometry
+            if boundary_data.get('multiple_pids') and boundary_data.get('combined_geometry', {}).get('rings'):
+                rings = boundary_data['combined_geometry']['rings']
+            # For single PID properties, use regular geometry
+            elif boundary_data.get('geometry', {}).get('rings'):
+                rings = boundary_data['geometry']['rings']
+        
+        if not rings:
             raise HTTPException(status_code=400, detail="No boundary data available for this property")
         
         # Generate Google Maps Static API URL with boundary overlay
@@ -3475,7 +3485,6 @@ async def generate_boundary_thumbnail(assessment_number: str):
         google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
         
         # Convert boundary rings to path format for Google Maps Static API
-        rings = boundary_data['geometry']['rings']
         boundary_paths = []
         
         # Process each ring (usually just one for most properties)
