@@ -748,12 +748,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Admin Subscription Status Bug Fix"
-    - "Property Card Design and Layout"
-    - "Property Details Links and Routing"
-  stuck_tasks:
-    - "Victoria County Property Image Routing Fix"
-    - "Admin Subscription Status Bug Fix"
+    - "Boundary Thumbnail System Debugging"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
