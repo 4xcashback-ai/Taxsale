@@ -1841,6 +1841,263 @@ async def scrape_victoria_county_for_municipality(municipality_id: str):
         )
         raise HTTPException(status_code=500, detail=f"Victoria County scraping failed: {str(e)}")
 
+async def scrape_cumberland_county_for_municipality(municipality_id: str):
+    """Scrape Cumberland County tax sales for a specific municipality ID"""
+    try:
+        logger.info(f"Starting Cumberland County tax sale scraping for municipality {municipality_id}...")
+        
+        # Get municipality info
+        municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not municipality:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        # Update scrape status to in_progress
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {"$set": {"scrape_status": "in_progress"}}
+        )
+        
+        # Cumberland County tax sale URL
+        url = "https://www.cumberlandcounty.ns.ca/tax-sales.html"
+        
+        logger.info(f"Fetching Cumberland County tax sale page: {url}")
+        
+        # Scrape the tax sale page
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find the sale date from the page content
+        sale_date = "2025-10-21T10:00:00Z"  # Default based on the page content
+        sale_location = "Dr. Carson & Marion Murray Community Centre, 6 Main Street, Springhill, NS"
+        
+        # Look for the actual sale date in the text
+        for text in soup.get_text().split('\n'):
+            if 'October' in text and '2025' in text and '10:00' in text:
+                # Extract the actual sale date if found
+                logger.info(f"Cumberland County: Found sale date in text: {text.strip()}")
+                break
+        
+        # Find the table with property data
+        properties = []
+        table = soup.find('table')
+        
+        if table:
+            rows = table.find_all('tr')[1:]  # Skip header row
+            
+            for row in rows:
+                cells = row.find_all('td')
+                if len(cells) >= 6:
+                    try:
+                        assessment_num = cells[0].get_text(strip=True)
+                        pid = cells[1].get_text(strip=True)
+                        district = cells[2].get_text(strip=True)
+                        owner_description = cells[3].get_text(strip=True)
+                        total_due = cells[4].get_text(strip=True)
+                        redeemable = cells[5].get_text(strip=True)
+                        
+                        # Parse owner and description
+                        if '–' in owner_description:
+                            parts = owner_description.split('–', 1)
+                            owner_name = parts[0].strip()
+                            description = parts[1].strip() if len(parts) > 1 else ""
+                        else:
+                            owner_name = owner_description.strip()
+                            description = ""
+                        
+                        # Parse total due amount
+                        opening_bid = 0.0
+                        try:
+                            # Extract numeric value from total_due (e.g., "$3,369.46" -> 3369.46)
+                            bid_text = total_due.replace('$', '').replace(',', '').split()[0]
+                            opening_bid = float(bid_text)
+                        except:
+                            logger.warning(f"Could not parse opening bid from: {total_due}")
+                        
+                        # Check HST status
+                        hst_applicable = "HST Applicable" if "HST appl" in total_due else "No HST"
+                        
+                        # Set redeemable status
+                        redeemable_status = "Redeemable" if redeemable.lower() == "yes" else "Not Redeemable"
+                        
+                        properties.append({
+                            "assessment_num": assessment_num,
+                            "pid": pid,
+                            "owner_name": owner_name,
+                            "description": description,
+                            "district": district,
+                            "opening_bid": opening_bid,
+                            "total_due": total_due,
+                            "redeemable_status": redeemable_status,
+                            "hst_status": hst_applicable
+                        })
+                        
+                    except Exception as e:
+                        logger.warning(f"Error parsing Cumberland County property row: {e}")
+                        continue
+        
+        logger.info(f"Cumberland County: Parsed {len(properties)} properties from table")
+        
+        # Update property statuses before processing new data
+        await update_property_statuses()
+        
+        # Get current assessment numbers for inactive marking
+        current_assessment_numbers = [prop["assessment_num"] for prop in properties]
+        await mark_missing_properties_inactive(current_assessment_numbers, "Cumberland County")
+        
+        properties_scraped = 0
+        
+        for prop in properties:
+            try:
+                assessment_num = prop["assessment_num"]
+                owner_name = prop["owner_name"]
+                description = prop["description"]
+                pid = prop["pid"]
+                opening_bid = prop["opening_bid"]
+                
+                # Parse property type from description
+                property_type = "Dwelling" if "Dwelling" in description else "Land" if "Land" in description else "Property"
+                
+                # Format sale date for display
+                sale_date_obj = datetime.fromisoformat(sale_date.replace('Z', '+00:00'))
+                formatted_date = sale_date_obj.strftime("%B %d, %Y")
+                
+                # Create property record with status tracking
+                property_data = {
+                    "municipality_id": municipality_id,
+                    "municipality_name": "Cumberland County",
+                    "property_address": description,
+                    "property_description": f"Assessment: {assessment_num}, Owner: {owner_name}, District: {prop['district']}",
+                    "opening_bid": opening_bid,
+                    "sale_date": sale_date,
+                    "sale_time": "10:00 AM",
+                    "sale_location": f"Cumberland County - Public Auction ({formatted_date} at 10:00 AM, {sale_location})",
+                    "assessment_number": assessment_num,
+                    "property_type": property_type,
+                    "owner_name": owner_name,
+                    "pid_number": pid,
+                    "redeemable": prop["redeemable_status"],
+                    "hst_applicable": prop["hst_status"],
+                    "source_url": url,
+                    "status": "active",  # New properties default to active
+                    "status_updated_at": datetime.now(timezone.utc),
+                    "raw_data": {
+                        "assessment_number": assessment_num,
+                        "owner_name": owner_name,
+                        "property_address": description,
+                        "district": prop["district"],
+                        "pid": pid,
+                        "opening_bid": opening_bid,
+                        "total_due": prop["total_due"],
+                        "redeemable": prop["redeemable_status"],
+                        "hst_applicable": prop["hst_status"]
+                    }
+                }
+                
+                # Geocode the property address to get real coordinates
+                if description:
+                    address_for_geocoding = description.split(',')[0]  # Use first part of description
+                    latitude, longitude = await geocode_address(address_for_geocoding)
+                    
+                    property_data["latitude"] = latitude
+                    property_data["longitude"] = longitude
+                    
+                    if latitude and longitude:
+                        logger.info(f"Geocoded Cumberland County {assessment_num}: {address_for_geocoding} -> {latitude}, {longitude}")
+                    else:
+                        logger.warning(f"Could not geocode Cumberland County {assessment_num}: {address_for_geocoding}")
+                
+                # Fetch boundary data using PID if available
+                boundary_data = None
+                if pid:
+                    try:
+                        logger.info(f"Fetching boundary data for Cumberland County property {assessment_num}, PID: {pid}")
+                        boundary_response = await query_ns_government_parcel(pid)
+                        if boundary_response.get('found'):
+                            if (boundary_response.get('geometry') or 
+                                boundary_response.get('combined_geometry')):
+                                boundary_data = boundary_response
+                                property_data["government_boundary_data"] = boundary_data
+                                logger.info(f"Successfully fetched boundary data for Cumberland County {assessment_num}")
+                            else:
+                                logger.warning(f"Boundary response found but no geometry data for Cumberland County {assessment_num}")
+                        else:
+                            logger.warning(f"No boundary data found for Cumberland County property {assessment_num}, PID: {pid}")
+                    except Exception as boundary_error:
+                        logger.warning(f"Error fetching boundary data for Cumberland County property {assessment_num}: {boundary_error}")
+                
+                # Set boundary screenshot filename if boundary data exists, but preserve existing proper thumbnails
+                if boundary_data:
+                    # Check if property already exists to preserve existing boundary screenshots
+                    existing_property = await db.tax_sales.find_one({
+                        "assessment_number": assessment_num,
+                        "municipality_name": "Cumberland County"
+                    })
+                    
+                    # Only set basic filename if no existing boundary screenshot or if it's the basic format
+                    if not existing_property or not existing_property.get('boundary_screenshot') or existing_property.get('boundary_screenshot') == f"boundary_{assessment_num}.png":
+                        property_data["boundary_screenshot"] = f"boundary_{assessment_num}.png"
+                    else:
+                        # Preserve existing proper boundary screenshot (e.g., boundary_pid_assessment.png)
+                        property_data["boundary_screenshot"] = existing_property.get('boundary_screenshot')
+                        logger.info(f"Preserving existing boundary screenshot for Cumberland County {assessment_num}: {existing_property.get('boundary_screenshot')}")
+                
+                # Check if property already exists
+                existing = await db.tax_sales.find_one({
+                    "assessment_number": assessment_num,
+                    "municipality_name": "Cumberland County"
+                })
+                
+                if existing:
+                    # Update existing property
+                    await db.tax_sales.update_one(
+                        {"id": existing["id"]},
+                        {"$set": property_data}
+                    )
+                    logger.info(f"Updated existing Cumberland County property: {assessment_num}")
+                else:
+                    # Insert new property
+                    tax_sale_property = TaxSaleProperty(**property_data)
+                    await db.tax_sales.insert_one(tax_sale_property.dict())
+                    logger.info(f"Inserted new Cumberland County property: {assessment_num}")
+                
+                properties_scraped += 1
+                
+            except Exception as e:
+                logger.warning(f"Error processing Cumberland County property {prop.get('assessment_num', 'unknown')}: {e}")
+                continue
+        
+        # Update municipality scrape status
+        await db.municipalities.update_one(
+            {"id": municipality_id},
+            {
+                "$set": {
+                    "scrape_status": "success",
+                    "last_scraped": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        logger.info(f"Cumberland County scraping completed: {properties_scraped} properties processed")
+        
+        return {
+            "status": "success",
+            "municipality": "Cumberland County", 
+            "properties_scraped": properties_scraped,
+            "sale_date": sale_date,
+            "sale_location": sale_location
+        }
+        
+    except Exception as e:
+        logger.error(f"Cumberland County scraping failed: {e}")
+        if 'municipality_id' in locals():
+            await db.municipalities.update_one(
+                {"id": municipality_id},
+                {"$set": {"scrape_status": "failed"}}
+            )
+        raise HTTPException(status_code=500, detail=f"Cumberland County scraping failed: {str(e)}")
+
 def parse_victoria_county_pdf(pdf_text: str, municipality_id: str) -> list:
     """Parse Victoria County PDF format and extract property data"""
     properties = []
