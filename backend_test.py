@@ -2991,142 +2991,57 @@ def test_municipality_scheduling_system():
     return critical_tests_passed, results
 
 def main():
-    """Main test execution function - Focus on Cumberland County Property Image 404 Fix"""
-    print("🚀 Starting Backend API Testing for Nova Scotia Tax Sale Aggregator")
+    """Run comprehensive backend API tests - Focus on Municipality Scheduling System"""
+    print("🚀 STARTING COMPREHENSIVE BACKEND API TESTING")
     print("=" * 80)
-    print("🎯 PRIORITY FOCUS: Cumberland County Property Image 404 Fix")
-    print("📋 REVIEW REQUEST: Test Cumberland County property image 404 fix for 3 problematic properties")
-    print("🔍 KEY REQUIREMENTS:")
-    print("   1. Test GET /api/property-image/07486596 - should return 200 OK with image content")
-    print("   2. Test GET /api/property-image/01578626 - should return 200 OK with image content")
-    print("   3. Test GET /api/property-image/10802059 - should return 200 OK with image content")
-    print("   4. Verify images are actual satellite images (Content-Type: image/png or image/jpeg)")
-    print("   5. Verify image file sizes are reasonable (should be > 50KB for satellite images)")
-    print("   6. Test a few other property images to ensure fix didn't break existing functionality")
-    print("🎯 AUTHENTICATION: Use admin credentials (admin/TaxSale2025!SecureAdmin)")
-    print("🎯 BACKGROUND: Properties were returning 404 errors, fixed by:")
-    print("   - Running batch processing to update boundary screenshot filenames")
-    print("   - Adding missing coordinates from Nova Scotia Government boundary data")
-    print("   - Now serves Google Maps satellite images using newly added coordinates")
+    print(f"🌐 Backend URL: {BACKEND_URL}")
+    print(f"🔑 Admin Credentials: {ADMIN_USERNAME} / {'*' * len(ADMIN_PASSWORD)}")
+    print("🎯 PRIORITY FOCUS: Municipality Scheduling System Bug Fix")
+    print("📋 REVIEW REQUEST: Test Municipality Scheduling System bug fix")
+    print("📋 BACKGROUND: User reported scheduling enable/disable only worked for Cumberland County")
+    print("📋 FIX: Added missing 'schedule_enabled' field to MunicipalityUpdate model")
     print("=" * 80)
     
-    # Test 1: Basic API connectivity
-    api_connected, _ = test_api_connection()
+    # Test API connection first
+    connection_result, connection_data = test_api_connection()
+    if not connection_result:
+        print("❌ Cannot proceed without API connection")
+        sys.exit(1)
     
-    if not api_connected:
-        print("\n❌ Cannot proceed without API connection")
-        return False
+    # Run Municipality Scheduling System tests based on review request
+    print("\n🎯 RUNNING MUNICIPALITY SCHEDULING SYSTEM TESTS...")
     
-    # Test 2: Cumberland County Property Image 404 Fix (PRIORITY TEST)
-    print("\n🎯 PRIORITY TEST: Cumberland County Property Image 404 Fix")
-    cumberland_success, cumberland_results = test_cumberland_county_property_images()
+    # Test Municipality Scheduling System
+    print("\n" + "🔍" * 40)
+    scheduling_result, scheduling_data = test_municipality_scheduling_system()
     
-    # Test 3: Additional system tests for context
-    print("\n🔍 ADDITIONAL CONTEXT TESTS:")
-    
-    # Enhanced Property Details Endpoint (related functionality)
-    print("\n   Testing Enhanced Property Details Endpoint...")
-    enhanced_working, enhanced_results = test_enhanced_property_details_comprehensive()
-    
-    # User Authentication System (needed for property endpoints)
-    print("\n   Testing User Authentication System...")
-    auth_working, auth_results = test_user_authentication_system()
-    
-    # Halifax Boundary Data System (related to property images)
-    print("\n   Testing Halifax Boundary Data System...")
-    halifax_working, halifax_results = test_deployment_system()
-    
-    # Final Results Summary
+    # Final summary
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST RESULTS SUMMARY - Cumberland County Property Image 404 Fix")
+    print("📊 FINAL TEST SUMMARY")
     print("=" * 80)
     
-    if cumberland_success:
-        print(f"🎉 CUMBERLAND COUNTY PROPERTY IMAGE 404 FIX: SUCCESS!")
-        print(f"   ✅ All critical tests passed")
-        print(f"   ✅ All 3 problematic properties (07486596, 01578626, 10802059) now working")
-        print(f"   ✅ Properties serve satellite images with proper content-type")
-        print(f"   ✅ Image sizes are reasonable (>50KB)")
-        print(f"   ✅ No regression detected in other property images")
-        
-        # Show detailed results for each property
-        print(f"\n📊 DETAILED PROPERTY RESULTS:")
-        for prop_id, result in cumberland_results.items():
-            if isinstance(result, dict) and prop_id in ["07486596", "01578626", "10802059"]:
-                if result.get("success"):
-                    print(f"   ✅ {prop_id}: {result.get('content_type', 'N/A')}, {result.get('size_kb', 0)} KB")
-                else:
-                    print(f"   ❌ {prop_id}: {result.get('error', 'Unknown error')}")
-        
-        # Show regression test results
-        regression_results = cumberland_results.get("regression_test", {})
-        if isinstance(regression_results, dict) and not regression_results.get("error"):
-            working_regression = sum(1 for r in regression_results.values() if r is True)
-            total_regression = len(regression_results)
-            print(f"\n📊 REGRESSION TEST RESULTS:")
-            print(f"   Other properties tested: {working_regression}/{total_regression} working")
-            print(f"   No regression detected: {'✅ CONFIRMED' if working_regression >= total_regression * 0.8 else '⚠️ SOME ISSUES'}")
-        
-        print(f"\n🎯 KEY ACHIEVEMENTS:")
-        print(f"   ✅ Cumberland County property image 404 errors resolved")
-        print(f"   ✅ Batch processing updated boundary screenshot filenames correctly")
-        print(f"   ✅ Missing coordinates added from Nova Scotia Government boundary data")
-        print(f"   ✅ Google Maps satellite image fallback working properly")
-        print(f"   ✅ Properties now return 200 OK for /api/property-image/{'{assessment_number}'} requests")
-        print(f"   ✅ Images served as Google Maps satellite images using geocoded coordinates")
-        
+    tests = [
+        ("Municipality Scheduling System", scheduling_result)
+    ]
+    
+    passed_tests = sum(1 for _, result in tests if result)
+    total_tests = len(tests)
+    
+    print(f"📋 OVERALL RESULTS:")
+    for test_name, result in tests:
+        status = "✅ PASSED" if result else "❌ FAILED"
+        print(f"   {status} - {test_name}")
+    
+    print(f"\n📊 SUMMARY:")
+    print(f"   Passed: {passed_tests}/{total_tests} test suites")
+    print(f"   Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    
+    if passed_tests == total_tests:
+        print(f"\n🎉 ALL TESTS PASSED! Municipality Scheduling System bug fix is working correctly.")
+        return True
     else:
-        print(f"❌ CUMBERLAND COUNTY PROPERTY IMAGE 404 FIX: CRITICAL ISSUES IDENTIFIED")
-        print(f"   ❌ Some of the 3 problematic properties still have issues")
-        print(f"   🔧 Property image serving or coordinate issues detected")
-        
-        print(f"\n📋 ISSUES IDENTIFIED:")
-        failed_properties = []
-        for prop_id, result in cumberland_results.items():
-            if isinstance(result, dict) and prop_id in ["07486596", "01578626", "10802059"]:
-                if not result.get("success"):
-                    failed_properties.append(f"{prop_id}: {result.get('error', 'Unknown error')}")
-        
-        if failed_properties:
-            print(f"   ❌ FAILED PROPERTIES:")
-            for failure in failed_properties:
-                print(f"      - {failure}")
-        
-        print(f"\n   🔧 RECOMMENDED ACTIONS:")
-        print(f"      1. Check if coordinates were properly added to database for failed properties")
-        print(f"      2. Verify Google Maps API key is working")
-        print(f"      3. Test property-image endpoint routing")
-        print(f"      4. Check boundary screenshot filename updates")
-        print(f"      5. Verify fix_cumberland_coordinates.py script results")
-        print(f"      6. Test /api/batch-process-ns-government-boundaries endpoint")
-    
-    # Context test results
-    print(f"\n📋 CONTEXT TEST RESULTS:")
-    print(f"   Enhanced Property Details: {'✅ PASSED' if enhanced_working else '❌ FAILED'}")
-    print(f"   User Authentication System: {'✅ PASSED' if auth_working else '❌ FAILED'}")
-    print(f"   Halifax Boundary Data System: {'✅ PASSED' if halifax_working else '❌ FAILED'}")
-    
-    # Overall system health
-    all_systems = [cumberland_success, enhanced_working, auth_working, halifax_working]
-    working_systems = sum(1 for system in all_systems if system)
-    total_systems = len(all_systems)
-    
-    print(f"\n📈 OVERALL SYSTEM HEALTH: {working_systems}/{total_systems} systems working ({(working_systems/total_systems)*100:.1f}%)")
-    
-    if cumberland_success:
-        print(f"\n🎉 PRIORITY OBJECTIVE ACHIEVED!")
-        print(f"   ✅ Cumberland County property image 404 fix is working correctly")
-        print(f"   ✅ All 3 problematic properties now serve satellite images")
-        print(f"   ✅ Fix implementation successful - coordinates added, filenames updated")
-        print(f"   ✅ Ready for production use")
-    else:
-        print(f"\n❌ PRIORITY OBJECTIVE NOT ACHIEVED")
-        print(f"   ❌ Cumberland County property image 404 fix needs attention")
-        print(f"   🔧 Review failed tests above for specific issues")
-    
-    print("=" * 80)
-    
-    return cumberland_success
+        print(f"\n❌ Some tests failed. Please review the issues above.")
+        return False
 
 if __name__ == "__main__":
     success = main()
