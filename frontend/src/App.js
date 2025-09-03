@@ -210,23 +210,48 @@ const AuthenticatedApp = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await axios.post(
-        `${API}/api/favorites/toggle`,
-        { assessment_number: property.assessment_number },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Update the property in the taxSales array
-      setTaxSales(prevSales => 
-        prevSales.map(p => 
-          p.assessment_number === property.assessment_number 
-            ? { ...p, is_favorited: response.data.is_favorited, favorite_count: response.data.favorite_count }
-            : p
-        )
-      );
+      
+      if (property.is_favorited) {
+        // Remove from favorites
+        await axios.delete(
+          `${API}/api/favorites/${property.assessment_number}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        // Update the property in the taxSales array
+        setTaxSales(prevSales => 
+          prevSales.map(p => 
+            p.assessment_number === property.assessment_number 
+              ? { ...p, is_favorited: false, favorite_count: Math.max(0, (p.favorite_count || 1) - 1) }
+              : p
+          )
+        );
+      } else {
+        // Add to favorites
+        await axios.post(
+          `${API}/api/favorites`,
+          { property_id: property.assessment_number },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        // Update the property in the taxSales array
+        setTaxSales(prevSales => 
+          prevSales.map(p => 
+            p.assessment_number === property.assessment_number 
+              ? { ...p, is_favorited: true, favorite_count: (p.favorite_count || 0) + 1 }
+              : p
+          )
+        );
+      }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      alert('Error updating favorite status. Please try again.');
+      if (error.response?.status === 403) {
+        alert('Paid subscription required for favorites');
+      } else if (error.response?.status === 400 && error.response?.data?.detail?.includes('Maximum 50')) {
+        alert('You have reached the maximum of 50 favorite properties');
+      } else {
+        alert('Error updating favorite status. Please try again.');
+      }
     }
   };
 
