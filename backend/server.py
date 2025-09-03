@@ -3976,6 +3976,12 @@ async def scrape_all_municipalities(current_user: dict = Depends(verify_token)):
             elif scraper_type == "cape_breton":
                 # Use Cape Breton scraper
                 result = await scrape_cape_breton_tax_sales()
+            elif scraper_type == "victoria_county":
+                # Use Victoria County scraper
+                result = await scrape_victoria_county_for_municipality(municipality["id"])
+            elif scraper_type == "cumberland_county":
+                # Use Cumberland County scraper
+                result = await scrape_cumberland_county_for_municipality(municipality["id"])
             elif scraper_type == "kentville":
                 # Use Kentville scraper  
                 result = await scrape_kentville_tax_sales()
