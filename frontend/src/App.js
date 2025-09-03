@@ -574,160 +574,181 @@ const AuthenticatedApp = () => {
                   <p className="mt-2 text-gray-600">Loading properties...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {taxSales.map((property, index) => (
-                    <div key={property.id}>
-                      <Card 
-                        className="cursor-pointer hover:shadow-lg transition-shadow duration-200 relative bg-white rounded-lg overflow-hidden"
-                        onClick={() => handlePropertyClick(property)}
-                      >
-                        {/* Property Map Image */}
-                        <div className="relative h-48 bg-gray-200">
-                          {property.boundary_screenshot || property.latitude ? (
-                            <img
-                              src={property.boundary_screenshot?.startsWith('http') 
-                                ? property.boundary_screenshot 
-                                : `${API}/api/property-image/${property.assessment_number}?v=${Date.now()}`
-                              }
-                              alt={`Property map for ${property.property_address}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                // Fallback to Google Maps static image if boundary image fails
-                                const lat = property.latitude || 44.6488;
-                                const lng = property.longitude || -63.5752;
-                                e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=400x300&maptype=satellite&markers=color:blue%7C${lat},${lng}&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY`;
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                              <MapPin className="h-12 w-12 text-gray-400" />
-                            </div>
-                          )}
-                          
-                          {/* Status Badges */}
-                          <div className="absolute top-3 right-3 flex flex-col gap-2">
-                            {/* Main Status Badge */}
-                            <div className={`px-3 py-1 rounded-full text-sm font-bold ${
-                              property.status === 'active' 
-                                ? 'bg-green-100 text-green-800 border border-green-200' 
-                                : property.status === 'inactive'
-                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                : property.status === 'sold'
-                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                : 'bg-gray-100 text-gray-800 border border-gray-200'
-                            }`}>
-                              {(property.status || 'active').toUpperCase()}
-                            </div>
-                            
-                            {/* Auction Result Badge - Only show for inactive/sold properties */}
-                            {(property.status === 'inactive' || property.status === 'sold') && property.auction_result && (
-                              <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                property.auction_result === 'sold' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                                property.auction_result === 'pending' ? 'bg-orange-100 text-orange-800 border border-orange-200' :
-                                property.auction_result === 'canceled' ? 'bg-red-100 text-red-800 border border-red-200' :
-                                property.auction_result === 'deferred' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                                property.auction_result === 'taxes_paid' ? 'bg-green-100 text-green-800 border border-green-200' :
-                                'bg-gray-100 text-gray-800 border border-gray-200'
-                              }`}>
-                                {property.auction_result === 'sold' ? 'SOLD' :
-                                 property.auction_result === 'pending' ? 'PENDING' :
-                                 property.auction_result === 'canceled' ? 'CANCELED' :
-                                 property.auction_result === 'deferred' ? 'DEFERRED' :
-                                 property.auction_result === 'taxes_paid' ? 'REDEEMED' :
-                                 property.auction_result.toUpperCase()}
+                <div className="space-y-6">
+                  {/* Render properties in batches with ads between */}
+                  {(() => {
+                    const result = [];
+                    const propertiesPerRow = 3; // Based on lg:grid-cols-3
+                    const showAdAfter = 6; // Show ad after every 6 properties (2 rows)
+                    
+                    for (let i = 0; i < taxSales.length; i += showAdAfter) {
+                      const batch = taxSales.slice(i, i + showAdAfter);
+                      
+                      // Add property grid for this batch
+                      result.push(
+                        <div key={`batch-${i}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {batch.map((property, batchIndex) => (
+                            <Card 
+                              key={property.id}
+                              className="cursor-pointer hover:shadow-lg transition-shadow duration-200 relative bg-white rounded-lg overflow-hidden"
+                              onClick={() => handlePropertyClick(property)}
+                            >
+                              {/* Property Map Image */}
+                              <div className="relative h-48 bg-gray-200">
+                                {property.boundary_screenshot || property.latitude ? (
+                                  <img
+                                    src={property.boundary_screenshot?.startsWith('http') 
+                                      ? property.boundary_screenshot 
+                                      : `${API}/api/property-image/${property.assessment_number}?v=${Date.now()}`
+                                    }
+                                    alt={`Property map for ${property.property_address}`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Fallback to Google Maps static image if boundary image fails
+                                      const lat = property.latitude || 44.6488;
+                                      const lng = property.longitude || -63.5752;
+                                      e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=400x300&maptype=satellite&markers=color:blue%7C${lat},${lng}&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY`;
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <MapPin className="h-12 w-12 text-gray-400" />
+                                  </div>
+                                )}
+                                
+                                {/* Status Badges */}
+                                <div className="absolute top-3 right-3 flex flex-col gap-2">
+                                  {/* Main Status Badge */}
+                                  <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                    property.status === 'active' 
+                                      ? 'bg-green-100 text-green-800 border border-green-200' 
+                                      : property.status === 'inactive'
+                                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                      : property.status === 'sold'
+                                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                      : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                  }`}>
+                                    {(property.status || 'active').toUpperCase()}
+                                  </div>
+                                  
+                                  {/* Auction Result Badge - Only show for inactive/sold properties */}
+                                  {(property.status === 'inactive' || property.status === 'sold') && property.auction_result && (
+                                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                      property.auction_result === 'sold' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                      property.auction_result === 'pending' ? 'bg-orange-100 text-orange-800 border border-orange-200' :
+                                      property.auction_result === 'canceled' ? 'bg-red-100 text-red-800 border border-red-200' :
+                                      property.auction_result === 'deferred' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                                      property.auction_result === 'taxes_paid' ? 'bg-green-100 text-green-800 border border-green-200' :
+                                      'bg-gray-100 text-gray-800 border border-gray-200'
+                                    }`}>
+                                      {property.auction_result === 'sold' ? 'SOLD' :
+                                       property.auction_result === 'pending' ? 'PENDING' :
+                                       property.auction_result === 'canceled' ? 'CANCELED' :
+                                       property.auction_result === 'deferred' ? 'DEFERRED' :
+                                       property.auction_result === 'taxes_paid' ? 'REDEEMED' :
+                                       property.auction_result.toUpperCase()}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </div>
+
+                              <CardContent className="p-6">
+                                {/* Property Address */}
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                                  {property.property_address}
+                                </h3>
+
+                                {/* Property Details */}
+                                <div className="space-y-2 text-gray-600 mb-4">
+                                  <div className="flex justify-between">
+                                    <span>Assessment #:</span>
+                                    <span className="font-medium">{property.assessment_number}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>PID:</span>
+                                    <span className="font-medium">{property.pid_number}</span>
+                                  </div>
+                                </div>
+
+                                {/* Price */}
+                                <div className="mb-4">
+                                  <div className="text-3xl font-bold text-green-600">
+                                    ${parseFloat(property.opening_bid || 0).toLocaleString('en-US', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2
+                                    })}
+                                  </div>
+                                  {property.auction_result === 'sold' && property.winning_bid_amount && (
+                                    <div className="mt-1">
+                                      <span className="text-sm text-gray-500">Final Sale: </span>
+                                      <span className="text-lg font-semibold text-blue-600">
+                                        ${parseFloat(property.winning_bid_amount).toLocaleString('en-US', {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2
+                                        })}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Additional Info */}
+                                <div className="space-y-2 text-gray-600 mb-6">
+                                  <div className="flex justify-between">
+                                    <span>Owner:</span>
+                                    <span className="font-medium text-right">{property.owner_name || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Municipality:</span>
+                                    <span className="font-medium">{property.municipality_name}</span>
+                                  </div>
+                                  {property.sale_date && (
+                                    <div className="flex justify-between">
+                                      <span>Sale Date:</span>
+                                      <span className="font-medium">{formatDate(property.sale_date)}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Access Control Notice */}
+                                {property.status === 'active' && !canViewActiveProperties() && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                                    <div className="flex items-center">
+                                      <Lock className="h-4 w-4 text-blue-600 mr-2" />
+                                      <span className="text-sm text-blue-800 font-medium">
+                                        Premium Required
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-blue-700 mt-1">
+                                      Upgrade to view active property details
+                                    </p>
+                                  </div>
+                                )}
+
+                                <Button 
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg"
+                                  variant={property.status === 'active' && !canViewActiveProperties() ? "outline" : "default"}
+                                >
+                                  {property.status === 'active' && !canViewActiveProperties() 
+                                    ? 'Upgrade to View Details' 
+                                    : 'See More Details →'
+                                  }
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
-
-                        <CardContent className="p-6">
-                          {/* Property Address */}
-                          <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {property.property_address}
-                          </h3>
-
-                          {/* Property Details */}
-                          <div className="space-y-2 text-gray-600 mb-4">
-                            <div className="flex justify-between">
-                              <span>Assessment #:</span>
-                              <span className="font-medium">{property.assessment_number}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>PID:</span>
-                              <span className="font-medium">{property.pid_number}</span>
-                            </div>
-                          </div>
-
-                          {/* Price */}
-                          <div className="mb-4">
-                            <div className="text-3xl font-bold text-green-600">
-                              ${parseFloat(property.opening_bid || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                              })}
-                            </div>
-                            {property.auction_result === 'sold' && property.winning_bid_amount && (
-                              <div className="mt-1">
-                                <span className="text-sm text-gray-500">Final Sale: </span>
-                                <span className="text-lg font-semibold text-blue-600">
-                                  ${parseFloat(property.winning_bid_amount).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                  })}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Additional Info */}
-                          <div className="space-y-2 text-gray-600 mb-6">
-                            <div className="flex justify-between">
-                              <span>Owner:</span>
-                              <span className="font-medium text-right">{property.owner_name || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Municipality:</span>
-                              <span className="font-medium">{property.municipality_name}</span>
-                            </div>
-                            {property.sale_date && (
-                              <div className="flex justify-between">
-                                <span>Sale Date:</span>
-                                <span className="font-medium">{formatDate(property.sale_date)}</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Access Control Notice */}
-                          {property.status === 'active' && !canViewActiveProperties() && (
-                            <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-                              <div className="flex items-center">
-                                <Lock className="h-4 w-4 text-blue-600 mr-2" />
-                                <span className="text-sm text-blue-800 font-medium">
-                                  Premium Required
-                                </span>
-                              </div>
-                              <p className="text-xs text-blue-700 mt-1">
-                                Upgrade to view active property details
-                              </p>
-                            </div>
-                          )}
-
-                          <Button 
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg"
-                            variant={property.status === 'active' && !canViewActiveProperties() ? "outline" : "default"}
-                          >
-                            {property.status === 'active' && !canViewActiveProperties() 
-                              ? 'Upgrade to View Details' 
-                              : 'See More Details →'
-                            }
-                          </Button>
-                        </CardContent>
-                      </Card>
-
-                      {/* Ad placement every 3 properties */}
-                      {(index + 1) % 3 === 0 && <SearchPageAd index={index} />}
-                    </div>
-                  ))}
+                      );
+                      
+                      // Add ad after this batch (if not the last batch and we have more properties)
+                      if (i + showAdAfter < taxSales.length) {
+                        result.push(
+                          <SearchPageAd key={`ad-${i}`} index={i / showAdAfter} />
+                        );
+                      }
+                    }
+                    
+                    return result;
+                  })()}
                 </div>
               )}
 
