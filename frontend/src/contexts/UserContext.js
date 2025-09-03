@@ -41,17 +41,39 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
-      // Get user info from the regular user endpoint
-      const response = await axios.get(`${API}/api/users/me`);
-      const userData = response.data;
-      
-      // Use actual database user data for all users
-      setUser(userData);
-      
-      setIsAuthenticated(true);
+      // Try to get user info - for admin this will fail, so we handle it
+      try {
+        const response = await axios.get(`${API}/api/users/me`);
+        const userData = response.data;
+        
+        // Use actual database user data for regular users
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (userError) {
+        // If /api/users/me fails, check if it's because we're admin
+        // Admin tokens are valid but don't have user data in the users table
+        if (userError.response?.status === 404 || userError.response?.status === 401) {
+          // Try to verify token by calling a protected admin endpoint
+          try {
+            await axios.get(`${API}/api/deployment/status`);
+            // If this succeeds, we're admin
+            const adminUser = {
+              id: 'admin',
+              email: 'admin@taxsalecompass.ca',
+              subscription_tier: 'admin'
+            };
+            setUser(adminUser);
+            setIsAuthenticated(true);
+          } catch (adminError) {
+            // Token is invalid
+            logout();
+          }
+        } else {
+          logout();
+        }
+      }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      // Token is invalid, clear it
+      console.error('Auth status check failed:', error);
       logout();
     } finally {
       setLoading(false);
