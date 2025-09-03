@@ -2259,6 +2259,32 @@ async def update_municipality_scraping_schedule(
         logger.error(f"Error updating municipality schedule: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update schedule: {str(e)}")
 
+@api_router.get("/municipalities/{municipality_id}/schedule")
+async def get_municipality_scraping_schedule(
+    municipality_id: str,
+    current_user: dict = Depends(verify_token)
+):
+    """Get current scraping schedule for a municipality"""
+    try:
+        municipality = await db.municipalities.find_one({"id": municipality_id})
+        if not municipality:
+            raise HTTPException(status_code=404, detail="Municipality not found")
+        
+        return {
+            "municipality_id": municipality_id,
+            "municipality_name": municipality["name"],
+            "schedule": municipality.get("scrape_schedule"),
+            "enabled": municipality.get("schedule_enabled", False),
+            "next_scheduled_scrape": municipality.get("next_scheduled_scrape"),
+            "scrape_enabled": municipality.get("scrape_enabled", True)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting municipality schedule: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get schedule: {str(e)}")
+
 # Background task scheduler
 async def scheduled_scraping_background_task():
     """Background task that runs every hour to check for scheduled scrapes"""
