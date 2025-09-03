@@ -366,7 +366,7 @@ const AuthenticatedApp = () => {
   // Deployment functions
   const fetchDeploymentStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.get(`${API}/api/deployment/status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
