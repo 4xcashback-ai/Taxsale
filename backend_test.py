@@ -1367,18 +1367,315 @@ def test_verify_deployment_endpoint():
         print(f"   ❌ Verify deployment error: {e}")
         return False, {"error": str(e)}
 
-def test_deployment_system():
-    """Comprehensive test of the deployment system API endpoints"""
-    print("\n🎯 COMPREHENSIVE DEPLOYMENT SYSTEM TEST")
+def test_halifax_boundary_data():
+    """Test Halifax boundary data system to verify the boundary issue has been fixed"""
+    print("\n🎯 HALIFAX BOUNDARY DATA SYSTEM TEST")
     print("=" * 80)
-    print("🎯 REVIEW REQUEST: Test deployment system API endpoints")
+    print("🎯 REVIEW REQUEST: Test Halifax boundary data system")
     print("📋 SPECIFIC REQUIREMENTS:")
-    print("   1. Authentication: All deployment endpoints require JWT token")
-    print("   2. Deployment Status: GET /api/deployment/status - return current status")
-    print("   3. Check Updates: POST /api/deployment/check-updates - check GitHub updates")
-    print("   4. Deploy: POST /api/deployment/deploy - start deployment process")
-    print("   5. Health Check: GET /api/deployment/health - return system health")
-    print("   6. Verify Deployment: POST /api/deployment/verify - verify deployment")
+    print("   1. Halifax Property Boundary Data: GET /api/tax-sales?municipality=Halifax%20Regional%20Municipality&limit=5")
+    print("   2. Halifax Boundary Images: GET /api/property-image/{assessment_number} for Halifax properties")
+    print("   3. Compare with Victoria County: GET /api/tax-sales?municipality=Victoria%20County&limit=3")
+    print("   4. NS Government API: GET /api/query-ns-government-parcel/{pid} for Halifax PIDs")
+    print("   5. Verify government_boundary_data field populated (not null)")
+    print("   6. Verify boundary_screenshot filename set")
+    print("=" * 80)
+
+def test_halifax_properties_boundary_data():
+    """Test that Halifax properties have boundary data populated"""
+    print("\n🏠 Testing Halifax Properties Boundary Data...")
+    print("🔍 FOCUS: GET /api/tax-sales?municipality=Halifax%20Regional%20Municipality&limit=5")
+    print("📋 EXPECTED: Properties have government_boundary_data and boundary_screenshot fields")
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax%20Regional%20Municipality&limit=5", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Handle different response formats
+            if isinstance(data, dict):
+                properties = data.get('properties', [])
+            else:
+                properties = data
+            
+            if not properties:
+                print("   ❌ No Halifax properties found")
+                return False, {"error": "No Halifax properties found"}
+            
+            print(f"   📋 Found {len(properties)} Halifax properties")
+            
+            # Check each property for boundary data
+            properties_with_boundary_data = 0
+            properties_with_boundary_screenshot = 0
+            properties_with_pid = 0
+            
+            for i, prop in enumerate(properties):
+                assessment_number = prop.get('assessment_number', f'Property_{i+1}')
+                government_boundary_data = prop.get('government_boundary_data')
+                boundary_screenshot = prop.get('boundary_screenshot')
+                pid_number = prop.get('pid_number')
+                
+                print(f"\n   Property {i+1}: {assessment_number}")
+                print(f"     PID: {pid_number}")
+                print(f"     Government Boundary Data: {'✅ Present' if government_boundary_data else '❌ Missing'}")
+                print(f"     Boundary Screenshot: {'✅ Present' if boundary_screenshot else '❌ Missing'}")
+                
+                if government_boundary_data:
+                    properties_with_boundary_data += 1
+                if boundary_screenshot:
+                    properties_with_boundary_screenshot += 1
+                if pid_number:
+                    properties_with_pid += 1
+            
+            print(f"\n   📊 Halifax Boundary Data Summary:")
+            print(f"     Properties with government_boundary_data: {properties_with_boundary_data}/{len(properties)}")
+            print(f"     Properties with boundary_screenshot: {properties_with_boundary_screenshot}/{len(properties)}")
+            print(f"     Properties with PID numbers: {properties_with_pid}/{len(properties)}")
+            
+            # Success criteria: At least 80% of properties should have boundary data
+            boundary_data_percentage = (properties_with_boundary_data / len(properties)) * 100
+            screenshot_percentage = (properties_with_boundary_screenshot / len(properties)) * 100
+            
+            if boundary_data_percentage >= 80 and screenshot_percentage >= 80:
+                print(f"   ✅ Halifax boundary data system working correctly")
+                return True, {
+                    "total_properties": len(properties),
+                    "boundary_data_count": properties_with_boundary_data,
+                    "screenshot_count": properties_with_boundary_screenshot,
+                    "pid_count": properties_with_pid,
+                    "boundary_data_percentage": boundary_data_percentage,
+                    "screenshot_percentage": screenshot_percentage
+                }
+            else:
+                print(f"   ❌ Halifax boundary data incomplete")
+                return False, {
+                    "error": "Insufficient boundary data coverage",
+                    "boundary_data_percentage": boundary_data_percentage,
+                    "screenshot_percentage": screenshot_percentage
+                }
+        else:
+            print(f"   ❌ Failed to get Halifax properties: {response.status_code}")
+            return False, {"error": f"HTTP {response.status_code}"}
+            
+    except Exception as e:
+        print(f"   ❌ Halifax properties test error: {e}")
+        return False, {"error": str(e)}
+
+def test_halifax_boundary_images():
+    """Test Halifax boundary image generation and serving"""
+    print("\n🖼️ Testing Halifax Boundary Images...")
+    print("🔍 FOCUS: GET /api/property-image/{assessment_number} for Halifax properties")
+    print("📋 EXPECTED: Images generated and served correctly for Halifax assessment numbers")
+    
+    # Test specific Halifax assessment numbers from the review request
+    test_assessment_numbers = ["10692563", "00079006", "00125326"]
+    
+    results = {}
+    
+    for assessment_number in test_assessment_numbers:
+        try:
+            print(f"\n   Testing Halifax assessment number: {assessment_number}")
+            
+            response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", timeout=30)
+            
+            print(f"     Status Code: {response.status_code}")
+            print(f"     Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+            print(f"     Content-Length: {len(response.content)} bytes")
+            
+            if response.status_code == 200:
+                content_type = response.headers.get('Content-Type', '')
+                if content_type == 'image/png' and len(response.content) > 1000:
+                    print(f"     ✅ Boundary image served successfully")
+                    results[assessment_number] = True
+                else:
+                    print(f"     ❌ Invalid image response")
+                    results[assessment_number] = False
+            elif response.status_code == 404:
+                print(f"     ⚠️ Property not found or no image available")
+                results[assessment_number] = False
+            else:
+                print(f"     ❌ Image serving failed")
+                results[assessment_number] = False
+                
+        except Exception as e:
+            print(f"     ❌ Error testing {assessment_number}: {e}")
+            results[assessment_number] = False
+    
+    successful_images = sum(1 for result in results.values() if result is True)
+    total_tests = len(results)
+    
+    print(f"\n   📊 Halifax Boundary Images Results: {successful_images}/{total_tests} images served")
+    
+    if successful_images >= 1:  # At least one image should work
+        print(f"   ✅ Halifax boundary image system working")
+        return True, results
+    else:
+        print(f"   ❌ Halifax boundary image system has issues")
+        return False, results
+
+def test_victoria_county_comparison():
+    """Test Victoria County properties to ensure they still work"""
+    print("\n🏛️ Testing Victoria County Comparison...")
+    print("🔍 FOCUS: GET /api/tax-sales?municipality=Victoria%20County&limit=3")
+    print("📋 EXPECTED: Victoria County properties also have boundary data")
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Victoria%20County&limit=3", timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Handle different response formats
+            if isinstance(data, dict):
+                properties = data.get('properties', [])
+            else:
+                properties = data
+            
+            if not properties:
+                print("   ⚠️ No Victoria County properties found")
+                return True, {"message": "No Victoria County properties to compare"}
+            
+            print(f"   📋 Found {len(properties)} Victoria County properties")
+            
+            # Check boundary data for Victoria County
+            properties_with_boundary_data = 0
+            
+            for i, prop in enumerate(properties):
+                assessment_number = prop.get('assessment_number', f'Property_{i+1}')
+                government_boundary_data = prop.get('government_boundary_data')
+                boundary_screenshot = prop.get('boundary_screenshot')
+                
+                print(f"   Property {i+1}: {assessment_number}")
+                print(f"     Government Boundary Data: {'✅ Present' if government_boundary_data else '❌ Missing'}")
+                print(f"     Boundary Screenshot: {'✅ Present' if boundary_screenshot else '❌ Missing'}")
+                
+                if government_boundary_data:
+                    properties_with_boundary_data += 1
+            
+            print(f"\n   📊 Victoria County has boundary data: {properties_with_boundary_data}/{len(properties)} properties")
+            
+            return True, {
+                "total_properties": len(properties),
+                "boundary_data_count": properties_with_boundary_data
+            }
+        else:
+            print(f"   ❌ Failed to get Victoria County properties: {response.status_code}")
+            return False, {"error": f"HTTP {response.status_code}"}
+            
+    except Exception as e:
+        print(f"   ❌ Victoria County test error: {e}")
+        return False, {"error": str(e)}
+
+def test_ns_government_parcel_api():
+    """Test the underlying NS Government parcel service"""
+    print("\n🏛️ Testing NS Government Parcel API...")
+    print("🔍 FOCUS: GET /api/query-ns-government-parcel/{pid} for Halifax PIDs")
+    print("📋 EXPECTED: API returns valid geometry data with coordinates")
+    
+    # First get some Halifax properties to extract PIDs
+    try:
+        response = requests.get(f"{BACKEND_URL}/tax-sales?municipality=Halifax%20Regional%20Municipality&limit=5", timeout=30)
+        
+        if response.status_code != 200:
+            print("   ❌ Cannot get Halifax properties for PID testing")
+            return False, {"error": "Cannot get Halifax properties"}
+        
+        data = response.json()
+        if isinstance(data, dict):
+            properties = data.get('properties', [])
+        else:
+            properties = data
+        
+        if not properties:
+            print("   ❌ No Halifax properties found for PID testing")
+            return False, {"error": "No Halifax properties found"}
+        
+        # Extract PIDs from Halifax properties
+        test_pids = []
+        for prop in properties:
+            pid = prop.get('pid_number')
+            if pid and len(pid) == 8:  # Valid PID format
+                test_pids.append(pid)
+        
+        if not test_pids:
+            print("   ❌ No valid PIDs found in Halifax properties")
+            return False, {"error": "No valid PIDs found"}
+        
+        print(f"   📋 Testing {len(test_pids)} PIDs from Halifax properties")
+        
+        results = {}
+        
+        for pid in test_pids[:3]:  # Test first 3 PIDs
+            try:
+                print(f"\n   Testing PID: {pid}")
+                
+                response = requests.get(f"{BACKEND_URL}/query-ns-government-parcel/{pid}", timeout=30)
+                
+                print(f"     Status Code: {response.status_code}")
+                
+                if response.status_code == 200:
+                    parcel_data = response.json()
+                    
+                    # Check if parcel was found
+                    if parcel_data.get('found'):
+                        geometry = parcel_data.get('geometry') or parcel_data.get('combined_geometry')
+                        
+                        if geometry:
+                            print(f"     ✅ Valid geometry data returned")
+                            print(f"     Geometry type: {geometry.get('type', 'Unknown')}")
+                            
+                            # Check for coordinates
+                            coordinates = geometry.get('coordinates')
+                            if coordinates:
+                                print(f"     ✅ Coordinates present")
+                                results[pid] = True
+                            else:
+                                print(f"     ❌ No coordinates in geometry")
+                                results[pid] = False
+                        else:
+                            print(f"     ❌ No geometry data in response")
+                            results[pid] = False
+                    else:
+                        print(f"     ⚠️ PID not found in NS Government database")
+                        results[pid] = False
+                else:
+                    print(f"     ❌ API call failed: {response.status_code}")
+                    results[pid] = False
+                    
+            except Exception as e:
+                print(f"     ❌ Error testing PID {pid}: {e}")
+                results[pid] = False
+        
+        successful_pids = sum(1 for result in results.values() if result is True)
+        total_tests = len(results)
+        
+        print(f"\n   📊 NS Government Parcel API Results: {successful_pids}/{total_tests} PIDs returned valid data")
+        
+        if successful_pids >= 1:  # At least one PID should work
+            print(f"   ✅ NS Government parcel API working")
+            return True, results
+        else:
+            print(f"   ❌ NS Government parcel API has issues")
+            return False, results
+            
+    except Exception as e:
+        print(f"   ❌ NS Government parcel API test error: {e}")
+        return False, {"error": str(e)}
+
+def test_deployment_system():
+    """Comprehensive test of the Halifax boundary data system"""
+    print("\n🎯 COMPREHENSIVE HALIFAX BOUNDARY DATA SYSTEM TEST")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Test Halifax boundary data system")
+    print("📋 KEY FIX APPLIED:")
+    print("   - Added missing government_boundary_data field to TaxSaleProperty model")
+    print("   - Added boundary data fetching logic to Halifax scraper")
+    print("   - Halifax scraper now calls query_ns_government_parcel() for each property")
     print("=" * 80)
     
     # Run all tests
