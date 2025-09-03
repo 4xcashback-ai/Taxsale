@@ -240,7 +240,13 @@ const AuthenticatedApp = () => {
       name: municipality.name,
       website_url: municipality.website_url,
       scrape_enabled: municipality.scrape_enabled,
-      scraper_type: municipality.scraper_type
+      scraper_type: municipality.scraper_type,
+      schedule_enabled: municipality.schedule_enabled || false,
+      scrape_frequency: municipality.scrape_frequency || 'weekly',
+      scrape_day_of_week: municipality.scrape_day_of_week || 1,
+      scrape_day_of_month: municipality.scrape_day_of_month || 1,
+      scrape_time_hour: municipality.scrape_time_hour || 2,
+      scrape_time_minute: municipality.scrape_time_minute || 0
     });
   };
 
