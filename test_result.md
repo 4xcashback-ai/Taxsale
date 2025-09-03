@@ -772,8 +772,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Statistics Header Consistency Testing - COMPLETED"
-    - "Boundary Thumbnail System Debugging"
+    - "Live Map Property Boundary Display"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
