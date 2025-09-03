@@ -5156,7 +5156,10 @@ async def get_user_favorites(current_user: dict = Depends(get_current_user)):
     """Get current user's favorite properties (paid users only)"""
     check_paid_user_access(current_user)
     
-    favorites = await db.favorites.find({"user_id": current_user["id"]}).to_list(100)
+    # Handle both regular users (with "id") and admin users (with "username")
+    user_id = current_user.get("id") or current_user.get("username")
+    
+    favorites = await db.favorites.find({"user_id": user_id}).to_list(100)
     
     return [FavoriteResponse(
         id=fav["id"],
@@ -5171,8 +5174,11 @@ async def add_to_favorites(favorite_data: FavoriteCreate, current_user: dict = D
     """Add property to favorites (paid users only, max 50)"""
     check_paid_user_access(current_user)
     
+    # Handle both regular users (with "id") and admin users (with "username")
+    user_id = current_user.get("id") or current_user.get("username")
+    
     # Check if user already has 50 favorites
-    favorites_count = await db.favorites.count_documents({"user_id": current_user["id"]})
+    favorites_count = await db.favorites.count_documents({"user_id": user_id})
     if favorites_count >= 50:
         raise HTTPException(status_code=400, detail="Maximum 50 properties can be favorited")
     
@@ -5183,7 +5189,7 @@ async def add_to_favorites(favorite_data: FavoriteCreate, current_user: dict = D
     
     # Check if already favorited
     existing = await db.favorites.find_one({
-        "user_id": current_user["id"],
+        "user_id": user_id,
         "property_id": favorite_data.property_id
     })
     if existing:
@@ -5191,7 +5197,7 @@ async def add_to_favorites(favorite_data: FavoriteCreate, current_user: dict = D
     
     # Create favorite
     favorite = Favorite(
-        user_id=current_user["id"],
+        user_id=user_id,
         property_id=favorite_data.property_id,
         municipality_name=property_doc["municipality_name"],
         property_address=property_doc["property_address"]
@@ -5206,8 +5212,11 @@ async def remove_from_favorites(property_id: str, current_user: dict = Depends(g
     """Remove property from favorites (paid users only)"""
     check_paid_user_access(current_user)
     
+    # Handle both regular users (with "id") and admin users (with "username")
+    user_id = current_user.get("id") or current_user.get("username")
+    
     result = await db.favorites.delete_one({
-        "user_id": current_user["id"],
+        "user_id": user_id,
         "property_id": property_id
     })
     
@@ -5221,8 +5230,11 @@ async def check_if_favorited(property_id: str, current_user: dict = Depends(get_
     """Check if property is in user's favorites (paid users only)"""
     check_paid_user_access(current_user)
     
+    # Handle both regular users (with "id") and admin users (with "username")
+    user_id = current_user.get("id") or current_user.get("username")
+    
     favorite = await db.favorites.find_one({
-        "user_id": current_user["id"],
+        "user_id": user_id,
         "property_id": property_id
     })
     
