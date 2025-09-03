@@ -200,6 +200,92 @@ const AuthenticatedApp = () => {
     }
   };
 
+  // Deployment functions
+  const fetchDeploymentStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/deployment/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDeploymentStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching deployment status:', error);
+      setDeploymentStatus({ status: 'error', message: 'Failed to fetch deployment status' });
+    }
+  };
+
+  const checkForUpdates = async () => {
+    try {
+      setDeploymentLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/api/deployment/check-updates`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUpdateCheckResult(response.data);
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+      setUpdateCheckResult({ updates_available: false, message: 'Error checking for updates' });
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
+  const deployLatest = async () => {
+    if (!window.confirm('This will deploy the latest version and may cause brief downtime. Continue?')) {
+      return;
+    }
+
+    try {
+      setDeploymentLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/api/deployment/deploy`, 
+        { github_repo: githubRepo },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      alert('Deployment started successfully! Please monitor the system status.');
+      fetchDeploymentStatus();
+    } catch (error) {
+      console.error('Error starting deployment:', error);
+      alert('Error starting deployment: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
+  const verifyDeployment = async () => {
+    try {
+      setDeploymentLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/api/deployment/verify`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert(response.data.message);
+    } catch (error) {
+      console.error('Error verifying deployment:', error);
+      alert('Error verifying deployment: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
+  const checkSystemHealth = async () => {
+    try {
+      setDeploymentLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/deployment/health`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSystemHealth(response.data);
+    } catch (error) {
+      console.error('Error checking system health:', error);
+      setSystemHealth({ health_status: 'unknown', message: 'Failed to check system health' });
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
