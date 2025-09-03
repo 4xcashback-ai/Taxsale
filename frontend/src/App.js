@@ -1499,7 +1499,7 @@ const AppContent = () => {
   const fetchSampleProperties = async () => {
     try {
       const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
-      const response = await axios.get(`${API}/api/tax-sales?limit=8`);
+      const response = await axios.get(`${API}/api/tax-sales?status=all&limit=8`);
       setSampleProperties(response.data);
     } catch (error) {
       console.error("Error fetching sample properties:", error);
