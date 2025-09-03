@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { UserContext } from '../contexts/UserContext';
+import React, { useState, useEffect } from 'react';
+import { useUser } from '../contexts/UserContext';
 
 const MyFavorites = () => {
   const { user } = useContext(UserContext);
