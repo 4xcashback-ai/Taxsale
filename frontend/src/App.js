@@ -929,7 +929,8 @@ const AuthenticatedApp = () => {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
+                    </Card>
+                  </div>
                 </div>
               </div>
           </div>
