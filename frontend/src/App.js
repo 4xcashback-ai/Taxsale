@@ -1035,7 +1035,7 @@ const AuthenticatedApp = () => {
                           <div className="text-xs text-green-600">Connected</div>
                         </div>
                         <div className="bg-blue-50 rounded-lg p-4 text-center border border-blue-200">
-                          <div className="text-2xl font-bold text-blue-600">{stats.total_properties || 0}</div>
+                          <div className="text-2xl font-bold text-blue-600">{allProperties.length}</div>
                           <div className="text-sm font-medium text-gray-700 mt-2">Properties</div>
                           <div className="text-xs text-blue-600">Total Count</div>
                         </div>
