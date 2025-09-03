@@ -142,7 +142,7 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Deployment System Integration Testing"
+    - "Frontend Deployment UI Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
