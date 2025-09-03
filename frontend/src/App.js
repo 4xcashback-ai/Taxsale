@@ -727,36 +727,38 @@ const AuthenticatedApp = () => {
                   </CardHeader>
                 </Card>
 
-                {/* Quick Actions - Keep as column layout */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                  <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
-                    <CardHeader>
-                      <CardTitle>Quick Actions</CardTitle>
-                      <CardDescription>
-                        Common administrative tasks
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <Button className="w-full" size="sm">
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Refresh Data
-                        </Button>
-                        <Button className="w-full" size="sm" variant="outline">
-                          <Download className="mr-2 h-4 w-4" />
-                          Export Data
-                        </Button>
-                        <Button className="w-full" size="sm" variant="outline">
-                          <BarChart3 className="mr-2 h-4 w-4" />
-                          View Analytics
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                {/* Main layout: Quick Actions on left, content on right */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* Quick Actions - Left sidebar column */}
+                  <div className="lg:col-span-1">
+                    <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50 h-fit sticky top-0">
+                      <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                        <CardDescription>
+                          Common administrative tasks
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <Button className="w-full" size="sm">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Refresh Data
+                          </Button>
+                          <Button className="w-full" size="sm" variant="outline">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export Data
+                          </Button>
+                          <Button className="w-full" size="sm" variant="outline">
+                            <BarChart3 className="mr-2 h-4 w-4" />
+                            View Analytics
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                {/* Rest of admin content in rows */}
-                <div className="space-y-6">
+                  {/* Right side content in rows */}
+                  <div className="lg:col-span-3 space-y-6">
                   {/* Data Management - Full width row */}
                   <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
                     <CardHeader>
