@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '../contexts/UserContext';
 
 const MyFavorites = () => {
-  const { user } = useContext(UserContext);
+  const { user } = useUser();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
