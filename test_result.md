@@ -122,18 +122,16 @@ frontend:
           agent: "main"
           comment: "Frontend PropertyDetails.js component already has code to fetch enhanced property details from /api/property/{assessment_number}/enhanced endpoint. With the backend endpoint now working correctly, the frontend should display the 'Detailed Assessment Information' section with all PVSC data including current assessment, taxable assessment, building style, year built, living area, bedrooms, bathrooms, quality of construction, etc. Need frontend testing to verify the detailed assessment information section displays correctly with the comprehensive PVSC data."
 
-frontend:
-  - task: "Halifax Boundary Thumbnail Display"
-    implemented: true
-    working: true
-    file: "frontend/src/App.js, frontend/src/components/LandingPage.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-        - working: true
-          agent: "main"
-          comment: "Halifax boundary thumbnails should now display correctly in the frontend. Database updated with proper boundary_screenshot filenames using unified naming format. Property images are being served via /api/property-image/{assessment_number} endpoint with cache-busting. Frontend Featured Properties section should now show Halifax properties with visible boundary thumbnails matching Victoria County quality. Need frontend testing to verify Halifax boundary thumbnails are displaying with visible boundaries."
+test_plan:
+  current_focus:
+    - "Enhanced Property Details Display"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: "Successfully fixed the enhanced property details endpoint by resolving duplicate endpoint routing conflict and authentication issues. Backend now returns comprehensive PVSC assessment data matching production site. Frontend PropertyDetails.js component is already implemented to display this data. Need frontend testing to verify the 'Detailed Assessment Information' section displays correctly with all the PVSC data including current assessment ($682,400), taxable assessment ($613,700), building details (1 Storey, 1956, 2512 sq ft), bedrooms (3), bathrooms (1), quality (Average), basement (Y), garage (Y), etc."
 
 backend:
   - task: "Deployment API Endpoints"
