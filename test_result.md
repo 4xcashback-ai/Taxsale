@@ -145,7 +145,7 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Frontend Deployment UI Testing"
+    - "Statistics Header Bug Fix Verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
