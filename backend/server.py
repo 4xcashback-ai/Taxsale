@@ -1023,7 +1023,7 @@ async def scrape_halifax_tax_sales():
                     "opening_bid": opening_bid,
                     "sale_date": sale_date,
                     "sale_time": "10:01 AM",
-                    "sale_location": "Halifax Regional Municipality - Tender Opening",
+                    "sale_location": "Halifax Regional Municipality - Public Tender (Open until closing date)",
                     "assessment_number": assessment_num,
                     "property_type": property_type,
                     "owner_name": owner_name,
