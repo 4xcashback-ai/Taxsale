@@ -1681,35 +1681,25 @@ def test_deployment_system():
     # Run all tests
     results = {}
     
-    # Test 1: Authentication Requirements
-    print("\n🔍 TEST 1: Authentication Requirements")
-    auth_result, auth_data = test_deployment_authentication()
-    results['authentication'] = {'success': auth_result, 'data': auth_data}
+    # Test 1: Halifax Properties Boundary Data
+    print("\n🔍 TEST 1: Halifax Properties Boundary Data")
+    halifax_result, halifax_data = test_halifax_properties_boundary_data()
+    results['halifax_boundary_data'] = {'success': halifax_result, 'data': halifax_data}
     
-    # Test 2: Deployment Status Endpoint
-    print("\n🔍 TEST 2: Deployment Status Endpoint")
-    status_result, status_data = test_deployment_status_endpoint()
-    results['deployment_status'] = {'success': status_result, 'data': status_data}
+    # Test 2: Halifax Boundary Images
+    print("\n🔍 TEST 2: Halifax Boundary Images")
+    images_result, images_data = test_halifax_boundary_images()
+    results['halifax_boundary_images'] = {'success': images_result, 'data': images_data}
     
-    # Test 3: Check Updates Endpoint
-    print("\n🔍 TEST 3: Check Updates Endpoint")
-    updates_result, updates_data = test_check_updates_endpoint()
-    results['check_updates'] = {'success': updates_result, 'data': updates_data}
+    # Test 3: Victoria County Comparison
+    print("\n🔍 TEST 3: Victoria County Comparison")
+    victoria_result, victoria_data = test_victoria_county_comparison()
+    results['victoria_county'] = {'success': victoria_result, 'data': victoria_data}
     
-    # Test 4: Deploy Endpoint
-    print("\n🔍 TEST 4: Deploy Endpoint")
-    deploy_result, deploy_data = test_deploy_endpoint()
-    results['deploy'] = {'success': deploy_result, 'data': deploy_data}
-    
-    # Test 5: Health Check Endpoint
-    print("\n🔍 TEST 5: Health Check Endpoint")
-    health_result, health_data = test_health_check_endpoint()
-    results['health_check'] = {'success': health_result, 'data': health_data}
-    
-    # Test 6: Verify Deployment Endpoint
-    print("\n🔍 TEST 6: Verify Deployment Endpoint")
-    verify_result, verify_data = test_verify_deployment_endpoint()
-    results['verify_deployment'] = {'success': verify_result, 'data': verify_data}
+    # Test 4: NS Government Parcel API
+    print("\n🔍 TEST 4: NS Government Parcel API")
+    parcel_result, parcel_data = test_ns_government_parcel_api()
+    results['ns_government_api'] = {'success': parcel_result, 'data': parcel_data}
     
     # Final Assessment
     print("\n" + "=" * 80)
