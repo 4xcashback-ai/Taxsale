@@ -1022,7 +1022,168 @@ const AuthenticatedApp = () => {
                         </div>
                       </div>
                     </CardContent>
-                    </Card>
+                  </Card>
+
+                  {/* Deployment Management - Full width row */}
+                  <Card className="bg-white/80 backdrop-blur-sm border-slate-200/50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <RefreshCw className="mr-2 h-5 w-5 text-green-600" />
+                        Deployment Management
+                      </CardTitle>
+                      <CardDescription>
+                        Safely deploy updates to your VPS with automatic backup and rollback
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        {/* Current Status */}
+                        <div className="bg-slate-50 rounded-lg p-4 border">
+                          <h4 className="font-semibold text-slate-800 mb-3">Current Status</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="text-center">
+                              <div className="text-sm text-gray-600">Deployment Status</div>
+                              <div className={`font-semibold ${
+                                deploymentStatus.status === 'success' ? 'text-green-600' : 
+                                deploymentStatus.status === 'error' ? 'text-red-600' : 'text-yellow-600'
+                              }`}>
+                                {deploymentStatus.status?.toUpperCase() || 'UNKNOWN'}
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-sm text-gray-600">System Health</div>
+                              <div className={`font-semibold ${
+                                systemHealth.health_status === 'excellent' ? 'text-green-600' :
+                                systemHealth.health_status === 'good' ? 'text-blue-600' :
+                                systemHealth.health_status === 'fair' ? 'text-yellow-600' :
+                                systemHealth.health_status === 'poor' ? 'text-red-600' : 'text-gray-600'
+                              }`}>
+                                {systemHealth.health_status?.toUpperCase() || 'UNKNOWN'}
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-sm text-gray-600">Updates Available</div>
+                              <div className={`font-semibold ${
+                                updateCheckResult.updates_available ? 'text-orange-600' : 'text-green-600'
+                              }`}>
+                                {updateCheckResult.updates_available ? 'YES' : 'NO'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* GitHub Repository */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-slate-800">GitHub Repository URL</h4>
+                          <Input
+                            placeholder="https://github.com/username/repository.git"
+                            value={githubRepo}
+                            onChange={(e) => setGithubRepo(e.target.value)}
+                            className="max-w-md"
+                          />
+                          <p className="text-sm text-gray-600">
+                            Enter your GitHub repository URL for automatic updates
+                          </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <Button
+                            onClick={checkForUpdates}
+                            disabled={deploymentLoading}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            {deploymentLoading ? (
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            Check Updates
+                          </Button>
+
+                          <Button
+                            onClick={deployLatest}
+                            disabled={deploymentLoading || !githubRepo}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {deploymentLoading ? (
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="mr-2 h-4 w-4" />
+                            )}
+                            Deploy Latest
+                          </Button>
+
+                          <Button
+                            onClick={verifyDeployment}
+                            disabled={deploymentLoading}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            {deploymentLoading ? (
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="mr-2 h-4 w-4" />
+                            )}
+                            Verify Status
+                          </Button>
+
+                          <Button
+                            onClick={checkSystemHealth}
+                            disabled={deploymentLoading}
+                            className="bg-orange-600 hover:bg-orange-700"
+                          >
+                            {deploymentLoading ? (
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <BarChart3 className="mr-2 h-4 w-4" />
+                            )}
+                            Health Check
+                          </Button>
+                        </div>
+
+                        {/* Warning Message */}
+                        <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                          <div className="flex items-start">
+                            <div className="text-yellow-600 mr-3 mt-0.5">⚠️</div>
+                            <div>
+                              <div className="font-semibold text-yellow-800">Important Notice</div>
+                              <div className="text-sm text-yellow-700 mt-1">
+                                Deployment will cause brief downtime (30-60 seconds). Automatic backup and rollback are enabled for safety.
+                                Always test in a staging environment first when possible.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Status Messages */}
+                        {deploymentStatus.message && (
+                          <div className={`rounded-lg p-4 border ${
+                            deploymentStatus.status === 'success' ? 'bg-green-50 border-green-200' :
+                            deploymentStatus.status === 'error' ? 'bg-red-50 border-red-200' :
+                            'bg-blue-50 border-blue-200'
+                          }`}>
+                            <div className="text-sm">
+                              <strong>Last Status:</strong> {deploymentStatus.message}
+                            </div>
+                            {deploymentStatus.last_check && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                Checked: {new Date(deploymentStatus.last_check).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {systemHealth.output && (
+                          <div className="bg-gray-50 rounded-lg p-4 border">
+                            <div className="text-sm font-semibold text-gray-800 mb-2">System Health Details:</div>
+                            <pre className="text-xs text-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                              {systemHealth.output}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                   </div>
                 </div>
               </div>
