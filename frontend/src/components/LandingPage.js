@@ -225,11 +225,19 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-2">
-                    <div className="text-3xl font-bold text-green-600">1</div>
-                    <div className="text-2xl">🍁</div>
+                    <div className="text-3xl font-bold text-green-600">{stats.provinces || 1}</div>
+                    <div className="flex space-x-1">
+                      {getCoveredProvinces().map((province, index) => (
+                        <div key={index} className="text-2xl" title={province}>
+                          {getProvinceFlag(province)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="text-sm text-gray-600">Provinces Covered</div>
-                  <div className="text-xs text-gray-500 mt-1">Nova Scotia</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {getCoveredProvinces().join(', ')}
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-blue-600">{stats.municipalities}</div>
