@@ -20,16 +20,16 @@ import { UserProvider, useUser } from './contexts/UserContext';
 // AdSense Component for Search Page
 const SearchPageAd = ({ index }) => {
   useEffect(() => {
-    // Initialize AdSense only once when component mounts
-    if (typeof window !== 'undefined' && window.adsbygoogle && !window.adsenseInitialized) {
+    // Initialize each ad independently
+    if (typeof window !== 'undefined' && window.adsbygoogle) {
       try {
+        // Push this specific ad to AdSense
         (window.adsbygoogle = window.adsbygoogle || []).push({});
-        window.adsenseInitialized = true;
       } catch (error) {
-        console.log('AdSense initialization error:', error);
+        console.log('AdSense ad initialization error:', error);
       }
     }
-  }, []); // Empty dependency array - run only once
+  }, [index]); // Depend on index so each ad initializes independently
 
   return (
     <div className="my-6 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
