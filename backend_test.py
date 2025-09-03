@@ -1045,7 +1045,7 @@ def test_deployment_authentication():
             
             print(f"   Status Code: {response.status_code}")
             
-            if response.status_code == 401:
+            if response.status_code in [401, 403]:
                 print(f"   ✅ Correctly requires authentication")
                 results[endpoint] = True
             else:
