@@ -760,6 +760,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Statistics Header Consistency Testing - COMPLETED"
     - "Boundary Thumbnail System Debugging"
   stuck_tasks: []
   test_all: false
