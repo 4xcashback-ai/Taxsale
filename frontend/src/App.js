@@ -56,6 +56,28 @@ const AuthenticatedApp = () => {
   const [stats, setStats] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMunicipality, setSelectedMunicipality] = useState('');
+  
+  // Function to get province flag image URL
+  const getProvinceFlagImage = (provinceName) => {
+    const provinceFlagImages = {
+      'Nova Scotia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Flag_of_Nova_Scotia.svg/320px-Flag_of_Nova_Scotia.svg.png',
+      'Ontario': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Flag_of_Ontario.svg/320px-Flag_of_Ontario.svg.png',
+      'British Columbia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Flag_of_British_Columbia.svg/320px-Flag_of_British_Columbia.svg.png',
+      'Alberta': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Flag_of_Alberta.svg/320px-Flag_of_Alberta.svg.png',
+      'Quebec': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Flag_of_Quebec.svg/320px-Flag_of_Quebec.svg.png',
+      'Manitoba': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Flag_of_Manitoba.svg/320px-Flag_of_Manitoba.svg.png',
+      'Saskatchewan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Flag_of_Saskatchewan.svg/320px-Flag_of_Saskatchewan.svg.png',
+      'New Brunswick': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Flag_of_New_Brunswick.svg/320px-Flag_of_New_Brunswick.svg.png',
+      'Newfoundland and Labrador': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Flag_of_Newfoundland_and_Labrador.svg/320px-Flag_of_Newfoundland_and_Labrador.svg.png',
+      'Prince Edward Island': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Flag_of_Prince_Edward_Island.svg/320px-Flag_of_Prince_Edward_Island.svg.png'
+    };
+    return provinceFlagImages[provinceName] || null;
+  };
+
+  // Get unique provinces from municipalities
+  const getUniqueProvinces = () => {
+    return [...new Set(municipalities.map(m => m.province))].filter(Boolean);
+  };
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState(null);
