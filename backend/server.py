@@ -3508,7 +3508,7 @@ async def generate_boundary_thumbnail(assessment_number: str):
         base_url = "https://maps.googleapis.com/maps/api/staticmap"
         params = {
             'center': f"{lat},{lng}",
-            'zoom': '17',
+            'zoom': '16',
             'size': '400x300',
             'maptype': 'satellite',
             'key': google_maps_api_key
