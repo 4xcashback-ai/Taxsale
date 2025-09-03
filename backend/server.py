@@ -2217,7 +2217,7 @@ async def check_and_run_scheduled_scrapes():
         logger.error(f"Error checking scheduled scrapes: {e}")
 
 # API endpoint for managing municipality schedules
-@app.put("/api/municipalities/{municipality_id}/schedule")
+@api_router.put("/municipalities/{municipality_id}/schedule")
 async def update_municipality_scraping_schedule(
     municipality_id: str, 
     schedule_data: dict,
