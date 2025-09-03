@@ -20,24 +20,16 @@ import { UserProvider, useUser } from './contexts/UserContext';
 // AdSense Component for Search Page
 const SearchPageAd = ({ index }) => {
   useEffect(() => {
-    try {
-      // Load AdSense script if not already loaded
-      if (!document.querySelector('script[src*="googlesyndication.com"]')) {
-        const script = document.createElement('script');
-        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        document.head.appendChild(script);
+    // Initialize AdSense only once when component mounts
+    if (typeof window !== 'undefined' && window.adsbygoogle && !window.adsenseInitialized) {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        window.adsenseInitialized = true;
+      } catch (error) {
+        console.log('AdSense initialization error:', error);
       }
-      
-      // Push ad to AdSense
-      if (window.adsbygoogle) {
-        window.adsbygoogle.push({});
-      }
-    } catch (err) {
-      console.log('AdSense error:', err);
     }
-  }, [index]);
+  }, []); // Empty dependency array - run only once
 
   return (
     <div className="my-6 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
