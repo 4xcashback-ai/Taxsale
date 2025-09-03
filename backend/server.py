@@ -4564,6 +4564,9 @@ async def get_enhanced_property_details(
         
         return property_data
         
+    except HTTPException:
+        # Re-raise HTTPExceptions (like 401, 403, 404) without modification
+        raise
     except Exception as e:
         logger.error(f"Error getting enhanced property details: {e}")
         raise HTTPException(status_code=500, detail=str(e))
