@@ -148,32 +148,27 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center space-x-8 text-sm">
             <div className="flex items-center">
-              <span className="text-gray-300">Municipalities:</span>
-              <span className="ml-2 font-semibold text-white">{municipalities.length}</span>
+              <span className="text-gray-300">{stats.municipalities} Municipalities</span>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-300">Active:</span>
-              <span className="ml-2 font-semibold text-green-400">
-                {sampleProperties.filter(p => p.status === 'active').length}
-              </span>
+              <span className="font-semibold text-green-400">{stats.active}</span>
+              <span className="ml-1 text-gray-300">Active</span>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-300">Inactive:</span>
-              <span className="ml-2 font-semibold text-yellow-400">
-                {sampleProperties.filter(p => p.status === 'inactive').length}
-              </span>
+              <span className="font-semibold text-yellow-400">{stats.inactive}</span>
+              <span className="ml-1 text-gray-300">Inactive</span>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-300">Total Properties:</span>
-              <span className="ml-2 font-semibold text-blue-400">{sampleProperties.length}</span>
+              <span className="font-semibold text-blue-400">{stats.total}</span>
+              <span className="ml-1 text-gray-300">Total Properties</span>
             </div>
             <div className="flex items-center">
-              <span className="text-gray-300">Scraped Today:</span>
-              <span className="ml-2 font-semibold text-white">0</span>
+              <span className="font-semibold text-white">{stats.scrapedToday}</span>
+              <span className="ml-1 text-gray-300">Scraped Today</span>
             </div>
             <div className="flex items-center">
               <span className="text-gray-300">Last:</span>
-              <span className="ml-2 font-semibold text-white">2025-09-03</span>
+              <span className="ml-1 font-semibold text-white">{stats.lastScrape}</span>
             </div>
           </div>
         </div>
