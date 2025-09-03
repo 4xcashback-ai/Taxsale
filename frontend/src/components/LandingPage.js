@@ -4,7 +4,29 @@ import { Eye, Search, MapPin, Users, CheckCircle, ArrowRight, Star, TrendingUp }
 const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
+  // Function to get province flag emoji
+  const getProvinceFlag = (provinceName) => {
+    const provinceFlags = {
+      'Nova Scotia': '🏴‍🟩',  // Nova Scotia flag colors
+      'Ontario': '🏴‍⬜',      // Ontario flag
+      'British Columbia': '🏴‍🟥', // BC flag
+      'Alberta': '🏴‍🟦',     // Alberta flag
+      'Quebec': '⚜️',        // Quebec fleur-de-lis
+      'Manitoba': '🏴‍🟨',    // Manitoba flag
+      'Saskatchewan': '🏴‍🟩', // Saskatchewan flag
+      'New Brunswick': '🏴‍🟨', // New Brunswick flag
+      'Newfoundland and Labrador': '🏴‍🟪', // NL flag
+      'Prince Edward Island': '🏴‍🟥' // PEI flag
+    };
+    return provinceFlags[provinceName] || '🍁'; // Default to maple leaf
+  };
+
+  // Function to get all covered provinces
+  const getCoveredProvinces = () => {
+    if (!municipalities || municipalities.length === 0) return ['Nova Scotia'];
+    const uniqueProvinces = [...new Set(municipalities.map(m => m.province))].filter(Boolean);
+    return uniqueProvinces.length > 0 ? uniqueProvinces : ['Nova Scotia'];
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [municipalities, setMunicipalities] = useState([]);
