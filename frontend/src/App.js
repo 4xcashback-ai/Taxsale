@@ -354,7 +354,7 @@ const AuthenticatedApp = () => {
                             <img
                               src={property.boundary_screenshot?.startsWith('http') 
                                 ? property.boundary_screenshot 
-                                : `${API}/api/property-image/${property.assessment_number}`
+                                : `${API}/api/property-image/${property.assessment_number}?v=${Date.now()}`
                               }
                               alt={`Property map for ${property.property_address}`}
                               className="w-full h-full object-cover"
