@@ -15,6 +15,7 @@ import LandingPage from './components/LandingPage';
 import EmailVerification from './components/EmailVerification';
 import UpgradeModal from './components/UpgradeModal';
 import AuctionResultModal from './components/AuctionResultModal';
+import MyFavorites from './components/MyFavorites';
 import { UserProvider, useUser } from './contexts/UserContext';
 
 // AdSense Component for Search Page
