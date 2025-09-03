@@ -1209,6 +1209,30 @@ const AuthenticatedApp = () => {
                                       Type: {municipality.scraper_type} | 
                                       Scraping: {municipality.scrape_enabled ? '✅ Enabled' : '❌ Disabled'}
                                     </div>
+                                    
+                                    {/* Scheduling Information */}
+                                    {municipality.scrape_enabled && (
+                                      <div className="text-xs text-purple-600 mt-1">
+                                        {municipality.schedule_enabled ? (
+                                          <>
+                                            📅 {municipality.scrape_frequency === 'weekly' ? 
+                                              `Weekly on ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][municipality.scrape_day_of_week]}` :
+                                              municipality.scrape_frequency === 'monthly' ? 
+                                              `Monthly on day ${municipality.scrape_day_of_month}` :
+                                              'Daily'
+                                            } at {String(municipality.scrape_time_hour || 2).padStart(2, '0')}:{String(municipality.scrape_time_minute || 0).padStart(2, '0')}
+                                            {municipality.next_scheduled_scrape && (
+                                              <span className="text-green-600 ml-2">
+                                                Next: {new Date(municipality.next_scheduled_scrape).toLocaleDateString()}
+                                              </span>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <span className="text-gray-500">📅 Manual scheduling only</span>
+                                        )}
+                                      </div>
+                                    )}
+                                    
                                     <div className="text-xs text-blue-600 truncate">
                                       {municipality.website_url}
                                     </div>
