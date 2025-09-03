@@ -720,32 +720,31 @@ const AuthenticatedApp = () => {
                                       ? property.boundary_screenshot 
                                       : `${API}/api/property-image/${property.assessment_number}?v=${Date.now()}`
                                     }
-                                    alt={`Property map for ${property.property_address}`}
+                                    alt={`Property boundary for ${property.property_address}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      // Fallback to Google Maps static image if boundary image fails
-                                      const lat = property.latitude || 44.6488;
-                                      const lng = property.longitude || -63.5752;
-                                      e.target.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=400x300&maptype=satellite&markers=color:blue%7C${lat},${lng}&key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY`;
+                                      // If boundary image fails, replace with satellite image
+                                      if (!e.target.src.includes('satellite=true')) {
+                                        e.target.src = `${API}/api/property-image/${property.assessment_number}?satellite=true&v=${Date.now()}`;
+                                      } else {
+                                        // If satellite also fails, show placeholder
+                                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOWNhM2FmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2UgQXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K';
+                                      }
                                     }}
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                                    <MapPin className="h-12 w-12 text-gray-400" />
+                                    <Building2 className="h-16 w-16 text-gray-400" />
                                   </div>
                                 )}
                                 
-                                {/* Status Badges */}
-                                <div className="absolute top-3 right-3 flex flex-col gap-2">
-                                  {/* Main Status Badge */}
-                                  <div className={`px-3 py-1 rounded-full text-sm font-bold ${
-                                    property.status === 'active' 
-                                      ? 'bg-green-100 text-green-800 border border-green-200' 
-                                      : property.status === 'inactive'
-                                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                      : property.status === 'sold'
-                                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                      : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                {/* Status and Auction Result Badges */}
+                                <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                    property.status === 'active' ? 'bg-red-100 text-red-800 border border-red-200' :
+                                    property.status === 'inactive' ? 'bg-gray-100 text-gray-800 border border-gray-200' :
+                                    property.status === 'sold' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                    'bg-yellow-100 text-yellow-800 border border-yellow-200'
                                   }`}>
                                     {(property.status || 'active').toUpperCase()}
                                   </div>
@@ -769,6 +768,36 @@ const AuthenticatedApp = () => {
                                     </div>
                                   )}
                                 </div>
+
+                                {/* Bookmark Button - Only for paid users */}
+                                {user && user.subscription_tier === 'paid' && (
+                                  <div className="absolute top-3 right-3">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent card click
+                                        toggleFavorite(property);
+                                      }}
+                                      className={`p-2 rounded-full shadow-lg transition-colors ${
+                                        property.is_favorited 
+                                          ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
+                                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                                      }`}
+                                      title={property.is_favorited ? 'Remove from favorites' : 'Add to favorites'}
+                                    >
+                                      <Bookmark className="h-4 w-4" fill={property.is_favorited ? 'currentColor' : 'none'} />
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* Favorite Count - Show if property has favorites */}
+                                {property.favorite_count > 0 && (
+                                  <div className="absolute bottom-3 right-3">
+                                    <div className="bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs flex items-center">
+                                      <Bookmark className="h-3 w-3 mr-1" />
+                                      {property.favorite_count}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               <CardContent className="p-6">
