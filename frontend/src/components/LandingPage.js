@@ -195,12 +195,16 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
               </p>
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">3</div>
-                  <div className="text-sm text-gray-600">Properties Tracked</div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="text-3xl font-bold text-green-600">1</div>
+                    <div className="text-2xl">🍁</div>
+                  </div>
+                  <div className="text-sm text-gray-600">Provinces Covered</div>
+                  <div className="text-xs text-gray-500 mt-1">Nova Scotia</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">2</div>
-                  <div className="text-sm text-gray-600">Provinces Covered</div>
+                  <div className="text-3xl font-bold text-blue-600">{stats.municipalities}</div>
+                  <div className="text-sm text-gray-600">Municipalities</div>
                 </div>
               </div>
               <div className="flex space-x-4">
