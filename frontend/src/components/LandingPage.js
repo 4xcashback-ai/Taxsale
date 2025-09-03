@@ -227,11 +227,23 @@ const LandingPage = ({ onLogin, onRegister, sampleProperties = [] }) => {
                   <div className="flex items-center justify-center space-x-2">
                     <div className="text-3xl font-bold text-green-600">{stats.provinces || 1}</div>
                     <div className="flex space-x-1">
-                      {getCoveredProvinces().map((province, index) => (
-                        <div key={index} className="text-2xl" title={province}>
-                          {getProvinceFlag(province)}
-                        </div>
-                      ))}
+                      {getCoveredProvinces().map((province, index) => {
+                        const flagImage = getProvinceFlagImage(province);
+                        return flagImage ? (
+                          <img 
+                            key={index}
+                            src={flagImage}
+                            alt={`${province} flag`}
+                            title={province}
+                            className="w-8 h-5 object-cover border border-gray-300 rounded-sm"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div key={index} className="text-2xl" title={province}>🍁</div>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="text-sm text-gray-600">Provinces Covered</div>
