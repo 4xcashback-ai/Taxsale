@@ -60,21 +60,48 @@ export const UserProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Always use regular user login endpoint
-      const response = await axios.post(`${API}/api/users/login`, {
-        email,
-        password
-      });
+      // Check if this is admin login
+      if (email === 'admin@taxsalecompass.ca' || email === 'admin') {
+        // Use admin login endpoint
+        const response = await axios.post(`${API}/api/auth/login`, {
+          username: 'admin',
+          password
+        });
 
-      const { access_token, user: userData } = response.data;
-      
-      // Store token and user data for all users
-      localStorage.setItem('authToken', access_token);
-      setToken(access_token);
-      setUser(userData);
-      setIsAuthenticated(true);
+        const { access_token } = response.data;
+        
+        // Store token and create admin user object
+        localStorage.setItem('authToken', access_token);
+        setToken(access_token);
+        
+        // Create admin user object
+        const adminUser = {
+          id: 'admin',
+          email: 'admin@taxsalecompass.ca',
+          subscription_tier: 'admin'
+        };
+        
+        setUser(adminUser);
+        setIsAuthenticated(true);
 
-      return { success: true, user: userData };
+        return { success: true, user: adminUser };
+      } else {
+        // Use regular user login endpoint
+        const response = await axios.post(`${API}/api/users/login`, {
+          email,
+          password
+        });
+
+        const { access_token, user: userData } = response.data;
+        
+        // Store token and user data for all users
+        localStorage.setItem('authToken', access_token);
+        setToken(access_token);
+        setUser(userData);
+        setIsAuthenticated(true);
+
+        return { success: true, user: userData };
+      }
     } catch (error) {
       const message = error.response?.data?.detail || 'Login failed';
       throw new Error(message);
