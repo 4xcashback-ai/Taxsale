@@ -203,11 +203,16 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
 
       // Process each property
       const loadPropertiesWithBoundaries = async () => {
+        console.log(`Loading ${properties.length} properties on Live Map...`);
+        
         for (const property of properties.filter(p => p.latitude && p.longitude)) {
+          console.log(`Processing property ${property.assessment_number} (${property.property_address})`);
+          
           // Fetch boundary data for this property
           const boundaryData = await fetchBoundaryData(property);
           
           if (boundaryData && (boundaryData.geometry?.rings || boundaryData.combined_geometry?.rings)) {
+            console.log(`Drawing boundary polygon for ${property.assessment_number}`);
             // Draw boundary polygon
             const result = drawBoundaryPolygon(map, property, boundaryData);
             if (result) {
@@ -215,6 +220,7 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
               newPolygons.push(result.polygon);
             }
           } else {
+            console.log(`No boundary data for ${property.assessment_number}, using fallback marker`);
             // Fallback: create regular marker if no boundary data
             const markerColor = property.status === 'active' ? '#10B981' : 
                               property.status === 'inactive' ? '#F59E0B' : 
