@@ -3497,7 +3497,10 @@ async def generate_boundary_thumbnail(assessment_number: str):
                 path_coords = []
                 for point in ring:
                     # point[1] is latitude, point[0] is longitude
-                    path_coords.append(f"{point[1]},{point[0]}")
+                    # Round to 6 decimal places to avoid Static API issues
+                    lat = round(point[1], 6)
+                    lng = round(point[0], 6)
+                    path_coords.append(f"{lat},{lng}")
                 
                 # Create path string for Google Maps Static API
                 # Use red color with thicker stroke (no fill to avoid Static API issues)
