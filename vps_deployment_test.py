@@ -12,7 +12,7 @@ import time
 import concurrent.futures
 
 # Get backend URL from environment
-BACKEND_URL = "https://taxcompass.preview.emergentagent.com/api"
+BACKEND_URL = "https://nstax-navigator.preview.emergentagent.com/api"
 
 def test_api_connection():
     """Test basic API connectivity"""
@@ -210,7 +210,7 @@ def test_vps_scraping_deployment_issues():
         
         # Test with different origins to simulate frontend requests
         test_origins = [
-            "https://taxcompass.preview.emergentagent.com",
+            "https://nstax-navigator.preview.emergentagent.com",
             "http://localhost:3000",
             "null"
         ]
@@ -248,10 +248,10 @@ def test_vps_scraping_deployment_issues():
         print(f"\n   🔧 TEST 7: Environment Configuration Check")
         
         print(f"   🔧 Backend URL being tested: {BACKEND_URL}")
-        print(f"   🔧 Expected frontend URL: https://taxcompass.preview.emergentagent.com")
+        print(f"   🔧 Expected frontend URL: https://nstax-navigator.preview.emergentagent.com")
         
         # Verify the backend URL matches what frontend should be using
-        expected_backend = "https://taxcompass.preview.emergentagent.com/api"
+        expected_backend = "https://nstax-navigator.preview.emergentagent.com/api"
         if BACKEND_URL == expected_backend:
             print(f"   ✅ Backend URL matches expected frontend configuration")
         else:
