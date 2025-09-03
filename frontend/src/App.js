@@ -1079,6 +1079,7 @@ const AuthenticatedApp = () => {
                             >
                               <option value="halifax">Halifax</option>
                               <option value="victoria_county">Victoria County</option>
+                              <option value="cumberland_county">Cumberland County</option>
                             </select>
                             
                             <div className="flex items-center space-x-2">
