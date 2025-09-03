@@ -162,7 +162,7 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
         
         # Handle admin users - they don't exist in the users database
         if user_id == ADMIN_USERNAME:
-            return {"username": user_id, "email": user_id, "subscription_tier": "admin"}
+            return {"username": user_id, "email": user_id, "subscription_tier": "paid"}
         
         # Handle regular users
         user = await get_user_by_id(user_id)
