@@ -3538,7 +3538,9 @@ async def generate_boundary_thumbnail(assessment_number: str):
         screenshots_dir = "/app/backend/static/property_screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
         
-        thumbnail_filename = f"boundary_{property_doc.get('pid_number', 'unknown')}_{assessment_number}.png"
+        # Create safe filename by replacing forward slashes with underscores for multi-PID properties
+        safe_pid = property_doc.get('pid_number', 'unknown').replace('/', '_')
+        thumbnail_filename = f"boundary_{safe_pid}_{assessment_number}.png"
         thumbnail_path = os.path.join(screenshots_dir, thumbnail_filename)
         
         with open(thumbnail_path, 'wb') as f:
