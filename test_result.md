@@ -157,8 +157,10 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Statistics Header Bug Fix Verification"
-  stuck_tasks: []
+    - "Data Management Section"
+    - "Frontend Authentication Flow Fix"
+  stuck_tasks:
+    - "Data Management Section"
   test_all: false
   test_priority: "high_first"
 
