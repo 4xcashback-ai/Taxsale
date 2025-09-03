@@ -821,9 +821,21 @@ const PropertyDetails = () => {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Tax Sale Information</h3>
                 <div className="prose max-w-none text-gray-700">
-                  <p className="mb-4">This property is available for tax sale by tender.</p>
+                  <p className="mb-4">
+                    This property is available for tax sale by {
+                      property.sale_type === 'public_auction' ? 'auction' : 
+                      property.sale_type === 'public_tender' ? 'tender' : 
+                      'public sale'
+                    }.
+                  </p>
                   <p className="mb-4">Please contact {property.municipality_name || 'the municipality'} directly for specific bidding instructions, submission methods, and deadlines.</p>
-                  <p>The municipality reserves the right to reject any or all tenders or to accept any tender considered to be in its best interest.</p>
+                  <p>
+                    The municipality reserves the right to reject any or all {
+                      property.sale_type === 'public_auction' ? 'bids' : 'tenders'
+                    } or to accept any {
+                      property.sale_type === 'public_auction' ? 'bid' : 'tender'
+                    } considered to be in its best interest.
+                  </p>
                 </div>
               </div>
             )}
