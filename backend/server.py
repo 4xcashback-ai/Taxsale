@@ -5188,7 +5188,10 @@ async def startup_event():
         replace_existing=True
     )
     
-    logger.info("Scheduler started - Weekly scraping on Sundays at 6 AM and smart auction result updates")
+    # Start the scheduled scraping background task
+    asyncio.create_task(scheduled_scraping_background_task())
+    
+    logger.info("Scheduler started - Weekly scraping on Sundays at 6 AM, smart auction result updates, and scheduled scraping background task")
 
 def calculate_center_from_bbox(bbox):
     """Calculate center coordinates from bounding box"""
