@@ -470,6 +470,12 @@ const AuthenticatedApp = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center space-x-8 text-sm">
             <div className="flex items-center">
+              <span className="text-gray-300">
+                {[...new Set(municipalities.map(m => m.province))].filter(Boolean).length || 1} Provinces
+              </span>
+              <span className="ml-1 text-blue-300">🔷</span>
+            </div>
+            <div className="flex items-center">
               <span className="text-gray-300">{municipalities.length} Municipalities</span>
             </div>
             <div className="flex items-center">
