@@ -1651,6 +1651,11 @@ const AuthenticatedApp = () => {
               </div>
           </div>
         )}
+
+        {/* My Favorites View */}
+        {activeView === 'favorites' && user && user.subscription_tier === 'paid' && (
+          <MyFavorites />
+        )}
       </div>
 
       {/* Property Details Modal - Removed in favor of routing */}
