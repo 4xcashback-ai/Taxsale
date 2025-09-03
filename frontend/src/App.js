@@ -975,9 +975,11 @@ const AuthenticatedApp = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Add Municipality */}
+                        {/* Add/Edit Municipality */}
                         <div className="space-y-4">
-                          <h4 className="font-semibold text-blue-800">Add Municipality</h4>
+                          <h4 className="font-semibold text-blue-800">
+                            {editingMunicipality ? 'Edit Municipality' : 'Add Municipality'}
+                          </h4>
                           <div className="space-y-3">
                             <Input
                               placeholder="Municipality name"
@@ -997,10 +999,39 @@ const AuthenticatedApp = () => {
                               <option value="halifax">Halifax</option>
                               <option value="victoria_county">Victoria County</option>
                             </select>
-                            <Button onClick={handleAddMunicipality} className="w-full">
-                              <Plus className="mr-2 h-4 w-4" />
-                              Add Municipality
-                            </Button>
+                            
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="scrape_enabled"
+                                checked={newMunicipality.scrape_enabled}
+                                onChange={(e) => setNewMunicipality({...newMunicipality, scrape_enabled: e.target.checked})}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <label htmlFor="scrape_enabled" className="text-sm text-gray-700">
+                                Enable automatic scraping
+                              </label>
+                            </div>
+
+                            <div className="flex space-x-2">
+                              {editingMunicipality ? (
+                                <>
+                                  <Button onClick={handleUpdateMunicipality} className="flex-1">
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Update Municipality
+                                  </Button>
+                                  <Button onClick={cancelEdit} variant="outline" className="flex-1">
+                                    <X className="mr-2 h-4 w-4" />
+                                    Cancel
+                                  </Button>
+                                </>
+                              ) : (
+                                <Button onClick={handleAddMunicipality} className="w-full">
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Add Municipality
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -1010,11 +1041,97 @@ const AuthenticatedApp = () => {
                           <div className="space-y-2 max-h-80 overflow-y-auto">
                             {municipalities.map((municipality) => (
                               <div key={municipality.id} className="bg-gray-50 rounded p-3 border">
-                                <div className="font-medium">{municipality.name}</div>
-                                <div className="text-sm text-gray-600">{municipality.scraper_type}</div>
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="font-medium">{municipality.name}</div>
+                                    <div className="text-sm text-gray-600">
+                                      Type: {municipality.scraper_type} | 
+                                      Scraping: {municipality.scrape_enabled ? '✅ Enabled' : '❌ Disabled'}
+                                    </div>
+                                    <div className="text-xs text-blue-600 truncate">
+                                      {municipality.website_url}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-1 ml-2">
+                                    <Button
+                                      onClick={() => handleScrapeData(municipality.id, municipality.name)}
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700"
+                                      title="Scrape Data"
+                                    >
+                                      <Download className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleEditMunicipality(municipality)}
+                                      size="sm"
+                                      variant="outline"
+                                      title="Edit Municipality"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleDeleteMunicipality(municipality.id, municipality.name)}
+                                      size="sm"
+                                      className="bg-red-600 hover:bg-red-700"
+                                      title="Delete Municipality"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             ))}
+                            {municipalities.length === 0 && (
+                              <div className="text-center py-8 text-gray-500">
+                                <Building2 className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                                <p>No municipalities added yet</p>
+                              </div>
+                            )}
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Bulk Actions Row */}
+                      <div className="border-t pt-6 mt-6">
+                        <h4 className="font-semibold text-blue-800 mb-4">Bulk Actions</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Button
+                            onClick={() => {
+                              if (window.confirm('Scrape all enabled municipalities? This may take several minutes.')) {
+                                municipalities
+                                  .filter(m => m.scrape_enabled)
+                                  .forEach(m => handleScrapeData(m.id, m.name));
+                              }
+                            }}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Scrape All Enabled
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              fetchTaxSales();
+                              fetchAllProperties();
+                              fetchMunicipalities();
+                              alert('Data refreshed successfully!');
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Refresh All Data
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              if (window.confirm('This will export all property data to CSV. Continue?')) {
+                                // TODO: Implement export functionality
+                                alert('Export functionality coming soon!');
+                              }
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Export Data
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
