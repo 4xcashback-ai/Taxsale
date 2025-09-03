@@ -2321,6 +2321,23 @@ async def get_scheduled_scrapes_status(current_user: dict = Depends(verify_token
         logger.error(f"Error getting scheduled scrapes status: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
 
+@api_router.post("/scheduled-scrapes/run")
+async def run_scheduled_scrapes_now(current_user: dict = Depends(verify_token)):
+    """Manually trigger scheduled scrapes check"""
+    try:
+        logger.info("Manual scheduled scrapes check triggered")
+        await check_and_run_scheduled_scrapes()
+        
+        return {
+            "status": "success",
+            "message": "Scheduled scrapes check completed",
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error running scheduled scrapes: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to run scheduled scrapes: {str(e)}")
+
 # Background task scheduler
 async def scheduled_scraping_background_task():
     """Background task that runs every hour to check for scheduled scrapes"""
