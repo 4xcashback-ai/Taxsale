@@ -3500,8 +3500,8 @@ async def generate_boundary_thumbnail(assessment_number: str):
                     path_coords.append(f"{point[1]},{point[0]}")
                 
                 # Create path string for Google Maps Static API
-                # Use red color with thicker stroke and more visible fill
-                path_str = "color:0xff0000|weight:5|fillcolor:0xff000060|" + "|".join(path_coords)
+                # Use red color with thicker stroke (no fill to avoid Static API issues)
+                path_str = "color:0xff0000|weight:5|" + "|".join(path_coords)
                 boundary_paths.append(path_str)
         
         # Build Google Maps Static API URL
