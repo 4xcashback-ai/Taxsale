@@ -96,6 +96,7 @@ const AuthenticatedApp = () => {
     fetchStats();
     fetchMunicipalities();
     fetchTaxSales();
+    fetchAllProperties(); // Fetch all properties for statistics header
   }, [selectedStatus, selectedMunicipality]);
 
   // Fetch deployment status when admin view is active
@@ -120,6 +121,16 @@ const AuthenticatedApp = () => {
       setMunicipalities(response.data);
     } catch (error) {
       console.error("Error fetching municipalities:", error);
+    }
+  };
+
+  // Fetch ALL properties for statistics header (unfiltered)
+  const fetchAllProperties = async () => {
+    try {
+      const response = await axios.get(`${API}/api/tax-sales`); // No filters - get all properties
+      setAllProperties(response.data);
+    } catch (error) {
+      console.error("Error fetching all properties:", error);
     }
   };
 
