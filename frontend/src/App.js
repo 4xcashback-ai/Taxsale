@@ -92,7 +92,13 @@ const AuthenticatedApp = () => {
     name: '',
     website_url: '',
     scrape_enabled: false,
-    scraper_type: 'halifax'
+    scraper_type: 'halifax',
+    schedule_enabled: false,
+    scrape_frequency: 'weekly',
+    scrape_day_of_week: 1,
+    scrape_day_of_month: 1,
+    scrape_time_hour: 2,
+    scrape_time_minute: 0
   });
   const [editingMunicipality, setEditingMunicipality] = useState(null);
 
