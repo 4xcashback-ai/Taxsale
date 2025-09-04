@@ -3382,7 +3382,7 @@ async def capture_property_boundary(assessment_number: str):
         
         # Check if screenshot already exists
         screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
-        screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+        screenshot_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{screenshot_filename}"
         
         if Path(screenshot_path).exists():
             # Update database with existing screenshot
