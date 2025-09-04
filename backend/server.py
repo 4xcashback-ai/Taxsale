@@ -3082,6 +3082,34 @@ async def get_tax_sale_properties(
     
     return enhanced_properties
 
+@api_router.get("/tax-sales/count")
+async def get_tax_sale_properties_count(
+    municipality: Optional[str] = Query(None, description="Filter by municipality name"),
+    status: Optional[str] = Query(None, description="Filter by status: active, inactive, all")
+):
+    """Get total count of properties matching filters for pagination"""
+    # Build query filter (same logic as main endpoint)
+    query = {}
+    
+    if municipality:
+        query["municipality_name"] = {"$regex": municipality, "$options": "i"}
+    
+    # Handle status filtering  
+    if status and status != "all":
+        if status == "sold":
+            query["auction_result"] = "sold"
+        else:
+            query["status"] = status
+    
+    # Get total count
+    total_count = await db.tax_sales.count_documents(query)
+    
+    return {
+        "total_count": total_count,
+        "page_size": 24,
+        "total_pages": (total_count + 23) // 24  # Ceiling division
+    }
+
 @api_router.get("/tax-sales/search")
 async def search_tax_sales(
     q: Optional[str] = Query(None, description="Search query"),
