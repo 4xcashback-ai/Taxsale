@@ -304,7 +304,7 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI(title="NS Tax Sale Aggregator", description="Nova Scotia Municipality Tax Sale Information Aggregator")
 
 # Remove the static mount that's conflicting with proxy routing
-# app.mount("/static", StaticFiles(directory="/app/backend/static"), name="static")
+# app.mount("/static", StaticFiles(directory=f"{os.path.dirname(os.path.abspath(__file__))}/static"), name="static")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
