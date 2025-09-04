@@ -19,63 +19,7 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
         <title>Emergent | Fullstack App</title>
-        <!-- Google Maps JavaScript API -->
-        <script>
-          // Robust Google Maps API loader with callback system
-          window.googleMapsLoaded = false;
-          window.googleMapsCallbacks = [];
-          
-          window.onGoogleMapsReady = function() {
-            console.log('Google Maps API loaded successfully');
-            window.googleMapsLoaded = true;
-            // Execute any waiting callbacks
-            window.googleMapsCallbacks.forEach(callback => {
-              try {
-                callback();
-              } catch (error) {
-                console.error('Error in Google Maps callback:', error);
-              }
-            });
-            window.googleMapsCallbacks = [];
-          };
-          
-          window.loadGoogleMaps = function(callback) {
-            if (window.googleMapsLoaded && window.google?.maps) {
-              // Already loaded, execute callback immediately
-              callback();
-              return;
-            }
-            
-            // Add callback to queue
-            if (callback) {
-              window.googleMapsCallbacks.push(callback);
-            }
-            
-            // Check if script is already loading
-            if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-              return; // Script already loading
-            }
-            
-            // Load the script
-            const script = document.createElement('script');
-            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY&libraries=geometry&callback=onGoogleMapsReady';
-            script.async = true;
-            script.defer = true;
-            script.onerror = function() {
-              console.error('Failed to load Google Maps API');
-            };
-            document.head.appendChild(script);
-          };
-          
-          // Initialize on DOM ready
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-              window.loadGoogleMaps();
-            });
-          } else {
-            window.loadGoogleMaps();
-          }
-        </script>
+        <!-- Google Maps will be loaded dynamically by React components -->
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
