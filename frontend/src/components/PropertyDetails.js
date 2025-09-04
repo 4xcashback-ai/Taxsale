@@ -173,26 +173,17 @@ const PropertyDetails = () => {
     };
 
     // Use the robust Google Maps loader
-    if (window.loadGoogleMaps) {
-      window.loadGoogleMaps(initMap);
-    } else {
-      // Fallback for immediate initialization if already loaded
-      if (window.google?.maps) {
+    const initializeMapAsync = async () => {
+      try {
+        console.log('PropertyDetails: Loading Google Maps API...');
+        await googleMapsLoader.load();
         initMap();
-      } else {
-        console.warn('Google Maps loader not available, using fallback');
-        // Fallback retry mechanism
-        const checkGoogleMaps = setInterval(() => {
-          if (window.google?.maps) {
-            clearInterval(checkGoogleMaps);
-            initMap();
-          }
-        }, 500);
-
-        // Cleanup interval after 10 seconds
-        setTimeout(() => clearInterval(checkGoogleMaps), 10000);
+      } catch (error) {
+        console.error('PropertyDetails: Error loading Google Maps:', error);
       }
-    }
+    };
+
+    initializeMapAsync();
   }, [property, boundaryData]);
 
   // Calculate polygon centroid
