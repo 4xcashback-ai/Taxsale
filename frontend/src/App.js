@@ -162,7 +162,7 @@ const AuthenticatedApp = () => {
     }
   };
 
-  const fetchTaxSales = async (municipality = selectedMunicipality, query = searchQuery) => {
+  const fetchTaxSales = async (municipality = selectedMunicipality, query = searchQuery, page = currentPage) => {
     setLoading(true);
     try {
       let url = `${API}/api/tax-sales`;
@@ -174,6 +174,11 @@ const AuthenticatedApp = () => {
       if (selectedStatus && selectedStatus !== 'all') {
         params.append("status", selectedStatus);
       }
+      
+      // Add pagination parameters
+      params.append("limit", pageSize.toString());
+      params.append("skip", ((page - 1) * pageSize).toString());
+      
       if (query) {
         url = `${API}/api/tax-sales/search`;
         params.append("q", query);
@@ -185,10 +190,35 @@ const AuthenticatedApp = () => {
 
       const response = await axios.get(url);
       setTaxSales(response.data);
+      
+      // Fetch total count for pagination
+      await fetchTotalCount(municipality, selectedStatus);
+      
     } catch (error) {
       console.error("Error fetching tax sales:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTotalCount = async (municipality = selectedMunicipality, status = selectedStatus) => {
+    try {
+      const params = new URLSearchParams();
+      
+      if (municipality) {
+        params.append("municipality", municipality);
+      }
+      if (status && status !== 'all') {
+        params.append("status", status);
+      }
+      
+      const url = `${API}/api/tax-sales/count${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await axios.get(url);
+      
+      setTotalCount(response.data.total_count);
+      setTotalPages(response.data.total_pages);
+    } catch (error) {
+      console.error("Error fetching total count:", error);
     }
   };
 
