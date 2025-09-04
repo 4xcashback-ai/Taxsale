@@ -94,7 +94,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the complete Favorites System implementation for paid users. This is a new feature that allows paid users to bookmark properties."
+user_problem_statement: "Test the Cumberland County scraper routing fix by getting the Cumberland County municipality from /api/municipalities endpoint, triggering a scrape using POST /api/scrape/{municipality_id} endpoint for Cumberland County, checking backend logs to verify we see 'Starting Cumberland County tax sale scraping' instead of 'Generic scraping for Cumberland County', and verifying the response indicates success with specific Cumberland County scraper usage."
 
 backend:
   - task: "Favorites System Backend API"
