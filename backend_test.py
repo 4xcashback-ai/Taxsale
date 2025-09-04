@@ -12,6 +12,8 @@ import math
 from datetime import datetime, timedelta
 import time
 import uuid
+import subprocess
+import os
 
 # Get backend URL from environment
 import os
