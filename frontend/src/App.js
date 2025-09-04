@@ -1719,6 +1719,22 @@ const AuthenticatedApp = () => {
                           </div>
                         </div>
 
+                        {/* Active Deployment Indicator */}
+                        {deploymentLoading && (
+                          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                            <div className="flex items-center">
+                              <RefreshCw className="mr-3 h-5 w-5 animate-spin text-blue-600" />
+                              <div>
+                                <div className="font-semibold text-blue-800">🚀 Deployment In Progress</div>
+                                <div className="text-sm text-blue-700 mt-1">
+                                  Deploying your application... This may take 1-2 minutes. 
+                                  The status will update automatically when complete.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Status Messages */}
                         {deploymentStatus.message && (
                           <div className={`rounded-lg p-4 border ${
