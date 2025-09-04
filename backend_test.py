@@ -2198,6 +2198,14 @@ def test_cumberland_county_property_images():
                 results[assessment_number] = {
                     "success": False,
                     "status_code": response.status_code,
+                }
+        
+        return results
+    
+    except Exception as e:
+        print(f"   ❌ Halifax boundary images test error: {e}")
+        return {"error": str(e)}
+
 def test_cumberland_county_scraper_routing():
     """Test Cumberland County scraper routing fix"""
     print("\n🏛️ Testing Cumberland County Scraper Routing...")
