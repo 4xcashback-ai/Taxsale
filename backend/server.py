@@ -3510,7 +3510,7 @@ async def capture_viewpoint_boundary_real(assessment_number: str):
             raise HTTPException(status_code=400, detail="Property has no PID number")
         
         screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
-        screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+        screenshot_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{screenshot_filename}"
         
         # Check if real screenshot already exists (not demo)
         if Path(screenshot_path).exists():
