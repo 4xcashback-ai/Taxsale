@@ -13,11 +13,6 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
         return;
       }
       
-      if (!window.google?.maps) {
-        console.log('Google Maps not loaded yet');
-        return;
-      }
-
       if (map) {
         console.log('Map already initialized');
         return;
@@ -45,19 +40,25 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
       }
     };
 
-    // Try to initialize immediately
-    initializeMap();
+    // Use the robust Google Maps loader
+    if (window.loadGoogleMaps) {
+      window.loadGoogleMaps(initializeMap);
+    } else {
+      // Fallback for immediate initialization if already loaded
+      if (window.google?.maps) {
+        initializeMap();
+      } else {
+        console.warn('Google Maps loader not available, using fallback');
+        // Fallback retry mechanism
+        const checkGoogleMaps = setInterval(() => {
+          if (window.google?.maps) {
+            clearInterval(checkGoogleMaps);
+            initializeMap();
+          }
+        }, 500);
 
-    // If Google Maps isn't ready, set up a retry mechanism
-    if (!window.google?.maps) {
-      const checkGoogleMaps = setInterval(() => {
-        if (window.google?.maps) {
-          clearInterval(checkGoogleMaps);
-          initializeMap();
-        }
-      }, 100);
-
-      return () => clearInterval(checkGoogleMaps);
+        return () => clearInterval(checkGoogleMaps);
+      }
     }
   }, [map]);
 
