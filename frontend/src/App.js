@@ -1642,7 +1642,7 @@ const AuthenticatedApp = () => {
                           <Input
                             placeholder="https://github.com/username/repository.git"
                             value={githubRepo}
-                            onChange={(e) => setGithubRepo(e.target.value)}
+                            onChange={(e) => { setGithubRepo(e.target.value); localStorage.setItem('githubRepo', e.target.value); }}
                             className="max-w-md"
                           />
                           <p className="text-sm text-gray-600">
