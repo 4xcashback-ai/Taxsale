@@ -242,11 +242,11 @@ frontend:
 
   - task: "VPS Interactive Map Google Maps API Loading Fix"
     implemented: true
-    working: true
-    file: "frontend/public/index.html"
-    stuck_count: 0
+    working: false
+    file: "frontend/public/index.html, frontend/src/components/InteractiveMap.js, frontend/src/components/PropertyDetails.js"
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: false
           agent: "user"
@@ -254,6 +254,12 @@ frontend:
         - working: false
           agent: "main"
           comment: "IDENTIFIED ROOT CAUSE: Google Maps API loading issue in HTML file. The script was using '%REACT_APP_GOOGLE_MAPS_API_KEY%' build-time replacement that doesn't work reliably on VPS build environment. This causes Google Maps JavaScript API to fail loading with invalid API key. FIXED: Replaced variable substitution with direct API key value 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY' in frontend/public/index.html. This ensures Google Maps API loads correctly on VPS without relying on build-time environment variable replacement that may fail in production deployment process."
+        - working: false
+          agent: "user"
+          comment: "User reports interactive map loads initially but fails to load after page refresh. Backend logs show enhanced endpoint working correctly with PVSC data loading, but map has inconsistent loading behavior indicating race condition in Google Maps API initialization."
+        - working: false
+          agent: "main"
+          comment: "ENHANCED FIX: Implemented robust Google Maps API loading system with callback mechanism. Root cause was race condition between Google Maps API loading and component initialization. SOLUTION: 1) Created window.loadGoogleMaps() function with callback queue system, 2) Added window.onGoogleMapsReady() callback for reliable API load detection, 3) Updated InteractiveMap.js and PropertyDetails.js to use robust loader, 4) Implemented fallback retry mechanisms with proper error handling, 5) Added script loading prevention to avoid duplicate API requests. This ensures consistent Google Maps loading across page refreshes and eliminates timing-related failures."
         - working: true
           agent: "testing"
           comment: "COMPREHENSIVE SUCCESS ✅ VPS BOUNDARY DISPLAY & GOOGLE MAPS INTEGRATION TESTING COMPLETED - All critical VPS vs Dev environment issues successfully resolved with 100% success rate (5/5 boundary tests passed). Key findings: ✅ VPS Boundary Display Fix: All 3 Victoria County properties now return proper PNG boundary images via /api/property-image/{assessment_number} endpoint - Assessment 00254118 (80.2 KB boundary image), Assessment 00453706 (83.0 KB boundary image), Assessment 09541209 (92.7 KB boundary image). ✅ Absolute File Path Resolution: os.path.dirname(os.path.abspath(__file__)) fix working correctly, resolving VPS working directory differences between dev (/app/backend) and VPS (/var/www/tax-sale-compass) environments. ✅ Direct Boundary Access: /api/boundary-image/{filename} endpoint working perfectly, returning proper PNG images with correct Content-Type headers. ✅ Caching Headers: Proper Cache-Control: max-age=3600 headers present for performance optimization. ✅ Google Maps Integration: The Google Maps API key fix in frontend/public/index.html ensures proper loading on VPS environment, resolving build-time variable replacement issues. The critical VPS vs Dev environment boundary display issue has been completely resolved - boundary images now serve properly on VPS production environment matching dev environment functionality."
