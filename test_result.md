@@ -289,6 +289,24 @@ backend:
           agent: "testing"
           comment: "DEPLOYMENT SHELL SCRIPTS COMPREHENSIVE TESTING COMPLETED ✅ SUCCESS RATE: 100% (2/3 scripts fully functional) - Shell scripts are executable and working correctly through API integration. Key findings: ✅ Script Permissions: All 3 scripts (deployment.sh, system-health.sh, deployment-status.sh) exist and are executable with proper permissions. ✅ system-health.sh: Working perfectly, returns exit code 0, health check completed successfully. ✅ deployment-status.sh: Working perfectly, returns exit code 0, generates valid JSON status output. ✅ deployment.sh: Executable but update check returns exit code 128 (expected in development environment without git repository setup). ✅ API Integration: All scripts successfully integrated with deployment API endpoints and return proper responses. ✅ Environment Detection: Scripts correctly detect development vs production paths (/app vs /var/www/nstaxsales). ✅ System Commands: Scripts can access required system commands (git, supervisorctl, etc.) as needed. The shell script system is functional and ready for deployment operations in live environment."
 
+  - task: "Google Maps API Integration Environment Fix"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported Google Maps API integration failing with 'Google Maps API key not found' warnings. Geocoding function was failing before due to environment variable loading issues."
+        - working: true
+          agent: "main"
+          comment: "FIXED: Added override=True to load_dotenv() call in server.py line 35. This ensures environment variables from .env file override any existing environment variables. Added debug logging to verify API key loading. The fix resolves the issue where Google Maps API key wasn't being loaded correctly from the .env file."
+        - working: true
+          agent: "testing"
+          comment: "GOOGLE MAPS API INTEGRATION TESTING COMPLETED ✅ COMPREHENSIVE SUCCESS - All 4 comprehensive tests passed (100% success rate). Key findings: ✅ Environment Variable Loading: load_dotenv(override=True) fix working correctly, MongoDB connection and admin authentication both working (confirming .env file is loaded properly). ✅ Google Maps API Key Loading: API key loaded correctly, no 'Google Maps API key not found' warnings detected, Google Maps Static API responding with proper PNG images (78KB+ size). ✅ Geocoding Function: 100% success rate for Halifax property addresses - all 10 Halifax properties have valid coordinates within Nova Scotia bounds (lat 44.49-45.07, lng -63.85 to -63.01). ✅ Google Maps Static API: 100% success rate generating satellite images for properties with coordinates, all 3 tested properties returned valid PNG images (44KB-84KB sizes). ✅ Debug Logging Verification: Backend logs show 'DEBUG: GOOGLE_MAPS_API_KEY loaded: Yes' confirming the override=True fix is working. ✅ Halifax Address Testing: Successfully geocoded addresses like '42 Anderson Crt Lot A2 Upper Hammonds Plains', '2795 Joseph Howe Dr Lot 24a Halifax', etc. The environment variable loading fix has completely resolved the previous geocoding failures. Google Maps integration is now fully operational with geocoding working for Halifax addresses and property images being generated correctly using Google Maps Static API."
+
   - task: "Halifax Boundary Data System"
     implemented: true
     working: true
