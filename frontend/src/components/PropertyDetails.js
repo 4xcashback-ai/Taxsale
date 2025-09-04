@@ -171,20 +171,26 @@ const PropertyDetails = () => {
       }
     };
 
-    // Check if Google Maps is already loaded
-    if (window.google?.maps) {
-      initMap();
+    // Use the robust Google Maps loader
+    if (window.loadGoogleMaps) {
+      window.loadGoogleMaps(initMap);
     } else {
-      // Wait for Google Maps to load (it should be loaded by the main App.js)
-      const checkGoogleMaps = setInterval(() => {
-        if (window.google?.maps) {
-          clearInterval(checkGoogleMaps);
-          initMap();
-        }
-      }, 100);
+      // Fallback for immediate initialization if already loaded
+      if (window.google?.maps) {
+        initMap();
+      } else {
+        console.warn('Google Maps loader not available, using fallback');
+        // Fallback retry mechanism
+        const checkGoogleMaps = setInterval(() => {
+          if (window.google?.maps) {
+            clearInterval(checkGoogleMaps);
+            initMap();
+          }
+        }, 500);
 
-      // Cleanup interval after 10 seconds
-      setTimeout(() => clearInterval(checkGoogleMaps), 10000);
+        // Cleanup interval after 10 seconds
+        setTimeout(() => clearInterval(checkGoogleMaps), 10000);
+      }
     }
   }, [property, boundaryData]);
 
