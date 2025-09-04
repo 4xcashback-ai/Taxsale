@@ -2700,7 +2700,7 @@ def test_cumberland_county_scraper_system():
     return routing_result, {"cumberland_routing": {"success": routing_result, "data": routing_data}}
 
 if __name__ == "__main__":
-    print("🚀 STARTING CUMBERLAND COUNTY SCRAPER ROUTING TEST")
+    print("🚀 STARTING DEPLOYMENT MANAGEMENT SYSTEM TEST")
     print("=" * 80)
     
     # Test API connection first
@@ -2709,18 +2709,18 @@ if __name__ == "__main__":
         print("❌ Cannot proceed without API connection")
         sys.exit(1)
     
-    # Run the comprehensive Cumberland County scraper routing test
-    success, results = test_cumberland_county_scraper_system()
+    # Run the comprehensive deployment system test
+    success, results = test_deployment_system()
     
     print("\n" + "=" * 80)
     print("🏁 TESTING COMPLETE")
     print("=" * 80)
     
     if success:
-        print("🎉 ALL TESTS PASSED - Cumberland County scraper routing fix is working!")
+        print("🎉 ALL TESTS PASSED - Deployment Management System is working!")
         sys.exit(0)
     else:
-        print("❌ TESTS FAILED - Cumberland County scraper routing needs attention")
+        print("❌ TESTS FAILED - Deployment Management System needs attention")
         sys.exit(1)
         if props_response.status_code == 200:
             properties_data = props_response.json()
