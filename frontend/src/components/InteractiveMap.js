@@ -1,25 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
+import googleMapsLoader from '../utils/googleMapsLoader';
 
 const InteractiveMap = ({ properties, onPropertySelect }) => {
   const mapRef = useRef();
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [polygons, setPolygons] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const initializeMap = () => {
+    const initializeMap = async () => {
       if (!mapRef.current) {
-        console.log('MapRef not available yet');
+        console.log('InteractiveMap: MapRef not available yet');
         return;
       }
       
       if (map) {
-        console.log('Map already initialized');
+        console.log('InteractiveMap: Map already initialized');
         return;
       }
 
       try {
-        console.log('Initializing Google Map...');
+        setIsLoading(true);
+        setError(null);
+        
+        console.log('InteractiveMap: Loading Google Maps API...');
+        await googleMapsLoader.load();
+        
+        console.log('InteractiveMap: Initializing Google Map...');
         const googleMap = new window.google.maps.Map(mapRef.current, {
           center: { lat: 45.0, lng: -63.0 },
           zoom: 7,
@@ -33,33 +42,17 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
           ]
         });
         
-        console.log('Google Map initialized successfully');
+        console.log('InteractiveMap: Google Map initialized successfully');
         setMap(googleMap);
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error initializing Google Map:', error);
+        console.error('InteractiveMap: Error initializing Google Map:', error);
+        setError(error.message);
+        setIsLoading(false);
       }
     };
 
-    // Use the robust Google Maps loader
-    if (window.loadGoogleMaps) {
-      window.loadGoogleMaps(initializeMap);
-    } else {
-      // Fallback for immediate initialization if already loaded
-      if (window.google?.maps) {
-        initializeMap();
-      } else {
-        console.warn('Google Maps loader not available, using fallback');
-        // Fallback retry mechanism
-        const checkGoogleMaps = setInterval(() => {
-          if (window.google?.maps) {
-            clearInterval(checkGoogleMaps);
-            initializeMap();
-          }
-        }, 500);
-
-        return () => clearInterval(checkGoogleMaps);
-      }
-    }
+    initializeMap();
   }, [map]);
 
   // Function to fetch boundary data for a property
