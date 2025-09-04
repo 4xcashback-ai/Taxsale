@@ -3141,7 +3141,7 @@ async def search_tax_sales(
         else:
             query["status"] = status
     
-    properties = await db.tax_sales.find(query).limit(limit).to_list(limit)
+    properties = await db.tax_sales.find(query).skip(skip).limit(limit).to_list(limit)
     return [TaxSaleProperty(**prop) for prop in properties]
 
 @api_router.get("/tax-sales/map-data")
