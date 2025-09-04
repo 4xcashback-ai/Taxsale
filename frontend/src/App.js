@@ -461,8 +461,22 @@ const AuthenticatedApp = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      alert('Deployment started successfully! Please monitor the system status.');
+      // Show better feedback with deployment details
+      const deploymentMessage = response.data?.message || 'Deployment started successfully!';
+      alert(`✅ ${deploymentMessage}\n\n🔄 Deployment is running in the background.\n📊 Check the deployment status below for progress updates.\n⏱️ This may take 1-2 minutes to complete.`);
+      
+      // Immediately fetch updated status
       fetchDeploymentStatus();
+      
+      // Auto-refresh status every 10 seconds for 2 minutes to show progress
+      let refreshCount = 0;
+      const statusInterval = setInterval(() => {
+        fetchDeploymentStatus();
+        refreshCount++;
+        if (refreshCount >= 12) { // Stop after 2 minutes (12 * 10 seconds)
+          clearInterval(statusInterval);
+        }
+      }, 10000);
     } catch (error) {
       console.error('Error starting deployment:', error);
       alert('Error starting deployment: ' + (error.response?.data?.detail || error.message));
