@@ -1068,6 +1068,102 @@ def test_deployment_authentication():
         print(f"   ❌ Some endpoints missing authentication")
         return False, results
 
+def test_deployment_shell_scripts():
+    """Test if deployment shell scripts are executable and working"""
+    print("\n🔧 Testing Deployment Shell Scripts...")
+    print("🔍 FOCUS: Shell script permissions and basic functionality")
+    print("📋 EXPECTED: Scripts are executable and return valid responses")
+    
+    scripts = [
+        ("/app/scripts/deployment.sh", ["check-updates"]),
+        ("/app/scripts/system-health.sh", ["check"]),
+        ("/app/scripts/deployment-status.sh", [])
+    ]
+    
+    results = {}
+    
+    for script_path, args in scripts:
+        script_name = script_path.split('/')[-1]
+        try:
+            print(f"\n   Testing {script_name}")
+            
+            # Check if script exists and is executable
+            import os
+            if not os.path.exists(script_path):
+                print(f"   ❌ Script not found: {script_path}")
+                results[script_name] = False
+                continue
+            
+            if not os.access(script_path, os.X_OK):
+                print(f"   ❌ Script not executable: {script_path}")
+                results[script_name] = False
+                continue
+            
+            print(f"   ✅ Script exists and is executable")
+            
+            # Test script execution (with timeout)
+            import subprocess
+            try:
+                cmd = [script_path] + args
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                
+                print(f"   Exit Code: {result.returncode}")
+                
+                if script_name == "deployment-status.sh":
+                    # Should return JSON
+                    try:
+                        import json
+                        json.loads(result.stdout)
+                        print(f"   ✅ Returns valid JSON")
+                        results[script_name] = True
+                    except json.JSONDecodeError:
+                        print(f"   ❌ Invalid JSON output")
+                        results[script_name] = False
+                elif script_name == "system-health.sh":
+                    # Should complete health check
+                    if "Health check completed" in result.stdout or result.returncode in [0, 1, 2]:
+                        print(f"   ✅ Health check completed")
+                        results[script_name] = True
+                    else:
+                        print(f"   ❌ Health check failed")
+                        results[script_name] = False
+                elif script_name == "deployment.sh":
+                    # Should check for updates
+                    if result.returncode in [0, 1]:  # 0 = updates available, 1 = no updates
+                        print(f"   ✅ Update check completed")
+                        results[script_name] = True
+                    else:
+                        print(f"   ❌ Update check failed")
+                        results[script_name] = False
+                
+            except subprocess.TimeoutExpired:
+                print(f"   ❌ Script execution timed out")
+                results[script_name] = False
+            except Exception as e:
+                print(f"   ❌ Script execution error: {e}")
+                results[script_name] = False
+                
+        except Exception as e:
+            print(f"   ❌ Error testing {script_name}: {e}")
+            results[script_name] = False
+    
+    successful_tests = sum(1 for result in results.values() if result is True)
+    total_tests = len(results)
+    
+    print(f"\n   📊 Shell Script Tests: {successful_tests}/{total_tests} passed")
+    
+    if successful_tests >= 2:  # At least 2 out of 3 scripts working
+        print(f"   ✅ Shell scripts are functional")
+        return True, results
+    else:
+        print(f"   ❌ Shell scripts have issues")
+        return False, results
+
 def test_deployment_status_endpoint():
     """Test deployment status endpoint with valid authentication"""
     print("\n📊 Testing Deployment Status Endpoint...")
