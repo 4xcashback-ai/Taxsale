@@ -378,7 +378,7 @@ async def get_optimized_property_image(assessment_number: str, width: int = 405,
         raise HTTPException(status_code=404, detail="No image available")
         
     except Exception as e:
-        logger.error(f"Error serving property image for {assessment_number}: {e}")
+        logger.debug(f"Property image not available for {assessment_number}: {e}")
         raise HTTPException(status_code=404, detail="Image not available")
 
 # Initialize scheduler
