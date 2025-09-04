@@ -2144,11 +2144,11 @@ def test_cumberland_county_property_images():
         print(f"\n   Testing {len(test_properties)} Cumberland County properties...")
         
         for assessment_number in test_properties:
-        try:
-            print(f"\n   🔍 Testing property {assessment_number}:")
-            
-            response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", 
-                                  headers=headers, timeout=30)
+            try:
+                print(f"\n   🔍 Testing property {assessment_number}:")
+                
+                response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", 
+                                      headers=headers, timeout=30)
             
             print(f"      Status Code: {response.status_code}")
             print(f"      Content-Type: {response.headers.get('Content-Type', 'Not set')}")
