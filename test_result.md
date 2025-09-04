@@ -97,6 +97,20 @@
 user_problem_statement: "Test the Cumberland County scraper routing fix by getting the Cumberland County municipality from /api/municipalities endpoint, triggering a scrape using POST /api/scrape/{municipality_id} endpoint for Cumberland County, checking backend logs to verify we see 'Starting Cumberland County tax sale scraping' instead of 'Generic scraping for Cumberland County', and verifying the response indicates success with specific Cumberland County scraper usage."
 
 backend:
+  - task: "Admin Panel 'Updates Available' Bug Fix"
+    implemented: true
+    working: false
+    file: "scripts/deployment.sh, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported admin panel incorrectly showing 'updates available' even after deployment and page refresh. VPS is 7 commits ahead of origin/main but check-updates endpoint returns updates_available=true."
+        - working: false  
+          agent: "main"
+          comment: "FIXED: Root cause was flawed logic in check-updates functionality. Original script returned 0 when local_commit != remote_commit regardless of direction (ahead/behind). VPS being 7 commits ahead triggered 'updates available' incorrectly. Fixed deployment.sh check_for_updates() to distinguish between local-behind-remote (return 0, updates available) vs local-ahead-remote (return 1, no updates needed). Enhanced backend API to parse output and provide detailed status messages like 'Local is ahead of remote - no updates needed'. Script now uses git rev-list --count to determine ahead/behind status."
   - task: "Google Maps API Key Environment Variable Fix"
     implemented: true
     working: true
