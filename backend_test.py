@@ -3125,7 +3125,7 @@ def test_cumberland_county_scraper_system():
     return routing_result, {"cumberland_routing": {"success": routing_result, "data": routing_data}}
 
 if __name__ == "__main__":
-    print("🚀 STARTING DEPLOYMENT MANAGEMENT SYSTEM TEST")
+    print("🚀 STARTING GOOGLE MAPS API INTEGRATION TEST")
     print("=" * 80)
     
     # Test API connection first
@@ -3134,16 +3134,16 @@ if __name__ == "__main__":
         print("❌ Cannot proceed without API connection")
         sys.exit(1)
     
-    # Run the comprehensive deployment system test
-    success, results = test_deployment_system()
+    # Run the comprehensive Google Maps integration test
+    success, results = test_google_maps_integration()
     
     print("\n" + "=" * 80)
     print("🏁 TESTING COMPLETE")
     print("=" * 80)
     
     if success:
-        print("🎉 ALL TESTS PASSED - Deployment Management System is working!")
+        print("🎉 ALL TESTS PASSED - Google Maps API Integration is working!")
         sys.exit(0)
     else:
-        print("❌ TESTS FAILED - Deployment Management System needs attention")
+        print("❌ TESTS FAILED - Google Maps API Integration needs attention")
         sys.exit(1)
