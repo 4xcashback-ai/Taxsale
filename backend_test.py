@@ -16,12 +16,15 @@ import subprocess
 import os
 
 # Get backend URL from environment
-with open('/app/frontend/.env', 'r') as f:
-    for line in f:
-        if line.startswith('REACT_APP_BACKEND_URL='):
-            BACKEND_URL = line.split('=', 1)[1].strip() + '/api'
-            break
-else:
+try:
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                BACKEND_URL = line.split('=', 1)[1].strip() + '/api'
+                break
+        else:
+            BACKEND_URL = 'https://propboundary-fix.preview.emergentagent.com/api'
+except:
     BACKEND_URL = 'https://propboundary-fix.preview.emergentagent.com/api'
 
 print(f"🌐 Backend URL: {BACKEND_URL}")
