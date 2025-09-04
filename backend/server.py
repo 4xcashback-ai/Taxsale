@@ -32,7 +32,11 @@ from jose import JWTError, jwt
 
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / '.env', override=True)
+
+# Debug environment loading
+print(f"DEBUG: Loading .env from {ROOT_DIR / '.env'}")
+print(f"DEBUG: GOOGLE_MAPS_API_KEY loaded: {'Yes' if os.environ.get('GOOGLE_MAPS_API_KEY') else 'No'}")
 
 # Environment detection for script paths
 if os.path.exists('/var/www/nstaxsales'):
