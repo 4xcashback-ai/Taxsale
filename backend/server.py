@@ -63,10 +63,6 @@ ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 # Authentication Helper Functions
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password"""
-    return pwd_context.verify(plain_password, hashed_password)
-
 def get_password_hash(password: str) -> str:
     """Hash a password"""
     return pwd_context.hash(password)
@@ -3050,14 +3046,8 @@ async def get_tax_sale_properties(
             query["status"] = status
     # If status == "all" or no status specified, don't add any status filters (show all)
     
-    # Get properties with filtering
-    properties = await db.tax_sales.find(query).skip(skip).limit(limit).to_list(limit)
-    
-    # Add favorite information to each property
-    enhanced_properties = []
-    user_favorites = set()
-    
     # Get user's favorites if authenticated and paid
+    user_favorites = set()
     if current_user and current_user.get("subscription_tier") == "paid":
         # Handle both regular users (with "id") and admin users (with "username")
         user_id = current_user.get("id") or current_user.get("username")
@@ -3065,20 +3055,35 @@ async def get_tax_sale_properties(
             user_favorites_docs = await db.favorites.find({"user_id": user_id}).to_list(100)
             user_favorites = {fav["property_id"] for fav in user_favorites_docs}
     
-    for prop in properties:
-        # Get favorite count for this property
-        favorite_count = await db.favorites.count_documents({"property_id": prop["assessment_number"]})
-        
-        # Create enhanced property dict
-        enhanced_prop = dict(prop)
-        enhanced_prop["favorite_count"] = favorite_count
-        enhanced_prop["is_favorited"] = prop["assessment_number"] in user_favorites
-        
-        # Remove MongoDB _id if present
-        if "_id" in enhanced_prop:
-            del enhanced_prop["_id"]
-            
-        enhanced_properties.append(enhanced_prop)
+    pipeline = [
+        {"$match": query},
+        {"$skip": skip},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from": "favorites",
+                "localField": "assessment_number",
+                "foreignField": "property_id",
+                "as": "favorites"
+            }
+        },
+        {
+            "$addFields": {
+                "favorite_count": {"$size": "$favorites"},
+                "is_favorited": {
+                    "$in": ["$assessment_number", list(user_favorites)]
+                }
+            }
+        },
+        {
+            "$project": {
+                "favorites": 0,
+                "_id": 0
+            }
+        }
+    ]
+    
+    enhanced_properties = await db.tax_sales.aggregate(pipeline).to_list(limit)
     
     return enhanced_properties
 
