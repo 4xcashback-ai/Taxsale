@@ -223,7 +223,23 @@ const AuthenticatedApp = () => {
   };
 
   const handleSearch = async () => {
-    await fetchTaxSales(selectedMunicipality, searchQuery);
+    setCurrentPage(1); // Reset to first page on new search
+    await fetchTaxSales(selectedMunicipality, searchQuery, 1);
+  };
+
+  const handlePageChange = async (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      await fetchTaxSales(selectedMunicipality, searchQuery, newPage);
+      // Scroll to top of results
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleStatusFilter = async (status) => {
+    setSelectedStatus(status);
+    setCurrentPage(1); // Reset to first page on filter change
+    await fetchTaxSales(selectedMunicipality, searchQuery, 1);
   };
 
   const handlePropertyClick = (property) => {
