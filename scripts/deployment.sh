@@ -84,11 +84,11 @@ update_backend() {
     
     cd "$APP_DIR/backend"
     
-    # Activate virtual environment
-    source venv/bin/activate
-    
-    # Update pip packages
-    pip install -r requirements.txt --upgrade
+    # Update pip packages (assume venv is already active or use system python)
+    pip install -r requirements.txt --upgrade || {
+        log "Warning: pip install failed, trying with python3 -m pip"
+        python3 -m pip install -r requirements.txt --upgrade
+    }
     
     # Run any database migrations if needed
     # python migrate.py || log "Warning: Database migration failed or not needed"
