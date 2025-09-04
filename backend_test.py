@@ -2470,14 +2470,6 @@ if __name__ == "__main__":
     else:
         print("❌ TESTS FAILED - Cumberland County scraper routing needs attention")
         sys.exit(1)
-            }
-    
-    # Test a few other properties to ensure fix didn't break existing functionality
-    print(f"\n   🔍 Testing other properties to verify no regression:")
-    
-    try:
-        # Get some other properties for regression testing
-        props_response = requests.get(f"{BACKEND_URL}/tax-sales?limit=5", timeout=30)
         if props_response.status_code == 200:
             properties_data = props_response.json()
             if isinstance(properties_data, dict):
