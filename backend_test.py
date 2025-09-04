@@ -1465,6 +1465,245 @@ def test_verify_deployment_endpoint():
         print(f"   ❌ Verify deployment error: {e}")
         return False, {"error": str(e)}
 
+def test_vps_boundary_display_fix():
+    """Test VPS vs Dev boundary display bug fix for /api/property-image/{assessment_number} endpoint"""
+    print("\n🖼️ Testing VPS vs Dev Boundary Display Bug Fix...")
+    print("🔍 FOCUS: /api/property-image/{assessment_number} endpoint with absolute file path fix")
+    print("📋 EXPECTED: Victoria County properties return proper PNG images, not 404 errors")
+    print("📋 SPECIFIC TEST CASES:")
+    print("   - Assessment 00254118: boundary_85006500_00254118.png")
+    print("   - Assessment 00453706: boundary_85010866_85074276_00453706.png")
+    print("   - Assessment 09541209: boundary_85142388_09541209.png")
+    
+    # Victoria County properties with known boundary files
+    test_properties = [
+        {
+            "assessment_number": "00254118",
+            "expected_boundary": "boundary_85006500_00254118.png",
+            "description": "198 Little Narrows Rd"
+        },
+        {
+            "assessment_number": "00453706", 
+            "expected_boundary": "boundary_85010866_85074276_00453706.png",
+            "description": "30 5413 (P) Rd"
+        },
+        {
+            "assessment_number": "09541209",
+            "expected_boundary": "boundary_85142388_09541209.png", 
+            "description": "Washabuck Rd"
+        }
+    ]
+    
+    results = {}
+    
+    try:
+        # Get admin token for authentication
+        admin_token = get_admin_token()
+        if not admin_token:
+            print("   ❌ Cannot test without admin token")
+            return False, {"error": "No admin token"}
+        
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        
+        print(f"\n   Testing {len(test_properties)} Victoria County properties...")
+        
+        successful_tests = 0
+        
+        for i, prop in enumerate(test_properties, 1):
+            assessment_number = prop["assessment_number"]
+            expected_boundary = prop["expected_boundary"]
+            description = prop["description"]
+            
+            print(f"\n   Test {i}: Assessment {assessment_number} ({description})")
+            print(f"   Expected boundary file: {expected_boundary}")
+            
+            try:
+                # Test the property image endpoint
+                response = requests.get(
+                    f"{BACKEND_URL}/property-image/{assessment_number}",
+                    headers=headers,
+                    timeout=30
+                )
+                
+                print(f"   Status Code: {response.status_code}")
+                print(f"   Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+                print(f"   Content-Length: {len(response.content)} bytes")
+                
+                # Check Cache-Control header
+                cache_control = response.headers.get('Cache-Control', 'Not set')
+                print(f"   Cache-Control: {cache_control}")
+                
+                if response.status_code == 200:
+                    # Verify it's a proper PNG image
+                    content_type = response.headers.get('Content-Type')
+                    if content_type == 'image/png':
+                        # Check if it's a reasonable image size (boundary images should be substantial)
+                        if len(response.content) > 10000:  # At least 10KB for a proper boundary image
+                            print(f"   ✅ Property image served successfully")
+                            print(f"   ✅ Proper PNG content-type header")
+                            print(f"   ✅ Reasonable image size ({len(response.content):,} bytes)")
+                            
+                            # Check if Cache-Control header is present
+                            if 'max-age' in cache_control.lower() or 'public' in cache_control.lower():
+                                print(f"   ✅ Proper Cache-Control header present")
+                            else:
+                                print(f"   ⚠️ Cache-Control header could be improved")
+                            
+                            results[assessment_number] = {
+                                "success": True,
+                                "status_code": response.status_code,
+                                "content_type": content_type,
+                                "size_bytes": len(response.content),
+                                "cache_control": cache_control
+                            }
+                            successful_tests += 1
+                        else:
+                            print(f"   ❌ Image too small ({len(response.content)} bytes) - might be error response")
+                            results[assessment_number] = {
+                                "success": False,
+                                "error": "Image too small",
+                                "size_bytes": len(response.content)
+                            }
+                    else:
+                        print(f"   ❌ Wrong content type: {content_type} (expected image/png)")
+                        results[assessment_number] = {
+                            "success": False,
+                            "error": f"Wrong content type: {content_type}",
+                            "status_code": response.status_code
+                        }
+                elif response.status_code == 404:
+                    print(f"   ❌ CRITICAL: 404 Not Found - This is the bug we're testing!")
+                    print(f"   🔧 File path resolution issue - absolute path fix may not be working")
+                    results[assessment_number] = {
+                        "success": False,
+                        "error": "404 Not Found - file path issue",
+                        "status_code": response.status_code
+                    }
+                else:
+                    print(f"   ❌ Unexpected status code: {response.status_code}")
+                    try:
+                        error_text = response.text[:200] if response.text else "No response text"
+                        print(f"   Error response: {error_text}")
+                    except:
+                        pass
+                    results[assessment_number] = {
+                        "success": False,
+                        "error": f"HTTP {response.status_code}",
+                        "status_code": response.status_code
+                    }
+                
+            except Exception as e:
+                print(f"   ❌ Request error: {e}")
+                results[assessment_number] = {
+                    "success": False,
+                    "error": str(e)
+                }
+        
+        # Test Google Maps fallback functionality
+        print(f"\n   Test 4: Google Maps Fallback (property without boundary file)")
+        
+        # Test with a property that likely doesn't have a boundary file
+        fallback_assessment = "99999999"  # Non-existent assessment number
+        
+        try:
+            response = requests.get(
+                f"{BACKEND_URL}/property-image/{fallback_assessment}",
+                headers=headers,
+                timeout=30
+            )
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 404:
+                print(f"   ✅ Proper 404 for non-existent property (expected behavior)")
+                results["fallback_test"] = {"success": True, "note": "Proper 404 for non-existent property"}
+            elif response.status_code == 200:
+                print(f"   ⚠️ Unexpected 200 response for non-existent property")
+                results["fallback_test"] = {"success": False, "note": "Unexpected 200 for non-existent property"}
+            else:
+                print(f"   ⚠️ Unexpected status: {response.status_code}")
+                results["fallback_test"] = {"success": False, "status_code": response.status_code}
+                
+        except Exception as e:
+            print(f"   ❌ Fallback test error: {e}")
+            results["fallback_test"] = {"success": False, "error": str(e)}
+        
+        # Test error handling for properties without coordinates
+        print(f"\n   Test 5: Error Handling for Properties Without Boundary Files or Coordinates")
+        
+        # First, let's get some actual properties to test with
+        try:
+            props_response = requests.get(f"{BACKEND_URL}/tax-sales?limit=10", timeout=30)
+            if props_response.status_code == 200:
+                properties_data = props_response.json()
+                if isinstance(properties_data, dict):
+                    properties = properties_data.get('properties', [])
+                else:
+                    properties = properties_data
+                
+                # Find a property without boundary_screenshot
+                test_property = None
+                for prop in properties:
+                    if not prop.get('boundary_screenshot') and prop.get('assessment_number'):
+                        test_property = prop
+                        break
+                
+                if test_property:
+                    test_assessment = test_property['assessment_number']
+                    print(f"   Testing property {test_assessment} (no boundary_screenshot)")
+                    
+                    response = requests.get(
+                        f"{BACKEND_URL}/property-image/{test_assessment}",
+                        headers=headers,
+                        timeout=30
+                    )
+                    
+                    print(f"   Status Code: {response.status_code}")
+                    
+                    if response.status_code == 200:
+                        print(f"   ✅ Google Maps fallback working (returned satellite image)")
+                        results["no_boundary_test"] = {"success": True, "note": "Google Maps fallback working"}
+                    elif response.status_code == 404:
+                        print(f"   ✅ Proper 404 when no image available (expected behavior)")
+                        results["no_boundary_test"] = {"success": True, "note": "Proper 404 when no image available"}
+                    else:
+                        print(f"   ⚠️ Unexpected status: {response.status_code}")
+                        results["no_boundary_test"] = {"success": False, "status_code": response.status_code}
+                else:
+                    print(f"   ⚠️ No suitable test property found")
+                    results["no_boundary_test"] = {"success": None, "note": "No test property found"}
+            else:
+                print(f"   ⚠️ Cannot get properties for testing")
+                results["no_boundary_test"] = {"success": None, "error": "Cannot get properties"}
+                
+        except Exception as e:
+            print(f"   ❌ Error handling test error: {e}")
+            results["no_boundary_test"] = {"success": False, "error": str(e)}
+        
+        # Overall assessment
+        print(f"\n   📊 VPS Boundary Display Fix Results:")
+        print(f"   Victoria County properties tested: {len(test_properties)}")
+        print(f"   Successful image serving: {successful_tests}/{len(test_properties)}")
+        
+        if successful_tests == len(test_properties):
+            print(f"   ✅ VPS boundary display bug fix is working correctly!")
+            print(f"   ✅ All Victoria County properties return proper PNG images")
+            print(f"   ✅ File path resolution working with absolute path logic")
+            return True, results
+        elif successful_tests > 0:
+            print(f"   ⚠️ Partial success - some properties working")
+            print(f"   🔧 {len(test_properties) - successful_tests} properties still have issues")
+            return False, results
+        else:
+            print(f"   ❌ CRITICAL: VPS boundary display bug fix not working")
+            print(f"   ❌ All test properties returning errors")
+            print(f"   🔧 File path resolution still failing - absolute path fix may not be applied correctly")
+            return False, results
+            
+    except Exception as e:
+        print(f"   ❌ VPS boundary display test error: {e}")
+        return False, {"error": str(e)}
+
 def test_google_maps_api_key_loading():
     """Test Google Maps API key loading and environment variable fix"""
     print("\n🗝️ Testing Google Maps API Key Loading...")
