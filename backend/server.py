@@ -321,7 +321,7 @@ async def serve_boundary_image(filename: str):
         if not filename.endswith('.png') or '..' in filename or '/' in filename:
             raise HTTPException(status_code=400, detail="Invalid filename")
         
-        file_path = f"/app/backend/static/property_screenshots/{filename}"
+        file_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{filename}"
         
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="Image not found")
