@@ -201,12 +201,26 @@ check_for_updates() {
     local remote_commit=$(git rev-parse origin/main)
     
     if [ "$local_commit" != "$remote_commit" ]; then
-        log "Updates available"
-        log "Local commit: $local_commit"
-        log "Remote commit: $remote_commit"
-        return 0
+        # Check if local is behind remote (updates available)
+        local behind_count=$(git rev-list --count HEAD..origin/main)
+        local ahead_count=$(git rev-list --count origin/main..HEAD)
+        
+        if [ "$behind_count" -gt 0 ]; then
+            log "Updates available: $behind_count commits behind remote"
+            log "Local commit: $local_commit"
+            log "Remote commit: $remote_commit"
+            return 0  # Updates available
+        elif [ "$ahead_count" -gt 0 ]; then
+            log "Local is ahead of remote by $ahead_count commits - no updates needed"
+            log "Local commit: $local_commit"
+            log "Remote commit: $remote_commit"
+            return 1  # No updates needed (local is ahead)
+        else
+            log "Repository state unknown"
+            return 1
+        fi
     else
-        log "No updates available"
+        log "No updates available - local and remote are synchronized"
         return 1
     fi
 }
