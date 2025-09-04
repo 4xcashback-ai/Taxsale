@@ -3029,7 +3029,7 @@ async def create_tax_sale_property(property_data: TaxSalePropertyCreate):
 @api_router.get("/tax-sales", response_model=List[dict])
 async def get_tax_sale_properties(
     municipality: Optional[str] = Query(None, description="Filter by municipality name"),
-    limit: int = Query(100, description="Number of results to return"),
+    limit: int = Query(24, description="Number of results to return"),
     skip: int = Query(0, description="Number of results to skip"),
     status: Optional[str] = Query(None, description="Filter by status: active, inactive, all"),
     current_user: Optional[dict] = Depends(get_current_user_optional)
