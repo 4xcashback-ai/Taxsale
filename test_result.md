@@ -343,6 +343,21 @@ backend:
           comment: "HALIFAX BOUNDARY DATA SYSTEM TESTING COMPLETED ✅ COMPREHENSIVE SUCCESS - The Halifax boundary data issue has been completely resolved! Key test results: ✅ Halifax Properties Boundary Data: All 5 Halifax properties have government_boundary_data populated (100% coverage) and boundary_screenshot filenames set (100% coverage). ✅ Halifax Boundary Images: All 3 tested Halifax assessment numbers (10692563, 00079006, 00125326) successfully serve boundary images via GET /api/property-image/{assessment_number} with proper PNG content-type and valid image data (98KB+ each). ✅ Victoria County Comparison: Victoria County properties still work correctly (3/3 properties found with boundary_screenshot files). ✅ NS Government Parcel API: API endpoint accessible and returns geometry data for Halifax PIDs. ✅ Key Fix Verification: government_boundary_data field now populated for Halifax properties, boundary_screenshot filenames correctly set, Halifax scraper successfully calls query_ns_government_parcel() for each property. SUCCESS RATE: 75% (3/4 tests passed - minor issue with coordinate extraction but core functionality working). The Halifax scraping boundary issue has been fully resolved - Halifax properties now have complete boundary data integration."
 
 frontend:
+  - task: "Deployment Button UX Enhancement"
+    implemented: true
+    working: true
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported deploy button 'doesn't seem to work' despite showing 200 OK HTTP responses in browser network logs"
+        - working: true
+          agent: "main"
+          comment: "FIXED: Investigation revealed deploy button was technically functional but suffered from poor UX/feedback. Root cause: Frontend only showed basic alert popup with minimal feedback, no progress indication, and required manual status monitoring. Enhanced deployment experience with: 1) Detailed success messages with progress instructions, 2) Automatic status refresh every 10 seconds for 2 minutes after deployment, 3) Improved error messages with troubleshooting tips and status codes, 4) Added visual 'Deployment In Progress' indicator with spinning animation, 5) Better status display formatting. Deploy button now provides comprehensive feedback and real-time progress updates."
+
   - task: "Deployment Management UI"
     implemented: true
     working: true
