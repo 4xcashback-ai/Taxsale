@@ -3115,7 +3115,8 @@ async def search_tax_sales(
     q: Optional[str] = Query(None, description="Search query"),
     municipality: Optional[str] = Query(None, description="Municipality filter"),
     status: Optional[str] = Query(None, description="Status filter: active, pending, sold, all"),
-    limit: int = Query(50, description="Results limit")
+    limit: int = Query(24, description="Results limit"),
+    skip: int = Query(0, description="Number of results to skip")
 ):
     query = {}
     
