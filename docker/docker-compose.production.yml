@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Main application
+  # Main application with optimizations
   taxsale-app:
     build:
       context: ..
@@ -9,6 +9,11 @@ services:
       args:
         REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-https://taxsalecompass.ca}
         REACT_APP_GOOGLE_MAPS_API_KEY: ${REACT_APP_GOOGLE_MAPS_API_KEY}
+      # Enable BuildKit for faster builds
+      cache_from:
+        - taxsale-app:latest
+        - python:3.11-slim
+        - node:18-alpine
     ports:
       - "80:80"
       - "443:443"
@@ -23,15 +28,30 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://taxsalecompass.ca,https://www.taxsalecompass.ca}
+      # Redis caching
+      - REDIS_URL=redis://redis:6379
+      - CACHE_TTL=${CACHE_TTL:-3600}
     volumes:
       - app-data:/app/data
       - logs:/var/log/taxsale
       - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL certificates
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - taxsale-network
+    # Resource limits for better performance
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # MongoDB database
   mongo:
