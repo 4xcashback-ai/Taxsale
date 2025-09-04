@@ -3126,8 +3126,335 @@ def test_cumberland_county_scraper_system():
     
     return routing_result, {"cumberland_routing": {"success": routing_result, "data": routing_data}}
 
+def test_deployment_process_investigation():
+    """Investigate deployment process execution and response handling"""
+    print("\n🔍 DEPLOYMENT PROCESS INVESTIGATION")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Investigate deployment process execution and response handling")
+    print("📋 USER ISSUE: Deploy button shows 200 OK but deployment doesn't seem to work")
+    print("🔍 SPECIFIC INVESTIGATION:")
+    print("   1. Test POST /api/deployment/deploy endpoint response content")
+    print("   2. Check if deployment shell scripts execute when endpoint called")
+    print("   3. Verify 200 OK response contains proper deployment status/feedback")
+    print("   4. Test if deployment initiates real deployment process")
+    print("   5. Check deployment logs for actual deployment activity")
+    print("   6. Verify if issue is lack of UI feedback vs actual deployment failure")
+    print("=" * 80)
+    
+    results = {}
+    
+    # Get admin token for testing
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Cannot investigate without admin token")
+        return False, {"error": "No admin token"}
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test 1: Detailed Deploy Endpoint Investigation
+    print("\n🔍 TEST 1: Deploy Endpoint Response Investigation")
+    print("🔍 FOCUS: POST /api/deployment/deploy - Examine actual response content")
+    
+    try:
+        # Test with GitHub repo parameter as mentioned in review
+        test_data = {"github_repo": "https://github.com/test/test-repo.git"}
+        
+        print(f"   📋 Testing with GitHub repo: {test_data['github_repo']}")
+        
+        response = requests.post(f"{BACKEND_URL}/deployment/deploy", 
+                               headers=headers,
+                               json=test_data,
+                               timeout=30)
+        
+        print(f"   Status Code: {response.status_code}")
+        print(f"   Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+        print(f"   Response Size: {len(response.content)} bytes")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                print("   ✅ Deploy endpoint returned 200 OK with JSON response")
+                print(f"   📋 Response Structure:")
+                for key, value in data.items():
+                    print(f"      {key}: {value}")
+                
+                # Check if response indicates deployment actually started
+                if data.get('status') == 'started':
+                    print("   ✅ Response indicates deployment process started")
+                    results['deploy_response'] = True
+                else:
+                    print(f"   ⚠️ Response status: {data.get('status')} - may not indicate actual deployment")
+                    results['deploy_response'] = False
+                
+                # Store response for further analysis
+                results['deploy_response_data'] = data
+                
+            except json.JSONDecodeError:
+                print("   ❌ Response is not valid JSON")
+                print(f"   Raw response: {response.text}")
+                results['deploy_response'] = False
+        else:
+            print(f"   ❌ Deploy endpoint failed with status {response.status_code}")
+            print(f"   Response: {response.text}")
+            results['deploy_response'] = False
+            
+    except Exception as e:
+        print(f"   ❌ Deploy endpoint test error: {e}")
+        results['deploy_response'] = False
+    
+    # Test 2: Check if shell scripts are actually executed
+    print("\n🔍 TEST 2: Shell Script Execution Investigation")
+    print("🔍 FOCUS: Verify if deployment.sh is actually called during deployment")
+    
+    try:
+        # Check if deployment script exists and is executable
+        script_path = "/app/scripts/deployment.sh"
+        
+        if os.path.exists(script_path):
+            print(f"   ✅ Deployment script exists: {script_path}")
+            
+            if os.access(script_path, os.X_OK):
+                print(f"   ✅ Deployment script is executable")
+                
+                # Test script execution directly
+                try:
+                    # Test check-updates command
+                    result = subprocess.run(
+                        [script_path, 'check-updates'],
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    
+                    print(f"   Script exit code: {result.returncode}")
+                    print(f"   Script stdout: {result.stdout[:200]}...")
+                    print(f"   Script stderr: {result.stderr[:200]}...")
+                    
+                    if result.returncode in [0, 1]:  # 0 = updates available, 1 = no updates
+                        print("   ✅ Shell script executes successfully")
+                        results['shell_execution'] = True
+                    else:
+                        print("   ❌ Shell script execution failed")
+                        results['shell_execution'] = False
+                        
+                except subprocess.TimeoutExpired:
+                    print("   ❌ Shell script execution timed out")
+                    results['shell_execution'] = False
+                except Exception as e:
+                    print(f"   ❌ Shell script execution error: {e}")
+                    results['shell_execution'] = False
+            else:
+                print(f"   ❌ Deployment script is not executable")
+                results['shell_execution'] = False
+        else:
+            print(f"   ❌ Deployment script not found: {script_path}")
+            results['shell_execution'] = False
+            
+    except Exception as e:
+        print(f"   ❌ Shell script investigation error: {e}")
+        results['shell_execution'] = False
+    
+    # Test 3: Check deployment logs for activity
+    print("\n🔍 TEST 3: Deployment Log Investigation")
+    print("🔍 FOCUS: Check if deployment activity is logged when API is called")
+    
+    try:
+        # Check for deployment log files
+        log_paths = [
+            "/var/log/tax-sale-deployment.log",
+            "/tmp/tax-sale-deployment.log"
+        ]
+        
+        log_found = False
+        for log_path in log_paths:
+            if os.path.exists(log_path):
+                print(f"   ✅ Deployment log found: {log_path}")
+                log_found = True
+                
+                # Read recent log entries
+                try:
+                    with open(log_path, 'r') as f:
+                        lines = f.readlines()
+                        recent_lines = lines[-10:] if len(lines) > 10 else lines
+                        
+                    print(f"   📋 Recent log entries ({len(recent_lines)} lines):")
+                    for line in recent_lines:
+                        print(f"      {line.strip()}")
+                        
+                    # Check for deployment activity
+                    deployment_activity = any('deployment' in line.lower() or 'deploy' in line.lower() 
+                                            for line in recent_lines)
+                    
+                    if deployment_activity:
+                        print("   ✅ Deployment activity found in logs")
+                        results['log_activity'] = True
+                    else:
+                        print("   ⚠️ No recent deployment activity in logs")
+                        results['log_activity'] = False
+                        
+                except Exception as e:
+                    print(f"   ❌ Error reading log file: {e}")
+                    results['log_activity'] = False
+                break
+        
+        if not log_found:
+            print("   ⚠️ No deployment log files found")
+            results['log_activity'] = False
+            
+    except Exception as e:
+        print(f"   ❌ Log investigation error: {e}")
+        results['log_activity'] = False
+    
+    # Test 4: Test actual deployment process initiation
+    print("\n🔍 TEST 4: Deployment Process Initiation Test")
+    print("🔍 FOCUS: Test if deployment actually starts background processes")
+    
+    try:
+        # Make deployment request and monitor for process activity
+        print("   📋 Initiating deployment request...")
+        
+        response = requests.post(f"{BACKEND_URL}/deployment/deploy", 
+                               headers=headers,
+                               json={"github_repo": "test-deployment-investigation"},
+                               timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"   ✅ Deployment request successful")
+            print(f"   📋 Response: {data}")
+            
+            # Wait a moment and check for process activity
+            time.sleep(5)
+            
+            # Check if any deployment-related processes are running
+            try:
+                result = subprocess.run(
+                    ['ps', 'aux'],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                deployment_processes = [line for line in result.stdout.split('\n') 
+                                      if 'deployment' in line.lower() or 'deploy' in line.lower()]
+                
+                if deployment_processes:
+                    print(f"   ✅ Found {len(deployment_processes)} deployment-related processes")
+                    for proc in deployment_processes[:3]:  # Show first 3
+                        print(f"      {proc}")
+                    results['process_activity'] = True
+                else:
+                    print("   ⚠️ No deployment-related processes found")
+                    results['process_activity'] = False
+                    
+            except Exception as e:
+                print(f"   ❌ Process check error: {e}")
+                results['process_activity'] = False
+        else:
+            print(f"   ❌ Deployment request failed: {response.status_code}")
+            results['process_activity'] = False
+            
+    except Exception as e:
+        print(f"   ❌ Process initiation test error: {e}")
+        results['process_activity'] = False
+    
+    # Test 5: Check deployment status after deployment attempt
+    print("\n🔍 TEST 5: Post-Deployment Status Check")
+    print("🔍 FOCUS: Check deployment status after deployment attempt")
+    
+    try:
+        response = requests.get(f"{BACKEND_URL}/deployment/status", 
+                              headers=headers,
+                              timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"   ✅ Deployment status retrieved")
+            print(f"   📋 Status: {data.get('status', 'N/A')}")
+            print(f"   📋 Message: {data.get('message', 'N/A')}")
+            print(f"   📋 Last Check: {data.get('last_check', 'N/A')}")
+            
+            # Check if status reflects recent deployment activity
+            if data.get('status') in ['deploying', 'completed', 'started']:
+                print("   ✅ Status reflects deployment activity")
+                results['status_reflects_activity'] = True
+            else:
+                print("   ⚠️ Status may not reflect recent deployment activity")
+                results['status_reflects_activity'] = False
+                
+            results['post_deployment_status'] = True
+        else:
+            print(f"   ❌ Status check failed: {response.status_code}")
+            results['post_deployment_status'] = False
+            
+    except Exception as e:
+        print(f"   ❌ Status check error: {e}")
+        results['post_deployment_status'] = False
+    
+    # Final Assessment
+    print("\n" + "=" * 80)
+    print("📊 DEPLOYMENT PROCESS INVESTIGATION - FINDINGS")
+    print("=" * 80)
+    
+    successful_tests = sum(1 for result in results.values() if result is True)
+    total_tests = len([r for r in results.values() if isinstance(r, bool)])
+    
+    print(f"📋 INVESTIGATION RESULTS:")
+    print(f"   Deploy Response: {'✅ WORKING' if results.get('deploy_response') else '❌ ISSUES'}")
+    print(f"   Shell Execution: {'✅ WORKING' if results.get('shell_execution') else '❌ ISSUES'}")
+    print(f"   Log Activity: {'✅ FOUND' if results.get('log_activity') else '⚠️ NOT FOUND'}")
+    print(f"   Process Activity: {'✅ FOUND' if results.get('process_activity') else '⚠️ NOT FOUND'}")
+    print(f"   Status Updates: {'✅ WORKING' if results.get('post_deployment_status') else '❌ ISSUES'}")
+    
+    print(f"\n🔍 ROOT CAUSE ANALYSIS:")
+    
+    if results.get('deploy_response') and results.get('shell_execution'):
+        print(f"   ✅ Deploy endpoint is working and shell scripts are executable")
+        
+        if not results.get('log_activity') and not results.get('process_activity'):
+            print(f"   🚨 ISSUE IDENTIFIED: Deployment endpoint returns 200 OK but no actual deployment occurs")
+            print(f"   🔧 POSSIBLE CAUSES:")
+            print(f"      - Deployment script may not be called by the API endpoint")
+            print(f"      - Background process creation may be failing silently")
+            print(f"      - Script execution may be failing without proper error reporting")
+            print(f"   🔧 RECOMMENDATION: Check API endpoint implementation for actual script execution")
+        else:
+            print(f"   ✅ Deployment process appears to be working correctly")
+    else:
+        if not results.get('deploy_response'):
+            print(f"   🚨 ISSUE: Deploy endpoint is not responding correctly")
+        if not results.get('shell_execution'):
+            print(f"   🚨 ISSUE: Shell scripts are not executable or have errors")
+    
+    # Check response data for clues
+    if 'deploy_response_data' in results:
+        response_data = results['deploy_response_data']
+        print(f"\n🔍 RESPONSE ANALYSIS:")
+        print(f"   Status Field: {response_data.get('status', 'Missing')}")
+        print(f"   Message Field: {response_data.get('message', 'Missing')}")
+        print(f"   Started At: {response_data.get('started_at', 'Missing')}")
+        
+        if response_data.get('status') == 'started' and response_data.get('started_at'):
+            print(f"   ✅ Response indicates deployment was initiated")
+        else:
+            print(f"   ⚠️ Response may not indicate actual deployment initiation")
+    
+    # Overall conclusion
+    if successful_tests >= 3:
+        print(f"\n🎉 DEPLOYMENT SYSTEM: MOSTLY WORKING")
+        print(f"   ✅ API endpoints responding correctly")
+        print(f"   ✅ Shell scripts are functional")
+        if not results.get('log_activity'):
+            print(f"   ⚠️ Minor issue: Deployment activity may not be logged properly")
+    else:
+        print(f"\n❌ DEPLOYMENT SYSTEM: SIGNIFICANT ISSUES")
+        print(f"   🔧 Deploy button may appear to work but actual deployment fails")
+        print(f"   🔧 User sees 200 OK but no deployment occurs")
+    
+    return successful_tests >= 3, results
+
 if __name__ == "__main__":
-    print("🚀 STARTING GOOGLE MAPS API INTEGRATION TEST")
+    print("🚀 STARTING DEPLOYMENT PROCESS INVESTIGATION")
     print("=" * 80)
     
     # Test API connection first
@@ -3136,16 +3463,16 @@ if __name__ == "__main__":
         print("❌ Cannot proceed without API connection")
         sys.exit(1)
     
-    # Run the comprehensive Google Maps integration test
-    success, results = test_google_maps_integration()
+    # Run deployment process investigation as requested in review
+    success, results = test_deployment_process_investigation()
     
     print("\n" + "=" * 80)
     print("🏁 TESTING COMPLETE")
     print("=" * 80)
     
     if success:
-        print("🎉 ALL TESTS PASSED - Google Maps API Integration is working!")
+        print("🎉 DEPLOYMENT INVESTIGATION COMPLETED!")
         sys.exit(0)
     else:
-        print("❌ TESTS FAILED - Google Maps API Integration needs attention")
+        print("❌ DEPLOYMENT INVESTIGATION FOUND ISSUES!")
         sys.exit(1)
