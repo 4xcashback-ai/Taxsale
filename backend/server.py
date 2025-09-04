@@ -349,7 +349,7 @@ async def get_optimized_property_image(assessment_number: str, width: int = 405,
         
         # Try boundary image first
         if property_doc.get('boundary_screenshot'):
-            file_path = f"static/property_screenshots/{property_doc['boundary_screenshot']}"
+            file_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{property_doc['boundary_screenshot']}"
             if os.path.exists(file_path):
                 from fastapi.responses import FileResponse
                 return FileResponse(
