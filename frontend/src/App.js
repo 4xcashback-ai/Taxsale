@@ -88,6 +88,13 @@ const AuthenticatedApp = () => {
   const [upgradeModalProperty, setUpgradeModalProperty] = useState(null);
   const [activeView, setActiveView] = useState('search');
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(24);
+  
+  
   // Admin state
   const [newMunicipality, setNewMunicipality] = useState({
     name: '',
