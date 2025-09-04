@@ -2722,8 +2722,6 @@ if __name__ == "__main__":
     else:
         print("❌ TESTS FAILED - Deployment Management System needs attention")
         sys.exit(1)
-    
-    # Test 1: Halifax Properties Boundary Data
     print("\n🔍 TEST 1: Halifax Properties Boundary Data")
     halifax_result, halifax_data = test_halifax_properties_boundary_data()
     results['halifax_boundary_data'] = {'success': halifax_result, 'data': halifax_data}
