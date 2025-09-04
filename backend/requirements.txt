@@ -49,6 +49,10 @@ sendgrid==6.10.0
 # Emergent Integration
 emergentintegrations
 
+# Redis for caching
+redis==5.0.1
+hiredis==2.2.3
+
 # Development Tools (only in dev/test)
 # pytest==8.0.0
 # black==24.1.1  
