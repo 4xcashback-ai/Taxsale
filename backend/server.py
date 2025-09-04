@@ -4277,13 +4277,28 @@ async def scrape_municipality(municipality_id: str, current_user: dict = Depends
     municipality = await db.municipalities.find_one({"id": municipality_id})
     if not municipality:
         raise HTTPException(status_code=404, detail="Municipality not found")
-    
-    if municipality["name"] == "Halifax Regional Municipality":
-        result = await scrape_halifax_tax_sales()
-    else:
-        result = await scrape_generic_municipality(municipality_id)
-    
-    return result
+
+    try:
+        scraper_type = municipality.get("scraper_type", "generic")
+        
+        if scraper_type == "halifax":
+            result = await scrape_halifax_tax_sales()
+        elif scraper_type == "cape_breton":
+            result = await scrape_cape_breton_tax_sales()
+        elif scraper_type == "kentville":
+            result = await scrape_kentville_tax_sales()
+        elif scraper_type == "victoria_county":
+            result = await scrape_victoria_county_tax_sales()
+        elif scraper_type == "cumberland_county":
+            result = await scrape_cumberland_county_for_municipality(municipality_id)
+        else:
+            result = await scrape_generic_municipality(municipality_id)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error scraping municipality {municipality_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/scrape-municipality/{municipality_id}")
 async def scrape_municipality_by_id(municipality_id: str):
