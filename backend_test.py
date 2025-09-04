@@ -2722,12 +2722,6 @@ if __name__ == "__main__":
     else:
         print("❌ TESTS FAILED - Deployment Management System needs attention")
         sys.exit(1)
-        if props_response.status_code == 200:
-            properties_data = props_response.json()
-            if isinstance(properties_data, dict):
-                properties = properties_data.get('properties', [])
-            else:
-                properties = properties_data
             
             # Test 2-3 other properties
             other_properties = []
