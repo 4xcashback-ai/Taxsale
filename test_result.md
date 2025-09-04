@@ -97,6 +97,24 @@
 user_problem_statement: "Test the Cumberland County scraper routing fix by getting the Cumberland County municipality from /api/municipalities endpoint, triggering a scrape using POST /api/scrape/{municipality_id} endpoint for Cumberland County, checking backend logs to verify we see 'Starting Cumberland County tax sale scraping' instead of 'Generic scraping for Cumberland County', and verifying the response indicates success with specific Cumberland County scraper usage."
 
 backend:
+  - task: "Google Maps API Key Environment Variable Fix"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported production logs showing 'Google Maps API key not found, skipping geocoding' warnings, causing geocoding failures for properties without coordinates"
+        - working: true
+          agent: "main"
+          comment: "FIXED: Root cause was that Supervisor process environment wasn't loading .env file variables properly. Although GOOGLE_MAPS_API_KEY was set in .env file, the supervisor-managed backend process couldn't access it. Fixed by adding override=True to load_dotenv() call to ensure .env variables take precedence over any existing environment variables. This forces proper loading of the Google Maps API key from the .env file."
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE SUCCESS ✅ Google Maps API integration working perfectly after environment fix. Key findings: ✅ Environment variable loading with override=True functioning correctly. ✅ Google Maps API key properly loaded and accessible. ✅ Geocoding function working with 100% success rate for Halifax properties (10/10 properties successfully geocoded). ✅ Google Maps Static API generating property images correctly (44KB-84KB PNG images). ✅ No 'Google Maps API key not found' warnings detected in logs. ✅ All properties now have valid coordinates within Nova Scotia bounds. The fix successfully resolves all geocoding and property image generation issues."
+
   - task: "Cumberland County Scraper Routing Fix"
     implemented: true
     working: true
