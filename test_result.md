@@ -105,9 +105,15 @@ backend:
     priority: "high"
     needs_retesting: false
     status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported Cumberland County scraper was falling back to generic scraper instead of using specific scraper, causing incorrect property display (showing 'public tender' instead of 'public auction')"
+        - working: true
+          agent: "main"
+          comment: "FIXED: Root cause was hardcoded routing logic in /api/scrape/{municipality_id} endpoint that only routed Halifax to its specific scraper while sending all other municipalities to generic scraper. Fixed by implementing dynamic routing based on municipality's scraper_type field. Now Cumberland County correctly routes to scrape_cumberland_county_for_municipality() function. Backend restarted successfully."
         - working: true
           agent: "testing"
-          comment: "COMPREHENSIVE SUCCESS ✅ CUMBERLAND COUNTY SCRAPER ROUTING FIX VERIFIED - Conducted thorough testing of the Cumberland County scraper routing fix with 100% success rate. Key findings: ✅ Municipality Discovery: Successfully found Cumberland County municipality (ID: 4ed32311-4763-4663-bd97-5aea7b80aa7b) with correct scraper_type: 'cumberland_county'. ✅ Endpoint Routing: POST /api/scrape/{municipality_id} correctly routes to specific Cumberland County scraper function instead of generic scraper. ✅ Scraper Execution: Cumberland County specific scraper executed successfully, processing 60 properties with proper response structure including status: 'success', municipality: 'Cumberland County', properties_scraped: 60, sale_date: '2025-10-21T10:00:00Z', sale_location: 'Dr. Carson & Marion Murray Community Centre, 6 Main Street, Springhill, NS'. ✅ Log Verification: Backend logs confirm Cumberland County specific scraper usage with messages like 'Cumberland County scraping completed: 60 properties processed' instead of generic scraper messages. ✅ Authentication: Admin credentials (admin/TaxSale2025!SecureAdmin) working correctly for scrape endpoint access. ✅ Response Validation: Scrape response contains Cumberland County specific data confirming proper routing to scrape_cumberland_county_for_municipality() function. The fix is working perfectly - the endpoint now checks the municipality's scraper_type field and routes to the appropriate specific scraper function as intended."
+          comment: "COMPREHENSIVE SUCCESS ✅ Cumberland County scraper routing fix verified working correctly. Key findings: ✅ Municipality found with correct scraper_type: 'cumberland_county'. ✅ Endpoint correctly routes to specific Cumberland County scraper function instead of generic scraper. ✅ Scraper executed successfully processing 60 properties with Cumberland County-specific data including proper sale_date and sale_location. ✅ Backend logs confirm specific scraper usage with Cumberland County processing messages instead of generic scraper messages. ✅ Authentication working correctly. The fix successfully resolves the routing issue - Cumberland County now uses its dedicated scraper as intended."
 
   - task: "Favorites System Backend API"
     implemented: true
