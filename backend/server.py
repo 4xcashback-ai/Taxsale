@@ -4987,12 +4987,30 @@ async def check_for_updates(current_user: dict = Depends(verify_token)):
             timeout=60
         )
         
+        # Return code 0 means updates are available (local is behind remote)
+        # Return code 1 means no updates needed (local is up-to-date or ahead)
         updates_available = result.returncode == 0
+        
+        # Parse output for more detailed information
+        output = result.stdout.strip()
+        error_output = result.stderr.strip()
+        
+        # Determine status message
+        if updates_available:
+            message = "Updates available - local is behind remote"
+        else:
+            if "ahead of remote" in output:
+                message = "Local is ahead of remote - no updates needed"
+            elif "synchronized" in output:
+                message = "Local and remote are synchronized - no updates needed"
+            else:
+                message = "No updates available"
         
         return {
             "updates_available": updates_available,
-            "message": "Updates available" if updates_available else "No updates available",
-            "output": result.stdout,
+            "message": message,
+            "output": output,
+            "error": error_output if error_output else None,
             "checked_at": datetime.now(timezone.utc).isoformat()
         }
         
