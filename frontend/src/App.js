@@ -106,7 +106,7 @@ const AuthenticatedApp = () => {
   // Deployment state
   const [deploymentStatus, setDeploymentStatus] = useState({});
   const [deploymentLoading, setDeploymentLoading] = useState(false);
-  const [githubRepo, setGithubRepo] = useState('');
+  const [githubRepo, setGithubRepo] = useState(localStorage.getItem('githubRepo') || 'https://github.com/4xcashback-ai/Taxsale');
   const [systemHealth, setSystemHealth] = useState({});
   const [updateCheckResult, setUpdateCheckResult] = useState({});
 
