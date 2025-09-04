@@ -37,9 +37,9 @@ load_dotenv(ROOT_DIR / '.env', override=True)
 # Environment loading with override to ensure .env variables take precedence
 
 # Environment detection for script paths
-if os.path.exists('/var/www/nstaxsales'):
+if os.path.exists('/var/www/tax-sale-compass'):
     # Production VPS environment
-    SCRIPT_DIR = '/var/www/nstaxsales/scripts'
+    SCRIPT_DIR = '/var/www/tax-sale-compass/scripts'
 else:
     # Development environment  
     SCRIPT_DIR = '/app/scripts'
