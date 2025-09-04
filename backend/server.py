@@ -3342,7 +3342,7 @@ print(result if result else "Failed")
                 capture_output=True, 
                 text=True, 
                 timeout=60,
-                cwd='/app/backend'
+                cwd=os.path.dirname(os.path.abspath(__file__))
             )
             
             if result.returncode == 0:
