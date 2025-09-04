@@ -117,10 +117,10 @@ restart_services() {
     
     # Restart PM2 processes
     cd "$APP_DIR"
-    pm2 restart ecosystem.config.js || {
-        log "PM2 restart failed, trying to start fresh..."
-        pm2 delete all 2>/dev/null || true
-        pm2 start ecosystem.config.js
+    pm2 restart tax-sale-backend tax-sale-frontend || {
+        log "PM2 restart failed, trying individual restarts..."
+        pm2 restart tax-sale-backend || log "Backend restart failed"
+        pm2 restart tax-sale-frontend || log "Frontend restart failed"
     }
     
     # Restart nginx
