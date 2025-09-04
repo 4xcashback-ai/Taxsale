@@ -21,14 +21,21 @@
         <title>Emergent | Fullstack App</title>
         <!-- Google Maps JavaScript API -->
         <script>
-          // Load Google Maps API with environment variable or fallback
-          // Use the specific API key since build-time replacement doesn't work reliably on VPS
-          const googleMapsApiKey = 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY';
-          const script = document.createElement('script');
-          script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=geometry`;
-          script.async = true;
-          script.defer = true;
-          document.head.appendChild(script);
+          // Load Google Maps API dynamically after React app loads
+          // This ensures environment variables are available
+          window.initGoogleMaps = function() {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY&libraries=geometry`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+          };
+          // Initialize when DOM is ready
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window.initGoogleMaps);
+          } else {
+            window.initGoogleMaps();
+          }
         </script>
     </head>
     <body>
