@@ -779,8 +779,13 @@ const AuthenticatedApp = () => {
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold text-gray-900">
-                  {loading ? 'Loading...' : `Showing ${taxSales.length} properties`}
-                  {searchQuery && ` matching "${searchQuery}"`}
+                  {loading ? 'Loading...' : (
+                    <>
+                      Showing {taxSales.length} of {totalCount} properties
+                      {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                      {searchQuery && ` matching "${searchQuery}"`}
+                    </>
+                  )}
                 </h2>
               </div>
 
