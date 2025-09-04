@@ -4195,7 +4195,7 @@ async def generate_boundary_thumbnail(assessment_number: str):
                 image_data = await response.read()
         
         # Save image to file
-        screenshots_dir = "/app/backend/static/property_screenshots"
+        screenshots_dir = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
         
         # Create safe filename by replacing forward slashes with underscores for multi-PID properties
