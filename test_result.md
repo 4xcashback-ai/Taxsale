@@ -239,6 +239,22 @@ frontend:
         - working: true
           agent: "testing"
           comment: "VICTORIA COUNTY PENDING BADGES VERIFICATION COMPLETED ✅ COMPREHENSIVE SUCCESS - All 3 Victoria County properties now correctly display orange PENDING badges as requested! Key findings: ✅ Authentication: Successfully accessed authenticated app using manual token injection (frontend login form has minor issue but backend auth working perfectly). ✅ Property Verification: All 3 target Victoria County properties found (Assessment #: 00254118, 00453706, 09541209) with status='inactive' and auction_result='pending'. ✅ Badge Display: All 3 properties correctly display orange PENDING badges with proper color scheme (bg-orange-100 text-orange-800). ✅ Status Consistency: Properties show 'INACTIVE' status with 'PENDING' auction result badges, providing accurate information since actual auction results from August 26, 2025 sale are not available yet. ✅ Frontend Implementation: Badge logic in App.js (lines 634-651) working correctly for auction_result='pending' displaying orange badges. ✅ Navigation & Filtering: Successfully filtered to show inactive properties (3 total) and verified all display consistent PENDING status. SUCCESS RATE: 100% (3/3 properties verified). The review request has been completely fulfilled - all Victoria County inactive properties now display correct orange PENDING badges providing consistent and accurate status information."
+
+  - task: "VPS Interactive Map Google Maps API Loading Fix"
+    implemented: true
+    working: false
+    file: "frontend/public/index.html"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports interactive map on property details page works in dev but not on VPS. Maps functionality fails on production environment."
+        - working: false
+          agent: "main"
+          comment: "IDENTIFIED ROOT CAUSE: Google Maps API loading issue in HTML file. The script was using '%REACT_APP_GOOGLE_MAPS_API_KEY%' build-time replacement that doesn't work reliably on VPS build environment. This causes Google Maps JavaScript API to fail loading with invalid API key. FIXED: Replaced variable substitution with direct API key value 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY' in frontend/public/index.html. This ensures Google Maps API loads correctly on VPS without relying on build-time environment variable replacement that may fail in production deployment process."
+
 test_plan:
   current_focus: []
   stuck_tasks: []
