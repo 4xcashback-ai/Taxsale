@@ -12,7 +12,7 @@ import time
 
 # Get backend URL from environment
 import os
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-hub.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://novascotia-taxmap.preview.emergentagent.com') + '/api'
 
 def test_api_connection():
     """Test basic API connectivity"""

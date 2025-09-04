@@ -15,7 +15,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-hub.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://novascotia-taxmap.preview.emergentagent.com') + '/api'
 
 # Admin credentials from review request
 ADMIN_EMAIL = "admin@taxsalecompass.ca"

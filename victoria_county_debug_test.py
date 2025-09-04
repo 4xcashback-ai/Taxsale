@@ -13,7 +13,7 @@ import time
 
 # Get backend URL from environment
 import os
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-hub.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://novascotia-taxmap.preview.emergentagent.com') + '/api'
 
 def test_victoria_county_enhanced_debugging():
     """Test Victoria County parser with enhanced debugging to identify extraction issues"""

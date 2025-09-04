@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://taxsale-hub.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://novascotia-taxmap.preview.emergentagent.com') + '/api'
 
 def test_admin_credentials_comparison():
     """Test both sets of admin credentials to identify discrepancy"""
