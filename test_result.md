@@ -97,6 +97,20 @@
 user_problem_statement: "DEBUG VPS vs DEV ENVIRONMENT BOUNDARY DISPLAY ISSUE: User reports that boundary overlays work perfectly in development environment but fail to display on VPS production environment. Interactive map on property details page also works in dev but not on VPS. This suggests environment-specific configuration differences in file serving, API routing, or static file access between dev (/app) and VPS (/var/www/tax-sale-compass) deployments. Need systematic investigation to identify and resolve deployment-specific issues preventing boundary image display and interactive map functionality on production VPS."
 
 backend:
+  - task: "VPS vs Dev Boundary Display Issue Fix"
+    implemented: true
+    working: false  
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports boundary overlays work perfectly in dev environment but fail to display on VPS production environment. Interactive map on property details page also works in dev but not on VPS."
+        - working: false
+          agent: "main"
+          comment: "IDENTIFIED ROOT CAUSE: Found critical file path issue in get_optimized_property_image endpoint (line 352). The function was using relative path 'static/property_screenshots/' which works in dev (working directory /app/backend) but fails on VPS due to different working directory. All other endpoints correctly use absolute path with os.path.dirname(os.path.abspath(__file__)). FIXED: Changed line 352 from relative path to absolute path: f'{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{property_doc['boundary_screenshot']}'. This should resolve boundary image serving on VPS. Interactive map issue likely related to Google Maps API key loading during build process on VPS - HTML uses %REACT_APP_GOOGLE_MAPS_API_KEY% replacement that may not work correctly in VPS build environment."
   - task: "Admin Panel 'Updates Available' Bug Fix"
     implemented: true
     working: true
