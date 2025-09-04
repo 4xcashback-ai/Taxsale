@@ -2132,17 +2132,18 @@ def test_cumberland_county_property_images():
     
     results = {}
     
-    # Get admin token for authentication
-    admin_token = get_admin_token()
-    if not admin_token:
-        print("   ❌ Cannot test without admin token")
-        return False, {"error": "No admin token"}
-    
-    headers = {"Authorization": f"Bearer {admin_token}"}
-    
-    print(f"\n   Testing {len(test_properties)} Cumberland County properties...")
-    
-    for assessment_number in test_properties:
+    try:
+        # Get admin token for authentication
+        admin_token = get_admin_token()
+        if not admin_token:
+            print("   ❌ Cannot test without admin token")
+            return False, {"error": "No admin token"}
+        
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        
+        print(f"\n   Testing {len(test_properties)} Cumberland County properties...")
+        
+        for assessment_number in test_properties:
         try:
             print(f"\n   🔍 Testing property {assessment_number}:")
             
