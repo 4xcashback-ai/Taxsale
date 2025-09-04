@@ -94,7 +94,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the Cumberland County scraper routing fix by getting the Cumberland County municipality from /api/municipalities endpoint, triggering a scrape using POST /api/scrape/{municipality_id} endpoint for Cumberland County, checking backend logs to verify we see 'Starting Cumberland County tax sale scraping' instead of 'Generic scraping for Cumberland County', and verifying the response indicates success with specific Cumberland County scraper usage."
+user_problem_statement: "DEBUG VPS vs DEV ENVIRONMENT BOUNDARY DISPLAY ISSUE: User reports that boundary overlays work perfectly in development environment but fail to display on VPS production environment. Interactive map on property details page also works in dev but not on VPS. This suggests environment-specific configuration differences in file serving, API routing, or static file access between dev (/app) and VPS (/var/www/tax-sale-compass) deployments. Need systematic investigation to identify and resolve deployment-specific issues preventing boundary image display and interactive map functionality on production VPS."
 
 backend:
   - task: "Admin Panel 'Updates Available' Bug Fix"
