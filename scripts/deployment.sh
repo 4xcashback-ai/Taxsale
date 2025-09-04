@@ -6,10 +6,10 @@
 set -e  # Exit on any error
 
 # Configuration - Environment Detection
-if [ -d "/var/www/nstaxsales" ]; then
+if [ -d "/var/www/tax-sale-compass" ]; then
     # Production VPS environment
-    APP_DIR="/var/www/nstaxsales"
-    BACKUP_DIR="/var/backups/nstaxsales"
+    APP_DIR="/var/www/tax-sale-compass"
+    BACKUP_DIR="/var/backups/tax-sale-compass"
     LOG_FILE="/var/log/tax-sale-deployment.log"
     DB_BACKUP_DIR="/var/backups/mongodb"
 else
