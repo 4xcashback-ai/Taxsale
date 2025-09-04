@@ -3887,7 +3887,7 @@ async def capture_satellite_thumbnails_batch(batch_size: int = 5):
             if not all([assessment_number, pid_number, screenshot_filename]):
                 continue
                 
-            screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+            screenshot_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{screenshot_filename}"
             
             # Check if image already exists and is substantial (not demo)
             if Path(screenshot_path).exists():
