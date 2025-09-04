@@ -1050,7 +1050,7 @@ const AuthenticatedApp = () => {
                       <label className="text-sm font-medium">Status:</label>
                       <select
                         value={selectedStatus}
-                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        onChange={(e) => handleStatusFilter(e.target.value)}
                         className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="active">Active</option>
