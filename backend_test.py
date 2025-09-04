@@ -2470,14 +2470,6 @@ if __name__ == "__main__":
     else:
         print("❌ TESTS FAILED - Cumberland County scraper routing needs attention")
         sys.exit(1)
-                    "error": f"HTTP {response.status_code}"
-                }
-                
-        except Exception as e:
-            print(f"      ❌ ERROR: {e}")
-            results[assessment_number] = {
-                "success": False,
-                "error": str(e)
             }
     
     # Test a few other properties to ensure fix didn't break existing functionality
