@@ -479,7 +479,12 @@ const AuthenticatedApp = () => {
       }, 10000);
     } catch (error) {
       console.error('Error starting deployment:', error);
-      alert('Error starting deployment: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
+      const statusCode = error.response?.status || 'Unknown';
+      alert(`❌ Deployment Failed\n\nStatus Code: ${statusCode}\nError: ${errorMessage}\n\n💡 Please check:\n• GitHub repository URL is correct\n• You have admin permissions\n• Network connection is stable`);
+      
+      // Also update deployment status to show error
+      fetchDeploymentStatus();
     } finally {
       setDeploymentLoading(false);
     }
