@@ -3466,7 +3466,7 @@ async def capture_all_property_boundaries():
             
             if pid_number and assessment_number:
                 screenshot_filename = f"boundary_{pid_number}_{assessment_number}.png"
-                screenshot_path = f"/app/backend/static/property_screenshots/{screenshot_filename}"
+                screenshot_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{screenshot_filename}"
                 
                 # Check if screenshot already exists
                 has_screenshot = Path(screenshot_path).exists()
