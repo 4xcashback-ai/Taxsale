@@ -458,11 +458,11 @@ def comprehensive_database_comparison():
     dev_client, dev_db = connect_to_database(DEV_MONGO_URL, DEV_DB_NAME, "Development")
     vps_client, vps_db = connect_to_database(VPS_MONGO_URL, VPS_DB_NAME, "VPS")
     
-    if not dev_db:
+    if dev_db is None:
         print("❌ Cannot proceed without development database connection")
         return False
     
-    if not vps_db:
+    if vps_db is None:
         print("❌ Cannot proceed without VPS database connection")
         return False
     
