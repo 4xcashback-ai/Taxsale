@@ -1,0 +1,101 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+docs/
+AUTOMATION_SETUP_INSTRUCTIONS.md
+STEP_BY_STEP_DEPLOYMENT.md
+UPDATE_EXISTING_VPS_DEPLOYMENT.md
+VPS_DEPLOYMENT_GUIDE.md
+DEPLOYMENT_PATH_FIXES.md
+GOOGLE_MAPS_SETUP.md
+
+# Development and testing files
+test_*.py
+*_test.py
+debug_*.py
+fix_*.py
+backend_test*.py
+*test*.py
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Frontend development files
+frontend/build
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Backend development files
+.env.local
+.env.development
+.env.test
+*.log
+logs/
+venv/
+.venv/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+token.tmp
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Python development
+*.egg
+.tox/
+pip-wheel-metadata/
+
+# Development databases and data
+*.db
+*.sqlite
+*.sqlite3
+
+# Supervisor logs (not needed in container)
+*.err.log
+*.out.log
+
+# Package lock files (using yarn.lock)
+package-lock.json
+
+# System files
+.DS_Store
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
