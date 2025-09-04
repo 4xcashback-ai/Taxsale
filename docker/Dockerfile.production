@@ -39,23 +39,32 @@ RUN pip install --no-cache-dir --compile -r requirements.txt
 # Install Playwright browsers in separate step for caching
 RUN playwright install chromium --with-deps
 
-# Stage 2: Frontend Build
+# ==============================================================================
+# Stage 3: Frontend Build (optimized)
+# ==============================================================================
 FROM node:18-alpine as frontend-build
 
 WORKDIR /app/frontend
 
-# Copy package files
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Copy package files first for better layer caching
 COPY frontend/package.json frontend/yarn.lock ./
 
-# Install dependencies
-RUN yarn install --frozen-lockfile
+# Install dependencies with optimization
+RUN yarn install --frozen-lockfile --network-timeout 300000 --production=false
 
-# Copy frontend source
-COPY frontend/src ./src
-COPY frontend/public ./public
+# Copy frontend configuration files
 COPY frontend/tailwind.config.js ./
 COPY frontend/postcss.config.js ./
 COPY frontend/craco.config.js ./
+COPY frontend/jsconfig.json ./
+COPY frontend/components.json ./
+
+# Copy source code
+COPY frontend/src ./src
+COPY frontend/public ./public
 
 # Build arguments for environment
 ARG REACT_APP_BACKEND_URL
@@ -65,8 +74,13 @@ ARG REACT_APP_GOOGLE_MAPS_API_KEY
 RUN echo "REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL" > .env && \
     echo "REACT_APP_GOOGLE_MAPS_API_KEY=$REACT_APP_GOOGLE_MAPS_API_KEY" >> .env
 
-# Build frontend
+# Build frontend with optimizations
+ENV NODE_ENV=production
+ENV GENERATE_SOURCEMAP=false
 RUN yarn build
+
+# Remove node_modules to reduce size
+RUN rm -rf node_modules
 
 # Stage 3: Production Runtime
 FROM python:3.12-slim as production
