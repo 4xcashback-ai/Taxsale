@@ -2149,56 +2149,62 @@ def test_cumberland_county_property_images():
                 
                 response = requests.get(f"{BACKEND_URL}/property-image/{assessment_number}", 
                                       headers=headers, timeout=30)
-            
-            print(f"      Status Code: {response.status_code}")
-            print(f"      Content-Type: {response.headers.get('Content-Type', 'Not set')}")
-            print(f"      Content-Length: {len(response.content)} bytes")
-            
-            if response.status_code == 200:
-                content_type = response.headers.get('Content-Type', '')
-                content_length = len(response.content)
                 
-                # Check if it's a valid image
-                if content_type in ['image/png', 'image/jpeg']:
-                    # Check if image size is reasonable (should be > 50KB for satellite images)
-                    if content_length > 50000:  # 50KB minimum
-                        print(f"      ✅ SUCCESS: Valid satellite image served")
-                        print(f"         - Content-Type: {content_type}")
-                        print(f"         - Size: {content_length:,} bytes ({content_length/1024:.1f} KB)")
-                        results[assessment_number] = {
-                            "success": True,
-                            "status_code": response.status_code,
-                            "content_type": content_type,
-                            "size_bytes": content_length,
-                            "size_kb": round(content_length/1024, 1)
-                        }
+                print(f"      Status Code: {response.status_code}")
+                print(f"      Content-Type: {response.headers.get('Content-Type', 'Not set')}")
+                print(f"      Content-Length: {len(response.content)} bytes")
+                
+                if response.status_code == 200:
+                    content_type = response.headers.get('Content-Type', '')
+                    content_length = len(response.content)
+                    
+                    # Check if it's a valid image
+                    if content_type in ['image/png', 'image/jpeg']:
+                        # Check if image size is reasonable (should be > 50KB for satellite images)
+                        if content_length > 50000:  # 50KB minimum
+                            print(f"      ✅ SUCCESS: Valid satellite image served")
+                            print(f"         - Content-Type: {content_type}")
+                            print(f"         - Size: {content_length:,} bytes ({content_length/1024:.1f} KB)")
+                            results[assessment_number] = {
+                                "success": True,
+                                "status_code": response.status_code,
+                                "content_type": content_type,
+                                "size_bytes": content_length,
+                                "size_kb": round(content_length/1024, 1)
+                            }
+                        else:
+                            print(f"      ❌ FAIL: Image too small ({content_length} bytes)")
+                            print(f"         Expected > 50KB for satellite images")
+                            results[assessment_number] = {
+                                "success": False,
+                                "error": "Image too small",
+                                "size_bytes": content_length
+                            }
                     else:
-                        print(f"      ❌ FAIL: Image too small ({content_length} bytes)")
-                        print(f"         Expected > 50KB for satellite images")
+                        print(f"      ❌ FAIL: Invalid content type: {content_type}")
+                        print(f"         Expected: image/png or image/jpeg")
                         results[assessment_number] = {
                             "success": False,
-                            "error": "Image too small",
-                            "size_bytes": content_length
+                            "error": "Invalid content type",
+                            "content_type": content_type
                         }
                 else:
-                    print(f"      ❌ FAIL: Invalid content type: {content_type}")
-                    print(f"         Expected: image/png or image/jpeg")
+                    print(f"      ❌ FAIL: HTTP {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        print(f"         Error: {error_data}")
+                    except:
+                        print(f"         Raw response: {response.text[:100]}...")
+                    
                     results[assessment_number] = {
                         "success": False,
-                        "error": "Invalid content type",
-                        "content_type": content_type
+                        "status_code": response.status_code,
                     }
-            else:
-                print(f"      ❌ FAIL: HTTP {response.status_code}")
-                try:
-                    error_data = response.json()
-                    print(f"         Error: {error_data}")
-                except:
-                    print(f"         Raw response: {response.text[:100]}...")
-                
+            except Exception as e:
+                print(f"      ❌ Error testing property {assessment_number}: {e}")
                 results[assessment_number] = {
                     "success": False,
-                    "status_code": response.status_code,
+                    "error": str(e)
                 }
         
         return results
