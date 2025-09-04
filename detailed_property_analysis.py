@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://novascotia-taxmap.preview.emergentagent.com/api"
+BACKEND_URL = "https://property-finder-89.preview.emergentagent.com/api"
 
 def analyze_specific_assessments():
     """Analyze specific assessments mentioned in the review request"""

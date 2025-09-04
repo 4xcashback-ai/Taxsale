@@ -1,76 +1,67 @@
 <analysis>
-The AI engineer successfully guided the application from its initial state through several critical bug fixes and new feature implementations. Initially, the focus was on resolving backend issues like duplicate endpoints, authentication errors for admin users, and incorrect property statuses. This involved unifying token usage, adjusting  logic, and updating property data. A significant feature addition was the province-tracking system on the landing page and header. Subsequently, the AI addressed persistent 404 errors for Cumberland County property images, diagnosing missing geocoordinates and incorrect boundary image filenames, which was resolved by programmatically updating property data. A bug preventing municipality scheduling for all regions was fixed by updating the backend's  model. The major new feature, a Favorites List for paid users with thumbnails, was fully implemented across backend API and frontend UI. Deployment to a VPS environment followed, where the AI debugged  errors, PM2 configuration issues, and an empty database backup, leading to a successful manual deployment. The final challenge involved fixing a hardcoded scraping logic that incorrectly routed Cumberland County to a generic scraper, which was resolved by updating the specific  endpoint to use dynamic  routing.
+The trajectory details a complex debugging and feature implementation journey for the Tax Sale Compass application. Initially, the AI engineer focused on resolving a hardcoded scraper routing bug for Cumberland County, followed by attempts to fix a non-functional deploy button on the live site. This led to extensive troubleshooting of environment variable loading for the Google Maps API key in the backend, then frontend UX improvements for the deployment process, and finally, a persistent problem with the Google Maps API key not being picked up by the frontend build, causing interactive map and thumbnail issues. The latest efforts concentrated on correcting static file serving in the backend, which was incorrectly returning HTML instead of images for property boundaries. The AI navigated through multiple environment-specific issues (development vs. VPS), git conflicts, and service management differences (Supervisor vs. PM2).
 </analysis>
 
 <product_requirements>
-The Tax Sale Compass application centralizes Nova Scotia tax sale data, featuring an interactive map, PDF scraping, and property filtering. Core functionality includes Google AdSense, an admin interface for municipality and scraper management, and in-app deployment automation. Initial problems involved resolving s, malformed image URLs, data discrepancies, and robust admin authentication. The system supports multiple PIDs, tracks auction results, and includes a smart scheduler. A landing page provides free/paid user tiers, limited property views, and requires accounts for detailed access. Recently, the app needed to restore detailed PVSC assessment info, establish admin as a paid subscriber, accurately display Victoria County property statuses, implement province tracking with flags, and add comprehensive scraper scheduling (daily/weekly/monthly). A Favorites List for paid users, limited to 50 properties with thumbnails, public favorite counts, and add/remove functionality, was a key beta feature. Further, Cumberland County properties needed to display public auction instead of public tender, and its specific scraper had to function correctly in production.
+The Tax Sale Compass application aims to centralize Nova Scotia tax sale data, offering an interactive map, PDF scraping, and property filtering for users. Key features include Google AdSense, an admin interface for managing municipalities and scrapers, and in-app deployment automation. The application supports multiple PIDs, tracks auction results, and incorporates a smart scheduler. It provides free and paid user tiers, with detailed property access requiring an account. Recent enhancements and fixes included restoring PVSC assessment info, ensuring admin users are marked as paid subscribers, accurate display of Victoria County property statuses, province tracking with dynamic flags, and robust scraper scheduling. A significant beta feature was the Favorites List for paid users, complete with thumbnails, public favorite counts, and add/remove functionality. Critical bug fixes included displaying public auction instead of public tender for Cumberland County properties and ensuring its specific scraper functioned correctly in production.
 </product_requirements>
 
 <key_technical_concepts>
 - Full-stack Development: React (frontend), FastAPI (backend), MongoDB (database).
-- Authentication: JWT, React UserContext, admin logic.
-- API Integration: Google Maps, viewpoint.ca (PVSC).
-- Data Scraping: Playwright and aiohttp/BeautifulSoup.
-- UI/UX: Tailwind CSS, dynamic data display.
-- Deployment: backend                          RUNNING   pid 27, uptime 0:00:04
-code-server                      RUNNING   pid 29, uptime 0:00:04
-frontend                         STOPPED   Sep 04 12:31 AM
-mongodb                          RUNNING   pid 35, uptime 0:00:04
-supervisor> , PM2, Nginx, environment variables.
-- GeoSpatial Data: PIDs, boundary image generation.
-- Scheduling: APScheduler.
+- API Integration: Google Maps (Geocoding, Static Maps), GitHub (for deployment).
+- Service Management: backend                          RUNNING   pid 27, uptime 0:00:05
+code-server                      RUNNING   pid 29, uptime 0:00:05
+frontend                         RUNNING   pid 31, uptime 0:00:05
+mongodb                          RUNNING   pid 34, uptime 0:00:05
+supervisor> , PM2 (on VPS).
+- Environment Variables:  files, , .
+- Deployment: Bash scripts (), , yarn run v1.22.22
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command..
+- Authentication: JWT, React UserContext.
 </key_technical_concepts>
 
 <code_architecture>
 
 
 - ****:
-    - **Importance**: The core FastAPI application, handling all API endpoints and database interactions.
+    - **Importance**: Core FastAPI application, API endpoints, and database interactions. Also contains backend deployment logic and environment variable loading.
     - **Changes Made**:
-        - Removed duplicate  endpoint.
-        - Fixed  logic for admin users to ensure .
-        - Modified  to accept .
-        - Updated Victoria County properties'  and .
-        - *Added  Pydantic model and CRUD API endpoints for favorites.*
-        - *Modified the  endpoint to include  and  for each property.*
-        - *Corrected admin user object handling (from  to uid=0(root) gid=0(root) groups=0(root)) in favorite endpoints and the  endpoint.*
-        - *Added  to the  model to allow frontend control over scheduling.*
-        - *Fixed hardcoded scraping logic in  to dynamically route based on  (e.g., to ) instead of falling back to a generic scraper for non-Halifax municipalities.*
+        - Fixed hardcoded scraping logic for  to use dynamic .
+        - Added  to  to ensure environment variables are loaded correctly in local environment.
+        - Modified the  logic and all hardcoded  paths to dynamically resolve to  on the VPS.
+        - Enabled the static file serving by uncommenting .
 
 - ****:
-    - **Importance**: Main React component managing global state, routing, and UI layout.
+    - **Importance**: Main React component for global state, routing, and UI.
     - **Changes Made**:
-        - Updated statistics header and  to use .
-        - Implemented UI for scraper scheduling and updated ,  for new fields.
-        - Unified  to .
-        - Updated authenticated header for Provinces Covered with dynamic count and Nova Scotia flag.
-        - *Added routing for  and a navigation link for paid users to the  component.*
-        - *Updated property card rendering logic to include bookmark buttons for favorites.*
+        - Enhanced deployment management UI feedback (detailed messages, loading indicators, auto-refresh).
+        - Implemented  persistence for the GitHub repository URL in the deployment section, pre-filling and auto-saving it.
 
 - ****:
-    - **Importance**: Displays detailed property information.
-    - **Changes Made**: Added  header to enhanced property details fetch.
-        - *Dynamically rendered Public Tender vs Public Auction and related text based on the property's  field, removing hardcoded values.*
+    - **Importance**: Likely handles property search and static map image generation.
+    - **Changes Made**: Added a fallback API key  to the Google Static Maps URL construction ().
+
+- **Usage: /app/scripts/deployment.sh {deploy|check-updates|rollback|verify} [github-repo-url]
+
+Commands:
+  deploy [repo-url]    - Deploy latest code from GitHub
+  check-updates        - Check if updates are available
+  rollback [backup]    - Rollback to a specific backup
+  verify              - Verify current deployment
+
+Examples:
+  /app/scripts/deployment.sh deploy https://github.com/user/nstaxsales.git
+  /app/scripts/deployment.sh check-updates
+  /app/scripts/deployment.sh verify**:
+    - **Importance**: Shell script used by the backend API to automate deployment tasks (git pull, build, restart).
+    - **Changes Made**:
+        - Updated  and  variables from  to  for correct VPS path detection.
+        - Corrected PM2 service names from  references to  and .
+        - Fixed example URL references.
 
 - ****:
-    - **Importance**: Manages global user authentication state.
-    - **Changes Made**: Modified admin user object to have .
-
-- ****:
-    - **Importance**: The entry point for unauthenticated users.
-    - **Changes Made**: Removed Properties Tracked, moved Provinces Covered, added dynamic count and flag,  to .
-
-- ****:
-    - **Importance**: *New React component to display a user's favorited properties.*
-    - **Changes Made**: *Initial creation, implemented fetching user favorites, displaying property details, including thumbnails, a remove button, and a graceful fallback for missing images. Uses  hook for user context.*
-
-- ****:
-    - **Importance**: Global CSS file for the frontend.
-    - **Changes Made**: *Added a  utility class for text truncation in UI components like property cards.*
-
-- ** and **:
-    - **Importance**: Stores environment-specific variables like  and .
-    - **Changes Made**: Values were updated and validated during VPS deployment troubleshooting to use  as the domain.
+    - **Importance**: Stores frontend-specific environment variables.
+    - **Changes Made**: Updated  to . (Verified on VPS but needs to be picked up by build).
 </code_architecture>
 
 <pending_tasks>
@@ -78,19 +69,16 @@ supervisor> , PM2, Nginx, environment variables.
 - Implement property history tracking and analytics.
 - Finalize Kubernetes ingress/proxy routing for boundary generation endpoints.
 - Ensure development environment stability and functionality (minor Google Maps async loading warning).
-- Implement a specific scraper for Cumberland County's website format (currently falls back to generic, though the routing is now fixed).
+- Address the Unknown command: "update-browserslist-db"
+
+To see a list of supported npm commands, run:
+  npm help warning during frontend build.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was addressing a critical bug related to the Cumberland County scraper. Despite previous efforts to implement the specific scraper and configure its routing, the system was still defaulting to a generic scraper for Cumberland County, as indicated by logs stating Generic scraping for Cumberland County - specific scraper not yet implemented.
-
-The root cause was identified in the  file within the  endpoint. This specific endpoint, used by the admin panel to trigger individual municipality scrapes, contained hardcoded logic: . This meant only Halifax was being routed to its specific scraper, while all other municipalities, including Cumberland County, were incorrectly sent to the generic scraper.
-
-The AI engineer's action was to modify this hardcoded  block. The updated logic now dynamically checks the  field of the  object and dispatches the request to the correct specific scraper function (e.g., ) or falls back to the generic one only if no specific scraper type is matched.
-
-The trajectory ends with the AI engineer instructing to restart the backend to apply these code changes and then re-test the Cumberland County scraper, expecting to see Starting Cumberland County tax sale scraping in the logs.
+Immediately before this summary, the AI engineer was addressing a critical bug where property thumbnails and interactive maps were not displaying correctly, specifically that boundary images were not loading. The root cause was identified as the backend's static file serving being misconfigured. Although the directory for static files existed and contained the images, the FastAPI  line was either commented out or incorrectly configured, leading to the server returning  (HTML content) instead of  when requesting image files directly. The AI engineer's action was to uncomment and update the static file mounting configuration in  to ensure it uses the correct absolute path  for serving static assets. This change was followed by a restart of the backend service via PM2. The goal of this fix is to correctly serve property boundary images so they can be displayed on the frontend, resolving the  content type issue for images.
 </current_work>
 
 <optional_next_step>
-Restart the backend to apply the fixed scraper routing logic and verify in logs that Cumberland County uses its specific scraper.
+Verify if the static file serving is now correctly returning  for boundary images.
 </optional_next_step>
