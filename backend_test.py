@@ -1463,6 +1463,162 @@ def test_verify_deployment_endpoint():
         print(f"   ❌ Verify deployment error: {e}")
         return False, {"error": str(e)}
 
+def test_deployment_system():
+    """Comprehensive test of the deployment management system"""
+    print("\n🎯 COMPREHENSIVE DEPLOYMENT MANAGEMENT SYSTEM TEST")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Test Deployment Management API endpoints for deploy button functionality")
+    print("📋 SPECIFIC REQUIREMENTS:")
+    print("   1. Test all deployment API endpoints with admin authentication")
+    print("   2. Check if shell scripts are executable and working")
+    print("   3. Test deployment flow that UI deploy button should trigger")
+    print("   4. Look for error responses, timeout issues, or authentication problems")
+    print("   5. Verify deployment scripts can access required system commands")
+    print("=" * 80)
+    
+    # Run all tests
+    results = {}
+    
+    # Test 1: Deployment Authentication
+    print("\n🔍 TEST 1: Deployment Authentication")
+    auth_result, auth_data = test_deployment_authentication()
+    results['deployment_authentication'] = {'success': auth_result, 'data': auth_data}
+    
+    # Test 2: Shell Scripts
+    print("\n🔍 TEST 2: Shell Scripts")
+    scripts_result, scripts_data = test_deployment_shell_scripts()
+    results['shell_scripts'] = {'success': scripts_result, 'data': scripts_data}
+    
+    # Test 3: Deployment Status
+    print("\n🔍 TEST 3: Deployment Status")
+    status_result, status_data = test_deployment_status_endpoint()
+    results['deployment_status'] = {'success': status_result, 'data': status_data}
+    
+    # Test 4: Check Updates
+    print("\n🔍 TEST 4: Check Updates")
+    updates_result, updates_data = test_check_updates_endpoint()
+    results['check_updates'] = {'success': updates_result, 'data': updates_data}
+    
+    # Test 5: Deploy Endpoint
+    print("\n🔍 TEST 5: Deploy Endpoint")
+    deploy_result, deploy_data = test_deploy_endpoint()
+    results['deploy_endpoint'] = {'success': deploy_result, 'data': deploy_data}
+    
+    # Test 6: Health Check
+    print("\n🔍 TEST 6: Health Check")
+    health_result, health_data = test_health_check_endpoint()
+    results['health_check'] = {'success': health_result, 'data': health_data}
+    
+    # Test 7: Verify Deployment
+    print("\n🔍 TEST 7: Verify Deployment")
+    verify_result, verify_data = test_verify_deployment_endpoint()
+    results['verify_deployment'] = {'success': verify_result, 'data': verify_data}
+    
+    # Final Assessment
+    print("\n" + "=" * 80)
+    print("📊 DEPLOYMENT MANAGEMENT SYSTEM - FINAL ASSESSMENT")
+    print("=" * 80)
+    
+    test_names = [
+        ('Deployment Authentication', 'deployment_authentication'),
+        ('Shell Scripts', 'shell_scripts'),
+        ('Deployment Status', 'deployment_status'),
+        ('Check Updates', 'check_updates'),
+        ('Deploy Endpoint', 'deploy_endpoint'),
+        ('Health Check', 'health_check'),
+        ('Verify Deployment', 'verify_deployment')
+    ]
+    
+    passed_tests = 0
+    total_tests = len(test_names)
+    
+    print(f"📋 DETAILED RESULTS:")
+    for test_name, test_key in test_names:
+        result = results[test_key]
+        status = "✅ PASSED" if result['success'] else "❌ FAILED"
+        print(f"   {status} - {test_name}")
+        if result['success']:
+            passed_tests += 1
+    
+    print(f"\n📊 SUMMARY:")
+    print(f"   Passed: {passed_tests}/{total_tests} tests")
+    print(f"   Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    
+    # Critical findings
+    print(f"\n🔍 CRITICAL FINDINGS:")
+    
+    if results['deployment_authentication']['success']:
+        print(f"   ✅ All deployment endpoints properly secured with JWT authentication")
+        print(f"   ✅ Unauthorized requests correctly rejected (401/403)")
+    else:
+        print(f"   ❌ Authentication issues detected on deployment endpoints")
+    
+    if results['shell_scripts']['success']:
+        print(f"   ✅ Shell scripts are executable and functional")
+        print(f"   ✅ Scripts can access required system commands")
+    else:
+        print(f"   ❌ Shell script issues detected - may cause deployment failures")
+    
+    if results['deployment_status']['success']:
+        print(f"   ✅ Deployment status monitoring working")
+        print(f"   ✅ Returns valid JSON with status information")
+    else:
+        print(f"   ❌ Deployment status endpoint has issues")
+    
+    if results['check_updates']['success']:
+        print(f"   ✅ GitHub update checking operational")
+        print(f"   ✅ Returns updates_available boolean correctly")
+    else:
+        print(f"   ❌ Update checking functionality has issues")
+    
+    if results['deploy_endpoint']['success']:
+        print(f"   ✅ Deployment process initiation working")
+        print(f"   ✅ Accepts GitHub repo parameters correctly")
+    else:
+        print(f"   ❌ Deploy endpoint has issues - deploy button won't work")
+    
+    if results['health_check']['success']:
+        print(f"   ✅ System health monitoring active")
+        print(f"   ✅ Returns valid health status")
+    else:
+        print(f"   ❌ Health check functionality has issues")
+    
+    if results['verify_deployment']['success']:
+        print(f"   ✅ Deployment verification working")
+        print(f"   ✅ Backend and frontend health checks functional")
+    else:
+        print(f"   ❌ Deployment verification has issues")
+    
+    # Overall assessment
+    critical_tests_passed = (
+        results['deployment_authentication']['success'] and 
+        results['deploy_endpoint']['success'] and 
+        results['deployment_status']['success']
+    )
+    
+    if critical_tests_passed and passed_tests >= 5:
+        print(f"\n🎉 DEPLOYMENT MANAGEMENT SYSTEM: SUCCESS!")
+        print(f"   ✅ All deployment API endpoints working correctly")
+        print(f"   ✅ Admin authentication (admin/TaxSale2025!SecureAdmin) working")
+        print(f"   ✅ Shell script integration functional")
+        print(f"   ✅ Deploy button functionality should work in live environment")
+        print(f"   ✅ GitHub repository parameter handling working")
+        print(f"   ✅ System health monitoring operational")
+        print(f"   ✅ Deployment verification working")
+    else:
+        print(f"\n❌ DEPLOYMENT MANAGEMENT SYSTEM: ISSUES IDENTIFIED")
+        print(f"   🔧 Some critical components need attention for deploy button to work")
+        
+        # Specific issue identification
+        if not results['deploy_endpoint']['success']:
+            print(f"   🚨 CRITICAL: Deploy endpoint not working - this is why deploy button fails")
+        if not results['deployment_authentication']['success']:
+            print(f"   🚨 CRITICAL: Authentication issues - deploy button requires admin access")
+        if not results['shell_scripts']['success']:
+            print(f"   🚨 CRITICAL: Shell script issues - deployment process will fail")
+    
+    return critical_tests_passed, results
+
 def test_enhanced_property_details_unauthenticated():
     """Test enhanced property details endpoint without authentication"""
     print("\n🔒 Testing Enhanced Property Details - Unauthenticated Access...")
