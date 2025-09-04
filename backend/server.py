@@ -3347,7 +3347,7 @@ print(result if result else "Failed")
             
             if result.returncode == 0:
                 screenshot_path = f"property_screenshots/{pid_number}_{assessment_number}_boundary.png"
-                full_path = Path(f"/app/backend/{screenshot_path}")
+                full_path = Path(f"{os.path.dirname(os.path.abspath(__file__))}/{screenshot_path}")
                 
                 if full_path.exists():
                     logger.info(f"Successfully captured boundary screenshot for PID {pid_number}")
