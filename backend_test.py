@@ -3862,8 +3862,110 @@ def test_admin_panel_updates_available_bug_fix():
         print(f"   ❌ Admin panel updates available test error: {e}")
         return False, {"error": str(e)}
 
+def test_vps_boundary_display_comprehensive():
+    """Comprehensive test of the VPS vs Dev boundary display bug fix"""
+    print("\n🎯 COMPREHENSIVE VPS vs DEV BOUNDARY DISPLAY BUG FIX TEST")
+    print("=" * 80)
+    print("🎯 REVIEW REQUEST: Test VPS vs Dev boundary display bug fix")
+    print("📋 SPECIFIC REQUIREMENTS:")
+    print("   1. Test /api/property-image/{assessment_number} endpoint with absolute file path fix")
+    print("   2. Verify Victoria County properties return proper PNG images (not 404 errors)")
+    print("   3. Check file path resolution working correctly with new absolute path logic")
+    print("   4. Test both boundary image serving and Google Maps fallback functionality")
+    print("   5. Verify response headers include proper Content-Type and Cache-Control")
+    print("   6. Test error handling for properties without boundary files or coordinates")
+    print("=" * 80)
+    
+    # Run the VPS boundary display fix test
+    results = {}
+    
+    # Test 1: VPS Boundary Display Fix
+    print("\n🔍 TEST 1: VPS Boundary Display Fix")
+    boundary_fix_result, boundary_fix_data = test_vps_boundary_display_fix()
+    results['vps_boundary_fix'] = {'success': boundary_fix_result, 'data': boundary_fix_data}
+    
+    # Final Assessment
+    print("\n" + "=" * 80)
+    print("📊 VPS vs DEV BOUNDARY DISPLAY BUG FIX - FINAL ASSESSMENT")
+    print("=" * 80)
+    
+    print(f"📋 DETAILED RESULTS:")
+    status = "✅ PASSED" if results['vps_boundary_fix']['success'] else "❌ FAILED"
+    print(f"   {status} - VPS Boundary Display Fix")
+    
+    print(f"\n📊 SUMMARY:")
+    if results['vps_boundary_fix']['success']:
+        print(f"   Success Rate: 100% - VPS boundary display bug fix working correctly")
+    else:
+        print(f"   Success Rate: 0% - VPS boundary display bug fix has issues")
+    
+    # Critical findings
+    print(f"\n🔍 CRITICAL FINDINGS:")
+    
+    if results['vps_boundary_fix']['success']:
+        print(f"   ✅ VPS vs Dev boundary display bug fix is working correctly")
+        print(f"   ✅ Victoria County properties return proper PNG images")
+        print(f"   ✅ File path resolution working with absolute path logic")
+        print(f"   ✅ Response headers include proper Content-Type: image/png")
+        print(f"   ✅ Cache-Control headers present for performance")
+        print(f"   ✅ Error handling working for properties without boundary files")
+    else:
+        print(f"   ❌ VPS boundary display bug fix has issues")
+        boundary_data = results['vps_boundary_fix']['data']
+        if isinstance(boundary_data, dict):
+            failed_properties = [k for k, v in boundary_data.items() if isinstance(v, dict) and not v.get('success', False)]
+            if failed_properties:
+                print(f"   ❌ Failed properties: {', '.join(failed_properties)}")
+                for prop in failed_properties:
+                    error = boundary_data[prop].get('error', 'Unknown error')
+                    print(f"     - {prop}: {error}")
+    
+    # Root cause analysis
+    print(f"\n🔍 ROOT CAUSE ANALYSIS:")
+    
+    if results['vps_boundary_fix']['success']:
+        print(f"   ✅ ABSOLUTE PATH FIX WORKING: os.path.dirname(os.path.abspath(__file__)) resolving correctly")
+        print(f"   ✅ FILE SERVING: Boundary images accessible via /api/property-image/ endpoint")
+        print(f"   ✅ VPS COMPATIBILITY: Working directory differences resolved")
+    else:
+        boundary_data = results['vps_boundary_fix']['data']
+        if isinstance(boundary_data, dict):
+            # Check for specific error patterns
+            has_404_errors = any(
+                isinstance(v, dict) and v.get('status_code') == 404 
+                for v in boundary_data.values()
+            )
+            has_path_errors = any(
+                isinstance(v, dict) and 'file path' in str(v.get('error', '')).lower()
+                for v in boundary_data.values()
+            )
+            
+            if has_404_errors:
+                print(f"   🚨 FILE PATH ISSUE: Still getting 404 errors - absolute path fix may not be working")
+                print(f"   🔧 SOLUTION: Verify os.path.dirname(os.path.abspath(__file__)) is correctly applied")
+                print(f"   🔧 CHECK: Ensure static/property_screenshots/ directory exists and has proper permissions")
+            
+            if has_path_errors:
+                print(f"   🚨 PATH RESOLUTION: File path resolution still failing")
+                print(f"   🔧 VERIFY: Working directory differences between dev and VPS environments")
+    
+    # Overall assessment
+    if results['vps_boundary_fix']['success']:
+        print(f"\n🎉 VPS vs DEV BOUNDARY DISPLAY BUG FIX: SUCCESS!")
+        print(f"   ✅ Absolute file path logic working correctly")
+        print(f"   ✅ Victoria County boundary images serving properly")
+        print(f"   ✅ VPS deployment compatibility achieved")
+        print(f"   ✅ File path resolution working across environments")
+        print(f"   ✅ Response headers and caching configured properly")
+    else:
+        print(f"\n❌ VPS vs DEV BOUNDARY DISPLAY BUG FIX: ISSUES IDENTIFIED")
+        print(f"   🔧 File path resolution still needs attention")
+        print(f"   🔧 Absolute path fix may not be fully implemented")
+    
+    return results['vps_boundary_fix']['success'], results
+
 if __name__ == "__main__":
-    print("🚀 STARTING ADMIN PANEL 'UPDATES AVAILABLE' BUG FIX TEST")
+    print("🚀 STARTING VPS vs DEV BOUNDARY DISPLAY BUG FIX TEST")
     print("=" * 80)
     
     # Test API connection first
@@ -3872,16 +3974,18 @@ if __name__ == "__main__":
         print("❌ Cannot proceed without API connection")
         sys.exit(1)
     
-    # Run the admin panel updates available bug fix test
-    success, results = test_admin_panel_updates_available_bug_fix()
+    # Run comprehensive VPS boundary display bug fix test
+    boundary_success, boundary_results = test_vps_boundary_display_comprehensive()
     
     print("\n" + "=" * 80)
     print("🏁 TESTING COMPLETE")
     print("=" * 80)
     
-    if success:
-        print("🎉 ADMIN PANEL UPDATES AVAILABLE BUG FIX TEST PASSED!")
+    if boundary_success:
+        print("🎉 VPS BOUNDARY DISPLAY BUG FIX TEST PASSED!")
+        print("✅ All boundary image serving systems working correctly")
         sys.exit(0)
     else:
-        print("❌ ADMIN PANEL UPDATES AVAILABLE BUG FIX TEST FAILED!")
+        print("❌ VPS BOUNDARY DISPLAY BUG FIX TEST FAILED!")
+        print("🔧 Boundary image serving needs attention")
         sys.exit(1)
