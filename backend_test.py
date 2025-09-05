@@ -916,14 +916,11 @@ def main():
     
     # Final Assessment
     print("\n" + "=" * 80)
-    print("📊 COMPREHENSIVE TESTING - FINAL ASSESSMENT")
+    print("📊 ADMIN BOUNDARY GENERATION TESTING - FINAL ASSESSMENT")
     print("=" * 80)
     
     test_suites = [
-        ('Pagination System', 'pagination_system'),
-        ('VPS Boundary Display Fix', 'boundary_display'),
-        ('Search Performance', 'search_performance'),
-        ('API Consistency', 'api_consistency')
+        ('Admin Boundary Generation Active Properties Only', 'admin_boundary_generation')
     ]
     
     passed_suites = 0
@@ -944,56 +941,30 @@ def main():
     # Critical findings
     print(f"\n🔍 CRITICAL FINDINGS:")
     
-    if all_results['pagination_system']['success']:
-        print(f"   ✅ Pagination system implemented with default limit=24")
-        print(f"   ✅ Count endpoint provides proper pagination metadata")
-        print(f"   ✅ Search endpoint supports skip/limit parameters")
-        print(f"   ✅ Pagination works with status and municipality filters")
+    if all_results['admin_boundary_generation']['success']:
+        print(f"   ✅ Admin boundary generation endpoint working correctly")
+        print(f"   ✅ Endpoint properly filters for ACTIVE properties only")
+        print(f"   ✅ Response includes required note about 'Only processed ACTIVE properties'")
+        print(f"   ✅ Authentication working properly for admin endpoints")
+        print(f"   ✅ Tested successfully with Halifax and Victoria County municipalities")
+        print(f"   ✅ Boundary generation works correctly but only for active properties")
     else:
-        print(f"   ❌ Pagination system has implementation issues")
-    
-    if all_results['boundary_display']['success']:
-        print(f"   ✅ VPS boundary display fix working correctly")
-        print(f"   ✅ Victoria County properties return proper PNG images")
-        print(f"   ✅ Absolute file path resolution implemented")
-        print(f"   ✅ Boundary images accessible via /api/property-image/ endpoint")
-    else:
-        print(f"   ❌ VPS boundary display fix has issues")
-    
-    if all_results['search_performance']['success']:
-        print(f"   ✅ Search performance improved with pagination")
-        print(f"   ✅ Response times optimized for 24 vs 100+ results")
-        print(f"   ✅ Concurrent requests handled efficiently")
-    else:
-        print(f"   ❌ Search performance improvements need attention")
-    
-    if all_results['api_consistency']['success']:
-        print(f"   ✅ API endpoints return consistent data structures")
-        print(f"   ✅ Count endpoint filters match main endpoint exactly")
-        print(f"   ✅ Authentication requirements maintained properly")
-    else:
-        print(f"   ❌ API consistency issues detected")
+        print(f"   ❌ Admin boundary generation has implementation issues")
     
     # Overall assessment
-    critical_systems_working = (
-        all_results['pagination_system']['success'] and 
-        all_results['boundary_display']['success']
-    )
+    critical_systems_working = all_results['admin_boundary_generation']['success']
     
     if critical_systems_working:
-        print(f"\n🎉 COMPREHENSIVE TESTING: SUCCESS!")
-        print(f"   ✅ Pagination system working with default limit=24")
-        print(f"   ✅ VPS boundary display issues resolved")
-        print(f"   ✅ Search performance optimized")
-        print(f"   ✅ API consistency maintained")
+        print(f"\n🎉 ADMIN BOUNDARY GENERATION TESTING: SUCCESS!")
+        print(f"   ✅ /api/auto-generate-boundaries/{{municipality_name}} endpoint working correctly")
+        print(f"   ✅ Only processes ACTIVE properties as required")
+        print(f"   ✅ Authentication and authorization working properly")
+        print(f"   ✅ Response format includes all required fields and notes")
         print(f"   ✅ All critical requirements from review request fulfilled")
     else:
-        print(f"\n❌ COMPREHENSIVE TESTING: CRITICAL ISSUES IDENTIFIED")
-        print(f"   🔧 Some critical components need attention")
-        if not all_results['pagination_system']['success']:
-            print(f"   🔧 Pagination system implementation needs fixes")
-        if not all_results['boundary_display']['success']:
-            print(f"   🔧 VPS boundary display fix needs attention")
+        print(f"\n❌ ADMIN BOUNDARY GENERATION TESTING: CRITICAL ISSUES IDENTIFIED")
+        print(f"   🔧 Admin boundary generation endpoint needs attention")
+        print(f"   🔧 Review the specific test failures above for details")
     
     return critical_systems_working, all_results
 
