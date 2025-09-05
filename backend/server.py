@@ -4305,18 +4305,19 @@ async def auto_generate_boundaries_for_municipality(municipality_name: str):
         return 0
 
 async def force_regenerate_boundaries_for_municipality(municipality_name: str):
-    """Helper function to force regenerate boundaries for ALL properties in a municipality"""
+    """Helper function to force regenerate boundaries for ACTIVE properties in a municipality"""
     try:
-        # Get ALL properties for the municipality (force regenerate all)
+        # Get ACTIVE properties only for the municipality (focus on what users see)
         properties = await db.tax_sales.find({
-            "municipality_name": municipality_name
+            "municipality_name": municipality_name,
+            "status": "active"  # Only process active properties
         }).to_list(1000)
         
         if not properties:
-            logger.info(f"No properties found for {municipality_name}")
+            logger.info(f"No active properties found for {municipality_name}")
             return 0
         
-        logger.info(f"Force-regenerating boundaries for {len(properties)} properties in {municipality_name}")
+        logger.info(f"Force-regenerating boundaries for {len(properties)} ACTIVE properties in {municipality_name}")
         boundary_generation_count = 0
         
         for prop in properties:
@@ -4336,7 +4337,7 @@ async def force_regenerate_boundaries_for_municipality(municipality_name: str):
                 except Exception as e:
                     logger.warning(f"Failed to force-generate boundary for {municipality_name} {assessment_number}: {e}")
         
-        logger.info(f"Force-generated {boundary_generation_count} boundary thumbnails for {municipality_name}")
+        logger.info(f"Force-generated {boundary_generation_count} boundary thumbnails for ACTIVE properties in {municipality_name}")
         return boundary_generation_count
         
     except Exception as e:
