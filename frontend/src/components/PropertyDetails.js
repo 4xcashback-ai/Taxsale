@@ -772,16 +772,15 @@ const PropertyDetails = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Location & Property Boundaries</h3>
               
-              {/* Reliable Map - No JavaScript timing issues */}
+              {/* Interactive Map */}
               {property.latitude && property.longitude && (
                 <div className="mb-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">Property Map with Boundaries</h4>
+                  <h4 className="text-lg font-medium text-gray-900 mb-3">Interactive Map with Property Boundaries</h4>
                   <div className="border rounded-lg overflow-hidden">
-                    <ReliableMap 
-                      assessmentNumber={property.assessment_number}
-                      width={600}
-                      height={400}
-                      zoom={17}
+                    <div 
+                      ref={mapRef}
+                      style={{ width: '100%', height: '400px' }}
+                      className="bg-gray-100"
                     />
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
@@ -796,9 +795,6 @@ const PropertyDetails = () => {
                         )}
                       </span>
                     )}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    ✅ Reliable server-generated map - always loads consistently
                   </p>
                 </div>
               )}
