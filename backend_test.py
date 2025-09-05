@@ -23,9 +23,9 @@ try:
                 BACKEND_URL = line.split('=', 1)[1].strip() + '/api'
                 break
         else:
-            BACKEND_URL = 'https://nstax-boundary.preview.emergentagent.com/api'
+            BACKEND_URL = 'https://taxsaletracker.preview.emergentagent.com/api'
 except:
-    BACKEND_URL = 'https://nstax-boundary.preview.emergentagent.com/api'
+    BACKEND_URL = 'https://taxsaletracker.preview.emergentagent.com/api'
 
 print(f"🌐 Backend URL: {BACKEND_URL}")
 

@@ -7,7 +7,7 @@ import requests
 import json
 from datetime import datetime
 
-BACKEND_URL = "https://nstax-boundary.preview.emergentagent.com/api"
+BACKEND_URL = "https://taxsaletracker.preview.emergentagent.com/api"
 
 def debug_municipality_scheduling():
     """Debug the scheduling fields in municipality management"""
