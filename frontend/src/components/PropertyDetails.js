@@ -173,27 +173,20 @@ const PropertyDetails = () => {
       }
     };
 
-    // Initialize map with retry limit to prevent infinite loops
-    let retryCount = 0;
-    const maxRetries = 10;
-    const retryDelay = 500; // 500ms delay between retries
-    
-    const initializeMapAsync = () => {
+    // Use googleMapsLoader for PropertyDetails route (separate from main app React Wrapper)
+    const initializeMapAsync = async () => {
       try {
-        console.log(`PropertyDetails: Initializing Google Map... (attempt ${retryCount + 1}/${maxRetries})`);
+        console.log('PropertyDetails: Loading Google Maps API via googleMapsLoader...');
         
-        if (window.google && window.google.maps) {
-          console.log('PropertyDetails: Google Maps API available, initializing map...');
-          initMap();
-        } else if (retryCount < maxRetries) {
-          console.log(`PropertyDetails: Google Maps API not yet available, retrying in ${retryDelay}ms...`);
-          retryCount++;
-          setTimeout(initializeMapAsync, retryDelay);
-        } else {
-          console.warn('PropertyDetails: Google Maps API failed to load after maximum retries. Map initialization skipped.');
-        }
+        // Use the robust Google Maps loader with built-in retry logic
+        await googleMapsLoader.load();
+        
+        console.log('PropertyDetails: Google Maps API loaded successfully, initializing map...');
+        initMap();
+        
       } catch (error) {
-        console.error('PropertyDetails: Error initializing Google Map:', error);
+        console.error('PropertyDetails: Failed to load Google Maps API:', error);
+        console.log('PropertyDetails: Map functionality will be disabled for this property.');
       }
     };
 
