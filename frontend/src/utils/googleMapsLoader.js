@@ -45,7 +45,7 @@ class GoogleMapsLoader {
   }
 
   /**
-   * Internal method to load the script with aggressive approach
+   * Internal method to load the script with non-blocking approach
    */
   _loadScript() {
     this.isLoading = true;
@@ -53,65 +53,66 @@ class GoogleMapsLoader {
 
     console.log(`GoogleMapsLoader: Loading attempt ${this.retryCount}/${this.maxRetries}`);
 
-    // Remove any existing Google Maps scripts
-    this._cleanupExistingScripts();
+    // Use requestIdleCallback for non-blocking execution
+    const performLoad = () => {
+      // Remove any existing Google Maps scripts
+      this._cleanupExistingScripts();
 
-    // Generate unique callback name for this attempt
-    const callbackName = `initGoogleMaps_${Date.now()}_${this.retryCount}`;
-    
-    // Create global callback
-    window[callbackName] = () => {
-      console.log('GoogleMapsLoader: Callback executed successfully');
-      delete window[callbackName]; // Cleanup
-      this._handleSuccess();
-    };
+      // Generate unique callback name for this attempt
+      const callbackName = `initGoogleMaps_${Date.now()}_${this.retryCount}`;
+      
+      // Create global callback
+      window[callbackName] = () => {
+        console.log('GoogleMapsLoader: Callback executed successfully');
+        delete window[callbackName]; // Cleanup
+        // Use setTimeout to avoid blocking the callback
+        setTimeout(() => this._handleSuccess(), 0);
+      };
 
-    const script = document.createElement('script');
-    script.id = this.scriptId;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry&callback=${callbackName}&v=3.55`;
-    script.async = true;
-    script.defer = true;
+      const script = document.createElement('script');
+      script.id = this.scriptId;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry&callback=${callbackName}&v=3.55`;
+      script.async = true;
+      script.defer = true;
 
-    // Set up timeout with aggressive timing
-    const timeoutId = setTimeout(() => {
-      console.error(`GoogleMapsLoader: Loading timeout on attempt ${this.retryCount}`);
-      delete window[callbackName]; // Cleanup callback
-      script.remove(); // Remove failed script
-      this._handleError(new Error(`Google Maps loading timeout (attempt ${this.retryCount})`));
-    }, 20000); // 20 second timeout
+      // Set up timeout with performance-friendly timing
+      const timeoutId = setTimeout(() => {
+        console.error(`GoogleMapsLoader: Loading timeout on attempt ${this.retryCount}`);
+        delete window[callbackName]; // Cleanup callback
+        script.remove(); // Remove failed script
+        // Use setTimeout to avoid blocking
+        setTimeout(() => this._handleError(new Error(`Google Maps loading timeout (attempt ${this.retryCount})`)), 0);
+      }, 15000); // Reduced to 15 seconds for faster feedback
 
-    script.onload = () => {
-      console.log('GoogleMapsLoader: Script onload event fired');
-      // Don't handle success here, wait for callback
-    };
+      script.onload = () => {
+        console.log('GoogleMapsLoader: Script onload event fired');
+        // Don't handle success here, wait for callback
+      };
 
-    script.onerror = (error) => {
-      clearTimeout(timeoutId);
-      delete window[callbackName]; // Cleanup callback
-      console.error(`GoogleMapsLoader: Script onerror on attempt ${this.retryCount}`, error);
-      this._handleError(new Error(`Failed to load Google Maps script (attempt ${this.retryCount})`));
-    };
-
-    // Add error event listener to window for additional error catching
-    const errorHandler = (event) => {
-      if (event.message && event.message.includes('google') && event.message.includes('maps')) {
-        console.error('GoogleMapsLoader: Window error related to Google Maps:', event.message);
+      script.onerror = (error) => {
         clearTimeout(timeoutId);
-        delete window[callbackName];
-        window.removeEventListener('error', errorHandler);
-        this._handleError(new Error(`Google Maps window error: ${event.message}`));
-      }
+        delete window[callbackName]; // Cleanup callback
+        console.error(`GoogleMapsLoader: Script onerror on attempt ${this.retryCount}`, error);
+        // Use setTimeout to avoid blocking
+        setTimeout(() => this._handleError(new Error(`Failed to load Google Maps script (attempt ${this.retryCount})`)), 0);
+      };
+
+      console.log(`GoogleMapsLoader: Appending script with callback ${callbackName}`);
+      document.head.appendChild(script);
+
+      // Cleanup timeout reference
+      setTimeout(() => {
+        clearTimeout(timeoutId);
+      }, 16000);
     };
-    window.addEventListener('error', errorHandler);
 
-    console.log(`GoogleMapsLoader: Appending script with callback ${callbackName}`);
-    document.head.appendChild(script);
-
-    // Cleanup timeout reference
-    setTimeout(() => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('error', errorHandler);
-    }, 21000);
+    // Use requestIdleCallback for non-blocking execution
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(performLoad, { timeout: 1000 });
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      setTimeout(performLoad, 0);
+    }
   }
 
   /**
