@@ -244,9 +244,8 @@ async def scrape_halifax_properties(current_user: dict = Depends(get_current_use
     if not current_user or not current_user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    # This is where we'll add the scraping logic
-    # For now, return a placeholder
-    return {"message": "Halifax scraping initiated", "status": "placeholder"}
+    result = scrape_halifax()
+    return result
 
 @app.post("/api/admin/scrape/victoria")
 async def scrape_victoria_properties(current_user: dict = Depends(get_current_user_optional)):
@@ -254,7 +253,8 @@ async def scrape_victoria_properties(current_user: dict = Depends(get_current_us
     if not current_user or not current_user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    return {"message": "Victoria scraping initiated", "status": "placeholder"}
+    result = scrape_victoria()
+    return result
 
 @app.post("/api/admin/scrape/cumberland")
 async def scrape_cumberland_properties(current_user: dict = Depends(get_current_user_optional)):
@@ -262,7 +262,17 @@ async def scrape_cumberland_properties(current_user: dict = Depends(get_current_
     if not current_user or not current_user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    return {"message": "Cumberland scraping initiated", "status": "placeholder"}
+    result = scrape_cumberland()
+    return result
+
+@app.post("/api/admin/scrape/all")
+async def scrape_all_properties(current_user: dict = Depends(get_current_user_optional)):
+    """Scrape all municipalities"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = scrape_all()
+    return result
 
 # Property creation endpoint (for scrapers)
 @app.post("/api/properties")
