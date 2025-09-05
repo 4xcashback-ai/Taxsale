@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
-import googleMapsLoader from '../utils/googleMapsLoader';
 import ReliableMap from './ReliableMap';
 
 // AdSense Component for Property Details Page
