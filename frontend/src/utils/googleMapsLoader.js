@@ -161,13 +161,24 @@ class GoogleMapsLoader {
   }
 
   /**
-   * Handle successful loading
+   * Handle successful loading with thorough verification
    */
   _handleSuccess() {
-    // Double-check that Google Maps is actually available
-    if (!window.google?.maps) {
-      console.error('GoogleMapsLoader: Success callback fired but Google Maps not available');
-      this._handleError(new Error('Google Maps callback fired but API not available'));
+    // Triple-check that Google Maps is actually available and functional
+    if (!window.google?.maps?.Map) {
+      console.error('GoogleMapsLoader: Success callback fired but Google Maps Map constructor not available');
+      setTimeout(() => this._handleError(new Error('Google Maps Map constructor not available after callback')), 0);
+      return;
+    }
+
+    // Verify core Google Maps functionality
+    try {
+      // Test if we can create a basic LatLng object
+      new window.google.maps.LatLng(0, 0);
+      console.log('GoogleMapsLoader: Google Maps functionality verified');
+    } catch (error) {
+      console.error('GoogleMapsLoader: Google Maps functionality test failed:', error);
+      setTimeout(() => this._handleError(new Error('Google Maps functionality test failed')), 0);
       return;
     }
 
@@ -175,18 +186,21 @@ class GoogleMapsLoader {
     this.isLoading = false;
     this.retryCount = 0;
 
-    console.log(`GoogleMapsLoader: Successfully loaded! Notifying ${this.callbacks.length} callbacks`);
+    console.log(`GoogleMapsLoader: Successfully loaded and verified! Notifying ${this.callbacks.length} callbacks`);
     
-    this.callbacks.forEach(callback => {
-      try {
-        callback.resolve();
-      } catch (error) {
-        console.error('GoogleMapsLoader: Error in success callback', error);
-      }
-    });
+    // Use setTimeout to ensure callbacks execute after this function completes
+    setTimeout(() => {
+      this.callbacks.forEach(callback => {
+        try {
+          callback.resolve();
+        } catch (error) {
+          console.error('GoogleMapsLoader: Error in success callback', error);
+        }
+      });
 
-    this.callbacks = [];
-    this.loadPromise = null;
+      this.callbacks = [];
+      this.loadPromise = null;
+    }, 0);
   }
 
   /**
