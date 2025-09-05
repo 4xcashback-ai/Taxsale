@@ -244,21 +244,69 @@ sudo systemctl start tax-sale-backend
 sudo systemctl status tax-sale-backend
 ```
 
-## 🔧 Step 6: Configuration
+## 🔧 Step 6: PHP Configuration & Database Connection
 
-Update database config if needed:
+Optimize PHP-FPM for better performance:
 
 ```bash
-sudo nano /var/www/tax-sale-compass/frontend-php/config/database.php
-```
+# Optimize PHP-FPM pool
+sudo tee /etc/php/8.1/fpm/pool.d/tax-sale-compass.conf << 'EOF'
+[tax-sale-compass]
+user = www-data
+group = www-data
+listen = /var/run/php/php8.1-fpm.sock
+listen.owner = www-data
+listen.group = www-data
+pm = dynamic
+pm.max_children = 20
+pm.start_servers = 4
+pm.min_spare_servers = 2
+pm.max_spare_servers = 6
+pm.process_idle_timeout = 10s
+EOF
 
-Set your MySQL credentials:
-
-```php
+# Update database configuration with your settings
+sudo tee /var/www/tax-sale-compass/frontend-php/config/database.php << 'EOF'
+<?php
+// Database configuration
 define('DB_HOST', 'localhost');
 define('DB_USER', 'taxsale');
-define('DB_PASS', 'secure_password_here');
+define('DB_PASS', 'TaxSale2025!SecureDB');
 define('DB_NAME', 'tax_sale_compass');
+
+// Google Maps API Key
+define('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY');
+
+// Backend API URL
+define('API_BASE_URL', 'http://localhost:8001/api');
+
+// Site configuration
+define('SITE_NAME', 'Tax Sale Compass');
+define('SITE_URL', 'http://your-domain.com');  // Update with your domain
+
+// Database connection function
+function getDB() {
+    static $pdo = null;
+    
+    if ($pdo === null) {
+        try {
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+            $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        } catch (PDOException $e) {
+            die("Database connection failed: " . $e->getMessage());
+        }
+    }
+    
+    return $pdo;
+}
+?>
+EOF
+
+sudo systemctl restart php8.1-fpm
 ```
 
 ## 🧪 Step 7: Test the System
