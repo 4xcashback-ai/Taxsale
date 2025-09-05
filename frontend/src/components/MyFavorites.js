@@ -141,8 +141,8 @@ const MyFavorites = () => {
               {/* Property Thumbnail */}
               <div className="relative h-32 bg-gray-200 rounded-t-lg overflow-hidden">
                 <img
-                  src={`${API}/api/static-map/${favorite.property_id}?width=300&height=200&zoom=16&v=${Date.now()}`}
-                  alt={`Property map for ${favorite.property_address}`}
+                  src={`${API}/api/property-image/${favorite.property_id}?v=${Date.now()}`}
+                  alt={`Property thumbnail for ${favorite.property_address}`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     // If image fails, show placeholder
