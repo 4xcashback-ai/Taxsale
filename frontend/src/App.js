@@ -820,16 +820,16 @@ const AuthenticatedApp = () => {
                                   <img
                                     src={property.boundary_screenshot?.startsWith('http') 
                                       ? property.boundary_screenshot 
-                                      : `${API}/api/property-image/${property.assessment_number}?v=${Date.now()}`
+                                      : `${API}/api/static-map/${property.assessment_number}?width=405&height=290&zoom=17&v=${Date.now()}`
                                     }
-                                    alt={`Property boundary for ${property.property_address}`}
+                                    alt={`Property map for ${property.property_address}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      // If boundary image fails, replace with satellite image
-                                      if (!e.target.src.includes('satellite=true')) {
-                                        e.target.src = `${API}/api/property-image/${property.assessment_number}?satellite=true&v=${Date.now()}`;
+                                      // If static map fails, try property image endpoint
+                                      if (!e.target.src.includes('property-image')) {
+                                        e.target.src = `${API}/api/property-image/${property.assessment_number}?v=${Date.now()}`;
                                       } else {
-                                        // If satellite also fails, show placeholder
+                                        // If all fails, show placeholder
                                         e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOWNhM2FmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2UgQXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K';
                                       }
                                     }}
