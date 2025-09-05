@@ -23,7 +23,10 @@ GITHUB_REPO=""  # Will be set dynamically
 
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local message="[$timestamp] $1"
+    echo "$message"
+    echo "$message" >> "$LOG_FILE"
 }
 
 # Function to check if we're running as root/sudo
