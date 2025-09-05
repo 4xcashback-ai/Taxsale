@@ -165,7 +165,7 @@ class GoogleMapsLoader {
   }
 
   /**
-   * Handle loading errors with aggressive retry logic
+   * Handle loading errors with non-blocking retry logic
    */
   _handleError(error) {
     this.isLoading = false;
@@ -175,8 +175,14 @@ class GoogleMapsLoader {
     if (this.retryCount < this.maxRetries) {
       console.log(`GoogleMapsLoader: Retrying in ${2 * this.retryCount} seconds...`);
       
+      // Use non-blocking timeout for retry
       setTimeout(() => {
-        this._loadScript();
+        // Use requestIdleCallback for non-blocking retry
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(() => this._loadScript(), { timeout: 1000 });
+        } else {
+          setTimeout(() => this._loadScript(), 0);
+        }
       }, 2000 * this.retryCount); // Exponential backoff
       
       return;
@@ -184,17 +190,20 @@ class GoogleMapsLoader {
 
     console.error(`GoogleMapsLoader: Failed after ${this.maxRetries} attempts. Giving up.`);
     
-    this.callbacks.forEach(callback => {
-      try {
-        callback.reject(new Error(`Google Maps failed to load after ${this.maxRetries} attempts: ${error.message}`));
-      } catch (callbackError) {
-        console.error('GoogleMapsLoader: Error in error callback', callbackError);
-      }
-    });
+    // Use setTimeout to avoid blocking main thread
+    setTimeout(() => {
+      this.callbacks.forEach(callback => {
+        try {
+          callback.reject(new Error(`Google Maps failed to load after ${this.maxRetries} attempts: ${error.message}`));
+        } catch (callbackError) {
+          console.error('GoogleMapsLoader: Error in error callback', callbackError);
+        }
+      });
 
-    this.callbacks = [];
-    this.loadPromise = null;
-    this.retryCount = 0; // Reset for potential future attempts
+      this.callbacks = [];
+      this.loadPromise = null;
+      this.retryCount = 0; // Reset for potential future attempts
+    }, 0);
   }
 
   /**
