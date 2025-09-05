@@ -1296,11 +1296,11 @@ async def scrape_halifax_tax_sales():
             }
         )
         
-        # Auto-generate boundary thumbnails for all Halifax properties
+        # Force regenerate boundary thumbnails for all Halifax properties
         if properties_scraped > 0:
-            logger.info("Auto-generating boundary thumbnails for Halifax properties...")
-            boundary_count = await auto_generate_boundaries_for_municipality("Halifax Regional Municipality")
-            logger.info(f"Auto-generated {boundary_count} boundary thumbnails for Halifax")
+            logger.info("Force-regenerating boundary thumbnails for Halifax properties...")
+            boundary_count = await force_regenerate_boundaries_for_municipality("Halifax Regional Municipality")
+            logger.info(f"Force-generated {boundary_count} boundary thumbnails for Halifax")
         
         logger.info(f"Halifax scraping completed: {properties_scraped} properties processed")
         return {"status": "success", "properties_scraped": properties_scraped}
