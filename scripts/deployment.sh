@@ -9,14 +9,14 @@ set -e  # Exit on any error
 if [ -d "/var/www/tax-sale-compass" ]; then
     # Production VPS environment
     APP_DIR="/var/www/tax-sale-compass"
-    BACKUP_DIR="/var/backups/tax-sale-compass"
-    LOG_FILE="/var/log/tax-sale-deployment.log"
+    BACKUP_DIR="/var/backups/nstaxsales"
+    LOG_FILE="/var/www/tax-sale-compass/logs/deployment.log"
     DB_BACKUP_DIR="/var/backups/mongodb"
 else
     # Development environment
     APP_DIR="/app"
     BACKUP_DIR="/tmp/backups/nstaxsales"
-    LOG_FILE="/tmp/tax-sale-deployment.log"
+    LOG_FILE="/tmp/deployment.log"
     DB_BACKUP_DIR="/tmp/backups/mongodb"
 fi
 GITHUB_REPO=""  # Will be set dynamically
