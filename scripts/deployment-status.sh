@@ -17,7 +17,9 @@ cat > "$status_file" << 'EOJ'
 EOJ
 
 # Environment detection
-if [ -d "/var/www/nstaxsales" ]; then
+if [ -d "/var/www/tax-sale-compass" ]; then
+    APP_DIR="/var/www/tax-sale-compass"
+elif [ -d "/var/www/nstaxsales" ]; then
     APP_DIR="/var/www/nstaxsales"
 elif [ -d "/app" ]; then
     APP_DIR="/app"
