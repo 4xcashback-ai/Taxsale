@@ -1924,27 +1924,25 @@ async def scrape_victoria_county_tax_sales():
                 await db.tax_sales.insert_one(tax_sale_property.dict())
             logger.info(f"Inserted {len(properties)} Victoria County properties")
             
-            # Auto-generate boundary thumbnails for all properties
-            logger.info("Auto-generating boundary thumbnails...")
+            # Force regenerate boundary thumbnails for all properties (ensures fresh, accurate boundaries)
+            logger.info("Force-regenerating boundary thumbnails for all Victoria County properties...")
             boundary_generation_count = 0
             for prop in properties:
                 assessment_number = prop.get("assessment_number")
-                pid_number = prop.get("pid_number")
                 if assessment_number:
                     try:
-                        generated_filename = await auto_generate_boundary_thumbnail(assessment_number, pid_number)
-                        if generated_filename != f"boundary_{assessment_number}.png":
-                            # Update the property with the actual generated filename
-                            await db.tax_sales.update_one(
-                                {"assessment_number": assessment_number, "municipality_name": "Victoria County"},
-                                {"$set": {"boundary_screenshot": generated_filename}}
-                            )
-                            boundary_generation_count += 1
-                            logger.info(f"✅ Generated boundary for {assessment_number}: {generated_filename}")
+                        # Use internal API call to force regenerate (bypasses "already exists" check)
+                        property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
+                        if property_doc and property_doc.get('latitude') and property_doc.get('longitude'):
+                            # Force regenerate using the generate_boundary_thumbnail logic
+                            generated_result = await generate_boundary_thumbnail(assessment_number)
+                            if generated_result:
+                                boundary_generation_count += 1
+                                logger.info(f"✅ Force-generated boundary for {assessment_number}: {generated_result.get('thumbnail_filename')}")
                     except Exception as e:
-                        logger.warning(f"Failed to generate boundary for {assessment_number}: {e}")
+                        logger.warning(f"Failed to force-generate boundary for {assessment_number}: {e}")
             
-            logger.info(f"Auto-generated {boundary_generation_count} boundary thumbnails")
+            logger.info(f"Force-generated {boundary_generation_count} boundary thumbnails for Victoria County")
         
         # Update municipality scrape status
         await db.municipalities.update_one(
