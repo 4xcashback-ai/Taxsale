@@ -96,6 +96,18 @@
 
 user_problem_statement: "DEBUG VPS vs DEV ENVIRONMENT BOUNDARY DISPLAY ISSUE: User reports that boundary overlays work perfectly in development environment but fail to display on VPS production environment. Interactive map on property details page also works in dev but not on VPS. This suggests environment-specific configuration differences in file serving, API routing, or static file access between dev (/app) and VPS (/var/www/tax-sale-compass) deployments. Need systematic investigation to identify and resolve deployment-specific issues preventing boundary image display and interactive map functionality on production VPS."
 
+  - task: "Admin Boundary Generation Active Properties Only Fix"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "COMPLETED: Updated auto_generate_boundaries_for_municipality() function to only process ACTIVE properties instead of all properties. Modified query to include 'status': 'active' filter, updated log messages to reflect active-only processing, and enhanced API endpoint response to include note about active properties only. This ensures admin boundary regeneration actions focus on properties that users actually see (active status) rather than processing inactive/sold properties unnecessarily. Aligns with user requirement and maintains consistency with force_regenerate_boundaries_for_municipality function."
+
 backend:
   - task: "VPS vs Dev Boundary Display Issue Fix"
     implemented: true
