@@ -66,3 +66,4 @@ hiredis==2.2.3
 # - selenium (replaced by playwright)
 # - jq (not needed for Python)
 # - typer (CLI tool, not needed in server)
+mysql-connector-python
