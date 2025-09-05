@@ -576,6 +576,32 @@ const AuthenticatedApp = () => {
     }
   };
 
+  const generateBoundariesForMunicipality = async (municipalityName) => {
+    try {
+      setDeploymentLoading(true);
+      const token = localStorage.getItem('authToken');
+      
+      // Show confirmation dialog
+      if (!window.confirm(`Generate boundary images for all ACTIVE properties in ${municipalityName}?\n\nThis may take a few minutes and only processes active properties.`)) {
+        return;
+      }
+      
+      const response = await axios.post(`${API}/api/auto-generate-boundaries/${encodeURIComponent(municipalityName)}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const message = `✅ Boundary Generation Complete!\n\nMunicipality: ${response.data.municipality}\nImages Generated: ${response.data.boundaries_generated}\n\n${response.data.note || 'Only processed ACTIVE properties'}`;
+      alert(message);
+      
+    } catch (error) {
+      console.error('Error generating boundaries:', error);
+      const errorMsg = error.response?.data?.detail || error.message;
+      alert(`❌ Error generating boundaries for ${municipalityName}:\n\n${errorMsg}`);
+    } finally {
+      setDeploymentLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
