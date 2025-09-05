@@ -114,19 +114,39 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)):
-    """Verify JWT token and return user info"""
+async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Depends(oauth2_scheme)):
+    """Verify JWT token and return user data"""
+    if not credentials:
+        logger.warning("No credentials provided in Authorization header")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
+        logger.debug(f"Attempting to decode JWT token with length: {len(credentials.credentials)}")
         payload = jwt.decode(credentials.credentials, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         username: str = payload.get("sub")
+        exp = payload.get("exp")
+        logger.debug(f"JWT decoded successfully - username: {username}, exp: {exp}")
+        
         if username is None:
+            logger.warning("JWT token missing 'sub' claim")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return {"username": username}
-    except JWTError:
+        return {"username": username, "sub": username}
+    except jwt.ExpiredSignatureError:
+        logger.warning("JWT token has expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except JWTError as e:
+        logger.warning(f"JWT validation failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
