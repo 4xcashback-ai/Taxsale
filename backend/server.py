@@ -4304,6 +4304,45 @@ async def auto_generate_boundaries_for_municipality(municipality_name: str):
         logger.error(f"Error auto-generating boundaries for {municipality_name}: {e}")
         return 0
 
+async def force_regenerate_boundaries_for_municipality(municipality_name: str):
+    """Helper function to force regenerate boundaries for ALL properties in a municipality"""
+    try:
+        # Get ALL properties for the municipality (force regenerate all)
+        properties = await db.tax_sales.find({
+            "municipality_name": municipality_name
+        }).to_list(1000)
+        
+        if not properties:
+            logger.info(f"No properties found for {municipality_name}")
+            return 0
+        
+        logger.info(f"Force-regenerating boundaries for {len(properties)} properties in {municipality_name}")
+        boundary_generation_count = 0
+        
+        for prop in properties:
+            assessment_number = prop.get("assessment_number")
+            pid_number = prop.get("pid_number")
+            if assessment_number:
+                try:
+                    generated_filename = await auto_generate_boundary_thumbnail(assessment_number, pid_number)
+                    if generated_filename != f"boundary_{assessment_number}.png":
+                        # Update the property with the actual generated filename
+                        await db.tax_sales.update_one(
+                            {"_id": prop["_id"]},
+                            {"$set": {"boundary_screenshot": generated_filename}}
+                        )
+                        boundary_generation_count += 1
+                        logger.info(f"✅ Force-generated boundary for {municipality_name} {assessment_number}: {generated_filename}")
+                except Exception as e:
+                    logger.warning(f"Failed to force-generate boundary for {municipality_name} {assessment_number}: {e}")
+        
+        logger.info(f"Force-generated {boundary_generation_count} boundary thumbnails for {municipality_name}")
+        return boundary_generation_count
+        
+    except Exception as e:
+        logger.error(f"Error force-regenerating boundaries for {municipality_name}: {e}")
+        return 0
+
 @api_router.post("/scrape/victoria-county")
 async def scrape_victoria_county():
     """Scrape Victoria County tax sales directly"""
