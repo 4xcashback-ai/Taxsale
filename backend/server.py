@@ -138,20 +138,21 @@ async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Dep
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return {"username": username, "sub": username}
-    except jwt.ExpiredSignatureError:
-        logger.warning("JWT token has expired")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
     except JWTError as e:
-        logger.warning(f"JWT validation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        if "expired" in str(e).lower():
+            logger.warning("JWT token has expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        else:
+            logger.warning(f"JWT validation failed: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
 def authenticate_admin(username: str, password: str) -> bool:
     """Authenticate admin user"""
