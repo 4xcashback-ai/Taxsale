@@ -294,10 +294,19 @@ const InteractiveMap = ({ properties, onPropertySelect }) => {
             <p className="text-red-600 font-medium">Map Loading Error</p>
             <p className="text-red-500 text-sm">{error}</p>
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                googleMapsLoader.forceReload().then(() => {
+                  // Map will be reinitialized by useEffect
+                }).catch(err => {
+                  setError(err.message);
+                  setIsLoading(false);
+                });
+              }} 
               className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
             >
-              Retry
+              Force Retry
             </button>
           </div>
         </div>
