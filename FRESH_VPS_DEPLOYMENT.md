@@ -104,55 +104,108 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 🌐 Step 4: Web Server Configuration
+## 🌐 Step 4: High-Performance Nginx Configuration
 
-Create Nginx configuration:
+Create optimized Nginx configuration:
 
 ```bash
-sudo nano /etc/nginx/sites-available/tax-sale-compass
-```
+# Remove default site
+sudo rm /etc/nginx/sites-enabled/default
 
-Add this configuration:
-
-```nginx
+# Create optimized Tax Sale Compass config
+sudo tee /etc/nginx/sites-available/tax-sale-compass << 'EOF'
 server {
     listen 80;
-    server_name your-domain.com www.your-domain.com;
+    listen [::]:80;
+    server_name _;  # Replace with your domain
     root /var/www/tax-sale-compass/frontend-php;
     index index.php index.html;
 
-    # PHP handling
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
+
+    # PHP handling (optimized)
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        
+        # Performance settings
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 4 256k;
+        fastcgi_busy_buffers_size 256k;
     }
 
     # API proxy to FastAPI backend
     location /api/ {
-        proxy_pass http://localhost:8001;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Performance settings
+        proxy_buffering on;
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
     }
 
-    # Static files
+    # Static files with caching
     location /static/ {
         alias /var/www/tax-sale-compass/backend/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
     }
 
+    # CSS/JS caching
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 7d;
+        add_header Cache-Control "public";
+    }
+
+    # Main routing
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
+
+    # Security: Block access to sensitive files
+    location ~ /\. {
+        deny all;
+    }
+    
+    location ~ /(config|database|scripts)/ {
+        deny all;
+    }
 }
-```
+EOF
 
-Enable the site:
-
-```bash
+# Enable site and optimize Nginx
 sudo ln -s /etc/nginx/sites-available/tax-sale-compass /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
+
+# Optimize Nginx for better performance
+sudo tee -a /etc/nginx/nginx.conf << 'EOF'
+
+# Tax Sale Compass Optimizations
+worker_processes auto;
+worker_connections 1024;
+keepalive_timeout 30;
+client_max_body_size 20M;
+EOF
+
+sudo systemctl restart nginx
 ```
 
 ## 🐍 Step 5: Backend Service Setup
