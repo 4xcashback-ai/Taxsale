@@ -326,7 +326,6 @@ def send_verification_email(email: str, verification_token: str) -> bool:
         logger.error(f"Failed to send verification email: {e}")
         return False
 
-# MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
