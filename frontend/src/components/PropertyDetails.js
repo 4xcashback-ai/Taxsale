@@ -172,15 +172,24 @@ const PropertyDetails = () => {
       }
     };
 
-    // Initialize map directly (Google Maps API is already loaded by React Wrapper)
+    // Initialize map with retry limit to prevent infinite loops
+    let retryCount = 0;
+    const maxRetries = 10;
+    const retryDelay = 500; // 500ms delay between retries
+    
     const initializeMapAsync = () => {
       try {
-        console.log('PropertyDetails: Initializing Google Map...');
+        console.log(`PropertyDetails: Initializing Google Map... (attempt ${retryCount + 1}/${maxRetries})`);
+        
         if (window.google && window.google.maps) {
+          console.log('PropertyDetails: Google Maps API available, initializing map...');
           initMap();
+        } else if (retryCount < maxRetries) {
+          console.log(`PropertyDetails: Google Maps API not yet available, retrying in ${retryDelay}ms...`);
+          retryCount++;
+          setTimeout(initializeMapAsync, retryDelay);
         } else {
-          console.log('PropertyDetails: Google Maps API not yet available, retrying...');
-          setTimeout(initializeMapAsync, 100);
+          console.warn('PropertyDetails: Google Maps API failed to load after maximum retries. Map initialization skipped.');
         }
       } catch (error) {
         console.error('PropertyDetails: Error initializing Google Map:', error);
