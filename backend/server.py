@@ -257,14 +257,15 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(o
 
 def check_property_access(property_data: dict, current_user: Optional[dict]) -> None:
     """Check if user has access to property details based on subscription tier"""
+    # ALL properties require authentication
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to view property details"
+        )
+    
+    # Active properties require paid subscription (in addition to authentication)
     if property_data.get("status") == "active":
-        # Active properties require authentication and paid subscription
-        if not current_user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required to view active property details"
-            )
-        
         if current_user.get("subscription_tier") != "paid":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
