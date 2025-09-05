@@ -370,7 +370,7 @@ test_plan:
           comment: "COMPREHENSIVE DATABASE STRUCTURE ANALYSIS COMPLETED ✅ SUCCESS - Conducted thorough database structure comparison and production readiness assessment. Key findings: ✅ Database Collections: All 4 required collections present (tax_sales: 125 docs, municipalities: 3 docs, users: 9 docs, favorites: 3 docs). ✅ Schema Structure: All collections have consistent field structures with proper data types. ✅ Data Quality: 99.2% of properties have coordinates, 97.6% have boundary screenshots, admin user configured correctly. ✅ Production Readiness: Database contains all required data for deployment. ❌ CRITICAL FINDING: Missing performance indexes on key fields. Collections only have default _id indexes. Missing indexes on: tax_sales (assessment_number, municipality_name, status, sale_date), users (email, id), municipalities (name, id). ⚠️ RECOMMENDATION: Add custom indexes before VPS deployment to ensure optimal query performance. Database structure is production-ready but needs index optimization for performance."
 
   - task: "Property Direct URL Access Bug Fix"
-    implemented: false
+    implemented: true
     working: false
     file: "backend/server.py, frontend/src/components/PropertyDetails.js"
     stuck_count: 0
@@ -383,6 +383,9 @@ test_plan:
         - working: false
           agent: "main"
           comment: "ROOT CAUSE IDENTIFIED: The PropertyDetails component fetches ALL properties via paginated /api/tax-sales endpoint (limit=24) and searches client-side by assessment number. This fails because: 1) Properties beyond first page can't be found, 2) No dedicated /api/property/{assessment_number} endpoint exists, 3) No authentication enforcement for direct property access. Frontend generates URLs like /property/04300343 but backend has no matching endpoint. SOLUTION: Create new /api/property/{assessment_number} endpoint with proper authentication - require login for ALL properties, require paid subscription for active properties."
+        - working: false
+          agent: "main"
+          comment: "IMPLEMENTED FIX: 1) Added new backend endpoint GET /api/property/{assessment_number} that requires authentication for ALL properties and paid subscription for active properties. 2) Updated check_property_access function to enforce authentication for all properties (not just active). 3) Modified frontend PropertyDetails component to use dedicated endpoint instead of fetching all properties and searching client-side. 4) Added proper error handling for 401 (login required), 403 (subscription required), and 404 (not found) responses. This fixes both the 404 issue and enforces proper access control as requested. Ready for testing."
 
 agent_communication:
     - agent: "main"
