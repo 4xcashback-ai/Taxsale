@@ -4275,10 +4275,10 @@ async def auto_generate_boundaries_for_municipality(municipality_name: str):
         }).to_list(1000)
         
         if not properties:
-            logger.info(f"No properties need boundary generation for {municipality_name}")
+            logger.info(f"No active properties need boundary generation for {municipality_name}")
             return 0
         
-        logger.info(f"Auto-generating boundaries for {len(properties)} properties in {municipality_name}")
+        logger.info(f"Auto-generating boundaries for {len(properties)} ACTIVE properties in {municipality_name}")
         boundary_generation_count = 0
         
         for prop in properties:
