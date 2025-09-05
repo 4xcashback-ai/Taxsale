@@ -22,13 +22,21 @@ class GoogleMapsLoader {
   load() {
     // Return existing promise if already loading
     if (this.loadPromise) {
+      console.log('GoogleMapsLoader: Returning existing promise');
       return this.loadPromise;
     }
 
-    // Return resolved promise if already loaded
-    if (this.isLoaded && window.google?.maps) {
-      console.log('GoogleMapsLoader: Already loaded, returning resolved promise');
+    // Return resolved promise if already loaded and verified
+    if (this.isLoaded && window.google?.maps?.Map) {
+      console.log('GoogleMapsLoader: Already loaded and verified, returning resolved promise');
       return Promise.resolve();
+    }
+
+    // Reset state if window.google exists but is incomplete
+    if (window.google && !window.google.maps?.Map) {
+      console.log('GoogleMapsLoader: Found broken Google Maps state, resetting...');
+      this.isLoaded = false;
+      delete window.google;
     }
 
     console.log('GoogleMapsLoader: Starting ultra-robust loading process...');
@@ -37,11 +45,28 @@ class GoogleMapsLoader {
       this.callbacks.push({ resolve, reject });
 
       if (!this.isLoading) {
-        this._loadScript();
+        // Add immediate retry mechanism
+        this._loadWithRetries();
       }
     });
 
     return this.loadPromise;
+  }
+
+  /**
+   * Load with built-in retry wrapper
+   */
+  _loadWithRetries() {
+    this._loadScript();
+    
+    // Add safety net - if no response in 10 seconds, force retry
+    setTimeout(() => {
+      if (this.isLoading && !this.isLoaded) {
+        console.warn('GoogleMapsLoader: Safety net triggered - forcing retry');
+        this.isLoading = false;
+        this._loadScript();
+      }
+    }, 10000);
   }
 
   /**
