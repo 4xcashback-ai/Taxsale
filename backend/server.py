@@ -5712,33 +5712,36 @@ async def admin_force_regenerate_property_boundary(assessment_number: str, curre
 
 @api_router.post("/admin/force-regenerate-municipality-boundaries/{municipality_name}")
 async def admin_force_regenerate_municipality_boundaries(municipality_name: str, 
-                                                        limit: int = Query(50, description="Maximum properties to process (safety limit)"),
+                                                        limit: int = Query(50, description="Maximum active properties to process (safety limit)"),
                                                         current_user: dict = Depends(verify_token)):
-    """Admin: Force regenerate boundary thumbnails for all properties in a municipality (with safety limit)"""
+    """Admin: Force regenerate boundary thumbnails for ACTIVE properties in a municipality (with safety limit)"""
     try:
-        # Get properties count first for safety check
-        total_count = await db.tax_sales.count_documents({"municipality_name": municipality_name})
+        # Get ACTIVE properties count first for safety check
+        total_count = await db.tax_sales.count_documents({
+            "municipality_name": municipality_name,
+            "status": "active"
+        })
         
         if total_count == 0:
-            raise HTTPException(status_code=404, detail=f"No properties found for {municipality_name}")
+            raise HTTPException(status_code=404, detail=f"No active properties found for {municipality_name}")
         
         if total_count > limit:
             return {
                 "status": "warning",
-                "message": f"Municipality has {total_count} properties, but limit is {limit}. Use a higher limit if needed.",
+                "message": f"Municipality has {total_count} active properties, but limit is {limit}. Use a higher limit if needed.",
                 "municipality": municipality_name,
-                "total_properties": total_count,
+                "active_properties": total_count,
                 "suggested_limit": min(total_count, 100)
             }
         
-        # Force regenerate boundaries for the municipality
+        # Force regenerate boundaries for ACTIVE properties in the municipality
         boundary_count = await force_regenerate_boundaries_for_municipality(municipality_name)
         
         return {
             "status": "success",
-            "message": f"Successfully regenerated boundaries for {municipality_name}",
+            "message": f"Successfully regenerated boundaries for {total_count} active properties in {municipality_name}",
             "municipality": municipality_name,
-            "total_properties": total_count,
+            "active_properties": total_count,
             "boundaries_regenerated": boundary_count
         }
 
