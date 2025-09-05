@@ -5397,6 +5397,9 @@ async def check_for_updates(request: Request, current_user: dict = Depends(verif
     try:
         import subprocess
         
+        client_ip = request.client.host
+        logger.info(f"Deployment update check requested by admin user from IP: {client_ip}")
+        
         # Run the check-updates command
         result = subprocess.run(
             ['sudo', f'{SCRIPT_DIR}/deployment.sh', 'check-updates'],
