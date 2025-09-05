@@ -5106,11 +5106,6 @@ async def get_property_details(
             logger.warning(f"Property {assessment_number} not found in database")
             raise HTTPException(status_code=404, detail="Property not found")
         
-        # ALWAYS require authentication for property details access
-        if not current_user:
-            logger.info(f"Unauthenticated access attempt to property {assessment_number}")
-            raise HTTPException(status_code=401, detail="Authentication required to view property details")
-        
         # Check access control based on property status and user subscription
         check_property_access(property_data, current_user)
         
