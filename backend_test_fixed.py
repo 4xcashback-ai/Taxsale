@@ -14,7 +14,7 @@ import time
 
 # Get backend URL from environment
 import os
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tax-auction-hub.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://nstax-boundary.preview.emergentagent.com') + '/api'
 
 # Admin credentials for testing
 ADMIN_USERNAME = "admin"

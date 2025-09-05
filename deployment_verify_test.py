@@ -10,7 +10,7 @@ import json
 import os
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tax-auction-hub.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://nstax-boundary.preview.emergentagent.com') + '/api'
 
 def test_deployment_verify_timeout_fix():
     """Test the /api/deployment/verify endpoint for timeout issues"""
