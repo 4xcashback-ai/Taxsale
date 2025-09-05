@@ -5350,6 +5350,8 @@ async def get_deployment_status(current_user: dict = Depends(verify_token)):
         import subprocess
         import json
         
+        logger.info(f"Deployment status requested by user: {current_user.get('sub', 'unknown')}")
+        
         # Run the deployment status script
         result = subprocess.run(
             [f'{SCRIPT_DIR}/deployment-status.sh'],
@@ -5358,21 +5360,27 @@ async def get_deployment_status(current_user: dict = Depends(verify_token)):
             timeout=30
         )
         
+        logger.info(f"Deployment script result - return code: {result.returncode}, stdout length: {len(result.stdout)}, stderr: {result.stderr}")
+        
         if result.returncode == 0:
             try:
                 status_data = json.loads(result.stdout)
+                logger.info(f"Successfully parsed deployment status: {status_data.get('status', 'unknown')}")
                 return status_data
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse deployment status JSON: {e}")
                 return {
                     "status": "error",
                     "message": "Failed to parse status data",
                     "last_check": datetime.now(timezone.utc).isoformat()
                 }
         else:
+            logger.error(f"Deployment script failed with return code {result.returncode}: {result.stderr}")
             return {
                 "status": "error", 
-                "message": "Failed to get deployment status",
-                "last_check": datetime.now(timezone.utc).isoformat()
+                "message": f"Failed to get deployment status (exit code: {result.returncode})",
+                "last_check": datetime.now(timezone.utc).isoformat(),
+                "debug_info": result.stderr
             }
             
     except Exception as e:
