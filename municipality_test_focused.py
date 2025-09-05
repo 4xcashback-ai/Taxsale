@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import datetime
 
-BACKEND_URL = "https://property-finder-89.preview.emergentagent.com/api"
+BACKEND_URL = "https://tax-auction-hub.preview.emergentagent.com/api"
 
 def test_municipality_field_fix():
     """Test the specific field name fix for municipality management"""
