@@ -23,6 +23,9 @@ GITHUB_REPO=""  # Will be set dynamically
 
 # Logging function
 log() {
+    # Ensure log directory exists
+    mkdir -p "$(dirname "$LOG_FILE")"
+    
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local message="[$timestamp] $1"
     echo "$message"
