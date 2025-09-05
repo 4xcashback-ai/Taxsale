@@ -5392,7 +5392,7 @@ async def get_deployment_status(current_user: dict = Depends(verify_token)):
         }
 
 @api_router.post("/deployment/check-updates")
-async def check_for_updates(current_user: dict = Depends(verify_token)):
+async def check_for_updates(request: Request, current_user: dict = Depends(verify_token)):
     """Check if updates are available"""
     try:
         import subprocess
