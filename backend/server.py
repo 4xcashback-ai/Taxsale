@@ -5682,6 +5682,71 @@ async def check_if_favorited(property_id: str, current_user: dict = Depends(get_
     
     return {"is_favorited": favorite is not None}
 
+@api_router.post("/admin/force-regenerate-property-boundary/{assessment_number}")
+async def admin_force_regenerate_property_boundary(assessment_number: str, current_user: dict = Depends(verify_token)):
+    """Admin: Force regenerate boundary thumbnail for a specific property"""
+    try:
+        # Find property by assessment number
+        property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_doc:
+            raise HTTPException(status_code=404, detail="Property not found")
+
+        # Force regenerate boundary thumbnail
+        generated_result = await generate_boundary_thumbnail(assessment_number)
+        
+        return {
+            "status": "success",
+            "message": f"Successfully regenerated boundary for property {assessment_number}",
+            "assessment_number": assessment_number,
+            "municipality": property_doc.get("municipality_name"),
+            "property_address": property_doc.get("property_address"),
+            "thumbnail_filename": generated_result.get("thumbnail_filename") if generated_result else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error force-regenerating boundary for property {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate boundary: {str(e)}")
+
+@api_router.post("/admin/force-regenerate-municipality-boundaries/{municipality_name}")
+async def admin_force_regenerate_municipality_boundaries(municipality_name: str, 
+                                                        limit: int = Query(50, description="Maximum properties to process (safety limit)"),
+                                                        current_user: dict = Depends(verify_token)):
+    """Admin: Force regenerate boundary thumbnails for all properties in a municipality (with safety limit)"""
+    try:
+        # Get properties count first for safety check
+        total_count = await db.tax_sales.count_documents({"municipality_name": municipality_name})
+        
+        if total_count == 0:
+            raise HTTPException(status_code=404, detail=f"No properties found for {municipality_name}")
+        
+        if total_count > limit:
+            return {
+                "status": "warning",
+                "message": f"Municipality has {total_count} properties, but limit is {limit}. Use a higher limit if needed.",
+                "municipality": municipality_name,
+                "total_properties": total_count,
+                "suggested_limit": min(total_count, 100)
+            }
+        
+        # Force regenerate boundaries for the municipality
+        boundary_count = await force_regenerate_boundaries_for_municipality(municipality_name)
+        
+        return {
+            "status": "success",
+            "message": f"Successfully regenerated boundaries for {municipality_name}",
+            "municipality": municipality_name,
+            "total_properties": total_count,
+            "boundaries_regenerated": boundary_count
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error force-regenerating boundaries for {municipality_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate boundaries: {str(e)}")
+
 @api_router.post("/admin/fix-property-images")
 async def fix_property_images(current_user: dict = Depends(verify_token)):
     """Fix property images with malformed URLs (migration helper)"""
