@@ -2272,6 +2272,12 @@ async def scrape_cumberland_county_for_municipality(municipality_id: str):
             }
         )
         
+        # Auto-generate boundary thumbnails for all Cumberland County properties
+        if properties_scraped > 0:
+            logger.info("Auto-generating boundary thumbnails for Cumberland County properties...")
+            boundary_count = await auto_generate_boundaries_for_municipality("Cumberland County")
+            logger.info(f"Auto-generated {boundary_count} boundary thumbnails for Cumberland County")
+        
         logger.info(f"Cumberland County scraping completed: {properties_scraped} properties processed")
         
         return {
