@@ -44,7 +44,39 @@ else:
     SCRIPT_DIR = '/app/scripts'
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+import logging
+from logging.config import dictConfig
+
+# Configure logging to suppress uvicorn's "Invalid HTTP request received" warnings
+logging_config = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "default": {
+            "formatter": "default",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "root": {
+        "level": "INFO",
+        "handlers": ["default"],
+    },
+    "loggers": {
+        "uvicorn.protocols.http.h11_impl": {
+            "level": "ERROR",  # Suppress "Invalid HTTP request received" warnings
+            "handlers": ["default"],
+            "propagate": False,
+        },
+    },
+}
+
+dictConfig(logging_config)
 logger = logging.getLogger(__name__)
 
 # Authentication Configuration
