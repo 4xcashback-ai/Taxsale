@@ -28,6 +28,7 @@ from apscheduler.triggers.cron import CronTrigger
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError
 
 
 ROOT_DIR = Path(__file__).parent
