@@ -36,18 +36,53 @@ echo 'vm.swappiness = 10' | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p
 ```
 
-## 🗄️ Step 2: MySQL Database Setup
+## 🗄️ Step 2: MySQL Setup & Optimization
 
 ```bash
-# Login to MySQL
+# Secure MySQL installation
+sudo mysql_secure_installation
+# Answer: Y, 2 (strong password), Y, Y, Y, Y
+
+# Login to MySQL and create optimized database
 sudo mysql -u root -p
 
-# Create database and user
-CREATE DATABASE tax_sale_compass;
-CREATE USER 'taxsale'@'localhost' IDENTIFIED BY 'secure_password_here';
+# Create database with optimized settings
+CREATE DATABASE tax_sale_compass CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# Create user with secure password
+CREATE USER 'taxsale'@'localhost' IDENTIFIED BY 'TaxSale2025!SecureDB';
 GRANT ALL PRIVILEGES ON tax_sale_compass.* TO 'taxsale'@'localhost';
 FLUSH PRIVILEGES;
+
+# Optimize MySQL for property searches
+SET GLOBAL innodb_buffer_pool_size = 128M;
+SET GLOBAL query_cache_size = 16M;
+SET GLOBAL query_cache_type = 1;
+
 EXIT;
+
+# Optimize MySQL config for better performance
+sudo tee -a /etc/mysql/mysql.conf.d/tax-sale-optimization.cnf << EOF
+[mysqld]
+# Optimized for property database searches
+innodb_buffer_pool_size = 256M
+query_cache_size = 32M
+query_cache_type = 1
+key_buffer_size = 32M
+table_open_cache = 64
+sort_buffer_size = 512K
+net_buffer_length = 8K
+read_buffer_size = 256K
+read_rnd_buffer_size = 512K
+myisam_sort_buffer_size = 8M
+
+# Logging
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = 2
+EOF
+
+sudo systemctl restart mysql
 ```
 
 ## 📥 Step 3: Deploy Application
