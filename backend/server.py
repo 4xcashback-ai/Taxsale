@@ -334,6 +334,23 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI(title="NS Tax Sale Aggregator", description="Nova Scotia Municipality Tax Sale Information Aggregator")
 
+# Custom exception handler for authentication errors
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    """Custom handler for HTTP exceptions to log security events"""
+    
+    # Log unauthorized access attempts to admin endpoints
+    if exc.status_code == 401 and request.url.path.startswith("/api/deployment"):
+        client_ip = request.client.host
+        user_agent = request.headers.get("user-agent", "Unknown")
+        logger.warning(f"Unauthorized access attempt to {request.url.path} from IP: {client_ip}, User-Agent: {user_agent}")
+    
+    # Return the standard JSON error response
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+
 # Remove the static mount that's conflicting with proxy routing
 # app.mount("/static", StaticFiles(directory=f"{os.path.dirname(os.path.abspath(__file__))}/static"), name="static")
 
