@@ -173,24 +173,25 @@ const PropertyDetails = () => {
       }
     };
 
-    // Use googleMapsLoader for PropertyDetails route (separate from main app React Wrapper)
-    const initializeMapAsync = async () => {
+    // Wait for Google Maps API to be available (loaded by React Wrapper)
+    const initializeMapAsync = () => {
       try {
-        console.log('PropertyDetails: Loading Google Maps API via googleMapsLoader...');
+        console.log('PropertyDetails: Checking for Google Maps API...');
         
-        // Use the robust Google Maps loader with built-in retry logic
-        await googleMapsLoader.load();
-        
-        console.log('PropertyDetails: Google Maps API loaded successfully, initializing map...');
-        initMap();
-        
+        if (window.google && window.google.maps) {
+          console.log('PropertyDetails: Google Maps API found, initializing map...');
+          initMap();
+        } else {
+          console.log('PropertyDetails: Google Maps API not available yet, map will be disabled.');
+          // Don't retry - if Google Maps isn't loaded by now, gracefully fail
+        }
       } catch (error) {
-        console.error('PropertyDetails: Failed to load Google Maps API:', error);
-        console.log('PropertyDetails: Map functionality will be disabled for this property.');
+        console.error('PropertyDetails: Error checking Google Maps API:', error);
       }
     };
 
-    initializeMapAsync();
+    // Wait a moment for React Wrapper to load Google Maps, then check once
+    setTimeout(initializeMapAsync, 2000);
   }, [property, boundaryData]);
 
   // Calculate polygon centroid
