@@ -369,7 +369,24 @@ test_plan:
           agent: "testing"
           comment: "COMPREHENSIVE DATABASE STRUCTURE ANALYSIS COMPLETED ✅ SUCCESS - Conducted thorough database structure comparison and production readiness assessment. Key findings: ✅ Database Collections: All 4 required collections present (tax_sales: 125 docs, municipalities: 3 docs, users: 9 docs, favorites: 3 docs). ✅ Schema Structure: All collections have consistent field structures with proper data types. ✅ Data Quality: 99.2% of properties have coordinates, 97.6% have boundary screenshots, admin user configured correctly. ✅ Production Readiness: Database contains all required data for deployment. ❌ CRITICAL FINDING: Missing performance indexes on key fields. Collections only have default _id indexes. Missing indexes on: tax_sales (assessment_number, municipality_name, status, sale_date), users (email, id), municipalities (name, id). ⚠️ RECOMMENDATION: Add custom indexes before VPS deployment to ensure optimal query performance. Database structure is production-ready but needs index optimization for performance."
 
+  - task: "Property Direct URL Access Bug Fix"
+    implemented: false
+    working: false
+    file: "backend/server.py, frontend/src/components/PropertyDetails.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports that properties found via search cannot be accessed via their direct URLs (e.g., /property/04300343). Search creates direct URLs by opening properties in new tabs, but these URLs randomly return 404 errors. The search functionality itself is broken because it creates non-working links."
+        - working: false
+          agent: "main"
+          comment: "ROOT CAUSE IDENTIFIED: The PropertyDetails component fetches ALL properties via paginated /api/tax-sales endpoint (limit=24) and searches client-side by assessment number. This fails because: 1) Properties beyond first page can't be found, 2) No dedicated /api/property/{assessment_number} endpoint exists, 3) No authentication enforcement for direct property access. Frontend generates URLs like /property/04300343 but backend has no matching endpoint. SOLUTION: Create new /api/property/{assessment_number} endpoint with proper authentication - require login for ALL properties, require paid subscription for active properties."
+
 agent_communication:
+    - agent: "main"
+      message: "PROPERTY DIRECT URL ACCESS BUG ANALYSIS ✅: Identified root cause of random 404 errors for property direct URLs. The PropertyDetails component uses inefficient approach: fetches ALL properties via paginated /api/tax-sales (limit=24) then searches client-side. This fails for properties beyond first page and lacks authentication control. Frontend creates URLs like /property/04300343 but no matching backend endpoint exists. Need to implement dedicated /api/property/{assessment_number} endpoint with authentication: require login for ALL properties, paid subscription for active properties. Will fix both the 404 issue and enforce proper access control as requested by user."
     - agent: "main"  
       message: "ADMIN PANEL 'UPDATES AVAILABLE' BUG INVESTIGATION ✅: Root cause identified - VPS is 7 commits ahead of origin/main (local changes include fix_boundary_references.py, .gitignore updates, etc.). The check-updates logic incorrectly interprets 'local != remote' as 'updates available' regardless of direction. Script returns 0 when local != remote, backend interprets returncode==0 as updates_available=true. However, when local is AHEAD of remote, this should show 'No updates available' or 'Local is ahead'. Need to fix deployment script to distinguish between local-behind-remote (updates available) vs local-ahead-remote (no updates needed). Authentication errors in curl tests are expected for unauthenticated requests."
     - agent: "main"
