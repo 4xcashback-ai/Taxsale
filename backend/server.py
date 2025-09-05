@@ -4250,6 +4250,50 @@ async def auto_generate_boundary_thumbnail(assessment_number: str, pid_number: s
         logger.warning(f"Auto boundary generation failed for {assessment_number}: {e}")
         return f"boundary_{assessment_number}.png"  # Fallback
 
+async def auto_generate_boundaries_for_municipality(municipality_name: str):
+    """Helper function to auto-generate boundaries for all properties in a municipality"""
+    try:
+        # Get all properties for the municipality that don't have proper boundary screenshots
+        properties = await db.tax_sales.find({
+            "municipality_name": municipality_name,
+            "$or": [
+                {"boundary_screenshot": {"$regex": f"^boundary_[0-9]+\\.png$"}},  # Basic format
+                {"boundary_screenshot": {"$exists": False}},  # Missing
+                {"boundary_screenshot": None}  # Null
+            ]
+        }).to_list(1000)
+        
+        if not properties:
+            logger.info(f"No properties need boundary generation for {municipality_name}")
+            return 0
+        
+        logger.info(f"Auto-generating boundaries for {len(properties)} properties in {municipality_name}")
+        boundary_generation_count = 0
+        
+        for prop in properties:
+            assessment_number = prop.get("assessment_number")
+            pid_number = prop.get("pid_number")
+            if assessment_number:
+                try:
+                    generated_filename = await auto_generate_boundary_thumbnail(assessment_number, pid_number)
+                    if generated_filename != f"boundary_{assessment_number}.png":
+                        # Update the property with the actual generated filename
+                        await db.tax_sales.update_one(
+                            {"_id": prop["_id"]},
+                            {"$set": {"boundary_screenshot": generated_filename}}
+                        )
+                        boundary_generation_count += 1
+                        logger.info(f"✅ Generated boundary for {municipality_name} {assessment_number}: {generated_filename}")
+                except Exception as e:
+                    logger.warning(f"Failed to generate boundary for {municipality_name} {assessment_number}: {e}")
+        
+        logger.info(f"Auto-generated {boundary_generation_count} boundary thumbnails for {municipality_name}")
+        return boundary_generation_count
+        
+    except Exception as e:
+        logger.error(f"Error auto-generating boundaries for {municipality_name}: {e}")
+        return 0
+
 @api_router.post("/scrape/victoria-county")
 async def scrape_victoria_county():
     """Scrape Victoria County tax sales directly"""
