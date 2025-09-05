@@ -390,9 +390,24 @@ test_plan:
           agent: "testing"
           comment: "COMPREHENSIVE SUCCESS ✅ PROPERTY DIRECT URL ACCESS ENDPOINT TESTING COMPLETED - All 7 comprehensive tests passed (100% success rate). Key findings: ✅ Unauthenticated Access: GET /api/property/04300343 without token correctly returns 401 Unauthorized as required. ✅ Authenticated Access to Inactive Property: Admin token access to inactive property 00254118 (Victoria County) returns 200 OK with complete property data. ✅ Authenticated Paid User to Active Property: Admin token (paid user) access to active property 00079006 (Halifax) returns 200 OK with complete property data. ✅ Non-existent Property: Invalid assessment number 99999999 correctly returns 404 Not Found. ✅ Specific Property Testing: Property 04300343 mentioned in review request successfully accessible with authentication (returns 200 OK). ✅ Response Structure: All required fields present (assessment_number, municipality_name, property_address, status, scraped_at), ObjectId properly converted to string for JSON serialization. ✅ Authentication Security: Invalid tokens properly rejected with 401, proper Bearer token validation implemented. ✅ Access Control Implementation: Authentication required for ALL properties (not just active), paid subscription enforcement working for active properties. The new GET /api/property/{assessment_number} endpoint is working exactly as specified in the review request - fixing the random 404 errors and enforcing proper authentication requirements for all property access."
 
+  - task: "Interactive Map Google Maps API Loading Fix"
+    implemented: true
+    working: false
+    file: "frontend/src/components/PropertyDetails.js"
+    stuck_count: 0
+    priority: "high"  
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports interactive map has stopped working again after working for the longest time, suspects it might be being blocked by Google or something. Console shows 'GoogleMapsLoader: Loading timeout' and 'You have included the Google Maps JavaScript API multiple times on this page' errors."
+        - working: false
+          agent: "main"
+          comment: "ROOT CAUSE IDENTIFIED: Double loading conflict between @googlemaps/react-wrapper (used in App.js) and googleMapsLoader.js utility (used in PropertyDetails.js). Both components trying to load Google Maps API simultaneously causes 'multiple times' error and loading timeouts. SOLUTION: Removed duplicate googleMapsLoader usage from PropertyDetails.js, now uses same React Wrapper pattern as App.js. Fixed import and initialization logic to eliminate conflicts."
+
 agent_communication:
     - agent: "main"
-      message: "PROPERTY DIRECT URL ACCESS BUG ANALYSIS ✅: Identified root cause of random 404 errors for property direct URLs. The PropertyDetails component uses inefficient approach: fetches ALL properties via paginated /api/tax-sales (limit=24) then searches client-side. This fails for properties beyond first page and lacks authentication control. Frontend creates URLs like /property/04300343 but no matching backend endpoint exists. Need to implement dedicated /api/property/{assessment_number} endpoint with authentication: require login for ALL properties, paid subscription for active properties. Will fix both the 404 issue and enforce proper access control as requested by user."
+      message: "INTERACTIVE MAP GOOGLE MAPS API LOADING FIX ✅: Root cause identified from console errors - double loading conflict between @googlemaps/react-wrapper and googleMapsLoader.js utility. App.js uses React Wrapper to load Google Maps, but PropertyDetails.js also tried to load it again with googleMapsLoader, causing 'You have included the Google Maps JavaScript API multiple times' errors and loading timeouts. Fixed by removing duplicate googleMapsLoader from PropertyDetails.js and using direct Google Maps API access since it's already loaded by React Wrapper. Frontend restarted to apply changes. This should resolve the loading timeouts and map initialization issues."
     - agent: "main"  
       message: "ADMIN PANEL 'UPDATES AVAILABLE' BUG INVESTIGATION ✅: Root cause identified - VPS is 7 commits ahead of origin/main (local changes include fix_boundary_references.py, .gitignore updates, etc.). The check-updates logic incorrectly interprets 'local != remote' as 'updates available' regardless of direction. Script returns 0 when local != remote, backend interprets returncode==0 as updates_available=true. However, when local is AHEAD of remote, this should show 'No updates available' or 'Local is ahead'. Need to fix deployment script to distinguish between local-behind-remote (updates available) vs local-ahead-remote (no updates needed). Authentication errors in curl tests are expected for unauthenticated requests."
     - agent: "main"
