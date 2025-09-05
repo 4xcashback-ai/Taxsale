@@ -1273,6 +1273,35 @@ const AuthenticatedApp = () => {
                             <BarChart3 className="mr-2 h-4 w-4" />
                             View Analytics
                           </Button>
+                          
+                          {/* Boundary Image Generation Buttons */}
+                          <div className="border-t pt-2 mt-3">
+                            <p className="text-xs text-gray-600 mb-2">Generate Boundary Images (Active Properties Only)</p>
+                            <Button 
+                              className="w-full mb-1" 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => generateBoundariesForMunicipality('Halifax Regional Municipality')}
+                            >
+                              Halifax Images
+                            </Button>
+                            <Button 
+                              className="w-full mb-1" 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => generateBoundariesForMunicipality('Victoria County')}
+                            >
+                              Victoria Images
+                            </Button>
+                            <Button 
+                              className="w-full" 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => generateBoundariesForMunicipality('Cumberland County')}
+                            >
+                              Cumberland Images
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
