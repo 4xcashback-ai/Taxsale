@@ -4140,6 +4140,94 @@ async def scrape_kentville():
         logger.error(f"Kentville scraping endpoint failed: {e}")
         raise HTTPException(status_code=500, detail=f"Kentville scraping failed: {str(e)}")
 
+async def auto_generate_boundary_thumbnail(assessment_number: str, pid_number: str = None):
+    """Helper function to automatically generate boundary thumbnail during scraping"""
+    try:
+        import aiohttp
+        
+        # Call the boundary generation API internally
+        try:
+            # Find property by assessment number to get coordinates and PID
+            property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
+            if not property_doc:
+                logger.warning(f"Property {assessment_number} not found for boundary generation")
+                return f"boundary_{assessment_number}.png"  # Fallback
+
+            if not property_doc.get('latitude') or not property_doc.get('longitude'):
+                logger.warning(f"Property {assessment_number} has no coordinates for boundary generation")
+                return f"boundary_{assessment_number}.png"  # Fallback
+
+            # Get NSPRD boundary data if PID exists
+            boundary_data = None
+            if property_doc.get('pid_number'):
+                try:
+                    boundary_response = await query_ns_government_parcel(property_doc['pid_number'])
+                    if boundary_response.get('found'):
+                        if (boundary_response.get('geometry') or boundary_response.get('combined_geometry')):
+                            boundary_data = boundary_response
+                except Exception as e:
+                    logger.warning(f"Could not fetch boundary data for PID {property_doc['pid_number']}: {e}")
+
+            # Generate the actual thumbnail file
+            if boundary_data:
+                # Use the same logic as generate_boundary_thumbnail endpoint
+                rings = None
+                if boundary_data.get('multiple_pids') and boundary_data.get('combined_geometry', {}).get('rings'):
+                    rings = boundary_data['combined_geometry']['rings']
+                elif boundary_data.get('geometry', {}).get('rings'):
+                    rings = boundary_data['geometry']['rings']
+
+                if rings:
+                    # Generate filename based on PID(s) and assessment number
+                    pid_part = property_doc['pid_number'].replace('/', '_')
+                    thumbnail_filename = f"boundary_{pid_part}_{assessment_number}.png"
+                    
+                    # Generate the actual image file using Google Maps Static API
+                    lat, lng = property_doc['latitude'], property_doc['longitude']
+                    api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+                    
+                    if api_key:
+                        # Create static map URL with boundary overlay
+                        path_points = []
+                        for ring in rings:
+                            for point in ring:
+                                path_points.append(f"{point[1]},{point[0]}")  # Google Maps expects lat,lng
+                        
+                        path_str = '|'.join(path_points)
+                        static_map_url = (
+                            f"https://maps.googleapis.com/maps/api/staticmap?"
+                            f"center={lat},{lng}&zoom=18&size=400x300&maptype=satellite&"
+                            f"key={api_key}&"
+                            f"markers=color:blue|size:mid|{lat},{lng}&"
+                            f"path=color:0xff0000|weight:5|{path_str}"
+                        )
+                        
+                        # Download and save the image
+                        import requests
+                        response = requests.get(static_map_url, timeout=10)
+                        if response.status_code == 200:
+                            thumbnail_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{thumbnail_filename}"
+                            
+                            # Ensure directory exists
+                            os.makedirs(os.path.dirname(thumbnail_path), exist_ok=True)
+                            
+                            with open(thumbnail_path, 'wb') as f:
+                                f.write(response.content)
+                            
+                            logger.info(f"✅ Auto-generated boundary thumbnail: {thumbnail_filename}")
+                            return thumbnail_filename
+            
+            # Fallback filename if boundary generation fails
+            return f"boundary_{assessment_number}.png"
+            
+        except Exception as e:
+            logger.warning(f"Auto boundary generation error for {assessment_number}: {e}")
+            return f"boundary_{assessment_number}.png"  # Fallback
+            
+    except Exception as e:
+        logger.warning(f"Auto boundary generation failed for {assessment_number}: {e}")
+        return f"boundary_{assessment_number}.png"  # Fallback
+
 @api_router.post("/scrape/victoria-county")
 async def scrape_victoria_county():
     """Scrape Victoria County tax sales directly"""
