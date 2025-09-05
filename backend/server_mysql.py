@@ -28,8 +28,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import uvicorn
 
-# Import our MySQL manager
+# Import our MySQL manager and scrapers
 from mysql_config import mysql_db
+from scrapers_mysql import scrape_halifax, scrape_victoria, scrape_cumberland, scrape_all
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
