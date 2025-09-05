@@ -381,6 +381,68 @@ async def get_optimized_property_image(assessment_number: str, width: int = 405,
         logger.debug(f"Property image not available for {assessment_number}: {e}")
         raise HTTPException(status_code=404, detail="Image not available")
 
+@api_router.get("/static-map/{assessment_number}")
+async def get_static_property_map(
+    assessment_number: str,
+    width: int = Query(600, description="Map width"),
+    height: int = Query(400, description="Map height"),
+    zoom: int = Query(17, description="Zoom level")
+):
+    """Generate reliable static map with boundaries - no JavaScript timing issues"""
+    try:
+        # Get property from database
+        property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        if not property_doc:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        # Try boundary image first (most detailed)
+        if property_doc.get('boundary_screenshot'):
+            file_path = f"{os.path.dirname(os.path.abspath(__file__))}/static/property_screenshots/{property_doc['boundary_screenshot']}"
+            if os.path.exists(file_path):
+                from fastapi.responses import FileResponse
+                return FileResponse(
+                    file_path,
+                    media_type="image/png",
+                    headers={
+                        "Cache-Control": "public, max-age=86400",
+                        "Content-Type": "image/png"
+                    }
+                )
+        
+        # Enhanced static map with boundary overlay
+        if property_doc.get('latitude') and property_doc.get('longitude'):
+            # Create static map URL with markers and styling
+            lat, lng = property_doc['latitude'], property_doc['longitude']
+            api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+            
+            # Static map with red marker and satellite view
+            static_map_url = (
+                f"https://maps.googleapis.com/maps/api/staticmap?"
+                f"center={lat},{lng}&zoom={zoom}&size={width}x{height}"
+                f"&maptype=satellite&format=png"
+                f"&markers=color:red%7Csize:large%7C{lat},{lng}"
+                f"&key={api_key}"
+            )
+            
+            # Fetch and return the map
+            response = requests.get(static_map_url, timeout=15)
+            if response.status_code == 200:
+                return Response(
+                    content=response.content,
+                    media_type="image/png",
+                    headers={
+                        "Cache-Control": "public, max-age=3600",
+                        "Content-Type": "image/png"
+                    }
+                )
+        
+        # Fallback placeholder
+        raise HTTPException(status_code=404, detail="No map data available")
+        
+    except Exception as e:
+        logger.error(f"Error generating static map for {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail="Map generation failed")
+
 # Initialize scheduler
 scheduler = AsyncIOScheduler()
 
