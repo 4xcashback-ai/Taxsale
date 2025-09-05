@@ -116,9 +116,16 @@ COPY backend/static ./backend/static
 # Copy optimized frontend build
 COPY --from=frontend-build /app/frontend/build ./frontend/build
 
-# Copy configuration files
-COPY docker/nginx.prod.conf /etc/nginx/sites-available/default 2>/dev/null || echo "nginx config not found"
-COPY docker/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf 2>/dev/null || echo "supervisor config not found"  
+# Copy configuration files (create them if they don't exist)
+RUN mkdir -p /etc/nginx/sites-available /etc/supervisor/conf.d
+
+# Copy nginx config if it exists, create default if not
+COPY docker/nginx.prod.conf /etc/nginx/sites-available/default || \
+     echo "server { listen 80; root /app/frontend/build; index index.html; }" > /etc/nginx/sites-available/default
+
+# Copy supervisor config if it exists, create default if not  
+COPY docker/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf || \
+     echo "[supervisord]\nnodaemon=true\n[program:backend]\ncommand=python3 -m uvicorn server:app --host 0.0.0.0 --port 8001\ndirectory=/app/backend" > /etc/supervisor/conf.d/supervisord.conf  
 
 # Copy and make scripts executable
 COPY scripts ./scripts
