@@ -1,24 +1,39 @@
 # 🚀 Fresh VPS Deployment - Tax Sale Compass PHP/MySQL
+## Panel-Free High Performance Setup
 
-Complete instructions for deploying the new PHP/MySQL version on a fresh VPS.
+Complete instructions for deploying the new PHP/MySQL version on a fresh VPS with **maximum performance** and **no panel overhead**.
 
 ## 📋 Prerequisites
 
-- Fresh Ubuntu 20.04+ VPS
-- Root access
+- Fresh Ubuntu 22.04 LTS VPS (recommended)
+- Root access  
+- AI Assistant for any command line help needed 🤖
 - Domain pointed to VPS (optional)
 
-## 🔧 Step 1: System Setup
+## 🔧 Step 1: System Setup & Optimization
 
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install required packages
-sudo apt install -y git nginx mysql-server php-fpm php-mysql php-json php-mbstring php-curl python3 python3-pip python3-venv curl
+# Install core packages (optimized selection)
+sudo apt install -y \
+  git nginx mysql-server \
+  php8.1-fpm php8.1-mysql php8.1-json php8.1-mbstring php8.1-curl php8.1-xml \
+  python3 python3-pip python3-venv \
+  curl wget unzip htop ncdu \
+  ufw fail2ban logrotate
 
-# Secure MySQL installation
-sudo mysql_secure_installation
+# Basic security setup
+sudo ufw allow 22
+sudo ufw allow 80  
+sudo ufw allow 443
+sudo ufw --force enable
+
+# Optimize system
+echo 'net.core.somaxconn = 65536' | sudo tee -a /etc/sysctl.conf
+echo 'vm.swappiness = 10' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
 ```
 
 ## 🗄️ Step 2: MySQL Database Setup
