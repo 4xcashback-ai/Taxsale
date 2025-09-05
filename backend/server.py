@@ -5088,6 +5088,44 @@ async def scrape_pvsc_details(assessment_number: str):
         logger.error(f"Error scraping PVSC data for {assessment_number}: {e}")
         return None
 
+# API endpoint to get basic property details (requires authentication and subscription for active properties)
+@api_router.get("/property/{assessment_number}")
+async def get_property_details(
+    assessment_number: str,
+    current_user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """Get basic property details (authentication required for all properties, paid subscription for active properties)"""
+    logger.info(f"BASIC PROPERTY ENDPOINT CALLED for assessment {assessment_number}")
+    
+    try:
+        # Find property by assessment number
+        property_data = await db.tax_sales.find_one({"assessment_number": assessment_number})
+        
+        if not property_data:
+            logger.warning(f"Property {assessment_number} not found in database")
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        # ALWAYS require authentication for property details access
+        if not current_user:
+            logger.info(f"Unauthenticated access attempt to property {assessment_number}")
+            raise HTTPException(status_code=401, detail="Authentication required to view property details")
+        
+        # Check access control based on property status and user subscription
+        check_property_access(property_data, current_user)
+        
+        # Convert ObjectId to string for JSON serialization
+        property_data["_id"] = str(property_data["_id"])
+        
+        logger.info(f"Successfully retrieved property details for {assessment_number}")
+        return property_data
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as they are (401, 403, 404)
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error retrieving property {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # API endpoint to get enhanced property details with PVSC data
 @api_router.get("/property/{assessment_number}/enhanced")
 async def get_enhanced_property_details(
