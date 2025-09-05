@@ -415,14 +415,50 @@ async def get_static_property_map(
             lat, lng = property_doc['latitude'], property_doc['longitude']
             api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
             
-            # Static map with red marker and satellite view
-            static_map_url = (
-                f"https://maps.googleapis.com/maps/api/staticmap?"
-                f"center={lat},{lng}&zoom={zoom}&size={width}x{height}"
-                f"&maptype=satellite&format=png"
-                f"&markers=color:red%7Csize:large%7C{lat},{lng}"
-                f"&key={api_key}"
-            )
+            # Try to get boundary data for overlay
+            boundary_data = None
+            if property_doc.get('pids'):
+                try:
+                    # Get boundary data from NS government API
+                    pid_list = property_doc['pids'] if isinstance(property_doc['pids'], list) else [property_doc['pids']]
+                    for pid in pid_list:
+                        boundary_response = requests.get(
+                            f"https://geoapi.gov.ns.ca/api/v2/ownership-data/{pid}",
+                            timeout=10
+                        )
+                        if boundary_response.status_code == 200:
+                            boundary_data = boundary_response.json()
+                            break
+                except Exception as e:
+                    logger.debug(f"Could not fetch boundary data for {assessment_number}: {e}")
+            
+            # Create static map with boundary overlay if available
+            if boundary_data and boundary_data.get('geometry', {}).get('rings'):
+                # Build path parameter for boundary polygon
+                rings = boundary_data['geometry']['rings'][0]  # First ring
+                path_coords = []
+                for coord in rings[:10]:  # Limit to 10 points for URL length
+                    path_coords.append(f"{coord[1]},{coord[0]}")  # lat,lng format
+                
+                path_param = "path=color:0xff0000ff|weight:3|fillcolor:0xff000040|" + "|".join(path_coords)
+                
+                static_map_url = (
+                    f"https://maps.googleapis.com/maps/api/staticmap?"
+                    f"center={lat},{lng}&zoom={zoom}&size={width}x{height}"
+                    f"&maptype=satellite&format=png"
+                    f"&markers=color:red%7Csize:small%7C{lat},{lng}"
+                    f"&{path_param}"
+                    f"&key={api_key}"
+                )
+            else:
+                # Fallback to simple marker
+                static_map_url = (
+                    f"https://maps.googleapis.com/maps/api/staticmap?"
+                    f"center={lat},{lng}&zoom={zoom}&size={width}x{height}"
+                    f"&maptype=satellite&format=png"
+                    f"&markers=color:red%7Csize:large%7C{lat},{lng}"
+                    f"&key={api_key}"
+                )
             
             # Fetch and return the map
             response = requests.get(static_map_url, timeout=15)
@@ -435,6 +471,8 @@ async def get_static_property_map(
                         "Content-Type": "image/png"
                     }
                 )
+            else:
+                logger.warning(f"Google Static Maps API returned {response.status_code} for {assessment_number}")
         
         # Fallback placeholder
         raise HTTPException(status_code=404, detail="No map data available")
