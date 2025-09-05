@@ -15,7 +15,6 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import re
-import PyPDF2
 import pdfplumber
 import io
 import pandas as pd
