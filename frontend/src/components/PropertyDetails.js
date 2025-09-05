@@ -172,14 +172,18 @@ const PropertyDetails = () => {
       }
     };
 
-    // Use the robust Google Maps loader
-    const initializeMapAsync = async () => {
+    // Initialize map directly (Google Maps API is already loaded by React Wrapper)
+    const initializeMapAsync = () => {
       try {
-        console.log('PropertyDetails: Loading Google Maps API...');
-        await googleMapsLoader.load();
-        initMap();
+        console.log('PropertyDetails: Initializing Google Map...');
+        if (window.google && window.google.maps) {
+          initMap();
+        } else {
+          console.log('PropertyDetails: Google Maps API not yet available, retrying...');
+          setTimeout(initializeMapAsync, 100);
+        }
       } catch (error) {
-        console.error('PropertyDetails: Error loading Google Maps:', error);
+        console.error('PropertyDetails: Error initializing Google Map:', error);
       }
     };
 
