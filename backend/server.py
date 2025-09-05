@@ -4493,13 +4493,14 @@ async def generate_all_boundary_thumbnails():
 
 @api_router.post("/auto-generate-boundaries/{municipality_name}")
 async def auto_generate_boundaries_endpoint(municipality_name: str):
-    """Auto-generate boundary thumbnails for a specific municipality"""
+    """Auto-generate boundary thumbnails for ACTIVE properties in a specific municipality"""
     try:
         count = await auto_generate_boundaries_for_municipality(municipality_name)
         return {
             "status": "success",
             "municipality": municipality_name,
-            "boundaries_generated": count
+            "boundaries_generated": count,
+            "note": "Only processed ACTIVE properties"
         }
     except Exception as e:
         logger.error(f"Error auto-generating boundaries for {municipality_name}: {e}")
