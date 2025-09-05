@@ -4378,6 +4378,82 @@ async def scrape_halifax():
     result = await scrape_halifax_tax_sales()
     return result
 
+@api_router.post("/generate-all-boundary-thumbnails")
+async def generate_all_boundary_thumbnails():
+    """Generate boundary thumbnails for all properties with PID numbers"""
+    try:
+        # Get all properties that need boundary generation
+        properties = await db.tax_sales.find({
+            "pid_number": {"$exists": True, "$ne": None},
+            "$or": [
+                {"boundary_screenshot": {"$regex": f"^boundary_[0-9]+\\.png$"}},  # Basic format
+                {"boundary_screenshot": {"$exists": False}},  # Missing
+                {"boundary_screenshot": None}  # Null
+            ]
+        }).to_list(1000)
+
+        if not properties:
+            return {
+                "status": "success",
+                "message": "No properties need boundary thumbnail generation",
+                "properties_updated": 0
+            }
+
+        logger.info(f"Starting boundary thumbnail generation for {len(properties)} properties...")
+        
+        successful_generations = 0
+        failed_generations = 0
+        
+        for prop in properties:
+            assessment_number = prop.get("assessment_number")
+            pid_number = prop.get("pid_number")
+            
+            if not assessment_number or not pid_number:
+                continue
+                
+            try:
+                generated_filename = await auto_generate_boundary_thumbnail(assessment_number, pid_number)
+                if generated_filename != f"boundary_{assessment_number}.png":
+                    # Update the property with the actual generated filename
+                    await db.tax_sales.update_one(
+                        {"_id": prop["_id"]},
+                        {"$set": {"boundary_screenshot": generated_filename}}
+                    )
+                    successful_generations += 1
+                    logger.info(f"✅ Generated boundary for {assessment_number}: {generated_filename}")
+                else:
+                    failed_generations += 1
+                    
+            except Exception as e:
+                failed_generations += 1
+                logger.warning(f"Failed to generate boundary for {assessment_number}: {e}")
+
+        return {
+            "status": "success",
+            "message": f"Boundary thumbnail generation completed",
+            "properties_processed": len(properties),
+            "successful_generations": successful_generations,
+            "failed_generations": failed_generations
+        }
+
+    except Exception as e:
+        logger.error(f"Error in batch boundary generation: {e}")
+        raise HTTPException(status_code=500, detail=f"Batch boundary generation failed: {str(e)}")
+
+@api_router.post("/auto-generate-boundaries/{municipality_name}")
+async def auto_generate_boundaries_endpoint(municipality_name: str):
+    """Auto-generate boundary thumbnails for a specific municipality"""
+    try:
+        count = await auto_generate_boundaries_for_municipality(municipality_name)
+        return {
+            "status": "success",
+            "municipality": municipality_name,
+            "boundaries_generated": count
+        }
+    except Exception as e:
+        logger.error(f"Error auto-generating boundaries for {municipality_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to auto-generate boundaries: {str(e)}")
+
 @api_router.post("/generate-boundary-thumbnail/{assessment_number}")
 async def generate_boundary_thumbnail(assessment_number: str):
     """Generate a thumbnail screenshot with NSPRD boundaries using Google Maps Static API"""
@@ -4386,10 +4462,10 @@ async def generate_boundary_thumbnail(assessment_number: str):
         property_doc = await db.tax_sales.find_one({"assessment_number": assessment_number})
         if not property_doc:
             raise HTTPException(status_code=404, detail="Property not found")
-        
+
         if not property_doc.get('latitude') or not property_doc.get('longitude'):
             raise HTTPException(status_code=400, detail="Property coordinates not available")
-        
+
         # Get NSPRD boundary data
         boundary_data = None
         if property_doc.get('pid_number'):
@@ -4402,7 +4478,7 @@ async def generate_boundary_thumbnail(assessment_number: str):
                         boundary_data = boundary_response
             except Exception as e:
                 logger.warning(f"Could not fetch boundary data for PID {property_doc['pid_number']}: {e}")
-        
+
         # Handle both single PID and multi-PID boundary data
         rings = None
         if boundary_data:
@@ -4412,9 +4488,9 @@ async def generate_boundary_thumbnail(assessment_number: str):
             # For single PID properties, use regular geometry
             elif boundary_data.get('geometry', {}).get('rings'):
                 rings = boundary_data['geometry']['rings']
-        
+
         if not rings:
-            raise HTTPException(status_code=400, detail="No boundary data available for this property")
+            raise HTTPException(status_code=404, detail="No boundary data available for this property")
         
         # Generate Google Maps Static API URL with boundary overlay
         import urllib.parse
