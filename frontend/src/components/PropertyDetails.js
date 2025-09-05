@@ -281,40 +281,62 @@ const PropertyDetails = () => {
     try {
       setLoading(true);
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      const token = localStorage.getItem('authToken');
       
-      // Find the property by assessment number
-      const response = await fetch(`${backendUrl}/api/tax-sales`);
-      const properties = await response.json();
-      
-      const foundProperty = properties.find(p => p.assessment_number === assessmentNumber);
-      
-      if (foundProperty) {
-        setProperty(foundProperty);
-        
-        // Try to fetch enhanced property details
-        try {
-          const token = localStorage.getItem('authToken');
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
-          
-          const enhancedResponse = await fetch(`${backendUrl}/api/property/${assessmentNumber}/enhanced`, {
-            headers: headers
-          });
-          if (enhancedResponse.ok) {
-            const enhanced = await enhancedResponse.json();
-            setPropertyDetails(enhanced);
-          }
-        } catch (error) {
-          console.log('Enhanced details not available:', error);
-        }
-      } else {
-        setError('Property not found');
+      // Check if user is authenticated
+      if (!token) {
+        setError('Please log in to view property details');
+        return;
       }
+      
+      // Use the dedicated property endpoint
+      const headers = { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      
+      const response = await fetch(`${backendUrl}/api/property/${assessmentNumber}`, {
+        headers: headers
+      });
+      
+      if (response.status === 401) {
+        setError('Please log in to view property details');
+        return;
+      }
+      
+      if (response.status === 403) {
+        setError('Paid subscription required to view active property details');
+        return;
+      }
+      
+      if (response.status === 404) {
+        setError('Property not found');
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const foundProperty = await response.json();
+      setProperty(foundProperty);
+      
+      // Try to fetch enhanced property details (PVSC data)
+      try {
+        const enhancedResponse = await fetch(`${backendUrl}/api/property/${assessmentNumber}/enhanced`, {
+          headers: headers
+        });
+        if (enhancedResponse.ok) {
+          const enhanced = await enhancedResponse.json();
+          setPropertyDetails(enhanced);
+        }
+      } catch (error) {
+        console.log('Enhanced details not available:', error);
+      }
+      
     } catch (error) {
       console.error('Error fetching property details:', error);
-      setError('Failed to load property details');
+      setError('Failed to load property details. Please try again.');
     } finally {
       setLoading(false);
     }
