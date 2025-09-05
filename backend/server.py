@@ -4261,11 +4261,12 @@ async def auto_generate_boundary_thumbnail(assessment_number: str, pid_number: s
         return f"boundary_{assessment_number}.png"  # Fallback
 
 async def auto_generate_boundaries_for_municipality(municipality_name: str):
-    """Helper function to auto-generate boundaries for all properties in a municipality"""
+    """Helper function to auto-generate boundaries for ACTIVE properties in a municipality"""
     try:
-        # Get all properties for the municipality that don't have proper boundary screenshots
+        # Get ACTIVE properties for the municipality that don't have proper boundary screenshots
         properties = await db.tax_sales.find({
             "municipality_name": municipality_name,
+            "status": "active",  # Only process active properties
             "$or": [
                 {"boundary_screenshot": {"$regex": f"^boundary_[0-9]+\\.png$"}},  # Basic format
                 {"boundary_screenshot": {"$exists": False}},  # Missing
