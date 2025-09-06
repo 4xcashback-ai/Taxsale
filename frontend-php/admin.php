@@ -251,9 +251,12 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                                 
                                 <h6>Execution Log:</h6>
                                 <?php foreach ($system_result['steps'] as $step): ?>
-                                    <div class="mb-2">
-                                        <strong><?php echo htmlspecialchars($step['command']); ?>:</strong>
-                                        <pre class="bg-light p-2 mt-1"><?php echo htmlspecialchars($step['output']); ?></pre>
+                                    <div class="mb-3 border rounded p-2">
+                                        <strong><?php echo htmlspecialchars($step['command']); ?></strong>
+                                        <?php if (isset($step['time'])): ?>
+                                            <small class="text-muted">- <?php echo $step['time']; ?></small>
+                                        <?php endif; ?>
+                                        <pre class="bg-light p-2 mt-1 mb-0" style="font-size: 0.9em;"><?php echo htmlspecialchars($step['output']); ?></pre>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
