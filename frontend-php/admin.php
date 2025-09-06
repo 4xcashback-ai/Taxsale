@@ -10,6 +10,8 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['is_admin']) {
 
 // Handle scraping requests
 $scrape_result = null;
+$system_result = null;
+
 if ($_POST && isset($_POST['scrape_action'])) {
     $action = $_POST['scrape_action'];
     $api_url = API_BASE_URL . '/admin/scrape/' . $action;
@@ -28,6 +30,30 @@ if ($_POST && isset($_POST['scrape_action'])) {
     
     if ($response) {
         $scrape_result = json_decode($response, true);
+    }
+}
+
+// Handle system update requests
+if ($_POST && isset($_POST['system_action'])) {
+    $action = $_POST['system_action'];
+    
+    if ($action === 'git_pull_restart') {
+        $system_result = ['action' => 'git_pull_restart', 'steps' => []];
+        
+        // Execute git pull
+        $git_output = shell_exec('cd /var/www/tax-sale-compass && git pull origin main 2>&1');
+        $system_result['steps'][] = ['command' => 'git pull', 'output' => $git_output];
+        
+        // Restart backend service
+        $backend_output = shell_exec('sudo systemctl restart tax-sale-backend 2>&1');
+        $system_result['steps'][] = ['command' => 'restart backend', 'output' => $backend_output];
+        
+        // Restart PHP-FPM
+        $php_output = shell_exec('sudo systemctl restart php8.1-fpm 2>&1');
+        $system_result['steps'][] = ['command' => 'restart php-fpm', 'output' => $php_output];
+        
+        $system_result['success'] = true;
+        $system_result['message'] = 'System updated and services restarted successfully!';
     }
 }
 
