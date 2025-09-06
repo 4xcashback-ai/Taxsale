@@ -22,7 +22,9 @@ if ($status) {
 }
 
 if ($search) {
-    $query .= " AND (assessment_number LIKE ? OR civic_address LIKE ?)";
+    // Prioritize civic_address search and make it more flexible
+    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
+    $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
