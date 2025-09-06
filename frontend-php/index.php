@@ -174,6 +174,70 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                 <p>Try adjusting your search criteria.</p>
             </div>
         <?php endif; ?>
+
+        <!-- Pagination -->
+        <?php if ($total_pages > 1): ?>
+            <nav aria-label="Property search pagination" class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted">
+                        Showing <?php echo (($page - 1) * $per_page) + 1; ?> to <?php echo min($page * $per_page, $total_properties); ?> of <?php echo $total_properties; ?> properties
+                    </div>
+                </div>
+                
+                <ul class="pagination justify-content-center">
+                    <!-- Previous page -->
+                    <?php if ($page > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">Previous</a>
+                        </li>
+                    <?php else: ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    <?php endif; ?>
+
+                    <!-- Page numbers -->
+                    <?php
+                    $start = max(1, $page - 2);
+                    $end = min($total_pages, $page + 2);
+                    
+                    if ($start > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>">1</a>
+                        </li>
+                        <?php if ($start > 2): ?>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <?php endif;
+                    endif;
+
+                    for ($i = $start; $i <= $end; $i++): ?>
+                        <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php endfor;
+
+                    if ($end < $total_pages): ?>
+                        <?php if ($end < $total_pages - 1): ?>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $total_pages])); ?>"><?php echo $total_pages; ?></a>
+                        </li>
+                    <?php endif; ?>
+
+                    <!-- Next page -->
+                    <?php if ($page < $total_pages): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">Next</a>
+                        </li>
+                    <?php else: ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        <?php endif; ?>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
