@@ -13,8 +13,8 @@ class MySQLManager:
         self.connection_config = {
             'host': 'localhost',
             'database': 'tax_sale_compass',
-            'user': 'root',
-            'password': '',
+            'user': 'taxsale',
+            'password': 'SecureTaxSale2025!',
             'auth_plugin': 'mysql_native_password'
         }
         
