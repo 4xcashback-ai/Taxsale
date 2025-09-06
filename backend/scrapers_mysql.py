@@ -124,98 +124,73 @@ class TaxSaleScraper:
             }
 
     def _parse_halifax_pdf_text(self, text: str) -> List[Dict]:
-        """Parse Halifax PDF text to extract property information"""
+        """Parse Halifax PDF text to extract property information - SIMPLE VERSION"""
         properties = []
         
-        # Split text into lines and look for property patterns
+        # Split text into lines
         lines = text.split('\n')
         
-        for i, line in enumerate(lines):
+        for line in lines:
             line = line.strip()
+            if not line:
+                continue
+                
+            # Look for lines with assessment numbers (8+ digits)
+            assessment_matches = re.findall(r'\b(\d{8,})\b', line)
             
-            # Look for patterns that indicate property information
-            # Halifax format typically includes assessment numbers, addresses, and amounts
-            if re.search(r'\b\d{8,}\b', line):  # Assessment number pattern
+            for assessment_number in assessment_matches:
                 try:
-                    # Extract assessment number (should be 8+ digits)
-                    assessment_matches = re.findall(r'\b(\d{8,})\b', line)
+                    # Create a simple property entry
+                    # Remove the assessment number from the line to get remaining text
+                    remaining = line.replace(assessment_number, '').strip()
                     
-                    for assessment_number in assessment_matches:
-                        # Now properly parse the line to extract different components
-                        remaining_text = line.replace(assessment_number, '', 1).strip()
+                    # Simple address extraction - just take the first reasonable text
+                    address_parts = []
+                    words = remaining.split()
+                    
+                    # Look for address-like words
+                    for i, word in enumerate(words):
+                        if any(addr_word in word.lower() for addr_word in ['st', 'street', 'rd', 'road', 'ave', 'avenue', 'dr', 'drive', 'ln', 'lane', 'lot']):
+                            # Take this word and a few before/after it
+                            start = max(0, i-3)
+                            end = min(len(words), i+3)
+                            address_parts = words[start:end]
+                            break
+                    
+                    # Create clean address
+                    if address_parts:
+                        address = ' '.join(address_parts)
+                        # Clean up obvious non-address content
+                        address = re.sub(r'[A-Z]{3,}\s+[A-Z]{3,}', '', address)  # Remove names
+                        address = re.sub(r'\$[\d,]+\.?\d*', '', address)  # Remove money
+                        address = re.sub(r'\s+', ' ', address).strip()
+                    else:
+                        address = f"Halifax Property {assessment_number}"
+                    
+                    # Simple tax amount extraction
+                    tax_amount = 0.0
+                    money_match = re.search(r'\$?([\d,]+\.?\d*)', remaining)
+                    if money_match:
+                        try:
+                            tax_amount = float(money_match.group(1).replace(',', ''))
+                        except:
+                            tax_amount = 0.0
+                    
+                    if len(address) > 5:  # Only if we have a reasonable address
+                        property_data = {
+                            'assessment_number': assessment_number,
+                            'civic_address': address,
+                            'municipality': 'Halifax Regional Municipality',
+                            'province': 'Nova Scotia',
+                            'total_taxes': tax_amount,
+                            'status': 'active',
+                            'tax_year': 2024,
+                            'created_at': datetime.now()
+                        }
+                        properties.append(property_data)
                         
-                        # Extract address - look for street address patterns
-                        address = ""
-                        address_patterns = [
-                            r'([A-Za-z0-9\s,]+(?:Street|St|Road|Rd|Avenue|Ave|Drive|Dr|Lane|Ln|Crescent|Cres|Circle|Cir)[A-Za-z0-9\s,]*)',
-                            r'([A-Za-z0-9\s,]+ (?:Lot|Unit|Apt|#)\s*[A-Za-z0-9-]+[A-Za-z0-9\s,]*)',
-                            r'(Lot\s+[A-Za-z0-9-]+[A-Za-z0-9\s,]*)',
-                            r'([A-Za-z\s]+ Halifax[A-Za-z\s]*)'
-                        ]
-                        
-                        for pattern in address_patterns:
-                            addr_match = re.search(pattern, remaining_text, re.IGNORECASE)
-                            if addr_match:
-                                potential_address = addr_match.group(1).strip()
-                                # Clean up the address - remove owner names and extra info
-                                potential_address = re.sub(r'[A-Z]{2,}\s+[A-Z]{2,}.*?(?=[A-Z][a-z]|$)', '', potential_address)
-                                potential_address = re.sub(r'\s+', ' ', potential_address).strip()
-                                if len(potential_address) > 5 and not potential_address.replace(',', '').replace(' ', '').isdigit():
-                                    address = potential_address
-                                    break
-                        
-                        # If no street address found, look for area/location names
-                        if not address:
-                            location_match = re.search(r'([A-Za-z\s]+(?:Halifax|Dartmouth|Bedford|Sackville)[A-Za-z\s]*)', remaining_text, re.IGNORECASE)
-                            if location_match:
-                                address = location_match.group(1).strip()
-                        
-                        # Extract tax amount - look for currency patterns
-                        tax_amount = 0.0
-                        amount_patterns = [
-                            r'\$([0-9,]+\.?[0-9]*)',
-                            r'([0-9,]+\.[0-9]{2})',
-                            r'\$?([0-9,]+)'
-                        ]
-                        
-                        for pattern in amount_patterns:
-                            amount_match = re.search(pattern, remaining_text)
-                            if amount_match:
-                                amount_str = amount_match.group(1).replace(',', '')
-                                try:
-                                    potential_amount = float(amount_str)
-                                    # Only consider reasonable tax amounts (between $100 and $100,000)
-                                    if 100 <= potential_amount <= 100000:
-                                        tax_amount = potential_amount
-                                        break
-                                except ValueError:
-                                    continue
-                        
-                        # Default address if nothing found
-                        if not address:
-                            address = f"Halifax Property {assessment_number}"
-                        
-                        # Clean address of any remaining unwanted content
-                        address = re.sub(r'\$[0-9,]+\.?[0-9]*', '', address)  # Remove any money amounts
-                        address = re.sub(r'\b\d{8,}\b', '', address)  # Remove assessment numbers
-                        address = re.sub(r'\s+', ' ', address).strip()  # Clean whitespace
-                        
-                        if assessment_number and address:
-                            property_data = {
-                                'assessment_number': assessment_number,
-                                'civic_address': address,
-                                'municipality': 'Halifax Regional Municipality',
-                                'province': 'Nova Scotia',
-                                'total_taxes': tax_amount,
-                                'status': 'active',
-                                'tax_year': 2024,
-                                'created_at': datetime.now()
-                            }
-                            properties.append(property_data)
-                            logger.info(f"Parsed Halifax property: {assessment_number} | {address} | ${tax_amount}")
-                            
                 except Exception as e:
-                    logger.warning(f"Error parsing Halifax property line: {e}")
+                    logger.warning(f"Error parsing Halifax line: {e}")
                     continue
         
         return properties
