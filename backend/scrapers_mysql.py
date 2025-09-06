@@ -6,6 +6,7 @@ Scrapes tax sale data and saves directly to MySQL
 import requests
 import json
 import re
+from datetime import datetime
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 import logging
