@@ -218,7 +218,7 @@ class TaxSaleScraper:
             'success': True,
             'total_properties_scraped': total_properties,
             'municipality_results': results,
-            'timestamp': mysql_db.execute_query("SELECT NOW() as current_time")[0]['current_time']
+            'timestamp': mysql_db.execute_query("SELECT NOW() as current_time")[0]['current_time'].isoformat()
         }
 
 # Global scraper instance
