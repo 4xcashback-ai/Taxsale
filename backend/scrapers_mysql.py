@@ -209,10 +209,17 @@ class TaxSaleScraper:
                         if assessment_matches and not assessment_number:
                             assessment_number = assessment_matches[0]
                         
-                        # Look for address-like content
-                        if any(word in value_str.lower() for word in ['street', 'road', 'avenue', 'drive', 'lane', 'st', 'rd', 'ave', 'dr', 'ln', 'lot']) and len(value_str) > 5:
-                            if address == "Halifax Property":  # Only update if we haven't found one yet
-                                address = value_str
+                        # Look for address-like content (improved logic)
+                        if any(word in value_str.lower() for word in ['street', 'road', 'avenue', 'drive', 'lane', 'st', 'rd', 'ave', 'dr', 'ln', 'lot', 'way', 'place', 'crescent']) and len(value_str) > 5:
+                            # Clean up the address - remove obvious owner names
+                            clean_addr = value_str
+                            # Remove patterns that look like names (multiple capitalized words)
+                            clean_addr = re.sub(r'\b[A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,?\s*', '', clean_addr)
+                            # Remove trailing commas and spaces
+                            clean_addr = re.sub(r',\s*$', '', clean_addr).strip()
+                            
+                            if len(clean_addr) > 5 and address == "Halifax Property":
+                                address = clean_addr
                         
                         # Look for dollar amounts
                         money_matches = re.findall(r'\$?([0-9,]+\.?[0-9]*)', value_str)
