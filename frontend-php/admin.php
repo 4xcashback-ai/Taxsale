@@ -161,6 +161,65 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             </div>
         </div>
 
+        <!-- System Update Controls -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>System Updates</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Update the application and restart services:</p>
+                        
+                        <form method="POST" class="d-inline" onsubmit="return confirm('This will pull the latest code and restart services. Continue?')">
+                            <input type="hidden" name="system_action" value="git_pull_restart">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-sync-alt"></i> Git Pull & Restart Services
+                            </button>
+                        </form>
+                        
+                        <small class="text-muted d-block mt-2">
+                            This will: 1) Pull latest code from GitHub, 2) Restart backend service, 3) Restart PHP-FPM
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Update Results -->
+        <?php if ($system_result): ?>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>System Update Results</h4>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($system_result['success']): ?>
+                            <div class="alert alert-success">
+                                <h5>✅ System Update Successful!</h5>
+                                <p><?php echo htmlspecialchars($system_result['message']); ?></p>
+                                
+                                <h6>Execution Log:</h6>
+                                <?php foreach ($system_result['steps'] as $step): ?>
+                                    <div class="mb-2">
+                                        <strong><?php echo htmlspecialchars($step['command']); ?>:</strong>
+                                        <pre class="bg-light p-2 mt-1"><?php echo htmlspecialchars($step['output']); ?></pre>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-danger">
+                                <h5>❌ System Update Failed</h5>
+                                <p><?php echo htmlspecialchars($system_result['error'] ?? 'Unknown error'); ?></p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Scraping Results -->
         <?php if ($scrape_result): ?>
         <div class="row mb-4">
