@@ -24,8 +24,8 @@ class TaxSaleScraper:
         })
 
     def scrape_halifax_properties(self) -> Dict:
-        """Scrape Halifax tax sale properties from the actual PDF"""
-        logger.info("Starting Halifax tax sale scraping...")
+        """Scrape Halifax tax sale properties using Tabula for table extraction"""
+        logger.info("Starting Halifax tax sale scraping with Tabula...")
         
         try:
             # Use the actual Halifax PDF URL
@@ -35,58 +35,87 @@ class TaxSaleScraper:
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
             
-            logger.info(f"Downloading Halifax PDF from: {pdf_url}")
+            logger.info(f"Downloading Halifax PDF for table extraction: {pdf_url}")
             pdf_response = self.session.get(pdf_url, headers=headers, timeout=60)
             pdf_response.raise_for_status()
             
             properties = []
             
-            # Parse PDF with pdfplumber (preferred) or PyPDF2 (fallback)
-            try:
-                import pdfplumber
+            # Save PDF to temporary file for Tabula
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                tmp_file.write(pdf_response.content)
+                tmp_file.flush()
                 
-                with pdfplumber.open(io.BytesIO(pdf_response.content)) as pdf:
-                    all_text = ""
-                    for page in pdf.pages:
-                        page_text = page.extract_text()
-                        if page_text:
-                            all_text += page_text + "\n"
-                    
-                    logger.info(f"Extracted Halifax PDF text: {len(all_text)} characters")
-                    
-                    # Parse the extracted text for property data
-                    properties = self._parse_halifax_pdf_text(all_text)
-                    
-            except ImportError:
-                logger.warning("pdfplumber not available, falling back to PyPDF2")
                 try:
-                    import PyPDF2
+                    # Try Tabula-py for table extraction
+                    import tabula
                     
-                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_response.content))
-                    all_text = ""
-                    for page in pdf_reader.pages:
-                        all_text += page.extract_text() + "\n"
+                    logger.info("Using Tabula to extract tables from Halifax PDF")
                     
-                    properties = self._parse_halifax_pdf_text(all_text)
+                    # Extract all tables from the PDF
+                    tables = tabula.read_pdf(tmp_file.name, pages='all', multiple_tables=True)
                     
-                except Exception as e:
-                    logger.error(f"PDF parsing failed: {e}")
-                    return {
-                        'success': False,
-                        'error': f'PDF parsing failed: {str(e)}',
-                        'municipality': 'Halifax Regional Municipality'
-                    }
+                    logger.info(f"Found {len(tables)} tables in Halifax PDF")
+                    
+                    # Process each table
+                    for table_idx, df in enumerate(tables):
+                        logger.info(f"Processing table {table_idx + 1} with shape {df.shape}")
+                        
+                        # Convert DataFrame to property data
+                        table_properties = self._parse_halifax_table(df, table_idx)
+                        properties.extend(table_properties)
+                    
+                except ImportError:
+                    logger.warning("Tabula-py not available, falling back to pdfplumber")
+                    # Fallback to pdfplumber if Tabula not available
+                    try:
+                        import pdfplumber
+                        
+                        with pdfplumber.open(tmp_file.name) as pdf:
+                            all_text = ""
+                            for page in pdf.pages:
+                                page_text = page.extract_text()
+                                if page_text:
+                                    all_text += page_text + "\n"
+                            
+                            # Use the old text parsing as fallback
+                            properties = self._parse_halifax_pdf_text(all_text)
+                            
+                    except Exception as e:
+                        logger.error(f"Both Tabula and pdfplumber failed: {e}")
+                        return {
+                            'success': False,
+                            'error': f'PDF parsing failed: {str(e)}',
+                            'municipality': 'Halifax Regional Municipality'
+                        }
+                
+                # Clean up temp file
+                import os
+                try:
+                    os.unlink(tmp_file.name)
+                except:
+                    pass
+            
+            # Remove duplicates based on assessment number
+            unique_properties = {}
+            for prop in properties:
+                assessment = prop['assessment_number']
+                if assessment not in unique_properties:
+                    unique_properties[assessment] = prop
+            
+            final_properties = list(unique_properties.values())
             
             # Insert properties into database
-            for property_data in properties:
+            for property_data in final_properties:
                 mysql_db.insert_property(property_data)
             
-            logger.info(f"Halifax scraping completed. Found {len(properties)} properties.")
+            logger.info(f"Halifax scraping completed. Found {len(final_properties)} unique properties.")
             return {
                 'success': True,
                 'municipality': 'Halifax Regional Municipality',
-                'properties_found': len(properties),
-                'properties': properties[:5]  # Return first 5 as sample
+                'properties_found': len(final_properties),
+                'properties': final_properties[:5]  # Return first 5 as sample
             }
             
         except Exception as e:
