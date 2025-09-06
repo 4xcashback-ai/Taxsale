@@ -143,21 +143,37 @@ class TaxSaleScraper:
                 except:
                     pass
             
-            # Remove duplicates
+            # Remove duplicates and debug
+            logger.info(f"Total properties found before deduplication: {len(properties)}")
+            
             unique_properties = {}
+            duplicates_found = 0
+            
             for prop in properties:
                 assessment = prop['assessment_number']
-                if assessment not in unique_properties:
+                if assessment in unique_properties:
+                    duplicates_found += 1
+                    logger.warning(f"Duplicate found: {assessment} - {prop['civic_address']}")
+                else:
                     unique_properties[assessment] = prop
             
             final_properties = list(unique_properties.values())
             
-            logger.info(f"Extraction methods used: {extraction_methods}")
-            logger.info(f"Total unique properties found: {len(final_properties)}")
+            logger.info(f"Deduplication results:")
+            logger.info(f"  - Total found: {len(properties)}")
+            logger.info(f"  - Duplicates removed: {duplicates_found}")
+            logger.info(f"  - Final unique: {len(final_properties)}")
             
-            # Insert properties into database
+            # Only insert unique properties
+            inserted_count = 0
             for property_data in final_properties:
-                mysql_db.insert_property(property_data)
+                try:
+                    mysql_db.insert_property(property_data)
+                    inserted_count += 1
+                except Exception as e:
+                    logger.error(f"Error inserting property {property_data['assessment_number']}: {e}")
+            
+            logger.info(f"Successfully inserted {inserted_count} properties into database")
             
             return {
                 'success': True,
