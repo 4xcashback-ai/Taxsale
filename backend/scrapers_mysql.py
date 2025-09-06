@@ -23,34 +23,58 @@ class TaxSaleScraper:
         })
 
     def scrape_halifax_properties(self) -> Dict:
-        """Scrape Halifax tax sale properties - BASIC WORKING VERSION"""
+        """Scrape Halifax tax sale properties from the actual PDF"""
         logger.info("Starting Halifax tax sale scraping...")
         
         try:
-            # For now, return a small set of known working properties
-            # This ensures we have clean data while we debug the PDF parsing
-            properties = [
-                {
-                    'assessment_number': '00123456',
-                    'civic_address': 'Halifax Test Property 1',
-                    'municipality': 'Halifax Regional Municipality',
-                    'province': 'Nova Scotia',
-                    'total_taxes': 2500.00,
-                    'status': 'active',
-                    'tax_year': 2024,
-                    'created_at': datetime.now()
-                },
-                {
-                    'assessment_number': '00789012',
-                    'civic_address': 'Halifax Test Property 2',
-                    'municipality': 'Halifax Regional Municipality',
-                    'province': 'Nova Scotia',
-                    'total_taxes': 3200.50,
-                    'status': 'active',
-                    'tax_year': 2024,
-                    'created_at': datetime.now()
-                }
-            ]
+            # Use the actual Halifax PDF URL
+            pdf_url = "https://cdn.halifax.ca/sites/default/files/documents/home-property/property-taxes/sept16.2025newspaper.website-sept3.25.pdf"
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            
+            logger.info(f"Downloading Halifax PDF from: {pdf_url}")
+            pdf_response = self.session.get(pdf_url, headers=headers, timeout=60)
+            pdf_response.raise_for_status()
+            
+            properties = []
+            
+            # Parse PDF with pdfplumber (preferred) or PyPDF2 (fallback)
+            try:
+                import pdfplumber
+                
+                with pdfplumber.open(io.BytesIO(pdf_response.content)) as pdf:
+                    all_text = ""
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            all_text += page_text + "\n"
+                    
+                    logger.info(f"Extracted Halifax PDF text: {len(all_text)} characters")
+                    
+                    # Parse the extracted text for property data
+                    properties = self._parse_halifax_pdf_text(all_text)
+                    
+            except ImportError:
+                logger.warning("pdfplumber not available, falling back to PyPDF2")
+                try:
+                    import PyPDF2
+                    
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_response.content))
+                    all_text = ""
+                    for page in pdf_reader.pages:
+                        all_text += page.extract_text() + "\n"
+                    
+                    properties = self._parse_halifax_pdf_text(all_text)
+                    
+                except Exception as e:
+                    logger.error(f"PDF parsing failed: {e}")
+                    return {
+                        'success': False,
+                        'error': f'PDF parsing failed: {str(e)}',
+                        'municipality': 'Halifax Regional Municipality'
+                    }
             
             # Insert properties into database
             for property_data in properties:
@@ -61,7 +85,7 @@ class TaxSaleScraper:
                 'success': True,
                 'municipality': 'Halifax Regional Municipality',
                 'properties_found': len(properties),
-                'properties': properties
+                'properties': properties[:5]  # Return first 5 as sample
             }
             
         except Exception as e:
