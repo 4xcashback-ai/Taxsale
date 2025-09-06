@@ -137,33 +137,73 @@ class TaxSaleScraper:
             # Halifax format typically includes assessment numbers, addresses, and amounts
             if re.search(r'\b\d{8,}\b', line):  # Assessment number pattern
                 try:
-                    # Extract assessment number
-                    assessment_match = re.search(r'\b(\d{8,})\b', line)
-                    if assessment_match:
-                        assessment_number = assessment_match.group(1)
+                    # Extract assessment number (should be 8+ digits)
+                    assessment_matches = re.findall(r'\b(\d{8,})\b', line)
+                    
+                    for assessment_number in assessment_matches:
+                        # Now properly parse the line to extract different components
+                        remaining_text = line.replace(assessment_number, '', 1).strip()
                         
-                        # Look for address in the same line or nearby lines
+                        # Extract address - look for street address patterns
                         address = ""
-                        for j in range(max(0, i-2), min(len(lines), i+3)):
-                            if lines[j] and not re.search(r'^\d+\.?\d*$', lines[j].strip()):
-                                if any(word in lines[j].lower() for word in ['street', 'road', 'avenue', 'drive', 'lane', 'halifax']):
-                                    address = lines[j].strip()
+                        address_patterns = [
+                            r'([A-Za-z0-9\s,]+(?:Street|St|Road|Rd|Avenue|Ave|Drive|Dr|Lane|Ln|Crescent|Cres|Circle|Cir)[A-Za-z0-9\s,]*)',
+                            r'([A-Za-z0-9\s,]+ (?:Lot|Unit|Apt|#)\s*[A-Za-z0-9-]+[A-Za-z0-9\s,]*)',
+                            r'(Lot\s+[A-Za-z0-9-]+[A-Za-z0-9\s,]*)',
+                            r'([A-Za-z\s]+ Halifax[A-Za-z\s]*)'
+                        ]
+                        
+                        for pattern in address_patterns:
+                            addr_match = re.search(pattern, remaining_text, re.IGNORECASE)
+                            if addr_match:
+                                potential_address = addr_match.group(1).strip()
+                                # Clean up the address - remove owner names and extra info
+                                potential_address = re.sub(r'[A-Z]{2,}\s+[A-Z]{2,}.*?(?=[A-Z][a-z]|$)', '', potential_address)
+                                potential_address = re.sub(r'\s+', ' ', potential_address).strip()
+                                if len(potential_address) > 5 and not potential_address.replace(',', '').replace(' ', '').isdigit():
+                                    address = potential_address
                                     break
                         
-                        # Look for tax amount
-                        tax_amount = 0.0
-                        amount_match = re.search(r'\$?[\d,]+\.?\d*', line)
-                        if amount_match:
-                            amount_str = amount_match.group(0).replace('$', '').replace(',', '')
-                            try:
-                                tax_amount = float(amount_str)
-                            except ValueError:
-                                tax_amount = 0.0
+                        # If no street address found, look for area/location names
+                        if not address:
+                            location_match = re.search(r'([A-Za-z\s]+(?:Halifax|Dartmouth|Bedford|Sackville)[A-Za-z\s]*)', remaining_text, re.IGNORECASE)
+                            if location_match:
+                                address = location_match.group(1).strip()
                         
-                        if assessment_number:
+                        # Extract tax amount - look for currency patterns
+                        tax_amount = 0.0
+                        amount_patterns = [
+                            r'\$([0-9,]+\.?[0-9]*)',
+                            r'([0-9,]+\.[0-9]{2})',
+                            r'\$?([0-9,]+)'
+                        ]
+                        
+                        for pattern in amount_patterns:
+                            amount_match = re.search(pattern, remaining_text)
+                            if amount_match:
+                                amount_str = amount_match.group(1).replace(',', '')
+                                try:
+                                    potential_amount = float(amount_str)
+                                    # Only consider reasonable tax amounts (between $100 and $100,000)
+                                    if 100 <= potential_amount <= 100000:
+                                        tax_amount = potential_amount
+                                        break
+                                except ValueError:
+                                    continue
+                        
+                        # Default address if nothing found
+                        if not address:
+                            address = f"Halifax Property {assessment_number}"
+                        
+                        # Clean address of any remaining unwanted content
+                        address = re.sub(r'\$[0-9,]+\.?[0-9]*', '', address)  # Remove any money amounts
+                        address = re.sub(r'\b\d{8,}\b', '', address)  # Remove assessment numbers
+                        address = re.sub(r'\s+', ' ', address).strip()  # Clean whitespace
+                        
+                        if assessment_number and address:
                             property_data = {
                                 'assessment_number': assessment_number,
-                                'civic_address': address or f"Property {assessment_number}",
+                                'civic_address': address,
                                 'municipality': 'Halifax Regional Municipality',
                                 'province': 'Nova Scotia',
                                 'total_taxes': tax_amount,
@@ -172,6 +212,7 @@ class TaxSaleScraper:
                                 'created_at': datetime.now()
                             }
                             properties.append(property_data)
+                            logger.info(f"Parsed Halifax property: {assessment_number} | {address} | ${tax_amount}")
                             
                 except Exception as e:
                     logger.warning(f"Error parsing Halifax property line: {e}")
