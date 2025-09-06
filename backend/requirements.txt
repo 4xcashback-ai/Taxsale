@@ -8,3 +8,8 @@ mysql-connector-python
 requests
 beautifulsoup4
 python-dotenv
+PyJWT
+pdfplumber
+PyPDF2
+tabula-py
+pandas
