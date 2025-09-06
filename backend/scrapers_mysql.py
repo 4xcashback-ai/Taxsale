@@ -126,6 +126,77 @@ class TaxSaleScraper:
                 'municipality': 'Halifax Regional Municipality'
             }
 
+    def _parse_halifax_table(self, df, table_idx: int) -> List[Dict]:
+        """Parse a DataFrame table from Halifax PDF into property data"""
+        properties = []
+        
+        logger.info(f"Table {table_idx + 1} columns: {list(df.columns)}")
+        logger.info(f"Table {table_idx + 1} first few rows:\n{df.head()}")
+        
+        # Try to identify the columns
+        # Common Halifax tax sale table headers might be:
+        # Assessment Number, Address, Owner, Amount, etc.
+        
+        for idx, row in df.iterrows():
+            try:
+                # Convert row to dict and look for assessment numbers
+                row_dict = row.to_dict()
+                
+                assessment_number = None
+                address = "Halifax Property"
+                tax_amount = 0.0
+                
+                # Look for assessment number in any column
+                for col_name, value in row_dict.items():
+                    if pd.notna(value):
+                        value_str = str(value).strip()
+                        
+                        # Look for 8+ digit numbers (assessment numbers)
+                        assessment_matches = re.findall(r'\b(\d{8,10})\b', value_str)
+                        if assessment_matches and not assessment_number:
+                            assessment_number = assessment_matches[0]
+                        
+                        # Look for address-like content
+                        if any(word in value_str.lower() for word in ['street', 'road', 'avenue', 'drive', 'lane', 'st', 'rd', 'ave', 'dr', 'ln', 'lot']) and len(value_str) > 5:
+                            if address == "Halifax Property":  # Only update if we haven't found one yet
+                                address = value_str
+                        
+                        # Look for dollar amounts
+                        money_matches = re.findall(r'\$?([0-9,]+\.?[0-9]*)', value_str)
+                        for match in money_matches:
+                            try:
+                                amount = float(match.replace(',', ''))
+                                if 100 <= amount <= 25000 and tax_amount == 0.0:  # Reasonable tax amount
+                                    tax_amount = amount
+                                    break
+                            except:
+                                continue
+                
+                # Create property if we have at least an assessment number
+                if assessment_number:
+                    if address == "Halifax Property":
+                        address = f"Halifax Property {assessment_number}"
+                    
+                    property_data = {
+                        'assessment_number': assessment_number,
+                        'civic_address': address,
+                        'municipality': 'Halifax Regional Municipality',
+                        'province': 'Nova Scotia',
+                        'total_taxes': tax_amount,
+                        'status': 'active',
+                        'tax_year': 2024,
+                        'created_at': datetime.now()
+                    }
+                    
+                    properties.append(property_data)
+                    logger.info(f"Table {table_idx + 1}: {assessment_number} | {address} | ${tax_amount}")
+                
+            except Exception as e:
+                logger.warning(f"Error parsing table row {idx}: {e}")
+                continue
+        
+        return properties
+
     def _parse_halifax_pdf_text(self, text: str) -> List[Dict]:
         """Parse Halifax PDF text - SIMPLE and RELIABLE version"""
         properties = []
