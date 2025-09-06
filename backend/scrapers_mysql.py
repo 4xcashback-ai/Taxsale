@@ -23,50 +23,89 @@ class TaxSaleScraper:
         })
 
     def scrape_halifax_properties(self) -> Dict:
-        """Scrape Halifax tax sale properties"""
+        """Scrape Halifax Regional Municipality tax sale properties from PDF"""
         logger.info("Starting Halifax tax sale scraping...")
         
         try:
-            # Halifax tax sale URL - updated for current website structure
-            url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
-            
-            response = self.session.get(url)
+            # Scrape main tax sale page to find the PDF link
+            main_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = self.session.get(main_url, headers=headers, timeout=30)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Look for property data (this is a simplified version)
-            # In practice, you'd need to adapt this to Halifax's actual HTML structure
+            # Find the PDF schedule link dynamically
+            schedule_link = None
+            
+            # Look for the schedule PDF link
+            for link in soup.find_all('a'):
+                href = link.get('href', '')
+                text = link.get_text()
+                # Look for PDF links containing tax sale schedule info
+                if ('SCHEDULE' in text.upper() or 'newspaper' in text.lower()) and href.endswith('.pdf'):
+                    schedule_link = href
+                    break
+                elif 'Sept16.2025newspaper' in href or '91654' in href:
+                    schedule_link = href
+                    break
+            
+            # Fallback to known link if not found dynamically
+            if not schedule_link:
+                schedule_link = "https://www.halifax.ca/media/91654"
+                
+            # Make URL absolute if relative
+            if schedule_link.startswith('/'):
+                schedule_link = "https://www.halifax.ca" + schedule_link
+                
+            logger.info(f"Found Halifax schedule link: {schedule_link}")
+            
+            # Download and parse the PDF
+            pdf_response = self.session.get(schedule_link, headers=headers, timeout=60)
+            pdf_response.raise_for_status()
+            
             properties = []
             
-            # Find tables or lists containing property information
-            property_tables = soup.find_all('table')
-            
-            for table in property_tables:
-                rows = table.find_all('tr')[1:]  # Skip header
+            # Use pdfplumber for better text extraction
+            try:
+                import pdfplumber
                 
-                for row in rows:
-                    cells = row.find_all(['td', 'th'])
-                    if len(cells) >= 4:  # Minimum columns expected
-                        try:
-                            property_data = {
-                                'assessment_number': cells[0].get_text(strip=True),
-                                'civic_address': cells[1].get_text(strip=True),
-                                'municipality': 'Halifax',
-                                'province': 'Nova Scotia',
-                                'total_taxes': self.parse_currency(cells[2].get_text(strip=True)),
-                                'status': 'active',
-                                'tax_year': 2024  # Current year, adjust as needed
-                            }
-                            
-                            # Save to MySQL
-                            if property_data['assessment_number']:
-                                mysql_db.insert_property(property_data)
-                                properties.append(property_data)
-                                
-                        except Exception as e:
-                            logger.error(f"Error processing Halifax property row: {e}")
-                            continue
+                with pdfplumber.open(io.BytesIO(pdf_response.content)) as pdf:
+                    all_text = ""
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            all_text += page_text + "\n"
+                    
+                    # Parse the extracted text for property data
+                    properties = self._parse_halifax_pdf_text(all_text)
+                    
+            except ImportError:
+                logger.warning("pdfplumber not available, falling back to PyPDF2")
+                # Fallback to PyPDF2 if pdfplumber not available
+                try:
+                    import PyPDF2
+                    
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_response.content))
+                    all_text = ""
+                    for page in pdf_reader.pages:
+                        all_text += page.extract_text() + "\n"
+                    
+                    properties = self._parse_halifax_pdf_text(all_text)
+                    
+                except Exception as e:
+                    logger.error(f"PDF parsing failed: {e}")
+                    return {
+                        'success': False,
+                        'error': f'PDF parsing failed: {str(e)}',
+                        'municipality': 'Halifax'
+                    }
+            
+            # Insert properties into database
+            for property_data in properties:
+                mysql_db.insert_property(property_data)
             
             logger.info(f"Halifax scraping completed. Found {len(properties)} properties.")
             return {
