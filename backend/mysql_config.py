@@ -80,22 +80,29 @@ class MySQLManager:
                 connection.close()
     
     def insert_property(self, property_data: Dict) -> int:
-        """Insert or update a property record"""
+        """Insert or update a property record with complete tax sale data"""
         query = """
             INSERT INTO properties (
-                assessment_number, civic_address, property_type, tax_year, 
-                total_taxes, status, municipality, province, 
+                assessment_number, owner_name, civic_address, parcel_description, 
+                pid_number, opening_bid, total_taxes, hst_applicable, redeemable,
+                property_type, tax_year, status, municipality, province, 
                 latitude, longitude, boundary_data, 
                 pvsc_assessment_value, pvsc_assessment_year,
                 created_at, updated_at
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             ON DUPLICATE KEY UPDATE
+                owner_name = VALUES(owner_name),
                 civic_address = VALUES(civic_address),
+                parcel_description = VALUES(parcel_description),
+                pid_number = VALUES(pid_number),
+                opening_bid = VALUES(opening_bid),
+                total_taxes = VALUES(total_taxes),
+                hst_applicable = VALUES(hst_applicable),
+                redeemable = VALUES(redeemable),
                 property_type = VALUES(property_type),
                 tax_year = VALUES(tax_year),
-                total_taxes = VALUES(total_taxes),
                 status = VALUES(status),
                 municipality = VALUES(municipality),
                 latitude = VALUES(latitude),
@@ -113,20 +120,26 @@ class MySQLManager:
         
         params = (
             property_data.get('assessment_number'),
+            property_data.get('owner_name'),
             property_data.get('civic_address'),
+            property_data.get('parcel_description'),
+            property_data.get('pid_number'),
+            property_data.get('opening_bid'),
+            property_data.get('total_taxes'),
+            property_data.get('hst_applicable', False),
+            property_data.get('redeemable', True),
             property_data.get('property_type'),
             property_data.get('tax_year'),
-            property_data.get('total_taxes'),
             property_data.get('status', 'active'),
             property_data.get('municipality'),
-            property_data.get('province', 'Nova Scotia'),
+            property_data.get('province'),
             property_data.get('latitude'),
             property_data.get('longitude'),
             boundary_json,
             property_data.get('pvsc_assessment_value'),
             property_data.get('pvsc_assessment_year'),
-            datetime.now(),
-            datetime.now()
+            property_data.get('created_at'),
+            property_data.get('updated_at')
         )
         
         return self.execute_update(query, params)
