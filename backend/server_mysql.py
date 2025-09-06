@@ -18,6 +18,7 @@ import requests
 from pathlib import Path
 import secrets
 import time
+import re
 
 import jwt
 from fastapi import FastAPI, HTTPException, Depends, status, Request
