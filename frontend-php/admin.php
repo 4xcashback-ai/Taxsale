@@ -216,7 +216,8 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                         </form>
                         
                         <small class="text-muted d-block mt-2">
-                            This will: 1) Pull latest code from GitHub, 2) Restart backend service, 3) Restart PHP-FPM
+                            <strong>Git Pull & Restart:</strong> 1) Pull latest code from GitHub, 2) Restart backend service, 3) Restart PHP-FPM<br>
+                            <strong>Clean Up Data:</strong> Fix malformed property addresses and remove jumbled data
                         </small>
                     </div>
                 </div>
