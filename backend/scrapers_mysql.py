@@ -24,8 +24,8 @@ class TaxSaleScraper:
         })
 
     def scrape_halifax_properties(self) -> Dict:
-        """Scrape Halifax tax sale properties using Tabula for table extraction"""
-        logger.info("Starting Halifax tax sale scraping with Tabula...")
+        """Scrape Halifax tax sale properties with enhanced debugging"""
+        logger.info("Starting Halifax tax sale scraping with enhanced debugging...")
         
         try:
             # Use the actual Halifax PDF URL
@@ -35,89 +35,106 @@ class TaxSaleScraper:
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
             
-            logger.info(f"Downloading Halifax PDF for table extraction: {pdf_url}")
+            logger.info(f"Downloading Halifax PDF for debugging: {pdf_url}")
             pdf_response = self.session.get(pdf_url, headers=headers, timeout=60)
             pdf_response.raise_for_status()
             
+            logger.info(f"PDF downloaded successfully: {len(pdf_response.content)} bytes")
+            
             properties = []
             
-            # Save PDF to temporary file for Tabula
+            # Save PDF to temporary file
             import tempfile
             with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
                 tmp_file.write(pdf_response.content)
                 tmp_file.flush()
                 
+                logger.info(f"PDF saved to temp file: {tmp_file.name}")
+                
+                # Try multiple extraction methods with detailed logging
+                extraction_methods = []
+                
+                # Method 1: Camelot
                 try:
-                    # Try Camelot for table extraction (pure Python)
                     import camelot
-                    
-                    logger.info("Using Camelot to extract tables from Halifax PDF")
-                    
-                    # Extract all tables from the PDF
+                    logger.info("Attempting Camelot table extraction...")
                     tables = camelot.read_pdf(tmp_file.name, pages='all')
+                    logger.info(f"Camelot found {len(tables)} tables")
                     
-                    logger.info(f"Found {len(tables)} tables in Halifax PDF")
-                    
-                    # Process each table
-                    for table_idx, table in enumerate(tables):
-                        logger.info(f"Processing table {table_idx + 1} with shape {table.df.shape}")
+                    if len(tables) > 0:
+                        for i, table in enumerate(tables):
+                            logger.info(f"Camelot Table {i+1}: {table.df.shape} - accuracy: {table.accuracy}")
+                            logger.info(f"Camelot Table {i+1} sample:\n{table.df.head()}")
+                            table_properties = self._parse_halifax_table(table.df, f"camelot_{i}")
+                            properties.extend(table_properties)
+                            extraction_methods.append(f"Camelot table {i+1}: {len(table_properties)} properties")
+                    else:
+                        logger.warning("Camelot found no tables")
+                        extraction_methods.append("Camelot: 0 tables found")
                         
-                        # Convert DataFrame to property data
-                        table_properties = self._parse_halifax_table(table.df, table_idx)
-                        properties.extend(table_properties)
-                    
                 except ImportError:
-                    logger.warning("Camelot not available, trying pdfplumber table extraction")
-                    # Use pdfplumber for table extraction
+                    logger.warning("Camelot not available")
+                    extraction_methods.append("Camelot: not available")
+                except Exception as e:
+                    logger.error(f"Camelot failed: {e}")
+                    extraction_methods.append(f"Camelot: failed - {str(e)}")
+                
+                # Method 2: pdfplumber table extraction
+                if not properties:
                     try:
                         import pdfplumber
+                        logger.info("Attempting pdfplumber table extraction...")
                         
                         with pdfplumber.open(tmp_file.name) as pdf:
+                            logger.info(f"PDF has {len(pdf.pages)} pages")
+                            
                             for page_num, page in enumerate(pdf.pages):
-                                # Try to extract tables from each page
+                                logger.info(f"Processing page {page_num + 1}")
                                 tables = page.extract_tables()
                                 
                                 if tables:
-                                    logger.info(f"Found {len(tables)} tables on page {page_num + 1}")
-                                    
+                                    logger.info(f"Page {page_num + 1}: Found {len(tables)} tables")
                                     for table_idx, table_data in enumerate(tables):
-                                        # Convert table data to DataFrame
-                                        if table_data and len(table_data) > 1:  # Skip empty tables
-                                            # Create DataFrame from table data
-                                            import pandas as pd
-                                            df = pd.DataFrame(table_data[1:], columns=table_data[0])  # First row as headers
+                                        if table_data and len(table_data) > 1:
+                                            logger.info(f"Page {page_num + 1}, Table {table_idx + 1}: {len(table_data)} rows, {len(table_data[0]) if table_data else 0} columns")
                                             
-                                            table_properties = self._parse_halifax_table(df, f"{page_num + 1}_{table_idx}")
+                                            # Create DataFrame
+                                            import pandas as pd
+                                            df = pd.DataFrame(table_data[1:], columns=table_data[0])
+                                            logger.info(f"Table sample:\n{df.head()}")
+                                            
+                                            table_properties = self._parse_halifax_table(df, f"pdfplumber_{page_num}_{table_idx}")
                                             properties.extend(table_properties)
+                                            extraction_methods.append(f"pdfplumber page {page_num + 1} table {table_idx + 1}: {len(table_properties)} properties")
                                 else:
-                                    # Fallback to text extraction
-                                    page_text = page.extract_text()
-                                    if page_text:
-                                        text_properties = self._parse_halifax_pdf_text(page_text)
-                                        properties.extend(text_properties)
+                                    logger.info(f"Page {page_num + 1}: No tables found")
+                                    
+                    except Exception as e:
+                        logger.error(f"pdfplumber table extraction failed: {e}")
+                        extraction_methods.append(f"pdfplumber tables: failed - {str(e)}")
+                
+                # Method 3: Text extraction as final fallback
+                if not properties:
+                    try:
+                        import pdfplumber
+                        logger.info("Falling back to text extraction...")
+                        
+                        with pdfplumber.open(tmp_file.name) as pdf:
+                            all_text = ""
+                            for page in pdf.pages:
+                                page_text = page.extract_text()
+                                if page_text:
+                                    all_text += page_text + "\n"
+                            
+                            logger.info(f"Extracted text length: {len(all_text)} characters")
+                            logger.info(f"Text sample: {all_text[:500]}...")
+                            
+                            properties = self._parse_halifax_pdf_text(all_text)
+                            extraction_methods.append(f"Text parsing: {len(properties)} properties")
                             
                     except Exception as e:
-                        logger.error(f"Pdfplumber table extraction failed: {e}")
-                        # Final fallback to simple text parsing
-                        try:
-                            import pdfplumber
-                            
-                            with pdfplumber.open(tmp_file.name) as pdf:
-                                all_text = ""
-                                for page in pdf.pages:
-                                    page_text = page.extract_text()
-                                    if page_text:
-                                        all_text += page_text + "\n"
-                                
-                                properties = self._parse_halifax_pdf_text(all_text)
-                                
-                        except Exception as final_e:
-                            logger.error(f"All PDF parsing methods failed: {final_e}")
-                            return {
-                                'success': False,
-                                'error': f'PDF parsing failed: {str(final_e)}',
-                                'municipality': 'Halifax Regional Municipality'
-                            }
+                        logger.error(f"Text extraction failed: {e}")
+                        extraction_methods.append(f"Text parsing: failed - {str(e)}")
                 
                 # Clean up temp file
                 import os
@@ -126,7 +143,7 @@ class TaxSaleScraper:
                 except:
                     pass
             
-            # Remove duplicates based on assessment number
+            # Remove duplicates
             unique_properties = {}
             for prop in properties:
                 assessment = prop['assessment_number']
@@ -135,16 +152,23 @@ class TaxSaleScraper:
             
             final_properties = list(unique_properties.values())
             
+            logger.info(f"Extraction methods used: {extraction_methods}")
+            logger.info(f"Total unique properties found: {len(final_properties)}")
+            
             # Insert properties into database
             for property_data in final_properties:
                 mysql_db.insert_property(property_data)
             
-            logger.info(f"Halifax scraping completed. Found {len(final_properties)} unique properties.")
             return {
                 'success': True,
                 'municipality': 'Halifax Regional Municipality',
                 'properties_found': len(final_properties),
-                'properties': final_properties[:5]  # Return first 5 as sample
+                'properties': final_properties[:5],
+                'debug_info': {
+                    'extraction_methods': extraction_methods,
+                    'total_found': len(properties),
+                    'unique_count': len(final_properties)
+                }
             }
             
         except Exception as e:
