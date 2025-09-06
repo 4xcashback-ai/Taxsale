@@ -319,30 +319,56 @@ class TaxSaleScraper:
                     else:
                         remaining_text = full_line
                     
-                    # Extract address - look for common address patterns
+                    # Enhanced address extraction - look for actual street addresses
                     address = "Halifax Property"
                     
-                    # Look for street-like patterns in the remaining text
-                    street_words = ['road', 'rd', 'street', 'st', 'avenue', 'ave', 'drive', 'dr', 'lane', 'ln', 'way', 'place', 'pl', 'crescent', 'cres', 'lot']
-                    words = remaining_text.lower().split()
+                    # Look for street address patterns in the remaining text
+                    # Common Halifax patterns: "405 Conrod Beach Rd", "123 Main Street", etc.
+                    street_patterns = [
+                        r'(\d+\s+[A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Way|Place|Pl|Crescent|Cres|Circle|Cir|Court|Ct)\s*[A-Za-z\s]*(?:Lot\s*\d+)?[A-Za-z\s]*)',
+                        r'(Lot\s+\d+[A-Za-z\s-]*[A-Za-z]+)',
+                        r'(\d+\s+[A-Za-z]+\s+[A-Za-z]+\s+(?:Rd|Road|St|Street|Ave|Avenue|Dr|Drive|Ln|Lane|Way|Place|Crescent|Circle|Court)[A-Za-z\s]*)',
+                    ]
                     
-                    address_parts = []
-                    for i, word in enumerate(words):
-                        # If we find a street word, take some words before and after
-                        if any(street in word for street in street_words):
-                            start_idx = max(0, i-3)
-                            end_idx = min(len(words), i+2)
-                            address_parts = words[start_idx:end_idx]
-                            break
+                    for pattern in street_patterns:
+                        street_match = re.search(pattern, remaining_text, re.IGNORECASE)
+                        if street_match:
+                            potential_address = street_match.group(1).strip()
+                            
+                            # Clean up the address - remove obvious owner names and extra info
+                            clean_addr = potential_address
+                            
+                            # Remove owner name patterns (multiple capitalized words with commas)
+                            clean_addr = re.sub(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,?\s*', '', clean_addr)
+                            
+                            # Clean up extra info like "- Dwelling", "- Land", etc.
+                            clean_addr = re.sub(r'\s*-\s*[A-Za-z]+\s*$', '', clean_addr)
+                            
+                            # Clean up multiple spaces
+                            clean_addr = re.sub(r'\s+', ' ', clean_addr).strip()
+                            
+                            if len(clean_addr) > 5 and not clean_addr.isdigit():
+                                address = clean_addr
+                                break
                     
-                    if address_parts:
-                        address = ' '.join(address_parts).title()
-                        # Clean up the address
-                        address = re.sub(r'[^\w\s,-]', '', address)  # Remove special chars
-                        address = re.sub(r'\s+', ' ', address).strip()  # Clean whitespace
-                    
-                    if not address or len(address) < 5:
-                        address = f"Halifax Property {assessment_number}"
+                    # If no street pattern found, look for location names
+                    if address == "Halifax Property":
+                        location_patterns = [
+                            r'([A-Za-z\s]+(?:Beach|Hill|Park|Point|Bay|Lake|River|Creek|Valley|Heights|Gardens)[A-Za-z\s]*)',
+                            r'([A-Za-z\s]+(?:North|South|East|West|Upper|Lower)[A-Za-z\s]*)',
+                        ]
+                        
+                        for pattern in location_patterns:
+                            loc_match = re.search(pattern, remaining_text, re.IGNORECASE)
+                            if loc_match:
+                                potential_location = loc_match.group(1).strip()
+                                # Remove owner names
+                                clean_loc = re.sub(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,?\s*', '', potential_location)
+                                clean_loc = re.sub(r'\s+', ' ', clean_loc).strip()
+                                
+                                if len(clean_loc) > 5:
+                                    address = clean_loc
+                                    break
                     
                     # Simple tax amount extraction - look for dollar amounts
                     tax_amount = 0.0
