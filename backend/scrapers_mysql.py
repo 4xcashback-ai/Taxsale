@@ -48,47 +48,76 @@ class TaxSaleScraper:
                 tmp_file.flush()
                 
                 try:
-                    # Try Tabula-py for table extraction
-                    import tabula
+                    # Try Camelot for table extraction (pure Python)
+                    import camelot
                     
-                    logger.info("Using Tabula to extract tables from Halifax PDF")
+                    logger.info("Using Camelot to extract tables from Halifax PDF")
                     
                     # Extract all tables from the PDF
-                    tables = tabula.read_pdf(tmp_file.name, pages='all', multiple_tables=True)
+                    tables = camelot.read_pdf(tmp_file.name, pages='all')
                     
                     logger.info(f"Found {len(tables)} tables in Halifax PDF")
                     
                     # Process each table
-                    for table_idx, df in enumerate(tables):
-                        logger.info(f"Processing table {table_idx + 1} with shape {df.shape}")
+                    for table_idx, table in enumerate(tables):
+                        logger.info(f"Processing table {table_idx + 1} with shape {table.df.shape}")
                         
                         # Convert DataFrame to property data
-                        table_properties = self._parse_halifax_table(df, table_idx)
+                        table_properties = self._parse_halifax_table(table.df, table_idx)
                         properties.extend(table_properties)
                     
                 except ImportError:
-                    logger.warning("Tabula-py not available, falling back to pdfplumber")
-                    # Fallback to pdfplumber if Tabula not available
+                    logger.warning("Camelot not available, trying pdfplumber table extraction")
+                    # Use pdfplumber for table extraction
                     try:
                         import pdfplumber
                         
                         with pdfplumber.open(tmp_file.name) as pdf:
-                            all_text = ""
-                            for page in pdf.pages:
-                                page_text = page.extract_text()
-                                if page_text:
-                                    all_text += page_text + "\n"
-                            
-                            # Use the old text parsing as fallback
-                            properties = self._parse_halifax_pdf_text(all_text)
+                            for page_num, page in enumerate(pdf.pages):
+                                # Try to extract tables from each page
+                                tables = page.extract_tables()
+                                
+                                if tables:
+                                    logger.info(f"Found {len(tables)} tables on page {page_num + 1}")
+                                    
+                                    for table_idx, table_data in enumerate(tables):
+                                        # Convert table data to DataFrame
+                                        if table_data and len(table_data) > 1:  # Skip empty tables
+                                            # Create DataFrame from table data
+                                            import pandas as pd
+                                            df = pd.DataFrame(table_data[1:], columns=table_data[0])  # First row as headers
+                                            
+                                            table_properties = self._parse_halifax_table(df, f"{page_num + 1}_{table_idx}")
+                                            properties.extend(table_properties)
+                                else:
+                                    # Fallback to text extraction
+                                    page_text = page.extract_text()
+                                    if page_text:
+                                        text_properties = self._parse_halifax_pdf_text(page_text)
+                                        properties.extend(text_properties)
                             
                     except Exception as e:
-                        logger.error(f"Both Tabula and pdfplumber failed: {e}")
-                        return {
-                            'success': False,
-                            'error': f'PDF parsing failed: {str(e)}',
-                            'municipality': 'Halifax Regional Municipality'
-                        }
+                        logger.error(f"Pdfplumber table extraction failed: {e}")
+                        # Final fallback to simple text parsing
+                        try:
+                            import pdfplumber
+                            
+                            with pdfplumber.open(tmp_file.name) as pdf:
+                                all_text = ""
+                                for page in pdf.pages:
+                                    page_text = page.extract_text()
+                                    if page_text:
+                                        all_text += page_text + "\n"
+                                
+                                properties = self._parse_halifax_pdf_text(all_text)
+                                
+                        except Exception as final_e:
+                            logger.error(f"All PDF parsing methods failed: {final_e}")
+                            return {
+                                'success': False,
+                                'error': f'PDF parsing failed: {str(final_e)}',
+                                'municipality': 'Halifax Regional Municipality'
+                            }
                 
                 # Clean up temp file
                 import os
