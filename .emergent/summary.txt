@@ -1,88 +1,213 @@
 <analysis>
-The trajectory describes the continuation of development for the Tax Sale Compass application by an expert AI engineer. Initially, the focus was on completing a pending task: integrating automatic boundary thumbnail generation into the scraping process and updating an admin endpoint to target active properties only. The AI successfully implemented the backend logic in  for this, updating log messages and API responses.
-
-Following this, a series of critical bugs were reported by the user from the VPS environment. First, Failed to get deployment status led to debugging the backend's deployment status endpoint () and the  script, revealing an authentication mismatch and a script path issue on the VPS. These were resolved by providing manual deployment instructions and a script fix. Next, missing quick action buttons for image creation in the frontend were identified and re-implemented in . This led to a git merge conflict on the VPS during deployment, which was being addressed. The most recent critical bug involves properties being found via search but inaccessible via their direct URL on the VPS, which the AI has diagnosed as a missing basic property detail endpoint in the backend.
+The trajectory chronicles a significant architectural shift for the Tax Sale Compass application, moving from a React/FastAPI/MongoDB stack to a PHP/FastAPI/MySQL hybrid. Initially, the AI engineer addressed several critical bugs in the React application, including fixing a missing backend endpoint for direct property access, resolving persistent Google Maps double-loading conflicts (which led to multiple attempts and regressions), and repeatedly fixing git synchronization issues on the VPS that prevented deployments. After numerous frustrations with React's complexity and build issues, the user decided to abandon React for a PHP frontend. The AI then meticulously engineered a new PHP frontend and adapted the existing Python FastAPI backend to use MySQL instead of MongoDB. This involved a complete refactoring of the backend's database interactions, creating a new PHP directory structure, and generating a comprehensive, panel-free VPS deployment guide. The final phase of the trajectory focuses on the step-by-step deployment of this new PHP/MySQL system onto a freshly wiped VPS, including system updates, package installations, MySQL setup, repository cloning, Python backend configuration, and Nginx setup.
 </analysis>
 
 <product_requirements>
-The Tax Sale Compass application is designed to centralize Nova Scotia tax sale data, providing an interactive map, PDF scraping, and advanced property filtering. Core features include Google AdSense, an admin interface with in-app deployment, support for multiple PIDs, auction result tracking, and a smart scheduler. It offers free and paid tiers, with paid subscribers gaining detailed property access and a Favorites List beta. Recent development aimed at restoring PVSC assessment info, accurate property status, province tracking, and improving scraper reliability. Significant efforts addressed deployment optimization, database performance, clean error logging, and UI issues like missing property boundary overlays and incorrect updates available notifications. The user explicitly favors interactive Google Maps and original boundary overlay thumbnails, noting their reliability in the development environment.
+The Tax Sale Compass application aims to centralize Nova Scotia tax sale data, offering an interactive map, PDF scraping, and advanced property filtering. Key features include Google AdSense integration, an admin interface with in-app deployment, support for multiple PIDs, auction result tracking, and a smart scheduler. It provides free and paid tiers, with paid subscribers getting detailed property access and a Favorites List beta. Recent efforts focused on restoring PVSC assessment information, accurate property status, province tracking, improving scraper reliability, and addressing deployment optimization, database performance, clean error logging, and UI issues like missing property boundary overlays. The user values interactive Google Maps and original boundary overlay thumbnails. Critical user requirements clarified during debugging included: direct property URLs must require login, and active property details require a paid subscription. The user ultimately decided to migrate from a React/MongoDB frontend to a PHP/MySQL frontend due to persistent React-related issues and preferences.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
--   **Deployment**: Docker, Kubernetes, PM2, Bash scripting, Nginx, Let's Encrypt.
--   **Data**: PyMongo, Motor, Google Maps Static API, pdfplumber.
--   **APIs**: Google Maps, Nova Scotia Government ArcGIS.
--   **Authentication**: JWT, environment variables, database user management.
+- **Full-stack**: PHP (frontend), FastAPI (backend), MySQL (database).
+- **Deployment**: Git, Nginx, Systemd, Bash scripting, UFW firewall.
+- **Data**: mysql-connector-python, requests, beautifulsoup4.
+- **APIs**: Google Maps JavaScript API (native integration).
+- **Authentication**: JWT, PHP sessions.
 </key_technical_concepts>
 
 <code_architecture>
 
 
--   ****: The core FastAPI application.
-    -   **Importance**: Handles all backend operations, API endpoints, data retrieval, scraping, authentication, image serving.
-    -   **Changes Made**:
-        -    logic updated to filter for active properties only.
-        -   Log messages and API endpoint responses updated to reflect active properties only logic for boundary generation.
-        -   Added more graceful error handling and detailed logging to the deployment status endpoint.
-        -   Added rate limiting and enhanced logging (including IP addresses) to admin endpoints.
-        -   Configured uvicorn logging for better warning handling.
-        -   Added an endpoint for security monitoring of unauthorized access attempts.
-        -   Enhanced  function with detailed logging and proper exception handling (, ).
--   ****: Main React component, including admin panel UI.
-    -   **Importance**: Contains the main application logic and renders the UI, including Quick Actions.
-    -   **Changes Made**:
-        -   Re-added Quick Action buttons for boundary image generation (Halifax, Victoria, Cumberland) in the admin panel.
-        -   Added  function to handle API calls for boundary generation from the frontend.
--   ****: Manages user authentication state.
-    -   **Importance**: Handles user login, registration, logout, and token management.
-    -   **Changes Made**: Logic confirmed to send admin as username for login.
--   **{
+- ****:
+  - **Importance**: Centralized configuration for MySQL database connection details for the Python backend.
+  - **Changes Made**: New file created to hold MySQL connection parameters (host, user, password, database).
+- ****:
+  - **Importance**: The core FastAPI application, now refactored to interact with MySQL. It handles API endpoints for property data, user authentication, and triggers scrapers.
+  - **Changes Made**: New file created to replace the old , integrating  and . All database operations are rewritten for MySQL.
+- ****:
+  - **Importance**: Contains the logic for scraping property data from external sources and inserting/updating it into the MySQL database.
+  - **Changes Made**: New file created. Scraper functions were adapted to use  for database connections and perform SQL  operations instead of MongoDB.
+- ****:
+  - **Importance**: Lists all Python dependencies for the FastAPI backend.
+  - **Changes Made**: Updated to include  and other essential packages, while removing MongoDB-related libraries.
+- ** (directory)**:
+  - **Importance**: The new PHP-based frontend application. This directory contains all PHP files, configuration, and assets that replace the previous React frontend.
+  - **Changes Made**: This entire directory structure was created from scratch.
+- ****:
+  - **Importance**: The main entry point for the PHP frontend, typically displaying the property search and interactive map.
+  - **Changes Made**: New file created.
+- ****:
+  - **Importance**: Displays detailed information for a single property, including its Google Map integration.
+  - **Changes Made**: New file created with native Google Maps API integration.
+- **, , , **:
+  - **Importance**: Handle user authentication, registration, administrative functions, and session management for the PHP frontend.
+  - **Changes Made**: New files created to implement PHP-session-based authentication and basic admin UI.
+- ****:
+  - **Importance**: PHP configuration file for connecting to the MySQL database.
+  - **Changes Made**: New file created.
+- ****:
+  - **Importance**: Defines the SQL schema for the  database, including , , and  tables with appropriate indexes.
+  - **Changes Made**: New file created outlining the MySQL database structure.
+- **{
     "status": "idle",
     "last_deployment": "",
-    "last_check": "2025-09-05T19:34:27+00:00",
+    "last_check": "2025-09-06T00:50:43+00:00",
     "updates_available": false,
     "health_status": "unknown",
-    "current_commit": "21520e3",
+    "current_commit": "21cdb25",
     "remote_commit": "unknown",
     "message": "Deployment is operational"
-}**: Bash script to fetch deployment status.
-    -   **Importance**: Executed by the backend  endpoint to report deployment state.
-    -   **Changes Made**: Updated path logic to correctly identify the application directory () on the VPS, resolving Application directory not found error.
--   ****: Backend environment variables.
-    -   **Importance**: Stores sensitive configuration like database URLs and API keys, including .
-    -   **Changes Made**: Confirmed presence of .
--   ** (New)**: A temporary script to test admin login.
-    -   **Importance**: Used to diagnose authentication issues by programmatically logging in and obtaining a JWT token.
--   ** (New)**: Documentation for VPS security.
-    -   **Importance**: Provides context and solutions for common VPS security warnings.
--   ** (New)**: Documentation for VPS authentication.
-    -   **Importance**: Guides users on resolving authentication issues specific to the VPS environment.
--   ** (New)**: Documentation for manual VPS deployment.
-    -   **Importance**: Provides step-by-step instructions for deploying updates when automated deployment buttons are not functional.
+}**:
+  - **Importance**: Script used by the backend to check for updates on the VPS.
+  - **Changes Made**: Modified to correctly identify the application directory () and configured for consistent updates.
+- ****:
+  - **Importance**: Comprehensive guide for deploying the new PHP/MySQL system on a clean VPS without a control panel.
+  - **Changes Made**: This new file was created and continuously updated throughout the migration process to reflect the no-panel, step-by-step deployment.
 </code_architecture>
 
 <pending_tasks>
--   Implement email alerts for new tax sales.
--   Implement property history tracking and analytics.
--   Finalize Kubernetes ingress/proxy routing for boundary generation endpoints (if needed for the new API).
--   Address the Unknown command: "update-browserslist-db"
-
-To see a list of supported npm commands, run:
-  npm help warning during frontend build (if it appears).
--   Resolve Google Maps async loading warning (implicitly covered by map fixes).
--   Add the missing basic property details endpoint in the backend.
--   Resolve git merge conflicts on VPS to deploy latest frontend changes.
+- Populate MySQL database by running the newly implemented scrapers.
+- Test the complete PHP frontend (property search, interactive map, login, admin panel).
+- Secure Nginx with SSL/HTTPS.
+- Fine-tune Nginx and PHP-FPM for optimal performance.
+- Implement cron jobs for scheduled scraper runs.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was focused on resolving a critical bug where a specific property () could be found through the  search endpoint but was inaccessible via its direct property URL (), which returned a  error.
+Immediately before this summary request, the AI engineer successfully migrated the entire application from a React/MongoDB stack to a PHP/MySQL stack, retaining the Python FastAPI backend for scraping and API services. All necessary code changes have been committed to GitHub, and a detailed, panel-free VPS deployment guide () has been created.
 
-Through direct API testing ( commands) and backend log analysis, the AI determined that the property *does* exist in the database and is returned by the general search endpoint. However, direct access to  consistently returns . An  endpoint exists, which *does* find the property, but it incorrectly requires authentication for basic property details access and then returns .
+The current work is focused on the step-by-step deployment of this new system onto a freshly provisioned VPS. So far, the following critical steps have been completed:
+1.  **System Update and Core Package Installation**: usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
 
-The AI has precisely diagnosed the problem: the **basic property details endpoint is missing from the backend**. The immediate task is to implement this missing endpoint to allow unauthenticated access to property details when found. This work is part of a series of bug fixes following a manual deployment process on the VPS, which itself followed fixing authentication and a deployment script issue.
+These are common Git commands used in various situations:
+
+start a working area (see also: git help tutorial)
+   clone     Clone a repository into a new directory
+   init      Create an empty Git repository or reinitialize an existing one
+
+work on the current change (see also: git help everyday)
+   add       Add file contents to the index
+   mv        Move or rename a file, a directory, or a symlink
+   restore   Restore working tree files
+   rm        Remove files from the working tree and from the index
+
+examine the history and state (see also: git help revisions)
+   bisect    Use binary search to find the commit that introduced a bug
+   diff      Show changes between commits, commit and working tree, etc
+   grep      Print lines matching a pattern
+   log       Show commit logs
+   show      Show various types of objects
+   status    Show the working tree status
+
+grow, mark and tweak your common history
+   branch    List, create, or delete branches
+   commit    Record changes to the repository
+   merge     Join two or more development histories together
+   rebase    Reapply commits on top of another base tip
+   reset     Reset current HEAD to the specified state
+   switch    Switch branches
+   tag       Create, list, delete or verify a tag object signed with GPG
+
+collaborate (see also: git help workflows)
+   fetch     Download objects and refs from another repository
+   pull      Fetch from and integrate with another repository or a local branch
+   push      Update remote refs along with associated objects
+
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system., , ,  with extensions,  with 
+Usage:   
+  pip <command> [options]
+
+Commands:
+  install                     Install packages.
+  lock                        Generate a lock file.
+  download                    Download packages.
+  uninstall                   Uninstall packages.
+  freeze                      Output installed packages in requirements format.
+  inspect                     Inspect the python environment.
+  list                        List installed packages.
+  show                        Show information about installed packages.
+  check                       Verify installed packages have compatible dependencies.
+  config                      Manage local and global configuration.
+  search                      Search PyPI for packages.
+  cache                       Inspect and manage pip's wheel cache.
+  index                       Inspect information available from package indexes.
+  wheel                       Build wheels from your requirements.
+  hash                        Compute hashes of package archives.
+  completion                  A helper command used for command completion.
+  debug                       Show information useful for debugging.
+  help                        Show help for commands.
+
+General Options:
+  -h, --help                  Show help.
+  --debug                     Let unhandled exceptions propagate outside the
+                              main subroutine, instead of logging them to
+                              stderr.
+  --isolated                  Run pip in an isolated mode, ignoring
+                              environment variables and user configuration.
+  --require-virtualenv        Allow pip to only run in a virtual environment;
+                              exit with an error otherwise.
+  --python <python>           Run pip with the specified Python interpreter.
+  -v, --verbose               Give more output. Option is additive, and can be
+                              used up to 3 times.
+  -V, --version               Show version and exit.
+  -q, --quiet                 Give less output. Option is additive, and can be
+                              used up to 3 times (corresponding to WARNING,
+                              ERROR, and CRITICAL logging levels).
+  --log <path>                Path to a verbose appending log.
+  --no-input                  Disable prompting for input.
+  --keyring-provider <keyring_provider>
+                              Enable the credential lookup via the keyring
+                              library if user input is allowed. Specify which
+                              mechanism to use [auto, disabled, import,
+                              subprocess]. (default: auto)
+  --proxy <proxy>             Specify a proxy in the form
+                              scheme://[user:passwd@]proxy.server:port.
+  --retries <retries>         Maximum attempts to establish a new HTTP
+                              connection. (default: 5)
+  --timeout <sec>             Set the socket timeout (default 15 seconds).
+  --exists-action <action>    Default action when a path already exists:
+                              (s)witch, (i)gnore, (w)ipe, (b)ackup, (a)bort.
+  --trusted-host <hostname>   Mark this host or host:port pair as trusted,
+                              even though it does not have valid or any HTTPS.
+  --cert <path>               Path to PEM-encoded CA certificate bundle. If
+                              provided, overrides the default. See 'SSL
+                              Certificate Verification' in pip documentation
+                              for more information.
+  --client-cert <path>        Path to SSL client certificate, a single file
+                              containing the private key and the certificate
+                              in PEM format.
+  --cache-dir <dir>           Store the cache data in <dir>.
+  --no-cache-dir              Disable the cache.
+  --disable-pip-version-check
+                              Don't periodically check PyPI to determine
+                              whether a new version of pip is available for
+                              download. Implied with --no-index.
+  --no-color                  Suppress colored output.
+  --use-feature <feature>     Enable new functionality, that may be backward
+                              incompatible.
+  --use-deprecated <feature>  Enable deprecated functionality, that will be
+                              removed in the future.
+  --resume-retries <resume_retries>
+                              Maximum attempts to resume or restart an
+                              incomplete download. (default: 5) and , ,  are all installed.
+2.  **Basic Security Setup**: UFW firewall has been configured to allow SSH, HTTP, and HTTPS.
+3.  **MySQL Database Setup**:  has been completed, and the  database along with a dedicated  user with appropriate privileges has been created.
+4.  **Repository Cloning**: The clean GitHub repository has been successfully cloned into .
+5.  **Database Schema Application**: The  has been applied, creating the , , and  tables.
+6.  **Python Backend Setup**: A virtual environment has been created in , and all  dependencies (including ) have been installed.
+7.  **Backend Service Configuration**: A  service () has been created, enabled, and successfully started, with the FastAPI backend now running on .
+8.  **Nginx Configuration**: The Nginx configuration file () has been created to serve the PHP frontend and proxy API requests to the backend.
+
+The immediate next task is to enable the Nginx site, test its configuration, and restart the Nginx service.
 </current_work>
 
 <optional_next_step>
-The next step is to add the missing basic property details endpoint in  that can retrieve property information by assessment number without requiring authentication.
+Enable the Nginx site, test its configuration (), and restart the Nginx service ().
 </optional_next_step>
