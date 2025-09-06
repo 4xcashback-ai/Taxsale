@@ -97,81 +97,98 @@ class TaxSaleScraper:
             }
 
     def _parse_halifax_pdf_text(self, text: str) -> List[Dict]:
-        """Parse Halifax PDF text to extract property information - SIMPLE VERSION"""
+        """Parse Halifax PDF text - SIMPLE and RELIABLE version"""
         properties = []
+        processed_assessments = set()  # Prevent duplicates
         
         # Split text into lines
         lines = text.split('\n')
         
-        for line in lines:
+        for line_num, line in enumerate(lines):
             line = line.strip()
             if not line:
                 continue
-                
-            # Look for lines with assessment numbers (8+ digits)
-            assessment_matches = re.findall(r'\b(\d{8,})\b', line)
+            
+            # Look for assessment numbers (pattern: 8+ digits)
+            assessment_matches = re.findall(r'\b(\d{8,10})\b', line)
             
             for assessment_number in assessment_matches:
+                # Skip if we already processed this assessment number
+                if assessment_number in processed_assessments:
+                    continue
+                
                 try:
-                    # Create a simple property entry
-                    # Remove the assessment number from the line to get remaining text
-                    remaining = line.replace(assessment_number, '').strip()
+                    # Mark as processed to prevent duplicates
+                    processed_assessments.add(assessment_number)
                     
-                    # Simple address extraction - just take the first reasonable text
+                    # Get the full line for parsing
+                    full_line = line
+                    
+                    # Simple address extraction - look for the part after assessment number
+                    line_parts = full_line.split(assessment_number, 1)
+                    if len(line_parts) > 1:
+                        remaining_text = line_parts[1].strip()
+                    else:
+                        remaining_text = full_line
+                    
+                    # Extract address - look for common address patterns
+                    address = "Halifax Property"
+                    
+                    # Look for street-like patterns in the remaining text
+                    street_words = ['road', 'rd', 'street', 'st', 'avenue', 'ave', 'drive', 'dr', 'lane', 'ln', 'way', 'place', 'pl', 'crescent', 'cres', 'lot']
+                    words = remaining_text.lower().split()
+                    
                     address_parts = []
-                    words = remaining.split()
-                    
-                    # Look for address-like words
                     for i, word in enumerate(words):
-                        if any(addr_word in word.lower() for addr_word in ['st', 'street', 'rd', 'road', 'ave', 'avenue', 'dr', 'drive', 'ln', 'lane', 'lot']):
-                            # Take this word and a few before/after it
-                            start = max(0, i-3)
-                            end = min(len(words), i+3)
-                            address_parts = words[start:end]
+                        # If we find a street word, take some words before and after
+                        if any(street in word for street in street_words):
+                            start_idx = max(0, i-3)
+                            end_idx = min(len(words), i+2)
+                            address_parts = words[start_idx:end_idx]
                             break
                     
-                    # Create clean address
                     if address_parts:
-                        address = ' '.join(address_parts)
-                        # Clean up obvious non-address content
-                        address = re.sub(r'[A-Z]{3,}\s+[A-Z]{3,}', '', address)  # Remove names
-                        address = re.sub(r'\$[\d,]+\.?\d*', '', address)  # Remove money
-                        address = re.sub(r'\s+', ' ', address).strip()
-                    else:
+                        address = ' '.join(address_parts).title()
+                        # Clean up the address
+                        address = re.sub(r'[^\w\s,-]', '', address)  # Remove special chars
+                        address = re.sub(r'\s+', ' ', address).strip()  # Clean whitespace
+                    
+                    if not address or len(address) < 5:
                         address = f"Halifax Property {assessment_number}"
                     
-                    # Simple tax amount extraction with validation
+                    # Simple tax amount extraction - look for dollar amounts
                     tax_amount = 0.0
-                    money_match = re.search(r'\$?([\d,]+\.?\d*)', remaining)
-                    if money_match:
+                    dollar_matches = re.findall(r'\$?([0-9,]+\.?[0-9]*)', remaining_text)
+                    for match in dollar_matches:
                         try:
-                            potential_amount = float(money_match.group(1).replace(',', ''))
-                            # Validate: tax amounts should be between $1 and $50,000 (reasonable range)
-                            if 1.0 <= potential_amount <= 50000.0:
-                                tax_amount = potential_amount
-                            else:
-                                logger.warning(f"Rejecting unreasonable tax amount: ${potential_amount}")
-                                tax_amount = 0.0
+                            amount = float(match.replace(',', ''))
+                            # Only accept reasonable tax amounts (between $100 and $25,000)
+                            if 100 <= amount <= 25000:
+                                tax_amount = amount
+                                break
                         except:
-                            tax_amount = 0.0
+                            continue
                     
-                    if len(address) > 5:  # Only if we have a reasonable address
-                        property_data = {
-                            'assessment_number': assessment_number,
-                            'civic_address': address,
-                            'municipality': 'Halifax Regional Municipality',
-                            'province': 'Nova Scotia',
-                            'total_taxes': tax_amount,
-                            'status': 'active',
-                            'tax_year': 2024,
-                            'created_at': datetime.now()
-                        }
-                        properties.append(property_data)
-                        
+                    # Create property data
+                    property_data = {
+                        'assessment_number': assessment_number,
+                        'civic_address': address,
+                        'municipality': 'Halifax Regional Municipality',
+                        'province': 'Nova Scotia',
+                        'total_taxes': tax_amount,
+                        'status': 'active',
+                        'tax_year': 2024,
+                        'created_at': datetime.now()
+                    }
+                    
+                    properties.append(property_data)
+                    logger.info(f"Parsed Halifax: {assessment_number} | {address} | ${tax_amount}")
+                    
                 except Exception as e:
-                    logger.warning(f"Error parsing Halifax line: {e}")
+                    logger.warning(f"Error parsing Halifax line {line_num}: {e}")
                     continue
         
+        logger.info(f"Halifax parsing completed: {len(properties)} unique properties found")
         return properties
 
     def scrape_victoria_properties(self) -> Dict:
