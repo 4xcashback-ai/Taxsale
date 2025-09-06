@@ -1,8 +1,8 @@
 <?php
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'taxsale');
+define('DB_PASS', 'SecureTaxSale2025!');
 define('DB_NAME', 'tax_sale_compass');
 
 // Google Maps API Key
