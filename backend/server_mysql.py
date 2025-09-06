@@ -276,6 +276,106 @@ async def scrape_all_properties(current_user: dict = Depends(get_current_user_op
     return result
 
 # Property creation endpoint (for scrapers)
+@app.post("/api/admin/cleanup-data")
+async def cleanup_bad_data(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Clean up malformed property data"""
+    try:
+        # Verify admin access
+        token = credentials.credentials
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        email = payload.get("sub")
+        
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Get user and verify admin status
+        users = mysql_db.execute_query("SELECT email, is_admin FROM users WHERE email = %s", (email,))
+        if not users or not users[0]['is_admin']:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Find and fix properties with malformed addresses
+        malformed_query = """
+            SELECT id, assessment_number, civic_address, total_taxes 
+            FROM properties 
+            WHERE civic_address REGEXP '[0-9]{8,}' 
+            OR civic_address LIKE '%$%'
+            OR LENGTH(civic_address) > 200
+        """
+        
+        malformed_properties = mysql_db.execute_query(malformed_query)
+        
+        cleaned_count = 0
+        
+        for prop in malformed_properties:
+            try:
+                # Extract clean data from malformed address
+                address_text = prop['civic_address']
+                
+                # Find assessment numbers that shouldn't be in address
+                assessment_matches = re.findall(r'\b(\d{8,})\b', address_text)
+                
+                # Remove assessment numbers from address
+                clean_address = address_text
+                for assessment in assessment_matches:
+                    clean_address = clean_address.replace(assessment, '')
+                
+                # Remove dollar amounts
+                clean_address = re.sub(r'\$[0-9,]+\.?[0-9]*', '', clean_address)
+                
+                # Remove owner names (all caps sequences)
+                clean_address = re.sub(r'\b[A-Z]{2,}\s+[A-Z]{2,}[A-Z\s,]*', '', clean_address)
+                
+                # Extract proper address parts
+                address_patterns = [
+                    r'([A-Za-z0-9\s,]+(?:Street|St|Road|Rd|Avenue|Ave|Drive|Dr|Lane|Ln|Crescent|Cres)[A-Za-z0-9\s,]*)',
+                    r'([A-Za-z0-9\s,]+ (?:Lot|Unit|Apt|#)\s*[A-Za-z0-9-]+)',
+                    r'(Lot\s+[A-Za-z0-9-]+[A-Za-z0-9\s,]*)',
+                    r'([A-Za-z\s]+ Halifax[A-Za-z\s]*)'
+                ]
+                
+                final_address = ""
+                for pattern in address_patterns:
+                    addr_match = re.search(pattern, clean_address, re.IGNORECASE)
+                    if addr_match:
+                        final_address = addr_match.group(1).strip()
+                        break
+                
+                # If no good address pattern found, create a basic one
+                if not final_address or len(final_address) < 5:
+                    final_address = f"Halifax Property {prop['assessment_number']}"
+                
+                # Clean up whitespace
+                final_address = re.sub(r'\s+', ' ', final_address).strip()
+                
+                # Update the property
+                update_query = """
+                    UPDATE properties 
+                    SET civic_address = %s
+                    WHERE id = %s
+                """
+                
+                mysql_db.execute_update(update_query, (final_address, prop['id']))
+                cleaned_count += 1
+                
+                logger.info(f"Cleaned property {prop['assessment_number']}: '{prop['civic_address']}' -> '{final_address}'")
+                
+            except Exception as e:
+                logger.error(f"Error cleaning property {prop['assessment_number']}: {e}")
+                continue
+        
+        return {
+            "success": True,
+            "message": f"Cleaned {cleaned_count} properties with malformed data",
+            "cleaned_count": cleaned_count,
+            "total_malformed": len(malformed_properties)
+        }
+        
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        logger.error(f"Data cleanup failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Data cleanup failed: {str(e)}")
+
 @app.post("/api/properties")
 async def create_property(property_data: PropertyCreate):
     """Create or update a property (used by scrapers)"""
