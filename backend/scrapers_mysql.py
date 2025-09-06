@@ -286,8 +286,19 @@ class TaxSaleScraper:
             if not line:
                 continue
             
-            # Look for assessment numbers (pattern: 8+ digits)
-            assessment_matches = re.findall(r'\b(\d{8,10})\b', line)
+            # Look for assessment numbers (AAN pattern: 8-9 digits, NOT PID pattern)
+            # AAN typically: 00079006 (8 digits with leading zeros)
+            # PID typically: 40123456789 (longer numbers we want to ignore)
+            assessment_matches = re.findall(r'\bAAN:?\s*(\d{8,9})\b', line)
+            
+            # If no AAN found, look for 8-9 digit numbers but avoid longer PIDs
+            if not assessment_matches:
+                potential_matches = re.findall(r'\b(\d{8,9})\b', line)
+                # Filter out numbers that are likely PIDs (avoid patterns that suggest PID context)
+                for match in potential_matches:
+                    if not re.search(r'\bPID:?\s*' + match, line, re.IGNORECASE):
+                        assessment_matches.append(match)
+                        break  # Only take the first valid AAN per line
             
             for assessment_number in assessment_matches:
                 # Skip if we already processed this assessment number
