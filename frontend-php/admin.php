@@ -54,6 +54,36 @@ if ($_POST && isset($_POST['system_action'])) {
         
         $system_result['success'] = true;
         $system_result['message'] = 'System updated and services restarted successfully!';
+    } elseif ($action === 'cleanup_data') {
+        $api_url = API_BASE_URL . '/admin/cleanup-data';
+        
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $_SESSION['access_token']
+                ]
+            ]
+        ]);
+        
+        $response = file_get_contents($api_url, false, $context);
+        
+        if ($response) {
+            $cleanup_result = json_decode($response, true);
+            $system_result = [
+                'action' => 'cleanup_data',
+                'success' => $cleanup_result['success'] ?? false,
+                'message' => $cleanup_result['message'] ?? 'Data cleanup completed',
+                'details' => $cleanup_result
+            ];
+        } else {
+            $system_result = [
+                'action' => 'cleanup_data',
+                'success' => false,
+                'message' => 'Failed to connect to cleanup service'
+            ];
+        }
     }
 }
 
