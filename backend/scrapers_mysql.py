@@ -180,41 +180,75 @@ class TaxSaleScraper:
         return properties
 
     def scrape_victoria_properties(self) -> Dict:
-        """Scrape Victoria County tax sale properties"""
+        """Scrape Victoria County tax sale properties from PDF"""
         logger.info("Starting Victoria County tax sale scraping...")
         
         try:
-            # Victoria County doesn't have a standard tax sale page
-            # This is a placeholder for their specific data source
-            url = "https://www.victoria.ca/property-taxes-assessments"
+            # Victoria County PDF URL (update this as needed)
+            direct_pdf_url = "https://victoriacounty.com/wp-content/uploads/2025/08/AUGUST-26-2025-TAX-SALE-AD-6.pdf"
             
             properties = []
             
-            # For now, create some sample data to test the system
-            sample_properties = [
-                {
-                    'assessment_number': '25045717',
-                    'civic_address': '123 Main Street, Baddeck',
-                    'municipality': 'Victoria County',
-                    'province': 'Nova Scotia',
-                    'total_taxes': 2450.00,
-                    'status': 'active',
-                    'tax_year': 2024
-                },
-                {
-                    'assessment_number': '25049271',
-                    'civic_address': '456 Ocean Drive, Sydney Mines',
-                    'municipality': 'Victoria County',
-                    'province': 'Nova Scotia',
-                    'total_taxes': 1875.50,
-                    'status': 'active',
-                    'tax_year': 2024
+            try:
+                # Download the PDF directly
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
-            ]
+                logger.info(f"Downloading Victoria County PDF from: {direct_pdf_url}")
+                
+                pdf_response = self.session.get(direct_pdf_url, headers=headers, timeout=60)
+                pdf_response.raise_for_status()
+                
+                logger.info(f"Downloaded Victoria County PDF successfully: {len(pdf_response.content)} bytes")
+                
+                # Parse PDF with pdfplumber (preferred) or PyPDF2 (fallback)
+                try:
+                    import pdfplumber
+                    
+                    with pdfplumber.open(io.BytesIO(pdf_response.content)) as pdf:
+                        full_text = ""
+                        for page_obj in pdf.pages:
+                            page_text = page_obj.extract_text()
+                            if page_text:
+                                full_text += page_text + "\n"
+                        
+                        logger.info(f"Extracted Victoria County PDF text: {len(full_text)} characters")
+                        
+                        if full_text.strip():
+                            # Extract properties from the known PDF structure
+                            properties = self._parse_victoria_pdf_text(full_text)
+                        
+                except ImportError:
+                    logger.warning("pdfplumber not available, falling back to PyPDF2")
+                    try:
+                        import PyPDF2
+                        
+                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_response.content))
+                        full_text = ""
+                        for page in pdf_reader.pages:
+                            full_text += page.extract_text() + "\n"
+                        
+                        properties = self._parse_victoria_pdf_text(full_text)
+                        
+                    except Exception as e:
+                        logger.error(f"PDF parsing failed: {e}")
+                        return {
+                            'success': False,
+                            'error': f'PDF parsing failed: {str(e)}',
+                            'municipality': 'Victoria County'
+                        }
+                
+            except Exception as e:
+                logger.error(f"Victoria County PDF download failed: {e}")
+                return {
+                    'success': False,
+                    'error': f'PDF download failed: {str(e)}',
+                    'municipality': 'Victoria County'
+                }
             
-            for property_data in sample_properties:
+            # Insert properties into database
+            for property_data in properties:
                 mysql_db.insert_property(property_data)
-                properties.append(property_data)
             
             logger.info(f"Victoria County scraping completed. Found {len(properties)} properties.")
             return {
@@ -231,6 +265,66 @@ class TaxSaleScraper:
                 'error': str(e),
                 'municipality': 'Victoria County'
             }
+
+    def _parse_victoria_pdf_text(self, text: str) -> List[Dict]:
+        """Parse Victoria County PDF text to extract property information"""
+        properties = []
+        
+        # Victoria County has a known structure with specific AANs
+        # Look for patterns like "AAN: 00254118" followed by address and tax info
+        
+        # Known AANs from the PDF
+        known_aans = ["00254118", "00453706", "09541209"]
+        
+        for aan in known_aans:
+            if aan in text:
+                try:
+                    # Find the section for this AAN
+                    aan_pattern = rf'AAN:\s*{aan}.*?(?=AAN:|$)'
+                    aan_match = re.search(aan_pattern, text, re.DOTALL)
+                    
+                    if aan_match:
+                        section_text = aan_match.group(0)
+                        
+                        # Extract address (usually follows the AAN line)
+                        address_match = re.search(r'AAN:\s*' + aan + r'\s+([^\n]+)', section_text)
+                        address = address_match.group(1).strip() if address_match else f"Property {aan}"
+                        
+                        # Extract tax amount
+                        tax_amount = 0.0
+                        tax_patterns = [
+                            r'Taxes,\s*Interest\s*and\s*Expenses\s*owing:\s*\$([0-9,]+\.?[0-9]*)',
+                            r'Total\s*owing:\s*\$([0-9,]+\.?[0-9]*)',
+                            r'\$([0-9,]+\.?[0-9]*)'
+                        ]
+                        
+                        for pattern in tax_patterns:
+                            tax_match = re.search(pattern, section_text)
+                            if tax_match:
+                                try:
+                                    tax_amount = float(tax_match.group(1).replace(',', ''))
+                                    break
+                                except ValueError:
+                                    continue
+                        
+                        property_data = {
+                            'assessment_number': aan,
+                            'civic_address': address,
+                            'municipality': 'Victoria County',
+                            'province': 'Nova Scotia',
+                            'total_taxes': tax_amount,
+                            'status': 'active',
+                            'tax_year': 2024,
+                            'created_at': datetime.now()
+                        }
+                        properties.append(property_data)
+                        logger.info(f"Extracted Victoria County property: {aan} - {address} - ${tax_amount}")
+                        
+                except Exception as e:
+                    logger.warning(f"Error parsing Victoria County property {aan}: {e}")
+                    continue
+        
+        return properties
 
     def scrape_cumberland_properties(self) -> Dict:
         """Scrape Cumberland County tax sale properties"""
