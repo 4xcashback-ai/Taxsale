@@ -26,8 +26,8 @@ class TaxSaleScraper:
         logger.info("Starting Halifax tax sale scraping...")
         
         try:
-            # Halifax tax sale URL
-            url = "https://www.halifax.ca/home-property/property-taxes/tax-sales"
+            # Halifax tax sale URL - updated for current website structure
+            url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
             
             response = self.session.get(url)
             response.raise_for_status()
