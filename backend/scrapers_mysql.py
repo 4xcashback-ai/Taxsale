@@ -123,6 +123,62 @@ class TaxSaleScraper:
                 'municipality': 'Halifax'
             }
 
+    def _parse_halifax_pdf_text(self, text: str) -> List[Dict]:
+        """Parse Halifax PDF text to extract property information"""
+        properties = []
+        
+        # Split text into lines and look for property patterns
+        lines = text.split('\n')
+        
+        for i, line in enumerate(lines):
+            line = line.strip()
+            
+            # Look for patterns that indicate property information
+            # Halifax format typically includes assessment numbers, addresses, and amounts
+            if re.search(r'\b\d{8,}\b', line):  # Assessment number pattern
+                try:
+                    # Extract assessment number
+                    assessment_match = re.search(r'\b(\d{8,})\b', line)
+                    if assessment_match:
+                        assessment_number = assessment_match.group(1)
+                        
+                        # Look for address in the same line or nearby lines
+                        address = ""
+                        for j in range(max(0, i-2), min(len(lines), i+3)):
+                            if lines[j] and not re.search(r'^\d+\.?\d*$', lines[j].strip()):
+                                if any(word in lines[j].lower() for word in ['street', 'road', 'avenue', 'drive', 'lane', 'halifax']):
+                                    address = lines[j].strip()
+                                    break
+                        
+                        # Look for tax amount
+                        tax_amount = 0.0
+                        amount_match = re.search(r'\$?[\d,]+\.?\d*', line)
+                        if amount_match:
+                            amount_str = amount_match.group(0).replace('$', '').replace(',', '')
+                            try:
+                                tax_amount = float(amount_str)
+                            except ValueError:
+                                tax_amount = 0.0
+                        
+                        if assessment_number:
+                            property_data = {
+                                'assessment_number': assessment_number,
+                                'civic_address': address or f"Property {assessment_number}",
+                                'municipality': 'Halifax Regional Municipality',
+                                'province': 'Nova Scotia',
+                                'total_taxes': tax_amount,
+                                'status': 'active',
+                                'tax_year': 2024,
+                                'created_at': datetime.now()
+                            }
+                            properties.append(property_data)
+                            
+                except Exception as e:
+                    logger.warning(f"Error parsing Halifax property line: {e}")
+                    continue
+        
+        return properties
+
     def scrape_victoria_properties(self) -> Dict:
         """Scrape Victoria County tax sale properties"""
         logger.info("Starting Victoria County tax sale scraping...")
