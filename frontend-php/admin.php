@@ -203,8 +203,15 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                         
                         <form method="POST" class="d-inline" onsubmit="return confirm('This will pull the latest code and restart services. Continue?')">
                             <input type="hidden" name="system_action" value="git_pull_restart">
-                            <button type="submit" class="btn btn-warning">
+                            <button type="submit" class="btn btn-warning me-2">
                                 <i class="fas fa-sync-alt"></i> Git Pull & Restart Services
+                            </button>
+                        </form>
+                        
+                        <form method="POST" class="d-inline" onsubmit="return confirm('This will clean up malformed property data. Continue?')">
+                            <input type="hidden" name="system_action" value="cleanup_data">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-broom"></i> Clean Up Data
                             </button>
                         </form>
                         
