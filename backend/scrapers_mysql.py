@@ -11,6 +11,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 import logging
+import pandas as pd
 from mysql_config import mysql_db
 
 logger = logging.getLogger(__name__)
