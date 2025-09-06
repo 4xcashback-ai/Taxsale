@@ -40,17 +40,28 @@ if ($_POST && isset($_POST['system_action'])) {
     if ($action === 'git_pull_restart') {
         $system_result = ['action' => 'git_pull_restart', 'steps' => []];
         
-        // Execute git pull
-        $git_output = shell_exec('cd /var/www/tax-sale-compass && git pull origin main 2>&1');
-        $system_result['steps'][] = ['command' => 'git pull', 'output' => $git_output];
+        // Execute git pull with detailed output
+        $git_command = 'cd /var/www/tax-sale-compass && git pull origin main 2>&1';
+        $git_output = shell_exec($git_command);
+        $system_result['steps'][] = ['command' => 'git pull origin main', 'output' => $git_output, 'time' => date('Y-m-d H:i:s')];
         
-        // Restart backend service
+        // Check git status after pull
+        $git_status = shell_exec('cd /var/www/tax-sale-compass && git status --porcelain 2>&1');
+        $system_result['steps'][] = ['command' => 'git status check', 'output' => $git_status ?: 'Working directory clean', 'time' => date('Y-m-d H:i:s')];
+        
+        // Restart backend service with status check
         $backend_output = shell_exec('sudo systemctl restart tax-sale-backend 2>&1');
-        $system_result['steps'][] = ['command' => 'restart backend', 'output' => $backend_output];
+        $backend_status = shell_exec('sudo systemctl is-active tax-sale-backend 2>&1');
+        $system_result['steps'][] = ['command' => 'restart backend', 'output' => $backend_output . "\nStatus: " . $backend_status, 'time' => date('Y-m-d H:i:s')];
         
-        // Restart PHP-FPM
+        // Restart PHP-FPM with status check
         $php_output = shell_exec('sudo systemctl restart php8.1-fpm 2>&1');
-        $system_result['steps'][] = ['command' => 'restart php-fpm', 'output' => $php_output];
+        $php_status = shell_exec('sudo systemctl is-active php8.1-fpm 2>&1');
+        $system_result['steps'][] = ['command' => 'restart php-fpm', 'output' => $php_output . "\nStatus: " . $php_status, 'time' => date('Y-m-d H:i:s')];
+        
+        // Final health check
+        $health_check = shell_exec('curl -s http://localhost:8001/api/health 2>&1');
+        $system_result['steps'][] = ['command' => 'health check', 'output' => $health_check ?: 'Backend not responding', 'time' => date('Y-m-d H:i:s')];
         
         $system_result['success'] = true;
         $system_result['message'] = 'System updated and services restarted successfully!';
