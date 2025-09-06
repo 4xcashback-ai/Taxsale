@@ -343,43 +343,113 @@ class TaxSaleScraper:
         logger.info("Starting Cumberland County tax sale scraping...")
         
         try:
-            # Cumberland County tax sale information
-            url = "https://www.cumberland.ca/tax-sales"
+            # Cumberland County tax sale URLs to try
+            urls_to_try = [
+                "https://www.cumberland.ca/tax-sales",
+                "https://www.cumberland.ca/services/tax-sales",
+                "https://www.cumberland.ca/municipal-services/tax-sales",
+                "https://www.cumberland.ca/departments/finance/tax-sales"
+            ]
             
             properties = []
             
-            # Sample data for Cumberland County
-            sample_properties = [
-                {
-                    'assessment_number': '40079659',
-                    'civic_address': '789 Elm Street, Amherst',
-                    'municipality': 'Cumberland County',
-                    'province': 'Nova Scotia',
-                    'total_taxes': 3200.75,
-                    'status': 'active',
-                    'tax_year': 2024
-                },
-                {
-                    'assessment_number': '40180606',
-                    'civic_address': '321 Pine Avenue, Springhill',
-                    'municipality': 'Cumberland County',
-                    'province': 'Nova Scotia',
-                    'total_taxes': 1650.25,
-                    'status': 'active',
-                    'tax_year': 2024
-                }
-            ]
+            for url in urls_to_try:
+                try:
+                    logger.info(f"Trying Cumberland URL: {url}")
+                    response = self.session.get(url, timeout=30)
+                    
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.content, 'html.parser')
+                        
+                        # Look for property data in various formats
+                        # Check for tables with property information
+                        tables = soup.find_all('table')
+                        for table in tables:
+                            rows = table.find_all('tr')
+                            for i, row in enumerate(rows[1:], 1):  # Skip header
+                                cells = row.find_all(['td', 'th'])
+                                if len(cells) >= 3:  # Minimum columns for property data
+                                    try:
+                                        # Extract data based on common table structures
+                                        assessment_num = self._clean_text(cells[0].get_text())
+                                        address = self._clean_text(cells[1].get_text()) if len(cells) > 1 else ""
+                                        tax_amount_text = self._clean_text(cells[-1].get_text())  # Usually last column
+                                        
+                                        # Parse tax amount
+                                        tax_amount = self._parse_currency(tax_amount_text)
+                                        
+                                        if assessment_num and assessment_num.isdigit() and len(assessment_num) >= 6:
+                                            property_data = {
+                                                'assessment_number': assessment_num,
+                                                'civic_address': address or f"Property {assessment_num}",
+                                                'municipality': 'Cumberland County',
+                                                'province': 'Nova Scotia',
+                                                'total_taxes': tax_amount,
+                                                'status': 'active',
+                                                'tax_year': 2024,
+                                                'created_at': datetime.now()
+                                            }
+                                            properties.append(property_data)
+                                            logger.info(f"Found Cumberland property: {assessment_num} - {address}")
+                                            
+                                    except Exception as e:
+                                        logger.warning(f"Error parsing Cumberland row {i}: {e}")
+                                        continue
+                        
+                        # Also look for lists or divs with property information
+                        property_lists = soup.find_all('div', class_=lambda x: x and 'property' in x.lower())
+                        for prop_div in property_lists:
+                            try:
+                                text = prop_div.get_text()
+                                # Look for assessment numbers in the text
+                                assessment_matches = re.findall(r'\b\d{6,}\b', text)
+                                for assessment_num in assessment_matches:
+                                    if assessment_num not in [p['assessment_number'] for p in properties]:
+                                        property_data = {
+                                            'assessment_number': assessment_num,
+                                            'civic_address': f"Property {assessment_num}",
+                                            'municipality': 'Cumberland County',
+                                            'province': 'Nova Scotia',
+                                            'total_taxes': 0.0,
+                                            'status': 'active',
+                                            'tax_year': 2024,
+                                            'created_at': datetime.now()
+                                        }
+                                        properties.append(property_data)
+                                        
+                            except Exception as e:
+                                logger.warning(f"Error parsing Cumberland property div: {e}")
+                                continue
+                        
+                        if properties:
+                            break  # Found properties, no need to try other URLs
+                            
+                except Exception as e:
+                    logger.warning(f"Failed to access Cumberland URL {url}: {e}")
+                    continue
             
-            for property_data in sample_properties:
+            # If no properties found from live scraping, this might mean no current tax sale
+            # but we don't want to fail completely
+            if not properties:
+                logger.warning("No current Cumberland County tax sale properties found online")
+                return {
+                    'success': True,
+                    'municipality': 'Cumberland County',
+                    'properties_found': 0,
+                    'properties': [],
+                    'message': 'No current tax sale properties available'
+                }
+            
+            # Insert properties into database
+            for property_data in properties:
                 mysql_db.insert_property(property_data)
-                properties.append(property_data)
             
             logger.info(f"Cumberland County scraping completed. Found {len(properties)} properties.")
             return {
                 'success': True,
                 'municipality': 'Cumberland County',
                 'properties_found': len(properties),
-                'properties': properties
+                'properties': properties[:10]  # Return first 10 as sample
             }
             
         except Exception as e:
@@ -389,6 +459,38 @@ class TaxSaleScraper:
                 'error': str(e),
                 'municipality': 'Cumberland County'
             }
+
+    def _clean_text(self, text: str) -> str:
+        """Clean extracted text"""
+        if not text:
+            return ""
+        return ' '.join(text.strip().split())
+
+    def _parse_currency(self, text: str) -> float:
+        """Parse currency amount from text"""
+        if not text:
+            return 0.0
+        
+        # Remove currency symbols and extra characters
+        cleaned = re.sub(r'[^\d.,]', '', text)
+        if not cleaned:
+            return 0.0
+            
+        try:
+            # Handle comma as thousands separator
+            if ',' in cleaned and '.' in cleaned:
+                cleaned = cleaned.replace(',', '')
+            elif ',' in cleaned and cleaned.count(',') == 1:
+                # Check if comma is decimal separator or thousands
+                parts = cleaned.split(',')
+                if len(parts[1]) == 2:  # Decimal separator
+                    cleaned = cleaned.replace(',', '.')
+                else:  # Thousands separator
+                    cleaned = cleaned.replace(',', '')
+            
+            return float(cleaned)
+        except ValueError:
+            return 0.0
 
     def parse_currency(self, text: str) -> Optional[float]:
         """Parse currency string to float"""
