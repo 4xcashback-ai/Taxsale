@@ -1,0 +1,12 @@
+# Allow www-data user to run specific system commands for Tax Sale Compass admin
+# Copy this file to /etc/sudoers.d/tax-sale-compass
+
+# Allow www-data to restart services without password
+www-data ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart tax-sale-backend
+www-data ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart php8.1-fpm
+www-data ALL=(ALL) NOPASSWD: /usr/bin/systemctl status tax-sale-backend
+www-data ALL=(ALL) NOPASSWD: /usr/bin/systemctl status php8.1-fpm
+
+# Allow www-data to run git commands in the application directory
+www-data ALL=(ALL) NOPASSWD: /usr/bin/git -C /var/www/tax-sale-compass pull
+www-data ALL=(ALL) NOPASSWD: /usr/bin/git -C /var/www/tax-sale-compass status
