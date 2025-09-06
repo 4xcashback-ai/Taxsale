@@ -95,12 +95,7 @@ if ($_POST) {
                             <a href="register.php" class="btn btn-link">Don't have an account? Register</a>
                         </form>
                         
-                        <hr>
-                        <div class="text-muted small">
-                            <strong>Demo Login:</strong><br>
-                            Email: admin<br>
-                            Password: TaxSale2025!SecureAdmin
-                        </div>
+
                     </div>
                 </div>
             </div>
