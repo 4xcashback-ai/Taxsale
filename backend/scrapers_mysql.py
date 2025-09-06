@@ -167,12 +167,18 @@ class TaxSaleScraper:
                     else:
                         address = f"Halifax Property {assessment_number}"
                     
-                    # Simple tax amount extraction
+                    # Simple tax amount extraction with validation
                     tax_amount = 0.0
                     money_match = re.search(r'\$?([\d,]+\.?\d*)', remaining)
                     if money_match:
                         try:
-                            tax_amount = float(money_match.group(1).replace(',', ''))
+                            potential_amount = float(money_match.group(1).replace(',', ''))
+                            # Validate: tax amounts should be between $1 and $50,000 (reasonable range)
+                            if 1.0 <= potential_amount <= 50000.0:
+                                tax_amount = potential_amount
+                            else:
+                                logger.warning(f"Rejecting unreasonable tax amount: ${potential_amount}")
+                                tax_amount = 0.0
                         except:
                             tax_amount = 0.0
                     
