@@ -11,5 +11,5 @@ python-dotenv
 PyJWT
 pdfplumber
 PyPDF2
-tabula-py
+camelot-py[cv]
 pandas
