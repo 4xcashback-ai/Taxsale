@@ -29,7 +29,40 @@ if ($search) {
     $params[] = "%$search%";
 }
 
-$query .= " ORDER BY created_at DESC LIMIT 24";
+# Get pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$per_page = 24;
+$offset = ($page - 1) * $per_page;
+
+# Get total count for pagination
+$count_query = "SELECT COUNT(*) FROM properties WHERE 1=1";
+$count_params = [];
+
+# Apply same filters to count query
+if ($municipality) {
+    $count_query .= " AND municipality = ?";
+    $count_params[] = $municipality;
+}
+
+if ($status) {
+    $count_query .= " AND status = ?";
+    $count_params[] = $status;
+}
+
+if ($search) {
+    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
+    $count_params[] = "%$search%";
+    $count_params[] = "%$search%";
+    $count_params[] = "%$search%";
+}
+
+# Get total count
+$count_stmt = $db->prepare($count_query);
+$count_stmt->execute($count_params);
+$total_properties = $count_stmt->fetchColumn();
+$total_pages = ceil($total_properties / $per_page);
+
+$query .= " ORDER BY created_at DESC LIMIT $per_page OFFSET $offset";
 
 $db = getDB();
 $stmt = $db->prepare($query);
