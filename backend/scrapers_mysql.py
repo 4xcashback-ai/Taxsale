@@ -343,11 +343,16 @@ class TaxSaleScraper:
                                 owner_name = potential_owner
                                 break
                     
-                    # Extract civic address (street address patterns)
+                    # Extract civic address (enhanced patterns for complete addresses)
                     address_patterns = [
-                        r'(\d+\s+[A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Way|Place|Pl|Crescent|Cres|Circle|Cir|Court|Ct)\s*[A-Za-z\s]*)',
-                        r'(Lot\s+\d+[A-Za-z\s-]*[A-Za-z]+)',
-                        r'(\d+\s+[A-Za-z]+\s+[A-Za-z]+\s+(?:Rd|Road|St|Street|Ave|Avenue|Dr|Drive|Ln|Lane|Way|Place|Crescent|Circle|Court)[A-Za-z\s]*)',
+                        # Pattern for numbered addresses with full location: "405 Conrod Beach Rd Lot 4 Port Lower East Chezzetcook"
+                        r'(\d+\s+[A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Way|Place|Pl|Crescent|Cres|Circle|Cir|Court|Ct)(?:\s+Lot\s+[\w-]+)?(?:\s+[A-Za-z\s]+){0,6})',
+                        # Pattern for lot-based addresses: "Lot 60-X Halifax" or similar
+                        r'(Lot\s+[\w-]+\s+[A-Za-z\s]+)',
+                        # Pattern for highway addresses: "4209 Highway 357" etc.
+                        r'(\d+\s+Highway\s+\d+[A-Za-z\s]*)',
+                        # General pattern for complex addresses
+                        r'(\d+\s+[A-Za-z\s]{3,50}(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Way|Place|Pl|Crescent|Cres|Circle|Cir|Court|Ct|Highway)[A-Za-z\s\d-]{0,50})',
                     ]
                     
                     for pattern in address_patterns:
