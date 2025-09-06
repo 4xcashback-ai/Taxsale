@@ -343,102 +343,155 @@ class TaxSaleScraper:
         logger.info("Starting Cumberland County tax sale scraping...")
         
         try:
-            # Cumberland County tax sale URLs to try
-            urls_to_try = [
-                "https://www.cumberland.ca/tax-sales",
-                "https://www.cumberland.ca/services/tax-sales",
-                "https://www.cumberland.ca/municipal-services/tax-sales",
-                "https://www.cumberland.ca/departments/finance/tax-sales"
-            ]
+            # Correct Cumberland County NS tax sale URL
+            url = "https://www.cumberlandcounty.ns.ca/tax-sales.html"
             
             properties = []
             
-            for url in urls_to_try:
+            logger.info(f"Accessing Cumberland County URL: {url}")
+            response = self.session.get(url, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for property data in various formats
+            # Check for tables with property information
+            tables = soup.find_all('table')
+            for table in tables:
+                rows = table.find_all('tr')
+                for i, row in enumerate(rows[1:], 1):  # Skip header
+                    cells = row.find_all(['td', 'th'])
+                    if len(cells) >= 3:  # Minimum columns for property data
+                        try:
+                            # Extract data based on common table structures
+                            assessment_num = self._clean_text(cells[0].get_text())
+                            address = self._clean_text(cells[1].get_text()) if len(cells) > 1 else ""
+                            tax_amount_text = self._clean_text(cells[-1].get_text())  # Usually last column
+                            
+                            # Parse tax amount
+                            tax_amount = self._parse_currency(tax_amount_text)
+                            
+                            if assessment_num and assessment_num.replace('.', '').replace('-', '').isdigit() and len(assessment_num.replace('.', '').replace('-', '')) >= 6:
+                                property_data = {
+                                    'assessment_number': assessment_num,
+                                    'civic_address': address or f"Property {assessment_num}",
+                                    'municipality': 'Cumberland County',
+                                    'province': 'Nova Scotia',
+                                    'total_taxes': tax_amount,
+                                    'status': 'active',
+                                    'tax_year': 2024,
+                                    'created_at': datetime.now()
+                                }
+                                properties.append(property_data)
+                                logger.info(f"Found Cumberland property: {assessment_num} - {address}")
+                                
+                        except Exception as e:
+                            logger.warning(f"Error parsing Cumberland row {i}: {e}")
+                            continue
+            
+            # Also look for lists, divs, or paragraphs with property information
+            property_sections = soup.find_all(['div', 'section', 'p'], string=re.compile(r'\d{6,}'))
+            for section in property_sections:
                 try:
-                    logger.info(f"Trying Cumberland URL: {url}")
-                    response = self.session.get(url, timeout=30)
-                    
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.content, 'html.parser')
-                        
-                        # Look for property data in various formats
-                        # Check for tables with property information
-                        tables = soup.find_all('table')
-                        for table in tables:
-                            rows = table.find_all('tr')
-                            for i, row in enumerate(rows[1:], 1):  # Skip header
-                                cells = row.find_all(['td', 'th'])
-                                if len(cells) >= 3:  # Minimum columns for property data
-                                    try:
-                                        # Extract data based on common table structures
-                                        assessment_num = self._clean_text(cells[0].get_text())
-                                        address = self._clean_text(cells[1].get_text()) if len(cells) > 1 else ""
-                                        tax_amount_text = self._clean_text(cells[-1].get_text())  # Usually last column
-                                        
-                                        # Parse tax amount
-                                        tax_amount = self._parse_currency(tax_amount_text)
-                                        
-                                        if assessment_num and assessment_num.isdigit() and len(assessment_num) >= 6:
-                                            property_data = {
-                                                'assessment_number': assessment_num,
-                                                'civic_address': address or f"Property {assessment_num}",
-                                                'municipality': 'Cumberland County',
-                                                'province': 'Nova Scotia',
-                                                'total_taxes': tax_amount,
-                                                'status': 'active',
-                                                'tax_year': 2024,
-                                                'created_at': datetime.now()
-                                            }
-                                            properties.append(property_data)
-                                            logger.info(f"Found Cumberland property: {assessment_num} - {address}")
-                                            
-                                    except Exception as e:
-                                        logger.warning(f"Error parsing Cumberland row {i}: {e}")
-                                        continue
-                        
-                        # Also look for lists or divs with property information
-                        property_lists = soup.find_all('div', class_=lambda x: x and 'property' in x.lower())
-                        for prop_div in property_lists:
-                            try:
-                                text = prop_div.get_text()
-                                # Look for assessment numbers in the text
-                                assessment_matches = re.findall(r'\b\d{6,}\b', text)
-                                for assessment_num in assessment_matches:
-                                    if assessment_num not in [p['assessment_number'] for p in properties]:
-                                        property_data = {
-                                            'assessment_number': assessment_num,
-                                            'civic_address': f"Property {assessment_num}",
-                                            'municipality': 'Cumberland County',
-                                            'province': 'Nova Scotia',
-                                            'total_taxes': 0.0,
-                                            'status': 'active',
-                                            'tax_year': 2024,
-                                            'created_at': datetime.now()
-                                        }
-                                        properties.append(property_data)
-                                        
-                            except Exception as e:
-                                logger.warning(f"Error parsing Cumberland property div: {e}")
-                                continue
-                        
-                        if properties:
-                            break  # Found properties, no need to try other URLs
+                    text = section.get_text()
+                    # Look for assessment numbers in the text
+                    assessment_matches = re.findall(r'\b\d{6,}\b', text)
+                    for assessment_num in assessment_matches:
+                        if assessment_num not in [p['assessment_number'] for p in properties]:
+                            # Try to extract address from the same text
+                            lines = text.split('\n')
+                            address = f"Property {assessment_num}"
+                            for line in lines:
+                                if assessment_num in line:
+                                    # Look for address patterns in the same line or next line
+                                    address_patterns = [
+                                        r'[A-Za-z\s,]+(?:Street|St|Road|Rd|Avenue|Ave|Drive|Dr|Lane|Ln)[A-Za-z\s,]*',
+                                        r'\d+\s+[A-Za-z\s,]+[A-Za-z]+'
+                                    ]
+                                    for pattern in address_patterns:
+                                        addr_match = re.search(pattern, line)
+                                        if addr_match:
+                                            address = addr_match.group(0).strip()
+                                            break
+                            
+                            property_data = {
+                                'assessment_number': assessment_num,
+                                'civic_address': address,
+                                'municipality': 'Cumberland County',
+                                'province': 'Nova Scotia',
+                                'total_taxes': 0.0,
+                                'status': 'active',
+                                'tax_year': 2024,
+                                'created_at': datetime.now()
+                            }
+                            properties.append(property_data)
                             
                 except Exception as e:
-                    logger.warning(f"Failed to access Cumberland URL {url}: {e}")
+                    logger.warning(f"Error parsing Cumberland property section: {e}")
                     continue
             
-            # If no properties found from live scraping, this might mean no current tax sale
-            # but we don't want to fail completely
-            if not properties:
-                logger.warning("No current Cumberland County tax sale properties found online")
-                return {
-                    'success': True,
-                    'municipality': 'Cumberland County',
-                    'properties_found': 0,
-                    'properties': [],
-                    'message': 'No current tax sale properties available'
-                }
+            # Look for PDF links that might contain property lists
+            pdf_links = soup.find_all('a', href=re.compile(r'\.pdf$', re.I))
+            for link in pdf_links:
+                href = link.get('href')
+                if href and 'tax' in href.lower():
+                    try:
+                        # Make URL absolute if relative
+                        if href.startswith('/'):
+                            pdf_url = "https://www.cumberlandcounty.ns.ca" + href
+                        elif not href.startswith('http'):
+                            pdf_url = "https://www.cumberlandcounty.ns.ca/" + href
+                        else:
+                            pdf_url = href
+                        
+                        logger.info(f"Found Cumberland PDF: {pdf_url}")
+                        
+                        # Download and parse PDF
+                        pdf_response = self.session.get(pdf_url, timeout=60)
+                        pdf_response.raise_for_status()
+                        
+                        # Parse PDF content
+                        try:
+                            import pdfplumber
+                            
+                            with pdfplumber.open(io.BytesIO(pdf_response.content)) as pdf:
+                                for page in pdf.pages:
+                                    page_text = page.extract_text()
+                                    if page_text:
+                                        # Look for assessment numbers and addresses in PDF
+                                        lines = page_text.split('\n')
+                                        for line in lines:
+                                            assessment_matches = re.findall(r'\b\d{6,}\b', line)
+                                            for assessment_num in assessment_matches:
+                                                if assessment_num not in [p['assessment_number'] for p in properties]:
+                                                    # Extract address from the line
+                                                    address = line.replace(assessment_num, '').strip()
+                                                    if not address:
+                                                        address = f"Property {assessment_num}"
+                                                    
+                                                    property_data = {
+                                                        'assessment_number': assessment_num,
+                                                        'civic_address': address,
+                                                        'municipality': 'Cumberland County',
+                                                        'province': 'Nova Scotia',
+                                                        'total_taxes': 0.0,
+                                                        'status': 'active',
+                                                        'tax_year': 2024,
+                                                        'created_at': datetime.now()
+                                                    }
+                                                    properties.append(property_data)
+                        
+                        except ImportError:
+                            logger.warning("pdfplumber not available for Cumberland PDF parsing")
+                        except Exception as e:
+                            logger.warning(f"Error parsing Cumberland PDF: {e}")
+                        
+                        # Only process first PDF to avoid duplicates
+                        break
+                            
+                    except Exception as e:
+                        logger.warning(f"Error downloading Cumberland PDF {href}: {e}")
+                        continue
             
             # Insert properties into database
             for property_data in properties:
