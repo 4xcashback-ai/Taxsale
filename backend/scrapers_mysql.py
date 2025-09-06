@@ -319,84 +319,106 @@ class TaxSaleScraper:
                     else:
                         remaining_text = full_line
                     
-                    # Enhanced address extraction - look for actual street addresses
-                    address = "Halifax Property"
+                    # Enhanced data extraction for complete tax sale information
+                    owner_name = ""
+                    civic_address = ""
+                    parcel_description = ""
+                    pid_number = ""
+                    opening_bid = 0.0
+                    hst_applicable = False
+                    redeemable = True
                     
-                    # Look for street address patterns in the remaining text
-                    # Common Halifax patterns: "405 Conrod Beach Rd", "123 Main Street", etc.
-                    street_patterns = [
-                        r'(\d+\s+[A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Way|Place|Pl|Crescent|Cres|Circle|Cir|Court|Ct)\s*[A-Za-z\s]*(?:Lot\s*\d+)?[A-Za-z\s]*)',
+                    # Extract owner name (usually comes first, multiple capitalized words)
+                    owner_patterns = [
+                        r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,4}(?:\s+Estate)?)\b',
+                        r'\b([A-Z][A-Z\s,]+)\s+(?=\d+|\w+\s+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln))',
+                    ]
+                    
+                    for pattern in owner_patterns:
+                        owner_match = re.search(pattern, remaining_text)
+                        if owner_match and not owner_name:
+                            potential_owner = owner_match.group(1).strip()
+                            # Make sure it's not a street address
+                            if not any(word in potential_owner.lower() for word in ['road', 'rd', 'street', 'st', 'avenue', 'ave', 'drive', 'dr', 'lane', 'ln', 'lot']):
+                                owner_name = potential_owner
+                                break
+                    
+                    # Extract civic address (street address patterns)
+                    address_patterns = [
+                        r'(\d+\s+[A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Way|Place|Pl|Crescent|Cres|Circle|Cir|Court|Ct)\s*[A-Za-z\s]*)',
                         r'(Lot\s+\d+[A-Za-z\s-]*[A-Za-z]+)',
                         r'(\d+\s+[A-Za-z]+\s+[A-Za-z]+\s+(?:Rd|Road|St|Street|Ave|Avenue|Dr|Drive|Ln|Lane|Way|Place|Crescent|Circle|Court)[A-Za-z\s]*)',
                     ]
                     
-                    for pattern in street_patterns:
-                        street_match = re.search(pattern, remaining_text, re.IGNORECASE)
-                        if street_match:
-                            potential_address = street_match.group(1).strip()
-                            
-                            # Clean up the address - remove obvious owner names and extra info
-                            clean_addr = potential_address
-                            
-                            # Remove owner name patterns (multiple capitalized words with commas)
-                            clean_addr = re.sub(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,?\s*', '', clean_addr)
-                            
-                            # Clean up extra info like "- Dwelling", "- Land", etc.
-                            clean_addr = re.sub(r'\s*-\s*[A-Za-z]+\s*$', '', clean_addr)
-                            
-                            # Clean up multiple spaces
-                            clean_addr = re.sub(r'\s+', ' ', clean_addr).strip()
-                            
-                            if len(clean_addr) > 5 and not clean_addr.isdigit():
-                                address = clean_addr
+                    for pattern in address_patterns:
+                        addr_match = re.search(pattern, remaining_text, re.IGNORECASE)
+                        if addr_match:
+                            potential_address = addr_match.group(1).strip()
+                            # Clean up the address
+                            clean_addr = re.sub(r'\s+', ' ', potential_address).strip()
+                            if len(clean_addr) > 5:
+                                civic_address = clean_addr
                                 break
                     
-                    # If no street pattern found, look for location names
-                    if address == "Halifax Property":
-                        location_patterns = [
-                            r'([A-Za-z\s]+(?:Beach|Hill|Park|Point|Bay|Lake|River|Creek|Valley|Heights|Gardens)[A-Za-z\s]*)',
-                            r'([A-Za-z\s]+(?:North|South|East|West|Upper|Lower)[A-Za-z\s]*)',
-                        ]
-                        
-                        for pattern in location_patterns:
-                            loc_match = re.search(pattern, remaining_text, re.IGNORECASE)
-                            if loc_match:
-                                potential_location = loc_match.group(1).strip()
-                                # Remove owner names
-                                clean_loc = re.sub(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,?\s*', '', potential_location)
-                                clean_loc = re.sub(r'\s+', ' ', clean_loc).strip()
-                                
-                                if len(clean_loc) > 5:
-                                    address = clean_loc
-                                    break
+                    # Extract PID (Property Identification Number) if present
+                    pid_match = re.search(r'PID:?\s*(\d{8,11})', remaining_text)
+                    if pid_match:
+                        pid_number = pid_match.group(1)
                     
-                    # Simple tax amount extraction - look for dollar amounts
-                    tax_amount = 0.0
-                    dollar_matches = re.findall(r'\$?([0-9,]+\.?[0-9]*)', remaining_text)
-                    for match in dollar_matches:
+                    # Extract opening bid / tax amount
+                    bid_amount = 0.0
+                    money_matches = re.findall(r'\$?([\d,]+\.?\d*)', remaining_text)
+                    for match in money_matches:
                         try:
                             amount = float(match.replace(',', ''))
-                            # Only accept reasonable tax amounts (between $100 and $25,000)
-                            if 100 <= amount <= 25000:
-                                tax_amount = amount
-                                break
+                            if 100 <= amount <= 25000:  # Reasonable tax/bid amount
+                                if bid_amount == 0.0:  # Take first reasonable amount as opening bid
+                                    opening_bid = amount
+                                else:  # Second amount might be total taxes
+                                    bid_amount = amount
+                                    break
                         except:
                             continue
                     
-                    # Create property data
+                    # Check for HST indicators
+                    if re.search(r'\bHST\b|\bYes\b.*HST', remaining_text, re.IGNORECASE):
+                        hst_applicable = True
+                    
+                    # Check for redeemable indicators
+                    if re.search(r'\bNo\b.*[Rr]edeemable|\bNot\s+[Rr]edeemable', remaining_text, re.IGNORECASE):
+                        redeemable = False
+                    
+                    # Create parcel description (combine address and other details)
+                    parcel_description = remaining_text.strip()
+                    if len(parcel_description) > 500:  # Truncate if too long
+                        parcel_description = parcel_description[:500] + "..."
+                    
+                    # Fallbacks for missing data
+                    if not owner_name:
+                        owner_name = "Unknown Owner"
+                    if not civic_address:
+                        civic_address = f"Halifax Property {assessment_number}"
+                    
+                    # Create comprehensive property data
                     property_data = {
                         'assessment_number': assessment_number,
-                        'civic_address': address,
+                        'owner_name': owner_name,
+                        'civic_address': civic_address,
+                        'parcel_description': parcel_description,
+                        'pid_number': pid_number,
+                        'opening_bid': opening_bid,
+                        'total_taxes': opening_bid,  # Use opening_bid as total_taxes for now
+                        'hst_applicable': hst_applicable,
+                        'redeemable': redeemable,
                         'municipality': 'Halifax Regional Municipality',
                         'province': 'Nova Scotia',
-                        'total_taxes': tax_amount,
                         'status': 'active',
                         'tax_year': 2024,
                         'created_at': datetime.now()
                     }
                     
                     properties.append(property_data)
-                    logger.info(f"Parsed Halifax: {assessment_number} | {address} | ${tax_amount}")
+                    logger.info(f"Parsed Halifax: {assessment_number} | {civic_address} | ${opening_bid}")
                     
                 except Exception as e:
                     logger.warning(f"Error parsing Halifax line {line_num}: {e}")
