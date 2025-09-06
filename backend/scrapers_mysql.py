@@ -336,8 +336,13 @@ class TaxSaleScraper:
                             tax_match = re.search(pattern, section_text)
                             if tax_match:
                                 try:
-                                    tax_amount = float(tax_match.group(1).replace(',', ''))
-                                    break
+                                    potential_amount = float(tax_match.group(1).replace(',', ''))
+                                    # Validate: tax amounts should be between $1 and $50,000 (reasonable range)
+                                    if 1.0 <= potential_amount <= 50000.0:
+                                        tax_amount = potential_amount
+                                        break
+                                    else:
+                                        logger.warning(f"Victoria: Rejecting unreasonable tax amount: ${potential_amount}")
                                 except ValueError:
                                     continue
                         
