@@ -209,6 +209,14 @@ class ThumbnailGenerator {
                     $longitude = $data['center']['lon'];
                     
                     error_log("Updated {$assessment_number} with coordinates: {$latitude}, {$longitude}");
+                    
+                    // If we have boundary geometry, try to create a boundary overlay
+                    if (isset($data['geometry']) && isset($data['bbox'])) {
+                        $boundary_thumbnail = $this->generateBoundaryOverlayThumbnail($assessment_number, $data, $latitude, $longitude);
+                        if ($boundary_thumbnail) {
+                            return $boundary_thumbnail;
+                        }
+                    }
                 }
             }
         }
