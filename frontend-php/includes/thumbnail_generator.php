@@ -111,77 +111,109 @@ class ThumbnailGenerator {
     }
     
     /**
-     * Fetch boundary data from ArcGIS service using PID
+     * Fetch boundary data from ArcGIS service using PID or AAN
      */
     private function fetchBoundaryFromArcGIS($pid_number, $property) {
         try {
             // ArcGIS REST API endpoint for Nova Scotia property parcels
             $arcgis_url = 'https://services1.arcgis.com/mCp8h70YF1NUbmGD/arcgis/rest/services/Property_Parcel_Boundaries/FeatureServer/0/query';
             
-            $params = [
-                'where' => "PID = '{$pid_number}'",
-                'outFields' => '*',
-                'geometryType' => 'esriGeometryPolygon',
-                'spatialRel' => 'esriSpatialRelIntersects',
-                'f' => 'json',
-                'returnGeometry' => 'true',
-                'outSR' => '4326' // WGS84 coordinate system
-            ];
+            // Try both PID and AAN (Assessment Account Number)
+            $search_attempts = [];
             
-            $url = $arcgis_url . '?' . http_build_query($params);
+            // First try with PID
+            if ($pid_number) {
+                $search_attempts[] = [
+                    'field' => 'PID',
+                    'value' => $pid_number,
+                    'where' => "PID = '{$pid_number}'"
+                ];
+            }
             
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'GET',
-                    'timeout' => 30,
-                    'header' => [
-                        'User-Agent: Tax Sale Compass/1.0',
-                        'Accept: application/json'
+            // Then try with Assessment Account Number
+            $assessment_number = $property['assessment_number'];
+            if ($assessment_number) {
+                $search_attempts[] = [
+                    'field' => 'AAN',
+                    'value' => $assessment_number,
+                    'where' => "AAN = '{$assessment_number}'"
+                ];
+            }
+            
+            foreach ($search_attempts as $attempt) {
+                error_log("Trying ArcGIS search with {$attempt['field']}: {$attempt['value']}");
+                
+                $params = [
+                    'where' => $attempt['where'],
+                    'outFields' => '*',
+                    'geometryType' => 'esriGeometryPolygon',
+                    'spatialRel' => 'esriSpatialRelIntersects',
+                    'f' => 'json',
+                    'returnGeometry' => 'true',
+                    'outSR' => '4326' // WGS84 coordinate system
+                ];
+                
+                $url = $arcgis_url . '?' . http_build_query($params);
+                
+                $context = stream_context_create([
+                    'http' => [
+                        'method' => 'GET',
+                        'timeout' => 30,
+                        'header' => [
+                            'User-Agent: Tax Sale Compass/1.0',
+                            'Accept: application/json'
+                        ]
                     ]
-                ]
-            ]);
-            
-            $response = file_get_contents($url, false, $context);
-            
-            if ($response === false) {
-                error_log("Failed to fetch ArcGIS data for PID: {$pid_number}");
-                return null;
+                ]);
+                
+                $response = file_get_contents($url, false, $context);
+                
+                if ($response === false) {
+                    error_log("Failed to fetch ArcGIS data for {$attempt['field']}: {$attempt['value']}");
+                    continue;
+                }
+                
+                $data = json_decode($response, true);
+                
+                if (!$data || !isset($data['features']) || empty($data['features'])) {
+                    error_log("No ArcGIS features found for {$attempt['field']}: {$attempt['value']}");
+                    continue;
+                }
+                
+                // Found data! Process it
+                error_log("SUCCESS: Found ArcGIS data using {$attempt['field']}: {$attempt['value']}");
+                
+                $feature = $data['features'][0];
+                $geometry = $feature['geometry'];
+                
+                if (!$geometry || !isset($geometry['rings'])) {
+                    error_log("No geometry rings found for {$attempt['field']}: {$attempt['value']}");
+                    continue;
+                }
+                
+                // Convert ArcGIS geometry to our format
+                $coordinates = [];
+                foreach ($geometry['rings'][0] as $point) {
+                    $coordinates[] = [$point[0], $point[1]]; // [longitude, latitude]
+                }
+                
+                // Calculate center point if not available
+                if (!$property['latitude'] || !$property['longitude']) {
+                    $center = $this->calculatePolygonCenter($coordinates);
+                    $this->updatePropertyCoordinates($property['assessment_number'], $center['lat'], $center['lng']);
+                }
+                
+                return json_encode([
+                    'type' => 'Polygon',
+                    'coordinates' => [$coordinates]
+                ]);
             }
             
-            $data = json_decode($response, true);
-            
-            if (!$data || !isset($data['features']) || empty($data['features'])) {
-                error_log("No ArcGIS features found for PID: {$pid_number}");
-                return null;
-            }
-            
-            $feature = $data['features'][0];
-            $geometry = $feature['geometry'];
-            
-            if (!$geometry || !isset($geometry['rings'])) {
-                error_log("No geometry rings found for PID: {$pid_number}");
-                return null;
-            }
-            
-            // Convert ArcGIS geometry to our format
-            $coordinates = [];
-            foreach ($geometry['rings'][0] as $point) {
-                $coordinates[] = [$point[0], $point[1]]; // [longitude, latitude]
-            }
-            
-            // Calculate center point if not available
-            if (!$property['latitude'] || !$property['longitude']) {
-                $center = $this->calculatePolygonCenter($coordinates);
-                $this->updatePropertyCoordinates($property['assessment_number'], $center['lat'], $center['lng']);
-            }
-            
-            return json_encode([
-                'type' => 'Polygon',
-                'coordinates' => [$coordinates]
-            ]);
+            error_log("No ArcGIS data found for PID: {$pid_number} or AAN: {$assessment_number}");
+            return null;
             
         } catch (Exception $e) {
-            error_log("ArcGIS API error for PID {$pid_number}: " . $e->getMessage());
+            error_log("ArcGIS API error: " . $e->getMessage());
             return null;
         }
     }
