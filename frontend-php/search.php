@@ -1,5 +1,22 @@
 <?php
 session_start();
+
+// Check if user is logged in - if not, show landing page
+$is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
+
+// For debugging - force landing page
+if (isset($_GET['debug']) && $_GET['debug'] === 'landing') {
+    require_once 'landing.php';
+    exit;
+}
+
+// If user is not logged in, show landing page instead of search
+if (!$is_logged_in) {
+    require_once 'landing.php';
+    exit;
+}
+
+// If we reach here, user is logged in, continue with search functionality
 require_once 'config/database.php';
 
 // Get search parameters
