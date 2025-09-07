@@ -27,7 +27,7 @@ class BatchThumbnailGenerator {
         $this->log("Scanning for properties needing thumbnails...");
         
         // Get properties that don't have thumbnails yet and have PID numbers
-        $sql = "SELECT id, assessment_number, pid_number, latitude, longitude, address, municipality 
+        $sql = "SELECT id, assessment_number, pid_number, latitude, longitude, civic_address, municipality 
                 FROM properties 
                 WHERE pid_number IS NOT NULL 
                 AND pid_number != '' 
