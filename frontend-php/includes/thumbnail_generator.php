@@ -11,7 +11,7 @@ class ThumbnailGenerator {
     
     public function __construct($api_key) {
         $this->google_api_key = $api_key;
-        $this->thumbnail_dir = $_SERVER['DOCUMENT_ROOT'] . '/frontend-php/assets/thumbnails/';
+        $this->thumbnail_dir = $_SERVER['DOCUMENT_ROOT'] . '/assets/thumbnails/';
         $this->base_url = 'https://maps.googleapis.com/maps/api/staticmap';
         
         // Create thumbnails directory if it doesn't exist
