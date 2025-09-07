@@ -64,6 +64,16 @@ chown -R www-data:www-data "$APP_DIR" 2>&1 | tee -a "$LOG_FILE"
 chmod -R 755 "$APP_DIR" 2>&1 | tee -a "$LOG_FILE"
 chmod -R 777 "$APP_DIR/frontend-php/assets/thumbnails/" 2>&1 | tee -a "$LOG_FILE"
 
+# Make scripts executable
+chmod +x "$APP_DIR/scripts/"*.sh 2>&1 | tee -a "$LOG_FILE"
+
+# Fix nginx configuration if needed
+log "Checking nginx configuration..."
+if ! curl -s -o /dev/null -w "%{http_code}" http://localhost/ | grep -q "200"; then
+    log "Fixing nginx configuration..."
+    bash "$APP_DIR/scripts/fix_nginx_vps.sh" 2>&1 | tee -a "$LOG_FILE"
+fi
+
 # Kill any stuck PHP processes
 log "Cleaning up PHP processes..."
 pkill -f php-fpm 2>&1 | tee -a "$LOG_FILE" || log "No PHP-FPM processes to kill"
