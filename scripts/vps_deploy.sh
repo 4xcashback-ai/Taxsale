@@ -22,6 +22,23 @@ handle_error() {
 log "=== Starting Tax Sale Compass Deployment ==="
 echo "DEPLOY_START"
 
+# Pre-deployment safety checks
+log "Running pre-deployment safety checks..."
+
+# Check if nginx is currently working
+CURRENT_NGINX_STATUS=$(systemctl is-active nginx 2>/dev/null || echo "inactive")
+CURRENT_SITE_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://localhost/ -k 2>/dev/null || curl -s -o /dev/null -w "%{http_code}" http://localhost/ 2>/dev/null || echo "000")
+
+log "Current status - Nginx: $CURRENT_NGINX_STATUS, Site response: $CURRENT_SITE_RESPONSE"
+
+if [ "$CURRENT_NGINX_STATUS" = "active" ] && ([ "$CURRENT_SITE_RESPONSE" = "200" ] || [ "$CURRENT_SITE_RESPONSE" = "301" ]); then
+    log "✅ Website is currently working - will preserve configuration"
+    PRESERVE_NGINX="true"
+else
+    log "⚠️ Website not responding correctly - nginx fixes may be applied if needed"
+    PRESERVE_NGINX="false"
+fi
+
 # Check if we're in the right directory
 if [ ! -d "$APP_DIR" ]; then
     handle_error "Application directory $APP_DIR not found"
