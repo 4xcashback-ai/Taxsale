@@ -62,7 +62,7 @@ echo "Test URL: <a href='{$test_url}' target='_blank'>Click to test Google Maps 
 
 // Test directory permissions
 echo "<h3>Directory Check:</h3>";
-$thumbnail_dir = $_SERVER['DOCUMENT_ROOT'] . '/frontend-php/assets/thumbnails/';
+$thumbnail_dir = dirname(__FILE__) . '/assets/thumbnails/';
 echo "Thumbnail directory: " . $thumbnail_dir . "<br>";
 echo "Directory exists: " . (is_dir($thumbnail_dir) ? 'Yes' : 'No') . "<br>";
 echo "Directory writable: " . (is_writable($thumbnail_dir) ? 'Yes' : 'No') . "<br>";
