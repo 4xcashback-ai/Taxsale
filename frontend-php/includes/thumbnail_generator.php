@@ -3,6 +3,8 @@ class ThumbnailGenerator {
     private $google_api_key;
     private $thumbnail_dir;
     private $base_url;
+    private $lastLatitude = null;
+    private $lastLongitude = null;
     
     public function __construct($api_key) {
         $this->google_api_key = $api_key;
