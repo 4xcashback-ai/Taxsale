@@ -320,6 +320,145 @@ class TaxSaleCompassTester:
             self.log_result("All Scrapers", False, "All scrapers request failed", str(e))
             return False
     
+    def test_ns_government_parcel_query(self):
+        """Test GET /api/query-ns-government-parcel/{pid_number} endpoint"""
+        try:
+            # Use a test PID number (this is a common format for Nova Scotia)
+            test_pid = "40123456"
+            
+            response = self.session.get(f"{self.base_url}/api/query-ns-government-parcel/{test_pid}", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('found'):
+                    self.log_result("NS Government Parcel Query", True, f"Successfully queried PID {test_pid}, found property data")
+                    return True
+                else:
+                    self.log_result("NS Government Parcel Query", True, f"PID {test_pid} not found (expected for test PID)")
+                    return True
+            else:
+                self.log_result("NS Government Parcel Query", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("NS Government Parcel Query", False, "NS Government parcel query failed", str(e))
+            return False
+    
+    def test_boundary_image_endpoints(self):
+        """Test boundary image serving endpoints"""
+        try:
+            # Test the generic boundary image endpoint
+            response = self.session.get(f"{self.base_url}/api/boundary-image/test.png", timeout=10)
+            
+            # We expect 404 since test.png doesn't exist, but endpoint should be accessible
+            if response.status_code == 404:
+                self.log_result("Boundary Image Endpoint", True, "Boundary image endpoint accessible (404 for non-existent file expected)")
+                return True
+            elif response.status_code == 200:
+                self.log_result("Boundary Image Endpoint", True, "Boundary image endpoint working")
+                return True
+            else:
+                self.log_result("Boundary Image Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Boundary Image Endpoint", False, "Boundary image endpoint test failed", str(e))
+            return False
+    
+    def test_property_image_endpoint(self):
+        """Test property image by assessment number endpoint"""
+        try:
+            # Test with a dummy assessment number
+            test_assessment = "12345678"
+            
+            response = self.session.get(f"{self.base_url}/api/property-image/{test_assessment}", timeout=10)
+            
+            # We expect 404 since the image doesn't exist, but endpoint should be accessible
+            if response.status_code == 404:
+                self.log_result("Property Image Endpoint", True, "Property image endpoint accessible (404 for non-existent image expected)")
+                return True
+            elif response.status_code == 200:
+                self.log_result("Property Image Endpoint", True, "Property image endpoint working")
+                return True
+            else:
+                self.log_result("Property Image Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Property Image Endpoint", False, "Property image endpoint test failed", str(e))
+            return False
+    
+    def test_generate_boundary_thumbnail(self):
+        """Test POST /api/generate-boundary-thumbnail/{assessment_number} endpoint"""
+        try:
+            # First get a property with assessment number from the database
+            properties_response = self.session.get(f"{self.base_url}/api/tax-sales?limit=1", timeout=10)
+            
+            if properties_response.status_code != 200:
+                self.log_result("Generate Boundary Thumbnail", False, "Could not fetch properties for testing")
+                return False
+            
+            properties = properties_response.json()
+            if not properties or len(properties) == 0:
+                self.log_result("Generate Boundary Thumbnail", True, "No properties available for thumbnail testing (expected if database empty)")
+                return True
+            
+            test_assessment = properties[0].get('assessment_number')
+            if not test_assessment:
+                self.log_result("Generate Boundary Thumbnail", False, "Property missing assessment number")
+                return False
+            
+            response = self.session.post(f"{self.base_url}/api/generate-boundary-thumbnail/{test_assessment}", timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result("Generate Boundary Thumbnail", True, f"Thumbnail generation endpoint working: {data.get('message', 'Success')}")
+                return True
+            else:
+                self.log_result("Generate Boundary Thumbnail", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Generate Boundary Thumbnail", False, "Generate boundary thumbnail test failed", str(e))
+            return False
+    
+    def test_map_data_endpoint(self):
+        """Test GET /api/tax-sales/map-data endpoint"""
+        try:
+            response = self.session.get(f"{self.base_url}/api/tax-sales/map-data", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                properties = data.get('properties', [])
+                self.log_result("Map Data Endpoint", True, f"Map data endpoint working, returned {len(properties)} properties")
+                return True
+            else:
+                self.log_result("Map Data Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Map Data Endpoint", False, "Map data endpoint test failed", str(e))
+            return False
+    
+    def test_search_endpoint(self):
+        """Test GET /api/tax-sales/search endpoint"""
+        try:
+            # Test basic search
+            response = self.session.get(f"{self.base_url}/api/tax-sales/search", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                properties = data.get('properties', [])
+                self.log_result("Search Endpoint", True, f"Search endpoint working, returned {len(properties)} properties")
+                return True
+            else:
+                self.log_result("Search Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Search Endpoint", False, "Search endpoint test failed", str(e))
+            return False
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("=" * 60)
