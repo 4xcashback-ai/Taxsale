@@ -67,11 +67,24 @@ chmod -R 777 "$APP_DIR/frontend-php/assets/thumbnails/" 2>&1 | tee -a "$LOG_FILE
 # Make scripts executable
 chmod +x "$APP_DIR/scripts/"*.sh 2>&1 | tee -a "$LOG_FILE"
 
-# Fix nginx configuration if needed
+# Check nginx configuration (smart check for HTTP/HTTPS)
 log "Checking nginx configuration..."
-if ! curl -s -o /dev/null -w "%{http_code}" http://localhost/ | grep -q "200"; then
-    log "Fixing nginx configuration..."
-    bash "$APP_DIR/scripts/fix_nginx_vps.sh" 2>&1 | tee -a "$LOG_FILE"
+NGINX_STATUS=$(systemctl is-active nginx 2>/dev/null || echo "inactive")
+
+if [ "$NGINX_STATUS" = "active" ]; then
+    # Test if nginx is responding (either HTTP 200 or 301 redirect to HTTPS is OK)
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ 2>/dev/null || echo "000")
+    HTTPS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://localhost/ -k 2>/dev/null || echo "000")
+    
+    if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTPS_CODE" = "200" ]; then
+        log "✅ Nginx is working correctly (HTTP: $HTTP_CODE, HTTPS: $HTTPS_CODE)"
+    else
+        log "⚠️ Nginx is running but not responding correctly (HTTP: $HTTP_CODE, HTTPS: $HTTPS_CODE)"
+        log "Skipping nginx auto-fix to preserve existing configuration"
+    fi
+else
+    log "❌ Nginx is not running, but skipping auto-fix to preserve SSL configuration"
+    log "Manual nginx restart may be needed after deployment"
 fi
 
 # Kill any stuck PHP processes
