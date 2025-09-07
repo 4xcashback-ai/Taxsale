@@ -42,7 +42,7 @@ try {
         echo "✅ Generated actual thumbnail<br>";
         
         // Check if file exists
-        $file_path = $_SERVER['DOCUMENT_ROOT'] . '/frontend-php/assets/thumbnails/' . $property['assessment_number'] . '.png';
+        $file_path = dirname(__FILE__) . '/assets/thumbnails/' . $property['assessment_number'] . '.png';
         echo "File path: " . $file_path . "<br>";
         echo "File exists: " . (file_exists($file_path) ? 'Yes' : 'No') . "<br>";
         
