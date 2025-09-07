@@ -206,6 +206,23 @@ class ThumbnailGenerator {
     }
     
     /**
+     * Get updated property data from database
+     */
+    private function getUpdatedProperty($assessment_number) {
+        try {
+            require_once dirname(__DIR__) . '/config/database.php';
+            $db = getDB();
+            
+            $stmt = $db->prepare("SELECT * FROM properties WHERE assessment_number = ?");
+            $stmt->execute([$assessment_number]);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            error_log("Failed to get updated property {$assessment_number}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Update property with boundary data in database
      */
     private function updatePropertyBoundary($assessment_number, $boundary_data) {
