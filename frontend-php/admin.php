@@ -85,24 +85,6 @@ if ($_POST && isset($_POST['system_action'])) {
         
         $system_result['raw_output'] = $deploy_output;
         $system_result['deploy_log'] = '/var/log/taxsale_deploy.log';
-    }
-        
-        // Restart backend service with status check
-        $backend_output = shell_exec('sudo systemctl restart tax-sale-backend 2>&1');
-        $backend_status = shell_exec('sudo systemctl is-active tax-sale-backend 2>&1');
-        $system_result['steps'][] = ['command' => 'restart backend', 'output' => $backend_output . "\nStatus: " . $backend_status, 'time' => date('Y-m-d H:i:s')];
-        
-        // Restart PHP-FPM with status check
-        $php_output = shell_exec('sudo systemctl restart php8.1-fpm 2>&1');
-        $php_status = shell_exec('sudo systemctl is-active php8.1-fpm 2>&1');
-        $system_result['steps'][] = ['command' => 'restart php-fpm', 'output' => $php_output . "\nStatus: " . $php_status, 'time' => date('Y-m-d H:i:s')];
-        
-        // Final health check
-        $health_check = shell_exec('curl -s http://localhost:8001/api/health 2>&1');
-        $system_result['steps'][] = ['command' => 'health check', 'output' => $health_check ?: 'Backend not responding', 'time' => date('Y-m-d H:i:s')];
-        
-        $system_result['success'] = true;
-        $system_result['message'] = 'System updated and services restarted successfully!';
     } elseif ($action === 'cleanup_data') {
         $api_url = API_BASE_URL . '/admin/cleanup-data';
         
