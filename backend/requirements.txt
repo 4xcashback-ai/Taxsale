@@ -13,3 +13,4 @@ pdfplumber
 PyPDF2
 camelot-py[cv]
 pandas
+aiohttp
