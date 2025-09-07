@@ -239,7 +239,7 @@ class ThumbnailGenerator {
             $params = [
                 'key' => $this->google_api_key,
                 'center' => $center_lat . ',' . $center_lon,
-                'zoom' => '16', // Slightly zoomed out to show boundary better
+                'zoom' => '18', // Closer zoom for more detail
                 'size' => '300x200',
                 'maptype' => 'satellite',
                 'format' => 'png',
