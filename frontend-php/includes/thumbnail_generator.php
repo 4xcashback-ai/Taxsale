@@ -233,6 +233,9 @@ class ThumbnailGenerator {
     /**
      * Build path string for Google Maps overlay
      */
+    /**
+     * Build path string for Google Maps overlay
+     */
     private function buildPathString($coordinates) {
         if (!is_array($coordinates) || empty($coordinates)) {
             return null;
@@ -240,18 +243,21 @@ class ThumbnailGenerator {
         
         $path_points = [];
         
-        // Handle different coordinate formats
+        // Handle GeoJSON format: coordinates[0] contains the ring
         if (isset($coordinates[0]) && is_array($coordinates[0])) {
-            // Array of coordinate pairs
+            $ring = $coordinates[0];
+            foreach ($ring as $coord) {
+                if (is_array($coord) && count($coord) >= 2) {
+                    // coord[0] = longitude, coord[1] = latitude
+                    $path_points[] = $coord[1] . ',' . $coord[0]; // Google Maps wants lat,lng
+                }
+            }
+        } else {
+            // Handle simple coordinate array
             foreach ($coordinates as $coord) {
                 if (is_array($coord) && count($coord) >= 2) {
                     $path_points[] = $coord[1] . ',' . $coord[0]; // lat,lng format
                 }
-            }
-        } else {
-            // Single coordinate pair or other format
-            if (count($coordinates) >= 2) {
-                $path_points[] = $coordinates[1] . ',' . $coordinates[0];
             }
         }
         
@@ -259,8 +265,8 @@ class ThumbnailGenerator {
             return null;
         }
         
-        // Close the polygon by adding first point at the end
-        if (count($path_points) > 2) {
+        // Close the polygon by adding first point at the end if not already closed
+        if (count($path_points) > 2 && $path_points[0] !== $path_points[count($path_points) - 1]) {
             $path_points[] = $path_points[0];
         }
         
