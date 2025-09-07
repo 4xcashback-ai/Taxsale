@@ -99,6 +99,12 @@ class ThumbnailGenerator {
         if (!file_exists($filename)) {
             error_log("ThumbnailGenerator: Creating missing thumbnail file for {$assessment_number}");
             
+            // Check if directory is writable
+            if (!is_writable($this->thumbnail_dir)) {
+                error_log("ThumbnailGenerator: Directory not writable, attempting to fix permissions");
+                @chmod($this->thumbnail_dir, 0777);
+            }
+            
             // Generate enhanced Google Maps thumbnail with better zoom and styling
             $params = [
                 'key' => $this->google_api_key,
@@ -114,16 +120,28 @@ class ThumbnailGenerator {
             $image_data = @file_get_contents($url);
             
             if ($image_data) {
-                $result = file_put_contents($filename, $image_data);
-                error_log("ThumbnailGenerator: Created thumbnail file, bytes written: " . ($result ?: 'FAILED'));
-                
+                $result = @file_put_contents($filename, $image_data);
                 if ($result) {
+                    error_log("ThumbnailGenerator: Created thumbnail file, bytes written: {$result}");
+                    
                     // Update database with correct path
-                    require_once dirname(__DIR__) . '/config/database.php';
-                    $db = getDB();
-                    $stmt = $db->prepare("UPDATE properties SET thumbnail_path = ? WHERE assessment_number = ?");
-                    $stmt->execute(['/assets/thumbnails/' . $assessment_number . '.png', $assessment_number]);
+                    try {
+                        require_once dirname(__DIR__) . '/config/database.php';
+                        $db = getDB();
+                        $stmt = $db->prepare("UPDATE properties SET thumbnail_path = ? WHERE assessment_number = ?");
+                        $stmt->execute(['/assets/thumbnails/' . $assessment_number . '.png', $assessment_number]);
+                        error_log("ThumbnailGenerator: Updated database thumbnail_path for {$assessment_number}");
+                    } catch (Exception $e) {
+                        error_log("ThumbnailGenerator: Database update failed: " . $e->getMessage());
+                    }
+                } else {
+                    error_log("ThumbnailGenerator: FAILED to write thumbnail file - check directory permissions: " . $this->thumbnail_dir);
+                    // Return a fallback image URL instead of file path if we can't create the file
+                    return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#dc3545"/><text x="150" y="100" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Thumbnail Error</text></svg>');
                 }
+            } else {
+                error_log("ThumbnailGenerator: FAILED to download image from Google Maps API");
+                return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#ffc107"/><text x="150" y="100" font-family="Arial" font-size="12" fill="black" text-anchor="middle">API Error</text></svg>');
             }
         }
         
