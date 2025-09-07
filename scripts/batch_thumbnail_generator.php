@@ -22,6 +22,18 @@ class BatchThumbnailGenerator {
         $this->thumbnailGenerator = new ThumbnailGenerator($apiKey);
         $this->logFile = '/var/log/thumbnail_generation.log';
         
+        // Ensure thumbnail_path column exists
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM properties LIKE 'thumbnail_path'");
+            if ($stmt->rowCount() === 0) {
+                $this->log("Adding thumbnail_path column to properties table");
+                $this->pdo->exec("ALTER TABLE properties ADD COLUMN thumbnail_path VARCHAR(255) DEFAULT NULL");
+                $this->pdo->exec("CREATE INDEX idx_properties_thumbnail ON properties (pid_number, thumbnail_path)");
+            }
+        } catch (Exception $e) {
+            $this->log("Database migration error: " . $e->getMessage());
+        }
+        
         $this->log("=== Batch Thumbnail Generation Started ===");
     }
     
