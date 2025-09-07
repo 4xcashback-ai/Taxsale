@@ -12,6 +12,21 @@ if (!$is_logged_in) {
     exit;
 }
 
+// Initialize database and ensure thumbnail_path column exists
+$db = getDB();
+
+// Check if thumbnail_path column exists, add it if not
+try {
+    $stmt = $db->query("SHOW COLUMNS FROM properties LIKE 'thumbnail_path'");
+    if ($stmt->rowCount() === 0) {
+        error_log("Adding thumbnail_path column to properties table");
+        $db->exec("ALTER TABLE properties ADD COLUMN thumbnail_path VARCHAR(255) DEFAULT NULL");
+        $db->exec("CREATE INDEX idx_properties_thumbnail ON properties (pid_number, thumbnail_path)");
+    }
+} catch (Exception $e) {
+    error_log("Database migration error: " . $e->getMessage());
+}
+
 // Initialize thumbnail generator
 $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
 
