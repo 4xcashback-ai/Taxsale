@@ -581,7 +581,7 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                     <div class="property-card">
                         <!-- Property Boundary Thumbnail -->
                         <div class="property-thumbnail">
-                            <img src="<?php echo htmlspecialchars($thumbnail_url); ?>" 
+                            <img src="<?php echo htmlspecialchars($thumbnail_url); ?>?v=<?php echo time(); ?>" 
                                  alt="Property boundary for <?php echo htmlspecialchars($property['assessment_number']); ?>"
                                  loading="lazy">
                             <div class="thumbnail-overlay">
