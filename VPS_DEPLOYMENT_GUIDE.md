@@ -71,14 +71,15 @@ sudo bash scripts/vps_deploy.sh
 ## Deployment Process Flow
 
 ### Full Deploy Process:
-1. **Backup Creation** - Creates timestamped backup
-2. **Git Conflict Resolution** - Stashes local changes, resets to remote
-3. **Permission Setting** - Sets proper file/directory permissions
-4. **Nginx Configuration Check** - Fixes configuration if needed
-5. **Service Cleanup** - Kills stuck PHP processes
-6. **Service Restart** - Restarts nginx, PHP-FPM, MySQL in order
-7. **Health Verification** - Checks all services are active
-8. **Website Test** - Verifies website responds correctly
+1. **Web Detection** - Automatically detects if running from admin panel
+2. **Backup Creation** - Creates timestamped backup
+3. **Git Conflict Resolution** - Stashes local changes, resets to remote
+4. **Permission Setting** - Sets proper file/directory permissions
+5. **Nginx Configuration Check** - Fixes configuration if needed
+6. **Service Cleanup** - Kills stuck PHP processes (skipped for web deployments)
+7. **Service Restart** - Restarts nginx, PHP-FPM, MySQL in order
+8. **Health Verification** - Checks all services are active
+9. **Website Test** - Verifies website responds correctly
 
 ### Quick Update Process:
 1. Git pull latest changes
