@@ -494,6 +494,15 @@ class TaxSaleCompassTester:
         else:
             print("⚠️  Skipping scraper tests - admin login failed")
         
+        # Thumbnail generation and boundary tests
+        print("\n🖼️  Testing Thumbnail Generation & Boundary Endpoints...")
+        self.test_ns_government_parcel_query()
+        self.test_boundary_image_endpoints()
+        self.test_property_image_endpoint()
+        self.test_generate_boundary_thumbnail()
+        self.test_map_data_endpoint()
+        self.test_search_endpoint()
+        
         # Summary
         print("\n" + "=" * 60)
         print("TEST SUMMARY")
