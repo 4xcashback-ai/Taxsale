@@ -10,7 +10,11 @@ class ThumbnailGenerator {
         $this->thumbnail_dir = dirname(__DIR__) . '/assets/thumbnails/';
         $this->base_url = 'https://maps.googleapis.com/maps/api/staticmap';
         
+        // Debug logging
+        error_log("ThumbnailGenerator: Using thumbnail directory: " . $this->thumbnail_dir);
+        
         if (!is_dir($this->thumbnail_dir)) {
+            error_log("ThumbnailGenerator: Creating thumbnail directory");
             mkdir($this->thumbnail_dir, 0755, true);
         }
     }
