@@ -7,6 +7,7 @@ import requests
 import json
 import re
 import io
+import subprocess
 from datetime import datetime
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
