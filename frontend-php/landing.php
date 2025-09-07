@@ -70,8 +70,8 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold mb-4">Find Nova Scotia Tax Sale Properties</h1>
-                    <p class="lead mb-5">Your comprehensive resource for discovering tax sale opportunities across Nova Scotia. Access detailed property information, interactive maps, and real-time updates.</p>
+                    <h1 class="display-4 fw-bold mb-4">Find Canadian Tax Sale Properties</h1>
+                    <p class="lead mb-5">Your comprehensive resource for discovering tax sale opportunities across Canada. Access detailed property information, interactive maps, and real-time updates from municipalities nationwide.</p>
                     <div class="d-gap-3">
                         <a href="register.php" class="btn btn-light btn-lg me-3 px-4">
                             <i class="fas fa-search me-2"></i>Start Searching
