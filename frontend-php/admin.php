@@ -250,12 +250,27 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                     <div class="card-body">
                         <p>Update the application and restart services:</p>
                         
-                        <form method="POST" class="d-inline" onsubmit="return confirm('This will pull the latest code and restart services. Continue?')">
-                            <input type="hidden" name="system_action" value="git_pull_restart">
-                            <button type="submit" class="btn btn-warning me-2">
-                                <i class="fas fa-sync-alt"></i> Git Pull & Restart Services
+                        <!-- Service Status Display -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div id="service-status" class="p-2 bg-light rounded">
+                                    <strong>Service Status:</strong> <span id="status-display">Checking...</span>
+                                    <button id="refresh-status" class="btn btn-sm btn-outline-secondary ms-2">
+                                        <i class="fas fa-refresh"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Deployment Buttons -->
+                        <div class="btn-group me-2" role="group">
+                            <button id="full-deploy-btn" class="btn btn-danger">
+                                <i class="fas fa-rocket"></i> Full Deploy & Restart
                             </button>
-                        </form>
+                            <button id="quick-update-btn" class="btn btn-warning">
+                                <i class="fas fa-sync-alt"></i> Quick Git Pull
+                            </button>
+                        </div>
                         
                         <form method="POST" class="d-inline" onsubmit="return confirm('This will clean up malformed property data. Continue?')">
                             <input type="hidden" name="system_action" value="cleanup_data">
@@ -264,8 +279,27 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                             </button>
                         </form>
                         
+                        <!-- Real-time Deployment Console -->
+                        <div id="deploy-console" class="mt-3" style="display: none;">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Deployment Console</h6>
+                                    <div>
+                                        <span id="deploy-status" class="badge bg-info">Ready</span>
+                                        <button id="clear-console" class="btn btn-sm btn-outline-secondary ms-2">Clear</button>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div id="console-output" class="bg-dark text-light p-3" style="height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.85em;">
+                                        <div class="text-muted">Console ready. Click deploy to start...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <small class="text-muted d-block mt-2">
-                            <strong>Git Pull & Restart:</strong> 1) Pull latest code from GitHub, 2) Restart backend service, 3) Restart PHP-FPM<br>
+                            <strong>Full Deploy:</strong> Automated deployment with conflict resolution, service restart, and health checks<br>
+                            <strong>Quick Update:</strong> Simple git pull and service restart (legacy method)<br>
                             <strong>Clean Up Data:</strong> Fix malformed property addresses and remove jumbled data
                         </small>
                     </div>
