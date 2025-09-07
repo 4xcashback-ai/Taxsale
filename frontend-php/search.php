@@ -152,6 +152,37 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
             box-shadow: 0 15px 35px rgba(0,0,0,0.15);
         }
         
+        .property-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .property-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .property-card:hover .property-thumbnail img {
+            transform: scale(1.05);
+        }
+        
+        .thumbnail-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
         .property-header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
