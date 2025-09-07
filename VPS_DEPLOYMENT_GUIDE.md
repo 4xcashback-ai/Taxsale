@@ -93,20 +93,35 @@ sudo bash scripts/vps_deploy.sh
    sudo chmod +x /var/www/tax-sale-compass/scripts/*.sh
    ```
 
-2. **Nginx Configuration Errors**
+2. **Deployment Broke the Website**
    ```bash
+   # Emergency restore script
+   sudo bash /var/www/tax-sale-compass/scripts/emergency_restore.sh
+   ```
+
+3. **Nginx Configuration Errors**
+   ```bash
+   # Check if SSL config exists and use it
+   sudo ls -la /etc/nginx/sites-available/tax-sale-compass
    sudo bash /var/www/tax-sale-compass/scripts/fix_nginx_vps.sh
    ```
 
-3. **Service Won't Start**
+4. **Service Won't Start**
    ```bash
    sudo systemctl status nginx php8.1-fpm mysql
    sudo journalctl -u nginx -f
    ```
 
-4. **Git Conflicts**
+5. **Git Conflicts**
    - The deployment script handles these automatically
    - Manual resolution: `git reset --hard origin/main`
+
+### Emergency Recovery:
+If deployment breaks your site:
+```bash
+cd /var/www/tax-sale-compass
+sudo bash scripts/emergency_restore.sh
+```
 
 ### Log Files:
 - **Deployment Logs**: `/var/log/taxsale_deploy.log`
