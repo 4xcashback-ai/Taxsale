@@ -104,6 +104,133 @@ class ThumbnailGenerator {
     }
     
     /**
+     * Fetch boundary data from ArcGIS service using PID
+     */
+    private function fetchBoundaryFromArcGIS($pid_number, $property) {
+        try {
+            // ArcGIS REST API endpoint for Nova Scotia property parcels
+            $arcgis_url = 'https://services1.arcgis.com/mCp8h70YF1NUbmGD/arcgis/rest/services/Property_Parcel_Boundaries/FeatureServer/0/query';
+            
+            $params = [
+                'where' => "PID = '{$pid_number}'",
+                'outFields' => '*',
+                'geometryType' => 'esriGeometryPolygon',
+                'spatialRel' => 'esriSpatialRelIntersects',
+                'f' => 'json',
+                'returnGeometry' => 'true',
+                'outSR' => '4326' // WGS84 coordinate system
+            ];
+            
+            $url = $arcgis_url . '?' . http_build_query($params);
+            
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'timeout' => 30,
+                    'header' => [
+                        'User-Agent: Tax Sale Compass/1.0',
+                        'Accept: application/json'
+                    ]
+                ]
+            ]);
+            
+            $response = file_get_contents($url, false, $context);
+            
+            if ($response === false) {
+                error_log("Failed to fetch ArcGIS data for PID: {$pid_number}");
+                return null;
+            }
+            
+            $data = json_decode($response, true);
+            
+            if (!$data || !isset($data['features']) || empty($data['features'])) {
+                error_log("No ArcGIS features found for PID: {$pid_number}");
+                return null;
+            }
+            
+            $feature = $data['features'][0];
+            $geometry = $feature['geometry'];
+            
+            if (!$geometry || !isset($geometry['rings'])) {
+                error_log("No geometry rings found for PID: {$pid_number}");
+                return null;
+            }
+            
+            // Convert ArcGIS geometry to our format
+            $coordinates = [];
+            foreach ($geometry['rings'][0] as $point) {
+                $coordinates[] = [$point[0], $point[1]]; // [longitude, latitude]
+            }
+            
+            // Calculate center point if not available
+            if (!$property['latitude'] || !$property['longitude']) {
+                $center = $this->calculatePolygonCenter($coordinates);
+                $this->updatePropertyCoordinates($property['assessment_number'], $center['lat'], $center['lng']);
+            }
+            
+            return json_encode([
+                'type' => 'Polygon',
+                'coordinates' => [$coordinates]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("ArcGIS API error for PID {$pid_number}: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Calculate the center point of a polygon
+     */
+    private function calculatePolygonCenter($coordinates) {
+        $lat_sum = 0;
+        $lng_sum = 0;
+        $count = count($coordinates);
+        
+        foreach ($coordinates as $coord) {
+            $lng_sum += $coord[0];
+            $lat_sum += $coord[1];
+        }
+        
+        return [
+            'lat' => $lat_sum / $count,
+            'lng' => $lng_sum / $count
+        ];
+    }
+    
+    /**
+     * Update property with boundary data in database
+     */
+    private function updatePropertyBoundary($assessment_number, $boundary_data) {
+        try {
+            require_once dirname(__DIR__) . '/config/database.php';
+            $db = getDB();
+            
+            $stmt = $db->prepare("UPDATE properties SET boundary_data = ?, updated_at = NOW() WHERE assessment_number = ?");
+            return $stmt->execute([$boundary_data, $assessment_number]);
+        } catch (Exception $e) {
+            error_log("Failed to update boundary data for {$assessment_number}: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Update property coordinates in database
+     */
+    private function updatePropertyCoordinates($assessment_number, $latitude, $longitude) {
+        try {
+            require_once dirname(__DIR__) . '/config/database.php';
+            $db = getDB();
+            
+            $stmt = $db->prepare("UPDATE properties SET latitude = ?, longitude = ?, updated_at = NOW() WHERE assessment_number = ?");
+            return $stmt->execute([$latitude, $longitude, $assessment_number]);
+        } catch (Exception $e) {
+            error_log("Failed to update coordinates for {$assessment_number}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Build path string for Google Maps overlay
      */
     private function buildPathString($coordinates) {
