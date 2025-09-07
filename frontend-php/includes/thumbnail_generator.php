@@ -86,5 +86,66 @@ class ThumbnailGenerator {
         
         return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#667eea"/><text x="150" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Property Location</text></svg>');
     }
+    
+    public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
+        error_log("ThumbnailGenerator: Generating thumbnail for {$assessment_number}");
+        
+        // Check if thumbnail already exists
+        $thumbnail_path = '/assets/thumbnails/' . $assessment_number . '.png';
+        $thumbnail_file = $this->thumbnail_dir . $assessment_number . '.png';
+        
+        if (file_exists($thumbnail_file)) {
+            return $thumbnail_path;
+        }
+        
+        // Call backend API if no coordinates
+        if ($pid_number && (!$latitude || !$longitude)) {
+            error_log("Calling backend API for PID: {$pid_number}");
+            
+            $backend_url = API_BASE_URL . "/query-ns-government-parcel/{$pid_number}";
+            $response = @file_get_contents($backend_url);
+            
+            if ($response) {
+                $data = json_decode($response, true);
+                if ($data && $data['found'] && $data['center']) {
+                    $latitude = $data['center']['lat'];
+                    $longitude = $data['center']['lon'];
+                    
+                    error_log("Updated {$assessment_number} with coordinates: {$latitude}, {$longitude}");
+                }
+            }
+        }
+        
+        // Store the coordinates for later retrieval
+        $this->lastLatitude = $latitude;
+        $this->lastLongitude = $longitude;
+        
+        if (!$latitude || !$longitude) {
+            return '/assets/images/placeholder-property.jpg';
+        }
+        
+        // Generate Google Maps thumbnail
+        $params = [
+            'key' => $this->google_api_key,
+            'center' => $latitude . ',' . $longitude,
+            'zoom' => '17',
+            'size' => '300x200',
+            'maptype' => 'satellite',
+            'format' => 'png',
+            'markers' => 'color:red|size:small|' . $latitude . ',' . $longitude
+        ];
+        
+        $url = $this->base_url . '?' . http_build_query($params);
+        $image_data = @file_get_contents($url);
+        
+        if ($image_data) {
+            $filename = $this->thumbnail_dir . $assessment_number . '.png';
+            $result = file_put_contents($filename, $image_data);
+            error_log("ThumbnailGenerator: Saved image to {$filename}, bytes written: " . ($result ?: 'FAILED'));
+            return $thumbnail_path;
+        }
+        
+        return '/assets/images/placeholder-property.jpg';
+    }
 }
 ?>
