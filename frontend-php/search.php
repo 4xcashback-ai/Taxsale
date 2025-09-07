@@ -417,21 +417,27 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
         <!-- Search Stats -->
         <div class="search-stats">
             <div class="row text-center">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="fw-bold text-primary fs-4"><?php echo number_format($total_properties); ?></div>
                     <div class="text-muted">Total Properties</div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="fw-bold text-success fs-4">
                         <?php echo count(array_filter($properties, fn($p) => $p['status'] === 'active')); ?>
                     </div>
-                    <div class="text-muted">Active Listings</div>
+                    <div class="text-muted">Active</div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <div class="fw-bold text-secondary fs-4">
+                        <?php echo count(array_filter($properties, fn($p) => $p['status'] === 'inactive')); ?>
+                    </div>
+                    <div class="text-muted">Inactive</div>
+                </div>
+                <div class="col-md-2">
                     <div class="fw-bold text-info fs-4"><?php echo count($municipalities); ?></div>
                     <div class="text-muted">Municipalities</div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="fw-bold text-warning fs-4">
                         Page <?php echo $page; ?> of <?php echo $total_pages; ?>
                     </div>
