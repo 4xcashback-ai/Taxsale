@@ -88,28 +88,40 @@ class ThumbnailGenerator {
             return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#667eea"/><text x="150" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Property Location</text></svg>');
         }
         
-        // Generate enhanced Google Maps thumbnail with better zoom and styling
-        $params = [
-            'key' => $this->google_api_key,
-            'center' => $latitude . ',' . $longitude,
-            'zoom' => '18',  // Higher zoom for better detail
-            'size' => '300x200',
-            'maptype' => 'satellite',
-            'format' => 'png',
-            'markers' => 'color:red|size:mid|' . $latitude . ',' . $longitude
-        ];
-        
-        $url = $this->base_url . '?' . http_build_query($params);
-        $image_data = @file_get_contents($url);
-        
-        if ($image_data) {
-            $filename = $this->thumbnail_dir . $assessment_number . '.png';
-            $result = file_put_contents($filename, $image_data);
-            error_log("ThumbnailGenerator: Saved image to {$filename}, bytes written: " . ($result ?: 'FAILED'));
-            return '/assets/thumbnails/' . $assessment_number . '.png';
+        // Generate thumbnail file if it doesn't exist
+        $filename = $this->thumbnail_dir . $assessment_number . '.png';
+        if (!file_exists($filename)) {
+            error_log("ThumbnailGenerator: Creating missing thumbnail file for {$assessment_number}");
+            
+            // Generate enhanced Google Maps thumbnail with better zoom and styling
+            $params = [
+                'key' => $this->google_api_key,
+                'center' => $latitude . ',' . $longitude,
+                'zoom' => '18',  // Higher zoom for better detail
+                'size' => '300x200',
+                'maptype' => 'satellite',
+                'format' => 'png',
+                'markers' => 'color:red|size:mid|' . $latitude . ',' . $longitude
+            ];
+            
+            $url = $this->base_url . '?' . http_build_query($params);
+            $image_data = @file_get_contents($url);
+            
+            if ($image_data) {
+                $result = file_put_contents($filename, $image_data);
+                error_log("ThumbnailGenerator: Created thumbnail file, bytes written: " . ($result ?: 'FAILED'));
+                
+                if ($result) {
+                    // Update database with correct path
+                    require_once dirname(__DIR__) . '/config/database.php';
+                    $db = getDB();
+                    $stmt = $db->prepare("UPDATE properties SET thumbnail_path = ? WHERE assessment_number = ?");
+                    $stmt->execute(['/assets/thumbnails/' . $assessment_number . '.png', $assessment_number]);
+                }
+            }
         }
         
-        return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#667eea"/><text x="150" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Property Location</text></svg>');
+        return '/assets/thumbnails/' . $assessment_number . '.png';
     }
     
     private function generateBoundaryOverlayThumbnail($assessment_number, $boundary_data, $center_lat, $center_lon) {
