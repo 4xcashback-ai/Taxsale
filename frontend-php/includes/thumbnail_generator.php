@@ -47,17 +47,24 @@ class ThumbnailGenerator {
         $longitude = $property['longitude'];
         $boundary_data = $property['boundary_data'];
         
-        // Try to get boundary data from ArcGIS if we have a PID but no boundary data
-        if ($pid_number && (!$boundary_data || empty($boundary_data))) {
-            $boundary_data = $this->fetchBoundaryFromArcGIS($pid_number, $property);
-            if ($boundary_data) {
-                // Update the database with the fetched boundary data
-                $this->updatePropertyBoundary($assessment_number, $boundary_data);
+        // Try to get boundary data from ArcGIS if we have a PID but no coordinates or boundary data
+        if ($pid_number && ((!$latitude || !$longitude) || (!$boundary_data || empty($boundary_data)))) {
+            error_log("Fetching from ArcGIS for PID: {$pid_number}");
+            $arcgis_result = $this->fetchBoundaryFromArcGIS($pid_number, $property);
+            if ($arcgis_result) {
+                $boundary_data = $arcgis_result;
+                // Re-fetch property data to get updated coordinates
+                $updated_property = $this->getUpdatedProperty($assessment_number);
+                if ($updated_property) {
+                    $latitude = $updated_property['latitude'];
+                    $longitude = $updated_property['longitude'];
+                }
             }
         }
         
         // If still no coordinates after ArcGIS fetch, return placeholder
         if (!$latitude || !$longitude) {
+            error_log("No coordinates available for {$assessment_number} after ArcGIS fetch");
             return $this->getPlaceholderImage();
         }
         
