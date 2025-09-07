@@ -17,6 +17,21 @@ from mysql_config import mysql_db
 
 logger = logging.getLogger(__name__)
 
+def run_post_scraping_tasks():
+    """Run post-scraping tasks like thumbnail generation"""
+    try:
+        logger.info("Running post-scraping tasks...")
+        script_path = "/var/www/tax-sale-compass/scripts/post_scraping_tasks.sh"
+        
+        # Run the post-scraping tasks in background
+        subprocess.Popen([
+            'bash', script_path
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        logger.info("Post-scraping tasks started in background")
+    except Exception as e:
+        logger.error(f"Failed to start post-scraping tasks: {e}")
+
 class TaxSaleScraper:
     def __init__(self):
         self.session = requests.Session()
