@@ -134,7 +134,15 @@ class ThumbnailGenerator {
      * Get placeholder image for properties without coordinates
      */
     private function getPlaceholderImage() {
-        return 'assets/images/property-placeholder.png';
+        return 'data:image/svg+xml;base64,' . base64_encode('
+            <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="300" height="200" fill="#667eea"/>
+                <text x="150" y="100" font-family="Arial, sans-serif" font-size="16" 
+                      fill="white" text-anchor="middle" dy="0.3em">Property Location</text>
+                <text x="150" y="120" font-family="Arial, sans-serif" font-size="12" 
+                      fill="white" text-anchor="middle" dy="0.3em">Map Not Available</text>
+            </svg>
+        ');
     }
     
     /**
