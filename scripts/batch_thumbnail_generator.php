@@ -110,7 +110,7 @@ class BatchThumbnailGenerator {
                 $latitude,
                 $longitude,
                 $pidNumber,
-                $property['address'],
+                $property['civic_address'],
                 $property['municipality']
             );
             
