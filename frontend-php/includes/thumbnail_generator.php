@@ -29,7 +29,7 @@ class ThumbnailGenerator {
         if ($pid_number && (!$latitude || !$longitude)) {
             error_log("Calling backend API for PID: {$pid_number}");
             
-            $backend_url = "http://localhost:8001/api/query-ns-government-parcel/{$pid_number}";
+            $backend_url = API_BASE_URL . "/query-ns-government-parcel/{$pid_number}";
             $response = @file_get_contents($backend_url);
             
             if ($response) {
