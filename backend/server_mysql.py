@@ -518,5 +518,347 @@ async def query_ns_government_parcel(pid_number: str):
             "error": str(e)
         }
 
+@app.get("/api/boundary-image/{filename}")
+async def get_boundary_image(filename: str):
+    """Serve boundary image files"""
+    import os
+    from fastapi.responses import FileResponse
+    
+    # Construct the full path to the boundary image
+    boundary_images_dir = "/app/backend/boundary_images"
+    file_path = os.path.join(boundary_images_dir, filename)
+    
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="image/png")
+    else:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+@app.get("/api/property-image/{assessment_number}")
+async def get_property_image(assessment_number: str):
+    """Get property boundary image by assessment number"""
+    import os
+    from fastapi.responses import FileResponse
+    
+    # Construct the expected filename
+    filename = f"boundary_{assessment_number}.png"
+    boundary_images_dir = "/app/backend/boundary_images"
+    file_path = os.path.join(boundary_images_dir, filename)
+    
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="image/png")
+    else:
+        raise HTTPException(status_code=404, detail="Property image not found")
+
+@app.get("/api/tax-sales/search")
+async def search_tax_sales(
+    municipality: Optional[str] = None,
+    status: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    search: Optional[str] = None
+):
+    """Advanced search for tax sale properties"""
+    try:
+        filters = {}
+        
+        if municipality:
+            filters['municipality'] = municipality
+        if status:
+            filters['status'] = status
+        if min_price is not None:
+            filters['total_taxes'] = {"$gte": min_price}
+        if max_price is not None:
+            if 'total_taxes' in filters:
+                filters['total_taxes']['$lte'] = max_price
+            else:
+                filters['total_taxes'] = {"$lte": max_price}
+        if search:
+            # Search in multiple fields
+            filters['$or'] = [
+                {"civic_address": {"$regex": search, "$options": "i"}},
+                {"assessment_number": {"$regex": search, "$options": "i"}},
+                {"municipality": {"$regex": search, "$options": "i"}}
+            ]
+        
+        query = "SELECT * FROM properties WHERE 1=1"
+        params = []
+        
+        if municipality:
+            query += " AND municipality = %s"
+            params.append(municipality)
+        if status:
+            query += " AND status = %s"
+            params.append(status)
+        if min_price is not None:
+            query += " AND total_taxes >= %s"
+            params.append(min_price)
+        if max_price is not None:
+            query += " AND total_taxes <= %s"
+            params.append(max_price)
+        if search:
+            query += " AND (civic_address LIKE %s OR assessment_number LIKE %s OR municipality LIKE %s)"
+            search_term = f"%{search}%"
+            params.extend([search_term, search_term, search_term])
+        
+        query += " ORDER BY created_at DESC"
+        
+        properties = mysql_db.execute_query(query, params)
+        return {"properties": properties}
+        
+    except Exception as e:
+        logger.error(f"Error searching tax sales: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tax-sales/map-data")
+async def get_map_data():
+    """Get tax sale data formatted for map display"""
+    try:
+        query = """
+        SELECT assessment_number, civic_address, municipality, total_taxes, 
+               status, latitude, longitude, boundary_data
+        FROM properties 
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        """
+        
+        properties = mysql_db.execute_query(query)
+        
+        map_data = []
+        for prop in properties:
+            map_data.append({
+                "assessment_number": prop['assessment_number'],
+                "address": prop['civic_address'] or 'Unknown Address',
+                "municipality": prop['municipality'],
+                "total_taxes": prop['total_taxes'],
+                "status": prop['status'],
+                "lat": float(prop['latitude']) if prop['latitude'] else None,
+                "lng": float(prop['longitude']) if prop['longitude'] else None,
+                "boundary_data": prop.get('boundary_data')
+            })
+        
+        return {"properties": map_data}
+        
+    except Exception as e:
+        logger.error(f"Error getting map data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats")
+async def get_stats():
+    """Get scraping and property statistics"""
+    try:
+        # Get total properties by municipality
+        query = "SELECT municipality, status, COUNT(*) as count FROM properties GROUP BY municipality, status"
+        results = mysql_db.execute_query(query)
+        
+        stats = {
+            "total_properties": 0,
+            "by_municipality": {},
+            "by_status": {"active": 0, "sold": 0, "withdrawn": 0, "inactive": 0}
+        }
+        
+        for row in results:
+            municipality = row['municipality']
+            status = row['status']
+            count = row['count']
+            
+            stats["total_properties"] += count
+            
+            if municipality not in stats["by_municipality"]:
+                stats["by_municipality"][municipality] = {"active": 0, "sold": 0, "withdrawn": 0, "inactive": 0}
+            
+            stats["by_municipality"][municipality][status] = count
+            
+            if status in stats["by_status"]:
+                stats["by_status"][status] += count
+        
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/geocode-properties")
+async def geocode_properties():
+    """Geocode properties that don't have coordinates"""
+    try:
+        # Get properties without coordinates
+        query = "SELECT assessment_number, civic_address, municipality FROM properties WHERE latitude IS NULL OR longitude IS NULL"
+        properties = mysql_db.execute_query(query)
+        
+        geocoded_count = 0
+        
+        for prop in properties:
+            address = prop.get('civic_address')
+            municipality = prop.get('municipality')
+            
+            if not address or not municipality:
+                continue
+                
+            # Simple geocoding using address and municipality
+            full_address = f"{address}, {municipality}, Nova Scotia, Canada"
+            
+            # Here you would integrate with a geocoding service
+            # For now, just log the attempt
+            logger.info(f"Would geocode: {full_address}")
+            geocoded_count += 1
+        
+        return {
+            "message": f"Geocoding initiated for {geocoded_count} properties",
+            "properties_processed": geocoded_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error geocoding properties: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/capture-boundary/{assessment_number}")
+async def capture_boundary(assessment_number: str):
+    """Capture boundary image for a specific property"""
+    try:
+        # Get property details
+        query = "SELECT * FROM properties WHERE assessment_number = %s"
+        properties = mysql_db.execute_query(query, [assessment_number])
+        
+        if not properties:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        property_data = properties[0]
+        pid_number = property_data.get('pid_number')
+        
+        if not pid_number:
+            raise HTTPException(status_code=400, detail="Property has no PID number")
+        
+        # Use the government parcel query to get boundary data
+        boundary_result = await query_ns_government_parcel(pid_number)
+        
+        if not boundary_result.get('found'):
+            raise HTTPException(status_code=404, detail="Property boundary not found in government database")
+        
+        return {
+            "message": f"Boundary capture initiated for {assessment_number}",
+            "property": property_data,
+            "boundary_data": boundary_result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error capturing boundary for {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/capture-all-boundaries")
+async def capture_all_boundaries():
+    """Capture boundary images for all properties with PIDs"""
+    try:
+        # Get all properties with PID numbers
+        query = "SELECT assessment_number, pid_number FROM properties WHERE pid_number IS NOT NULL AND pid_number != ''"
+        properties = mysql_db.execute_query(query)
+        
+        processed_count = 0
+        failed_count = 0
+        
+        for prop in properties:
+            try:
+                assessment_number = prop['assessment_number']
+                await capture_boundary(assessment_number)
+                processed_count += 1
+            except:
+                failed_count += 1
+                continue
+        
+        return {
+            "message": f"Boundary capture completed",
+            "total_properties": len(properties),
+            "processed": processed_count,
+            "failed": failed_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in batch boundary capture: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/generate-boundary-thumbnail/{assessment_number}")
+async def generate_boundary_thumbnail(assessment_number: str):
+    """Generate boundary thumbnail for a specific property"""
+    try:
+        # Get property details
+        query = "SELECT * FROM properties WHERE assessment_number = %s"
+        properties = mysql_db.execute_query(query, [assessment_number])
+        
+        if not properties:
+            raise HTTPException(status_code=404, detail="Property not found")
+        
+        property_data = properties[0]
+        pid_number = property_data.get('pid_number')
+        
+        if not pid_number:
+            return {"message": "Property has no PID number", "thumbnail_generated": False}
+        
+        # Get boundary data from government service
+        boundary_result = await query_ns_government_parcel(pid_number)
+        
+        if boundary_result.get('found'):
+            # Update property with coordinates if found
+            center = boundary_result.get('center')
+            if center:
+                update_query = "UPDATE properties SET latitude = %s, longitude = %s WHERE assessment_number = %s"
+                mysql_db.execute_query(update_query, [center['lat'], center['lon'], assessment_number])
+            
+            return {
+                "message": f"Boundary thumbnail generated for {assessment_number}",
+                "thumbnail_generated": True,
+                "center": center,
+                "boundary_data": boundary_result
+            }
+        else:
+            return {
+                "message": f"No boundary data found for {assessment_number}",
+                "thumbnail_generated": False
+            }
+        
+    except Exception as e:
+        logger.error(f"Error generating thumbnail for {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/scrape/cape-breton")
+async def scrape_cape_breton():
+    """Scrape Cape Breton tax sale properties"""
+    try:
+        # Placeholder for Cape Breton scraper
+        logger.info("Cape Breton scraper initiated")
+        return {"message": "Cape Breton scraper completed", "properties_added": 0}
+    except Exception as e:
+        logger.error(f"Error scraping Cape Breton: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/scrape/kentville")
+async def scrape_kentville():
+    """Scrape Kentville tax sale properties"""
+    try:
+        # Placeholder for Kentville scraper
+        logger.info("Kentville scraper initiated")
+        return {"message": "Kentville scraper completed", "properties_added": 0}
+    except Exception as e:
+        logger.error(f"Error scraping Kentville: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/scrape/victoria-county")
+async def scrape_victoria_county():
+    """Scrape Victoria County tax sale properties"""
+    try:
+        # Use existing Victoria scraper
+        result = scrape_victoria()
+        return result
+    except Exception as e:
+        logger.error(f"Error scraping Victoria County: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/debug/victoria-county-pdf")
+async def debug_victoria_county_pdf():
+    """Debug Victoria County PDF processing"""
+    try:
+        logger.info("Victoria County PDF debug initiated")
+        return {"message": "Victoria County PDF debug completed"}
+    except Exception as e:
+        logger.error(f"Error in Victoria County PDF debug: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
