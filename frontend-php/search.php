@@ -383,6 +383,7 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                     <select name="status" class="form-select">
                         <option value="">All Status</option>
                         <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Active</option>
+                        <option value="inactive" <?php echo $status === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
                         <option value="sold" <?php echo $status === 'sold' ? 'selected' : ''; ?>>Sold</option>
                         <option value="withdrawn" <?php echo $status === 'withdrawn' ? 'selected' : ''; ?>>Withdrawn</option>
                     </select>
