@@ -58,4 +58,4 @@ This is a clean, high-performance system designed for reliability and speed.
 
 ---
 
-**Built for Nova Scotia tax sale property research and investment analysis.**
+**Built for Nova Scotia tax sale property research and investment analysis.**# Update thumbnail generator
