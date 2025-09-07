@@ -21,6 +21,14 @@ class ThumbnailGenerator {
         }
     }
     
+    public function getLastLatitude() {
+        return $this->lastLatitude;
+    }
+    
+    public function getLastLongitude() {
+        return $this->lastLongitude;
+    }
+    
     public function getThumbnail($property) {
         $assessment_number = $property['assessment_number'];
         $pid_number = $property['pid_number'];
