@@ -14,8 +14,8 @@ header('Content-Type: application/json');
 $action = $_GET['action'] ?? '';
 
 if ($action === 'start_deploy') {
-    // Start deployment in background
-    $deploy_command = 'sudo /var/www/tax-sale-compass/scripts/vps_deploy.sh > /tmp/deploy_output.log 2>&1 &';
+    // Start deployment in background with web deploy flag
+    $deploy_command = 'WEB_DEPLOY=true sudo -E /var/www/tax-sale-compass/scripts/vps_deploy.sh > /tmp/deploy_output.log 2>&1 &';
     shell_exec($deploy_command);
     
     echo json_encode([
