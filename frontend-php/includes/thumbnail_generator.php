@@ -191,7 +191,7 @@ class ThumbnailGenerator {
         return '/assets/thumbnails/' . $assessment_number . '.png';
     }
     
-    private function generateBoundaryOverlayThumbnail($assessment_number, $boundary_data, $center_lat, $center_lon) {
+    public function generateBoundaryOverlayThumbnail($assessment_number, $boundary_data, $center_lat, $center_lon) {
         error_log("ThumbnailGenerator: Generating boundary overlay for {$assessment_number}");
         
         try {
