@@ -29,6 +29,7 @@ This deployment system provides automated, conflict-free updates and service man
 - **Backup Creation** - Creates timestamped backups before deployment
 - **Permission Management** - Sets correct file permissions automatically
 - **Nginx Auto-fix** - Detects and fixes nginx configuration issues
+- **Web-Safe Mode** - Automatically detects web deployments and skips PHP cleanup
 - **Comprehensive Logging** - Detailed logs with timestamps in `/var/log/taxsale_deploy.log`
 
 ## Deployment Instructions for VPS
