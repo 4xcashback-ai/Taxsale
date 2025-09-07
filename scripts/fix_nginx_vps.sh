@@ -120,11 +120,17 @@ server {
 }
 EOF
 
-# Enable the new site
-ln -sf /etc/nginx/sites-available/taxsale /etc/nginx/sites-enabled/taxsale
-
-# Disable default site if it exists
-rm -f /etc/nginx/sites-enabled/default
+# Only enable the new site if we don't have tax-sale-compass already
+if [ ! -f "/etc/nginx/sites-enabled/tax-sale-compass" ]; then
+    echo "Enabling new taxsale configuration..."
+    ln -sf /etc/nginx/sites-available/taxsale /etc/nginx/sites-enabled/taxsale
+    
+    # Disable default site if it exists
+    rm -f /etc/nginx/sites-enabled/default
+else
+    echo "Keeping existing tax-sale-compass configuration (has SSL)"
+    rm -f /etc/nginx/sites-available/taxsale
+fi
 
 # Test nginx configuration
 nginx -t
