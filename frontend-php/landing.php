@@ -138,7 +138,7 @@
                                 <i class="fas fa-search"></i>
                             </div>
                             <h5 class="card-title">Advanced Search</h5>
-                            <p class="card-text">Search by address, assessment number, municipality, or property type. Filter by price range and more.</p>
+                            <p class="card-text">Search by address, assessment number, municipality, province, or property type. Filter by price range and more across Canada.</p>
                         </div>
                     </div>
                 </div>
