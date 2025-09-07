@@ -39,8 +39,7 @@ if ($action === 'start_deploy') {
             $parsed_logs[] = [
                 'timestamp' => date('H:i:s'),
                 'message' => $line,
-                'type' => (strpos($line, 'ERROR') !== false) ? 'error' : 
-                         (strpos($line, 'Warning') !== false) ? 'warning' : 'info'
+                'type' => (strpos($line, 'ERROR') !== false) ? 'error' : ((strpos($line, 'Warning') !== false) ? 'warning' : 'info')
             ];
         }
         
