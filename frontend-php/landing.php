@@ -90,19 +90,19 @@
         <div class="container">
             <div class="row text-center">
                 <div class="col-md-4 mb-4">
-                    <div class="stat-number">61</div>
-                    <h5>Halifax Properties</h5>
-                    <p class="text-muted">Active tax sale listings</p>
+                    <div class="stat-number">500+</div>
+                    <h5>Active Properties</h5>
+                    <p class="text-muted">Across Canadian municipalities</p>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="stat-number">3</div>
-                    <h5>Municipalities</h5>
-                    <p class="text-muted">Halifax, Victoria, Cumberland</p>
+                    <div class="stat-number">10+</div>
+                    <h5>Provinces Covered</h5>
+                    <p class="text-muted">Coast to coast coverage</p>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="stat-number">$2.5K+</div>
-                    <h5>Starting Bids</h5>
-                    <p class="text-muted">Average opening bid</p>
+                    <div class="stat-number">$5K+</div>
+                    <h5>Average Starting Bids</h5>
+                    <p class="text-muted">Nationwide opportunities</p>
                 </div>
             </div>
         </div>
