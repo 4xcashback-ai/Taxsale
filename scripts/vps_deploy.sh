@@ -116,9 +116,13 @@ else
     log "Manual nginx restart may be needed after deployment"
 fi
 
-# Kill any stuck PHP processes
-log "Cleaning up PHP processes..."
-pkill -f php-fpm 2>&1 | tee -a "$LOG_FILE" || log "No PHP-FPM processes to kill"
+# Kill any stuck PHP processes (skip for web deployments)
+if [ "$WEB_DEPLOY" = "true" ]; then
+    log "Skipping PHP process cleanup (web deployment - would kill current session)"
+else
+    log "Cleaning up PHP processes..."
+    pkill -f php-fpm 2>&1 | tee -a "$LOG_FILE" || log "No PHP-FPM processes to kill"
+fi
 
 # Restart services
 log "Restarting nginx..."
