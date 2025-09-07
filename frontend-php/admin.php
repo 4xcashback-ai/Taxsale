@@ -625,9 +625,108 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         }
     }
     
-    // Initialize deployment manager when page loads
+    // Thumbnail Generation Manager
+    class ThumbnailManager {
+        constructor() {
+            this.isGenerating = false;
+            this.initEventListeners();
+            this.updateStats();
+            
+            // Auto-refresh stats every 10 seconds when generating
+            this.statsInterval = setInterval(() => {
+                if (this.isGenerating) {
+                    this.updateStats();
+                }
+            }, 10000);
+        }
+        
+        initEventListeners() {
+            document.getElementById('generate-thumbnails-btn').addEventListener('click', () => {
+                this.startThumbnailGeneration(false);
+            });
+            
+            document.getElementById('regenerate-all-thumbnails-btn').addEventListener('click', () => {
+                if (confirm('This will regenerate all thumbnails, which may take a while. Continue?')) {
+                    this.startThumbnailGeneration(true);
+                }
+            });
+        }
+        
+        async updateStats() {
+            try {
+                const response = await fetch('/api/generate_thumbnails.php?action=get_progress');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const stats = data.stats;
+                    document.getElementById('total-properties').textContent = stats.total_properties;
+                    document.getElementById('properties-with-pid').textContent = stats.properties_with_pid;
+                    document.getElementById('properties-with-thumbnails').textContent = stats.properties_with_thumbnails;
+                    document.getElementById('completion-rate').textContent = stats.completion_rate + '%';
+                    
+                    if (data.generation_running) {
+                        this.setStatus('Generating...', 'bg-warning');
+                        this.showProgress();
+                        const progress = (stats.properties_with_thumbnails / stats.properties_with_pid) * 100;
+                        this.updateProgress(progress, `${stats.properties_with_thumbnails}/${stats.properties_with_pid} thumbnails generated`);
+                    } else if (this.isGenerating) {
+                        this.setStatus('Completed', 'bg-success');
+                        this.hideProgress();
+                        this.isGenerating = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to update thumbnail stats:', error);
+            }
+        }
+        
+        async startThumbnailGeneration(regenerateAll = false) {
+            if (this.isGenerating) return;
+            
+            this.isGenerating = true;
+            this.setStatus('Starting...', 'bg-info');
+            
+            try {
+                const response = await fetch('/api/generate_thumbnails.php?action=start_generation' + (regenerateAll ? '&regenerate=1' : ''));
+                const data = await response.json();
+                
+                if (data.status === 'started') {
+                    this.setStatus('Generating...', 'bg-warning');
+                    this.showProgress();
+                    this.updateProgress(0, 'Starting thumbnail generation...');
+                } else {
+                    throw new Error('Failed to start thumbnail generation');
+                }
+            } catch (error) {
+                this.setStatus('Error', 'bg-danger');
+                this.isGenerating = false;
+                alert('Failed to start thumbnail generation: ' + error.message);
+            }
+        }
+        
+        setStatus(status, badgeClass) {
+            const statusElement = document.getElementById('thumbnail-status');
+            statusElement.innerHTML = `<span class="badge ${badgeClass}">${status}</span>`;
+        }
+        
+        showProgress() {
+            document.getElementById('thumbnail-progress').style.display = 'block';
+        }
+        
+        hideProgress() {
+            document.getElementById('thumbnail-progress').style.display = 'none';
+        }
+        
+        updateProgress(percentage, text) {
+            document.getElementById('thumbnail-progress-bar').style.width = percentage + '%';
+            document.getElementById('thumbnail-progress-text').textContent = text;
+        }
+    }
+    
+    // Initialize managers when page loads
     document.addEventListener('DOMContentLoaded', () => {
         new DeploymentManager();
+        new ThumbnailManager();
     });
     </script>
 </body>
