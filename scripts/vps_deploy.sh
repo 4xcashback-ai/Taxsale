@@ -113,15 +113,17 @@ if [ "$NGINX_STATUS" != "active" ] || [ "$PHP_STATUS" != "active" ] || [ "$MYSQL
     handle_error "One or more services failed to start properly"
 fi
 
-# Test website
+# Test website (check both HTTP and HTTPS)
 log "Testing website response..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ || echo "000")
-log "Website HTTP response code: $HTTP_CODE"
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ 2>/dev/null || echo "000")
+HTTPS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://localhost/ -k 2>/dev/null || echo "000")
 
-if [ "$HTTP_CODE" = "000" ]; then
-    log "Warning: Website not responding to local requests"
+log "Website response codes - HTTP: $HTTP_CODE, HTTPS: $HTTPS_CODE"
+
+if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTPS_CODE" = "200" ]; then
+    log "✅ Website is responding correctly"
 else
-    log "Website is responding"
+    log "⚠️ Website response issue - HTTP: $HTTP_CODE, HTTPS: $HTTPS_CODE"
 fi
 
 # Success
