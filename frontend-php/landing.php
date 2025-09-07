@@ -200,14 +200,14 @@
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-4">
                     <h2 class="fw-bold mb-4">About Tax Sale Compass</h2>
-                    <p class="mb-4">Tax Sale Compass is Nova Scotia's premier platform for discovering tax sale opportunities. We aggregate and organize tax sale information from multiple municipalities, making it easy for investors and homebuyers to find properties of interest.</p>
+                    <p class="mb-4">Tax Sale Compass is Canada's premier platform for discovering tax sale opportunities. We aggregate and organize tax sale information from municipalities across all provinces and territories, making it easy for investors and homebuyers to find properties of interest nationwide.</p>
                     
                     <div class="row">
                         <div class="col-sm-6">
                             <h6 class="fw-bold text-primary">
                                 <i class="fas fa-check-circle me-2"></i>Comprehensive Coverage
                             </h6>
-                            <p class="small text-muted mb-3">All major NS municipalities</p>
+                            <p class="small text-muted mb-3">All Canadian provinces & territories</p>
                         </div>
                         <div class="col-sm-6">
                             <h6 class="fw-bold text-primary">
