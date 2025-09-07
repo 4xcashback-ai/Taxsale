@@ -100,6 +100,26 @@ $stmt = $db->prepare($query);
 $stmt->execute($params);
 $properties = $stmt->fetchAll();
 
+// DEBUG: Log thumbnail data for first few properties (admin only)
+if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
+    error_log("=== THUMBNAIL DEBUG INFO ===");
+    foreach (array_slice($properties, 0, 3) as $property) {
+        error_log("Property {$property['assessment_number']}: PID={$property['pid_number']}, thumbnail_path=" . ($property['thumbnail_path'] ?? 'NULL') . ", coords=" . ($property['latitude'] ?? 'NULL') . "," . ($property['longitude'] ?? 'NULL'));
+        
+        // Test getThumbnail method
+        $thumbnail_url = $thumbnail_generator->getThumbnail($property);
+        error_log("getThumbnail() returned: {$thumbnail_url}");
+        
+        // Check if file exists
+        if (strpos($thumbnail_url, '/assets/thumbnails/') === 0) {
+            $file_path = dirname(__DIR__) . $thumbnail_url;
+            $file_exists = file_exists($file_path);
+            error_log("File path: {$file_path}, exists: " . ($file_exists ? 'YES' : 'NO'));
+        }
+    }
+    error_log("=== END THUMBNAIL DEBUG ===");
+}
+
 // Get municipalities for filter
 $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER BY municipality")->fetchAll(PDO::FETCH_COLUMN);
 ?>
