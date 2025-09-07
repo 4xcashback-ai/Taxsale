@@ -409,13 +409,114 @@ async def get_deployment_status(current_user: dict = Depends(get_current_user_op
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/deployment/check-updates")
-async def check_updates(current_user: dict = Depends(get_current_user_optional)):
-    """Check for updates"""
-    if not current_user or not current_user.get('is_admin'):
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    # Just return the deployment status for now
-    return await get_deployment_status(current_user)
+async def check_updates():
+    """Check if there are any updates in the git repository"""
+    try:
+        # Run git fetch to check for updates
+        result = subprocess.run(
+            ['git', 'fetch', '--dry-run'], 
+            capture_output=True, 
+            text=True,
+            cwd='/app'
+        )
+        
+        # If there's output, there are updates available
+        updates_available = bool(result.stderr.strip())
+        
+        return {
+            "updates_available": updates_available,
+            "message": "Updates available" if updates_available else "No updates available",
+            "git_output": result.stderr.strip()
+        }
+    except Exception as e:
+        logger.error(f"Error checking for updates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/query-ns-government-parcel/{pid_number}")
+async def query_ns_government_parcel(pid_number: str):
+    """Query official Nova Scotia government ArcGIS service for property boundary"""
+    try:
+        import aiohttp
+        
+        # Query the official Nova Scotia Property Registration Database (NSPRD)
+        query_url = (
+            "https://nsgiwa2.novascotia.ca/arcgis/rest/services/PLAN/PLAN_NSPRD_WM84/MapServer/0/query"
+            f"?where=PID='{pid_number}'"
+            "&outFields=*"
+            "&outSR=4326"
+            "&returnGeometry=true"
+            "&f=json"
+        )
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(query_url, timeout=15) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    if data.get('features') and len(data['features']) > 0:
+                        feature = data['features'][0]
+                        geometry = feature.get('geometry')
+                        attributes = feature.get('attributes')
+                        
+                        # Extract property details
+                        property_info = {
+                            "pid": attributes.get('PID'),
+                            "area_sqm": attributes.get('SHAPE.AREA'),
+                            "perimeter_m": attributes.get('PERIMETER'),
+                            "source_id": attributes.get('SOURCE_ID'),
+                            "update_date": attributes.get('UPDAT_DATE'),
+                            "theme_no": attributes.get('THEME_NO')
+                        }
+                        
+                        # Extract bounding box for map extent
+                        if geometry and geometry.get('rings'):
+                            coords = []
+                            for ring in geometry['rings']:
+                                coords.extend(ring)
+                            
+                            if coords:
+                                lons = [coord[0] for coord in coords]
+                                lats = [coord[1] for coord in coords]
+                                
+                                bbox = {
+                                    "minLon": min(lons),
+                                    "maxLon": max(lons), 
+                                    "minLat": min(lats),
+                                    "maxLat": max(lats)
+                                }
+                                
+                                center_lat = (bbox["minLat"] + bbox["maxLat"]) / 2
+                                center_lon = (bbox["minLon"] + bbox["maxLon"]) / 2
+                                
+                                return {
+                                    "found": True,
+                                    "pid_number": pid_number,
+                                    "property_info": property_info,
+                                    "geometry": geometry,
+                                    "bbox": bbox,
+                                    "center": {"lat": center_lat, "lon": center_lon},
+                                    "source": "Nova Scotia Government NSPRD"
+                                }
+                    
+                    return {
+                        "found": False,
+                        "pid_number": pid_number,
+                        "message": "Property not found in Nova Scotia government database"
+                    }
+                else:
+                    return {
+                        "found": False,
+                        "pid_number": pid_number,
+                        "error": f"NS Government service returned status {response.status}"
+                    }
+                    
+    except Exception as e:
+        logger.error(f"Error querying NS Government parcel {pid_number}: {e}")
+        return {
+            "found": False,
+            "pid_number": pid_number,
+            "error": str(e)
+        }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
