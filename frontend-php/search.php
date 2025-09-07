@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config/database.php';
+require_once 'includes/thumbnail_generator.php';
 
 // Check if user is logged in
 $is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
@@ -10,6 +11,9 @@ if (!$is_logged_in) {
     require_once 'landing.php';
     exit;
 }
+
+// Initialize thumbnail generator
+$thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
 
 // User is logged in, continue with search functionality
 // Get search parameters
