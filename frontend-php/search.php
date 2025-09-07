@@ -7,37 +7,9 @@ $is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
 
 // If user is not logged in, show landing page content
 if (!$is_logged_in) {
-    // Include landing page HTML directly
-    ?><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tax Sale Compass - Canadian Property Search</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 100px 0;
-            text-align: center;
-        }
-        .feature-card {
-            transition: transform 0.3s;
-            height: 100%;
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        .feature-icon {
-            font-size: 3rem;
-            color: #667eea;
-            margin-bottom: 1rem;
-        }
-        .stats-section {
-            background: #f8f9fa;
-            padding: 60px 0;
+    require_once 'landing.php';
+    exit;
+}
         }
         .stat-number {
             font-size: 2.5rem;
