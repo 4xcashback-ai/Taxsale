@@ -232,7 +232,7 @@
     <section class="py-5" style="background-color: #667eea;">
         <div class="container text-center text-white">
             <h2 class="fw-bold mb-3">Ready to Find Your Next Property?</h2>
-            <p class="lead mb-4">Join thousands of investors and homebuyers using Tax Sale Compass to discover opportunities in Nova Scotia.</p>
+            <p class="lead mb-4">Join thousands of investors and homebuyers using Tax Sale Compass to discover opportunities across Canada.</p>
             <a href="register.php" class="btn btn-light btn-lg px-4">
                 <i class="fas fa-rocket me-2"></i>Start Your Search Now
             </a>
