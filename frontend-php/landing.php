@@ -247,7 +247,7 @@
                     <h6 class="fw-bold">
                         <i class="fas fa-compass me-2"></i>Tax Sale Compass
                     </h6>
-                    <p class="small text-muted">Your guide to Nova Scotia tax sale opportunities.</p>
+                    <p class="small text-muted">Your guide to Canadian tax sale opportunities.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <small class="text-muted">
