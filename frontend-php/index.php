@@ -1,78 +1,16 @@
 <?php
 session_start();
-require_once 'config/database.php';
 
-// Get search parameters
-$municipality = $_GET['municipality'] ?? '';
-$status = $_GET['status'] ?? '';
-$search = $_GET['search'] ?? '';
-
-// Build query
-$query = "SELECT * FROM properties WHERE 1=1";
-$params = [];
-
-if ($municipality) {
-    $query .= " AND municipality = ?";
-    $params[] = $municipality;
+// Check if user is logged in
+if (isset($_SESSION['user_id']) && isset($_SESSION['access_token'])) {
+    // User is logged in, redirect to search page
+    header('Location: search.php');
+    exit;
+} else {
+    // User is not logged in, show landing page
+    include 'landing.php';
+    exit;
 }
-
-if ($status) {
-    $query .= " AND status = ?";
-    $params[] = $status;
-}
-
-if ($search) {
-    // Prioritize civic_address search and make it more flexible
-    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-// Get pagination parameters
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$per_page = 24;
-$offset = ($page - 1) * $per_page;
-
-// Get total count for pagination
-$count_query = "SELECT COUNT(*) FROM properties WHERE 1=1";
-$count_params = [];
-
-// Apply same filters to count query
-if ($municipality) {
-    $count_query .= " AND municipality = ?";
-    $count_params[] = $municipality;
-}
-
-if ($status) {
-    $count_query .= " AND status = ?";
-    $count_params[] = $status;
-}
-
-if ($search) {
-    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
-    $count_params[] = "%$search%";
-    $count_params[] = "%$search%";
-    $count_params[] = "%$search%";
-}
-
-$query .= " ORDER BY created_at DESC LIMIT $per_page OFFSET $offset";
-
-$db = getDB();
-
-// Get total count
-$count_stmt = $db->prepare($count_query);
-$count_stmt->execute($count_params);
-$total_properties = $count_stmt->fetchColumn();
-$total_pages = ceil($total_properties / $per_page);
-
-// Get properties for current page
-$stmt = $db->prepare($query);
-$stmt->execute($params);
-$properties = $stmt->fetchAll();
-
-// Get municipalities for filter
-$municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER BY municipality")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <!DOCTYPE html>
 <html lang="en">
