@@ -42,11 +42,21 @@ class ThumbnailGenerator {
      */
     private function generateThumbnail($property) {
         $assessment_number = $property['assessment_number'];
+        $pid_number = $property['pid_number'];
         $latitude = $property['latitude'];
         $longitude = $property['longitude'];
         $boundary_data = $property['boundary_data'];
         
-        // If no coordinates, return placeholder
+        // Try to get boundary data from ArcGIS if we have a PID but no boundary data
+        if ($pid_number && (!$boundary_data || empty($boundary_data))) {
+            $boundary_data = $this->fetchBoundaryFromArcGIS($pid_number, $property);
+            if ($boundary_data) {
+                // Update the database with the fetched boundary data
+                $this->updatePropertyBoundary($assessment_number, $boundary_data);
+            }
+        }
+        
+        // If still no coordinates after ArcGIS fetch, return placeholder
         if (!$latitude || !$longitude) {
             return $this->getPlaceholderImage();
         }
@@ -63,7 +73,7 @@ class ThumbnailGenerator {
         
         // Add property boundary overlay if available
         if ($boundary_data && !empty($boundary_data)) {
-            $boundary_json = json_decode($boundary_data, true);
+            $boundary_json = is_string($boundary_data) ? json_decode($boundary_data, true) : $boundary_data;
             if ($boundary_json && isset($boundary_json['coordinates'])) {
                 $path_string = $this->buildPathString($boundary_json['coordinates']);
                 if ($path_string) {
