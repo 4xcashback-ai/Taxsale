@@ -484,8 +484,19 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
         <!-- Properties Grid -->
         <div class="row">
             <?php foreach ($properties as $property): ?>
+                <?php $thumbnail_url = $thumbnail_generator->getThumbnail($property); ?>
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="property-card">
+                        <!-- Property Boundary Thumbnail -->
+                        <div class="property-thumbnail">
+                            <img src="<?php echo htmlspecialchars($thumbnail_url); ?>" 
+                                 alt="Property boundary for <?php echo htmlspecialchars($property['assessment_number']); ?>"
+                                 loading="lazy">
+                            <div class="thumbnail-overlay">
+                                <i class="fas fa-map-marked-alt me-1"></i>Boundary View
+                            </div>
+                        </div>
+                        
                         <div class="property-header">
                             <div class="property-id"><?php echo htmlspecialchars($property['assessment_number']); ?></div>
                             <div class="property-status">
