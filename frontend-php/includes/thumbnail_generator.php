@@ -208,12 +208,14 @@ class ThumbnailGenerator {
                 foreach ($ring as $coord) {
                     $path_points[] = $coord[1] . ',' . $coord[0]; // lat,lon format
                 }
+                // Only use first ring to avoid complexity
+                break;
             }
             
             // Limit path points to avoid URL length issues (Google Maps has limits)
-            if (count($path_points) > 100) {
+            if (count($path_points) > 30) {
                 // Take every nth point to reduce complexity
-                $step = ceil(count($path_points) / 100);
+                $step = ceil(count($path_points) / 30);
                 $reduced_points = [];
                 for ($i = 0; $i < count($path_points); $i += $step) {
                     $reduced_points[] = $path_points[$i];
@@ -221,18 +223,23 @@ class ThumbnailGenerator {
                 $path_points = $reduced_points;
             }
             
-            // Close the path by adding first point at the end
-            if (count($path_points) > 0) {
+            // Close the path by adding first point at the end if we have points
+            if (count($path_points) > 2) {
                 $path_points[] = $path_points[0];
             }
             
-            $path_string = 'color:0xff0000ff|weight:2|' . implode('|', $path_points);
+            if (count($path_points) < 3) {
+                error_log("ThumbnailGenerator: Not enough path points for boundary");
+                return null;
+            }
+            
+            $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $path_points);
             
             // Generate map with boundary overlay
             $params = [
                 'key' => $this->google_api_key,
                 'center' => $center_lat . ',' . $center_lon,
-                'zoom' => '17',
+                'zoom' => '16', // Slightly zoomed out to show boundary better
                 'size' => '300x200',
                 'maptype' => 'satellite',
                 'format' => 'png',
@@ -241,7 +248,12 @@ class ThumbnailGenerator {
             ];
             
             $url = $this->base_url . '?' . http_build_query($params);
-            error_log("ThumbnailGenerator: Boundary overlay URL: " . substr($url, 0, 200) . '...');
+            error_log("ThumbnailGenerator: Boundary URL length: " . strlen($url));
+            
+            if (strlen($url) > 2000) {
+                error_log("ThumbnailGenerator: URL too long, falling back to basic thumbnail");
+                return null;
+            }
             
             $image_data = @file_get_contents($url);
             
@@ -250,6 +262,18 @@ class ThumbnailGenerator {
                 $result = file_put_contents($filename, $image_data);
                 if ($result) {
                     error_log("ThumbnailGenerator: Saved boundary overlay to {$filename}");
+                    
+                    // Update database to use boundary version
+                    try {
+                        require_once dirname(__DIR__) . '/config/database.php';
+                        $db = getDB();
+                        $stmt = $db->prepare("UPDATE properties SET thumbnail_path = ? WHERE assessment_number = ?");
+                        $stmt->execute(['/assets/thumbnails/' . $assessment_number . '_boundary.png', $assessment_number]);
+                        error_log("ThumbnailGenerator: Updated database with boundary thumbnail path");
+                    } catch (Exception $e) {
+                        error_log("ThumbnailGenerator: Database update failed: " . $e->getMessage());
+                    }
+                    
                     return '/assets/thumbnails/' . $assessment_number . '_boundary.png';
                 }
             }
