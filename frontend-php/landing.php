@@ -150,7 +150,7 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                             <h5 class="card-title">Real-time Updates</h5>
-                            <p class="card-text">Get the latest tax sale information with automatic updates from municipal sources.</p>
+                            <p class="card-text">Get the latest tax sale information with automatic updates from municipal sources across Canada.</p>
                         </div>
                     </div>
                 </div>
