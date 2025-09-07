@@ -402,5 +402,199 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
+    
+    <script>
+    class DeploymentManager {
+        constructor() {
+            this.consoleOutput = document.getElementById('console-output');
+            this.deployStatus = document.getElementById('deploy-status');
+            this.serviceStatus = document.getElementById('status-display');
+            this.deployConsole = document.getElementById('deploy-console');
+            this.isDeploying = false;
+            
+            this.initEventListeners();
+            this.refreshServiceStatus();
+            
+            // Auto-refresh service status every 30 seconds
+            setInterval(() => this.refreshServiceStatus(), 30000);
+        }
+        
+        initEventListeners() {
+            document.getElementById('full-deploy-btn').addEventListener('click', () => {
+                if (!this.isDeploying) {
+                    this.startFullDeploy();
+                }
+            });
+            
+            document.getElementById('quick-update-btn').addEventListener('click', () => {
+                if (!this.isDeploying) {
+                    this.startQuickUpdate();
+                }
+            });
+            
+            document.getElementById('refresh-status').addEventListener('click', () => {
+                this.refreshServiceStatus();
+            });
+            
+            document.getElementById('clear-console').addEventListener('click', () => {
+                this.clearConsole();
+            });
+        }
+        
+        async refreshServiceStatus() {
+            try {
+                const response = await fetch('/api/deploy_status.php?action=check_status');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let statusHtml = '';
+                    Object.entries(data.services).forEach(([service, status]) => {
+                        const badge = status === 'active' ? 'bg-success' : 'bg-danger';
+                        statusHtml += `<span class="badge ${badge} me-1">${service}: ${status}</span>`;
+                    });
+                    
+                    statusHtml += `<small class="text-muted ms-2">Last Deploy: ${data.last_deploy}</small>`;
+                    this.serviceStatus.innerHTML = statusHtml;
+                }
+            } catch (error) {
+                this.serviceStatus.innerHTML = '<span class="text-danger">Status check failed</span>';
+            }
+        }
+        
+        async startFullDeploy() {
+            if (!confirm('This will perform a full deployment with automatic conflict resolution. Continue?')) {
+                return;
+            }
+            
+            this.isDeploying = true;
+            this.showConsole();
+            this.setDeployStatus('Deploying', 'bg-warning');
+            this.addConsoleMessage('🚀 Starting full deployment...', 'info');
+            
+            try {
+                // Start deployment
+                const response = await fetch('/api/deploy_status.php?action=start_deploy');
+                const data = await response.json();
+                
+                if (data.status === 'started') {
+                    this.addConsoleMessage('✅ Deployment process started', 'success');
+                    this.pollDeploymentStatus();
+                } else {
+                    throw new Error('Failed to start deployment');
+                }
+            } catch (error) {
+                this.addConsoleMessage(`❌ Failed to start deployment: ${error.message}`, 'error');
+                this.setDeployStatus('Failed', 'bg-danger');
+                this.isDeploying = false;
+            }
+        }
+        
+        async startQuickUpdate() {
+            if (!confirm('This will pull latest code and restart services. Continue?')) {
+                return;
+            }
+            
+            // Use the existing form submission for quick update
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'system_action';
+            input.value = 'git_pull_restart';
+            
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+        
+        async pollDeploymentStatus() {
+            const maxAttempts = 60; // 5 minutes max
+            let attempts = 0;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch('/api/deploy_status.php?action=get_logs&lines=20');
+                    const data = await response.json();
+                    
+                    if (data.status === 'success' && data.logs) {
+                        // Add new log entries
+                        data.logs.forEach(log => {
+                            this.addConsoleMessage(log.message, log.type);
+                        });
+                    }
+                    
+                    // Check if deployment is still running
+                    const statusResponse = await fetch('/api/deploy_status.php?action=check_status');
+                    const statusData = await statusResponse.json();
+                    
+                    if (!statusData.deploy_running) {
+                        // Deployment finished
+                        this.addConsoleMessage('🎉 Deployment completed!', 'success');
+                        this.setDeployStatus('Completed', 'bg-success');
+                        this.isDeploying = false;
+                        this.refreshServiceStatus();
+                        return;
+                    }
+                    
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 5000); // Poll every 5 seconds
+                    } else {
+                        this.addConsoleMessage('⚠️ Deployment monitoring timeout', 'warning');
+                        this.setDeployStatus('Timeout', 'bg-warning');
+                        this.isDeploying = false;
+                    }
+                    
+                } catch (error) {
+                    this.addConsoleMessage(`❌ Monitoring error: ${error.message}`, 'error');
+                    this.setDeployStatus('Error', 'bg-danger');
+                    this.isDeploying = false;
+                }
+            };
+            
+            poll();
+        }
+        
+        showConsole() {
+            this.deployConsole.style.display = 'block';
+            this.deployConsole.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        addConsoleMessage(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const typeColors = {
+                'info': 'text-light',
+                'success': 'text-success',
+                'warning': 'text-warning',
+                'error': 'text-danger'
+            };
+            
+            const color = typeColors[type] || 'text-light';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = color;
+            msgDiv.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${message}`;
+            
+            this.consoleOutput.appendChild(msgDiv);
+            this.consoleOutput.scrollTop = this.consoleOutput.scrollHeight;
+        }
+        
+        setDeployStatus(status, badgeClass) {
+            this.deployStatus.textContent = status;
+            this.deployStatus.className = `badge ${badgeClass}`;
+        }
+        
+        clearConsole() {
+            this.consoleOutput.innerHTML = '<div class="text-muted">Console cleared.</div>';
+        }
+    }
+    
+    // Initialize deployment manager when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        new DeploymentManager();
+    });
+    </script>
 </body>
 </html>
