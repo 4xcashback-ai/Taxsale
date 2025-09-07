@@ -69,7 +69,8 @@ class ThumbnailGenerator {
         
         if ($image_data) {
             $filename = $this->thumbnail_dir . $assessment_number . '.png';
-            file_put_contents($filename, $image_data);
+            $result = file_put_contents($filename, $image_data);
+            error_log("ThumbnailGenerator: Saved image to {$filename}, bytes written: " . ($result ?: 'FAILED'));
             return '/assets/thumbnails/' . $assessment_number . '.png';
         }
         
