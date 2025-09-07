@@ -75,6 +75,11 @@ class ThumbnailGenerator {
                     $stmt->execute([$latitude, $longitude, $assessment_number]);
                     
                     error_log("Updated {$assessment_number} with coordinates: {$latitude}, {$longitude}");
+                    
+                    // If we have boundary geometry, try to create a boundary overlay
+                    if (isset($data['geometry']) && isset($data['bbox'])) {
+                        return $this->generateBoundaryOverlayThumbnail($assessment_number, $data, $latitude, $longitude);
+                    }
                 }
             }
         }
@@ -83,15 +88,15 @@ class ThumbnailGenerator {
             return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#667eea"/><text x="150" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Property Location</text></svg>');
         }
         
-        // Generate Google Maps thumbnail
+        // Generate enhanced Google Maps thumbnail with better zoom and styling
         $params = [
             'key' => $this->google_api_key,
             'center' => $latitude . ',' . $longitude,
-            'zoom' => '17',
+            'zoom' => '18',  // Higher zoom for better detail
             'size' => '300x200',
             'maptype' => 'satellite',
             'format' => 'png',
-            'markers' => 'color:red|size:small|' . $latitude . ',' . $longitude
+            'markers' => 'color:red|size:mid|' . $latitude . ',' . $longitude
         ];
         
         $url = $this->base_url . '?' . http_build_query($params);
@@ -105,6 +110,76 @@ class ThumbnailGenerator {
         }
         
         return 'data:image/svg+xml;base64,' . base64_encode('<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#667eea"/><text x="150" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Property Location</text></svg>');
+    }
+    
+    private function generateBoundaryOverlayThumbnail($assessment_number, $boundary_data, $center_lat, $center_lon) {
+        error_log("ThumbnailGenerator: Generating boundary overlay for {$assessment_number}");
+        
+        try {
+            // Extract geometry rings for path overlay
+            $geometry = $boundary_data['geometry'];
+            if (!$geometry || !isset($geometry['rings']) || empty($geometry['rings'])) {
+                error_log("ThumbnailGenerator: No valid rings in geometry data");
+                return null;
+            }
+            
+            // Build path parameter for Google Maps Static API
+            $path_points = [];
+            foreach ($geometry['rings'] as $ring) {
+                foreach ($ring as $coord) {
+                    $path_points[] = $coord[1] . ',' . $coord[0]; // lat,lon format
+                }
+            }
+            
+            // Limit path points to avoid URL length issues (Google Maps has limits)
+            if (count($path_points) > 100) {
+                // Take every nth point to reduce complexity
+                $step = ceil(count($path_points) / 100);
+                $reduced_points = [];
+                for ($i = 0; $i < count($path_points); $i += $step) {
+                    $reduced_points[] = $path_points[$i];
+                }
+                $path_points = $reduced_points;
+            }
+            
+            // Close the path by adding first point at the end
+            if (count($path_points) > 0) {
+                $path_points[] = $path_points[0];
+            }
+            
+            $path_string = 'color:0xff0000ff|weight:2|' . implode('|', $path_points);
+            
+            // Generate map with boundary overlay
+            $params = [
+                'key' => $this->google_api_key,
+                'center' => $center_lat . ',' . $center_lon,
+                'zoom' => '17',
+                'size' => '300x200',
+                'maptype' => 'satellite',
+                'format' => 'png',
+                'path' => $path_string,
+                'markers' => 'color:red|size:small|' . $center_lat . ',' . $center_lon
+            ];
+            
+            $url = $this->base_url . '?' . http_build_query($params);
+            error_log("ThumbnailGenerator: Boundary overlay URL: " . substr($url, 0, 200) . '...');
+            
+            $image_data = @file_get_contents($url);
+            
+            if ($image_data) {
+                $filename = $this->thumbnail_dir . $assessment_number . '_boundary.png';
+                $result = file_put_contents($filename, $image_data);
+                if ($result) {
+                    error_log("ThumbnailGenerator: Saved boundary overlay to {$filename}");
+                    return '/assets/thumbnails/' . $assessment_number . '_boundary.png';
+                }
+            }
+            
+        } catch (Exception $e) {
+            error_log("ThumbnailGenerator: Error generating boundary overlay: " . $e->getMessage());
+        }
+        
+        return null; // Fall back to regular thumbnail generation
     }
     
     public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
