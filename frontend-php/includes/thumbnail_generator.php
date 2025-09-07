@@ -6,7 +6,8 @@ class ThumbnailGenerator {
     
     public function __construct($api_key) {
         $this->google_api_key = $api_key;
-        $this->thumbnail_dir = '/var/www/tax-sale-compass/frontend-php/assets/thumbnails/';
+        // Use relative path from current file location
+        $this->thumbnail_dir = dirname(__DIR__) . '/assets/thumbnails/';
         $this->base_url = 'https://maps.googleapis.com/maps/api/staticmap';
         
         if (!is_dir($this->thumbnail_dir)) {
