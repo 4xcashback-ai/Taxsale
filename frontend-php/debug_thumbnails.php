@@ -23,8 +23,10 @@ echo "Longitude: " . ($property['longitude'] ?? 'N/A') . "<br>";
 echo "Has Boundary Data: " . ($property['boundary_data'] ? 'Yes' : 'No') . "<br>";
 
 echo "<h3>Debug Info:</h3>";
-echo "Document Root: " . $_SERVER['DOCUMENT_ROOT'] . "<br>";
+echo "Document Root: " . ($_SERVER['DOCUMENT_ROOT'] ?? 'Not set') . "<br>";
 echo "Current Script: " . __FILE__ . "<br>";
+echo "Script Directory: " . dirname(__FILE__) . "<br>";
+echo "Computed thumbnail dir: " . dirname(__FILE__) . '/assets/thumbnails/' . "<br>";
 
 // Test thumbnail generator
 try {
