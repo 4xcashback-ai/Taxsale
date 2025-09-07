@@ -36,8 +36,8 @@ $municipality = $_GET['municipality'] ?? '';
 $status = $_GET['status'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Build query
-$query = "SELECT * FROM properties WHERE 1=1";
+// Build query - ensure we get the thumbnail_path column
+$query = "SELECT *, COALESCE(thumbnail_path, '') as thumbnail_path FROM properties WHERE 1=1";
 $params = [];
 
 if ($municipality) {
