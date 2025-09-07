@@ -516,6 +516,63 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
             </div>
         </div>
 
+        <!-- DEBUG: Thumbnail Debug Panel (Admin Only) -->
+        <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
+        <div class="alert alert-info mb-4" id="thumbnail-debug">
+            <h5><i class="fas fa-bug"></i> Thumbnail Debug Info (Admin Only)</h5>
+            <div class="row">
+                <?php 
+                // Show debug info for first 3 properties
+                $debug_count = 0;
+                foreach ($properties as $property): 
+                    if ($debug_count >= 3) break;
+                    $debug_count++;
+                    
+                    $thumbnail_url = $thumbnail_generator->getThumbnail($property);
+                    $file_exists = false;
+                    $file_size = 0;
+                    
+                    if (strpos($thumbnail_url, '/assets/thumbnails/') === 0) {
+                        $file_path = dirname(__DIR__) . $thumbnail_url;
+                        $file_exists = file_exists($file_path);
+                        if ($file_exists) {
+                            $file_size = filesize($file_path);
+                        }
+                    }
+                ?>
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong><?php echo htmlspecialchars($property['assessment_number']); ?></strong>
+                        </div>
+                        <div class="card-body small">
+                            <p><strong>PID:</strong> <?php echo htmlspecialchars($property['pid_number'] ?? 'NULL'); ?></p>
+                            <p><strong>DB thumbnail_path:</strong> <code><?php echo htmlspecialchars($property['thumbnail_path'] ?? 'NULL'); ?></code></p>
+                            <p><strong>getThumbnail() returns:</strong> <code><?php echo htmlspecialchars($thumbnail_url); ?></code></p>
+                            <p><strong>Coordinates:</strong> <?php echo htmlspecialchars(($property['latitude'] ?? 'NULL') . ', ' . ($property['longitude'] ?? 'NULL')); ?></p>
+                            <?php if (strpos($thumbnail_url, '/assets/thumbnails/') === 0): ?>
+                                <p><strong>File exists:</strong> <?php echo $file_exists ? '<span class="text-success">✅ Yes</span>' : '<span class="text-danger">❌ No</span>'; ?></p>
+                                <?php if ($file_exists): ?>
+                                    <p><strong>File size:</strong> <?php echo number_format($file_size); ?> bytes</p>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="mt-3">
+                <button class="btn btn-sm btn-outline-danger" onclick="document.getElementById('thumbnail-debug').style.display='none'">
+                    Hide Debug Panel
+                </button>
+                <a href="/admin.php" class="btn btn-sm btn-outline-primary">
+                    Go to Admin Panel
+                </a>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Properties Grid -->
         <div class="row">
             <?php foreach ($properties as $property): ?>
