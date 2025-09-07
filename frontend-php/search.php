@@ -21,8 +21,8 @@ $municipality = $_GET['municipality'] ?? '';
 $status = $_GET['status'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Build query
-$query = "SELECT * FROM properties WHERE 1=1";
+// Build query - explicitly select columns including thumbnail_path
+$query = "SELECT *, thumbnail_path FROM properties WHERE 1=1";
 $params = [];
 
 if ($municipality) {
