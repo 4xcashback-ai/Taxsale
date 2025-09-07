@@ -26,7 +26,7 @@ class ThumbnailGenerator {
     public function getThumbnail($property) {
         $assessment_number = $property['assessment_number'];
         $thumbnail_file = $this->thumbnail_dir . $assessment_number . '.png';
-        $thumbnail_url = 'assets/thumbnails/' . $assessment_number . '.png';
+        $thumbnail_url = '/frontend-php/assets/thumbnails/' . $assessment_number . '.png';
         
         // Check if thumbnail already exists and is recent (less than 30 days old)
         if (file_exists($thumbnail_file) && (time() - filemtime($thumbnail_file)) < (30 * 24 * 60 * 60)) {
