@@ -29,7 +29,7 @@ if ($search) {
     $params[] = "%$search%";
 }
 
-# Get pagination parameters
+// Get pagination parameters
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $per_page = 24;
 $offset = ($page - 1) * $per_page;
