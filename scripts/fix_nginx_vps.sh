@@ -1,10 +1,26 @@
 #!/bin/bash
 
 # Fix nginx configuration for VPS deployment
-echo "🔧 Fixing nginx configuration for Tax Sale Compass..."
+echo "🔧 Checking nginx configuration for Tax Sale Compass..."
 
-# Backup existing nginx config
-cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup.$(date +%Y%m%d_%H%M%S)
+# Check if we already have a working configuration
+if [ -f "/etc/nginx/sites-available/tax-sale-compass" ] && [ -L "/etc/nginx/sites-enabled/tax-sale-compass" ]; then
+    echo "✅ Found existing tax-sale-compass configuration"
+    
+    # Test the existing configuration
+    if nginx -t 2>/dev/null; then
+        echo "✅ Existing nginx configuration is valid"
+        echo "✅ Skipping configuration creation - using existing SSL-enabled config"
+        exit 0
+    else
+        echo "⚠️ Existing configuration has errors, will create new one"
+    fi
+fi
+
+echo "🔧 Creating new nginx configuration..."
+
+# Backup existing nginx config if it exists
+[ -f "/etc/nginx/sites-available/default" ] && cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup.$(date +%Y%m%d_%H%M%S)
 
 # Create new nginx configuration for Tax Sale Compass
 cat > /etc/nginx/sites-available/taxsale << 'EOF'
