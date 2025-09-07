@@ -35,6 +35,9 @@ class ThumbnailGenerator {
         $latitude = $property['latitude'];
         $longitude = $property['longitude'];
         
+        // Debug: Log what we received
+        error_log("ThumbnailGenerator: getThumbnail called for {$assessment_number}, thumbnail_path: " . ($property['thumbnail_path'] ?? 'NULL'));
+        
         // First check if we already have a pre-generated thumbnail path in the database
         if (isset($property['thumbnail_path']) && !empty($property['thumbnail_path'])) {
             $thumbnail_file = dirname(__DIR__) . $property['thumbnail_path'];
@@ -46,6 +49,8 @@ class ThumbnailGenerator {
                 error_log("ThumbnailGenerator: Pre-generated thumbnail file missing: {$thumbnail_file}");
             }
         }
+        
+        error_log("ThumbnailGenerator: No pre-generated thumbnail found, falling back to on-demand generation for {$assessment_number}");
         
         // Fallback to on-demand generation
         // Call backend API if no coordinates
