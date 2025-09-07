@@ -14,14 +14,16 @@ header('Content-Type: application/json');
 $action = $_GET['action'] ?? '';
 
 if ($action === 'start_generation') {
-    // Start thumbnail generation in background
-    $generate_command = 'php /var/www/tax-sale-compass/scripts/batch_thumbnail_generator.php > /tmp/thumbnail_generation.log 2>&1 &';
+    // Start thumbnail generation in background using correct path
+    $script_path = dirname(__DIR__, 2) . '/scripts/batch_thumbnail_generator.php';
+    $generate_command = "php {$script_path} > /tmp/thumbnail_generation.log 2>&1 &";
     shell_exec($generate_command);
     
     echo json_encode([
         'status' => 'started',
         'message' => 'Thumbnail generation started in background',
-        'log_file' => '/tmp/thumbnail_generation.log'
+        'log_file' => '/tmp/thumbnail_generation.log',
+        'script_path' => $script_path
     ]);
     
 } elseif ($action === 'get_progress') {
