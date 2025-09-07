@@ -135,7 +135,7 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                     </div>
                     <div class="col-md-3">
                         <button type="submit" class="btn btn-primary">Search</button>
-                        <a href="index.php" class="btn btn-secondary">Clear</a>
+                        <a href="search.php" class="btn btn-secondary">Clear</a>
                     </div>
                 </form>
             </div>
