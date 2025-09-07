@@ -3,16 +3,15 @@
 
 -- Add thumbnail_path column
 ALTER TABLE properties 
-ADD COLUMN IF NOT EXISTS thumbnail_path VARCHAR(255) DEFAULT NULL;
+ADD COLUMN thumbnail_path VARCHAR(255) DEFAULT NULL;
 
 -- Add index for faster queries on properties needing thumbnails
-CREATE INDEX IF NOT EXISTS idx_properties_thumbnail 
+CREATE INDEX idx_properties_thumbnail 
 ON properties (pid_number, thumbnail_path);
 
--- Add index for faster queries on properties with PID
-CREATE INDEX IF NOT EXISTS idx_properties_pid 
-ON properties (pid_number) 
-WHERE pid_number IS NOT NULL AND pid_number != '' AND pid_number != 'N/A';
+-- Add index for faster queries on properties with PID (without WHERE clause for MariaDB compatibility)
+CREATE INDEX idx_properties_pid 
+ON properties (pid_number);
 
 -- Update existing properties to have proper null values
 UPDATE properties 
