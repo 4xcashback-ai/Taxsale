@@ -222,6 +222,58 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             </div>
         </div>
 
+        <!-- Thumbnail Generation Controls -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Thumbnail Generation</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Generate property boundary thumbnails for better search page performance:</p>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <button id="generate-thumbnails-btn" class="btn btn-info me-2">
+                                <i class="fas fa-image"></i> Generate Missing Thumbnails
+                            </button>
+                            <button id="regenerate-all-thumbnails-btn" class="btn btn-warning me-2">
+                                <i class="fas fa-sync"></i> Regenerate All Thumbnails
+                            </button>
+                            <div id="thumbnail-status" class="ms-3">
+                                <span class="badge bg-secondary">Ready</span>
+                            </div>
+                        </div>
+                        
+                        <div id="thumbnail-progress" class="mb-3" style="display: none;">
+                            <div class="progress">
+                                <div id="thumbnail-progress-bar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                            <small id="thumbnail-progress-text" class="text-muted"></small>
+                        </div>
+                        
+                        <div id="thumbnail-stats" class="row text-center mb-3">
+                            <div class="col-md-3">
+                                <div class="fw-bold text-primary fs-5" id="total-properties">-</div>
+                                <div class="text-muted">Total Properties</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="fw-bold text-info fs-5" id="properties-with-pid">-</div>
+                                <div class="text-muted">With PID Numbers</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="fw-bold text-success fs-5" id="properties-with-thumbnails">-</div>
+                                <div class="text-muted">With Thumbnails</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="fw-bold text-warning fs-5" id="completion-rate">-</div>
+                                <div class="text-muted">Completion Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- System Update Controls -->
         <div class="row mb-4">
             <div class="col-md-12">
