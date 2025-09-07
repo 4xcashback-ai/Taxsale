@@ -179,6 +179,11 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
             color: white;
         }
         
+        .status-inactive {
+            background: #6c757d;
+            color: white;
+        }
+        
         .status-sold {
             background: var(--danger-color);
             color: white;
