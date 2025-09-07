@@ -529,6 +529,10 @@ class TaxSaleScraper:
                 mysql_db.insert_property(property_data)
             
             logger.info(f"Victoria County scraping completed. Found {len(properties)} properties.")
+            
+            # Run post-scraping tasks (thumbnail generation, etc.)
+            run_post_scraping_tasks()
+            
             return {
                 'success': True,
                 'municipality': 'Victoria County',
