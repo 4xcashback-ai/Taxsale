@@ -39,7 +39,9 @@ class ThumbnailGenerator {
         if ($pid_number && (!$latitude || !$longitude)) {
             error_log("Calling backend API for PID: {$pid_number}");
             
-            $backend_url = API_BASE_URL . "/query-ns-government-parcel/{$pid_number}";
+            // Use backend URL (fallback to localhost if API_BASE_URL not defined)
+            $backend_base = defined('API_BASE_URL') ? API_BASE_URL : 'http://localhost:8001/api';
+            $backend_url = $backend_base . "/query-ns-government-parcel/{$pid_number}";
             $response = @file_get_contents($backend_url);
             
             if ($response) {
