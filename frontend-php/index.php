@@ -66,7 +66,7 @@ $count_stmt->execute($count_params);
 $total_properties = $count_stmt->fetchColumn();
 $total_pages = ceil($total_properties / $per_page);
 
-$db = getDB();
+// Get properties for current page
 $stmt = $db->prepare($query);
 $stmt->execute($params);
 $properties = $stmt->fetchAll();
