@@ -48,6 +48,44 @@ if ($_POST && isset($_POST['system_action'])) {
         // Check git status after pull
         $git_status = shell_exec('cd /var/www/tax-sale-compass && git status --porcelain 2>&1');
         $system_result['steps'][] = ['command' => 'git status check', 'output' => $git_status ?: 'Working directory clean', 'time' => date('Y-m-d H:i:s')];
+    } elseif ($action === 'full_deploy') {
+        // Use the new deployment script
+        $system_result = ['action' => 'full_deploy', 'steps' => [], 'success' => false];
+        
+        // Make sure script is executable
+        shell_exec('chmod +x /var/www/tax-sale-compass/scripts/vps_deploy.sh 2>&1');
+        
+        // Execute deployment script
+        $deploy_command = 'sudo /var/www/tax-sale-compass/scripts/vps_deploy.sh 2>&1';
+        $deploy_output = shell_exec($deploy_command);
+        
+        // Parse deployment output
+        $lines = explode("\n", $deploy_output);
+        $current_step = '';
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+            
+            if (strpos($line, 'DEPLOY_ERROR:') === 0) {
+                $system_result['error'] = substr($line, 13);
+                $system_result['success'] = false;
+                break;
+            } elseif (strpos($line, 'DEPLOY_SUCCESS') === 0) {
+                $system_result['success'] = true;
+            } elseif (strpos($line, '[') === 0) {
+                // Timestamped log entry
+                $system_result['steps'][] = [
+                    'timestamp' => substr($line, 1, 19),
+                    'message' => substr($line, 22),
+                    'type' => 'log'
+                ];
+            }
+        }
+        
+        $system_result['raw_output'] = $deploy_output;
+        $system_result['deploy_log'] = '/var/log/taxsale_deploy.log';
+    }
         
         // Restart backend service with status check
         $backend_output = shell_exec('sudo systemctl restart tax-sale-backend 2>&1');
