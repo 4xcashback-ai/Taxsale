@@ -94,7 +94,7 @@ class ThumbnailGenerator {
             if ($image_data) {
                 $thumbnail_file = $this->thumbnail_dir . $assessment_number . '.png';
                 file_put_contents($thumbnail_file, $image_data);
-                return '/frontend-php/assets/thumbnails/' . $assessment_number . '.png';
+                return '/assets/thumbnails/' . $assessment_number . '.png';
             }
         } catch (Exception $e) {
             error_log("Thumbnail generation failed for {$assessment_number}: " . $e->getMessage());
