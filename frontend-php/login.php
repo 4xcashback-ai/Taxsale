@@ -37,8 +37,8 @@ if ($_POST) {
                 $_SESSION['subscription_tier'] = $result['user']['subscription_tier'];
                 $_SESSION['is_admin'] = $result['user']['is_admin'];
                 
-                // Redirect to intended page or home
-                $redirect = $_GET['redirect'] ?? 'index.php';
+                // Redirect to intended page or search page
+                $redirect = $_GET['redirect'] ?? 'search.php';
                 header('Location: ' . $redirect);
                 exit;
             } else {
