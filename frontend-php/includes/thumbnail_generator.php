@@ -235,11 +235,39 @@ class ThumbnailGenerator {
             
             $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $path_points);
             
+            // Calculate optimal zoom level based on property bounding box
+            $bbox = $boundary_data['bbox'];
+            $lat_span = $bbox['maxLat'] - $bbox['minLat'];
+            $lon_span = $bbox['maxLon'] - $bbox['minLon'];
+            
+            // Use the larger span to determine zoom level
+            $max_span = max($lat_span, $lon_span);
+            
+            // Calculate zoom level - add some padding so boundaries aren't at edge
+            $padded_span = $max_span * 1.3; // 30% padding
+            
+            // Determine zoom level based on span (approximate degrees per zoom level)
+            if ($padded_span > 0.01) {
+                $zoom = 14; // Large properties (rural, big lots)
+            } elseif ($padded_span > 0.005) {
+                $zoom = 15; // Medium-large properties
+            } elseif ($padded_span > 0.002) {
+                $zoom = 16; // Medium properties
+            } elseif ($padded_span > 0.001) {
+                $zoom = 17; // Small-medium properties
+            } elseif ($padded_span > 0.0005) {
+                $zoom = 18; // Small properties (typical residential)
+            } else {
+                $zoom = 19; // Very small properties
+            }
+            
+            error_log("ThumbnailGenerator: Property span: {$max_span}, calculated zoom: {$zoom}");
+            
             // Generate map with boundary overlay
             $params = [
                 'key' => $this->google_api_key,
                 'center' => $center_lat . ',' . $center_lon,
-                'zoom' => '18', // Closer zoom for more detail
+                'zoom' => $zoom, // Dynamic zoom based on property size
                 'size' => '300x200',
                 'maptype' => 'satellite',
                 'format' => 'png',
