@@ -17,7 +17,9 @@ class BatchThumbnailGenerator {
     
     public function __construct() {
         $this->pdo = getDB();
-        $this->thumbnailGenerator = new ThumbnailGenerator('AIzaSyBqJZiAhODPGKf6NLZSUOc6BQmMJtVg7bA'); // Google Maps API key
+        // Use the correct Google Maps API key from config
+        $apiKey = defined('GOOGLE_MAPS_API_KEY') ? GOOGLE_MAPS_API_KEY : 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY';
+        $this->thumbnailGenerator = new ThumbnailGenerator($apiKey);
         $this->logFile = '/var/log/thumbnail_generation.log';
         
         $this->log("=== Batch Thumbnail Generation Started ===");
