@@ -18,9 +18,21 @@ handle_error() {
     exit 1
 }
 
+# Detect if running from web interface
+WEB_DEPLOY=${WEB_DEPLOY:-"false"}
+if [ "$USER" = "www-data" ] || [ -n "$HTTP_HOST" ] || [ -n "$REQUEST_METHOD" ]; then
+    WEB_DEPLOY="true"
+fi
+
 # Start deployment
 log "=== Starting Tax Sale Compass Deployment ==="
 echo "DEPLOY_START"
+
+if [ "$WEB_DEPLOY" = "true" ]; then
+    log "🌐 Web deployment detected - using web-safe mode"
+else
+    log "💻 Command-line deployment detected"
+fi
 
 # Pre-deployment safety checks
 log "Running pre-deployment safety checks..."
