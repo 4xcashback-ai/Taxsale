@@ -17,7 +17,13 @@ class ThumbnailGenerator {
         
         if (!is_dir($this->thumbnail_dir)) {
             error_log("ThumbnailGenerator: Creating thumbnail directory");
-            mkdir($this->thumbnail_dir, 0755, true);
+            mkdir($this->thumbnail_dir, 0777, true);
+        }
+        
+        // Ensure directory is writable
+        if (!is_writable($this->thumbnail_dir)) {
+            error_log("ThumbnailGenerator: Setting directory permissions to 777");
+            chmod($this->thumbnail_dir, 0777);
         }
     }
     
