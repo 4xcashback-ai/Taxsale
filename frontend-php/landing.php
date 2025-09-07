@@ -114,7 +114,7 @@
             <div class="row mb-5">
                 <div class="col-lg-8 mx-auto text-center">
                     <h2 class="fw-bold mb-3">Why Choose Tax Sale Compass?</h2>
-                    <p class="lead text-muted">We provide the most comprehensive and up-to-date tax sale information in Nova Scotia</p>
+                    <p class="lead text-muted">We provide the most comprehensive and up-to-date tax sale information across Canada</p>
                 </div>
             </div>
             
