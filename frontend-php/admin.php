@@ -1097,6 +1097,7 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
     class ScraperTestingManager {
         constructor() {
             this.initEventListeners();
+            this.loadMunicipalities();
             this.updateStats();
         }
         
