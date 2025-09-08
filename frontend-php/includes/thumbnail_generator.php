@@ -442,6 +442,27 @@ class ThumbnailGenerator {
         }
     }
     
+    private function simplifyPathConservative($points, $maxPoints) {
+        // Fallback simplification method
+        if (count($points) <= $maxPoints) {
+            return $points;
+        }
+        
+        $simplified = [$points[0]]; // Keep first
+        $step = max(1, floor(count($points) / ($maxPoints - 2)));
+        
+        for ($i = $step; $i < count($points) - 1; $i += $step) {
+            $simplified[] = $points[$i];
+        }
+        
+        // Keep last if different from first
+        if (end($points) !== $points[0]) {
+            $simplified[] = end($points);
+        }
+        
+        return $simplified;
+    }
+    
     public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
         error_log("ThumbnailGenerator: Generating thumbnail for {$assessment_number}");
         
