@@ -324,6 +324,10 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                         <h4>Auction Information Management</h4>
                     </div>
                     <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> <strong>Important:</strong> This will only update <strong>ACTIVE properties</strong> in the selected municipality. Inactive/sold properties will not be affected.
+                        </div>
+                        
                         <p>Update auction date and type for existing active properties by municipality:</p>
                         
                         <div class="row">
