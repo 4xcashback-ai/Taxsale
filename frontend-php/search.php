@@ -54,9 +54,10 @@ if ($status) {
 }
 
 if ($search) {
-    // Prioritize civic_address search and make it more flexible
-    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
-    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
+    // Search across address, municipality, assessment number, and PID
+    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ? OR pid_number LIKE ?)";
+    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ? OR pid_number LIKE ?)";
+    $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
