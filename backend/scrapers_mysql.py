@@ -504,19 +504,38 @@ class TaxSaleScraper:
                         'assessment_number': assessment_number,
                         'owner_name': owner_name,
                         'civic_address': civic_address,
-                        'property_type': property_type,
-                        'parcel_description': parcel_description,
-                        'pid_number': pid_number,
-                        'opening_bid': opening_bid,
-                        'total_taxes': opening_bid,
-                        'hst_applicable': hst_applicable,
-                        'redeemable': redeemable,
                         'municipality': 'Halifax Regional Municipality',
                         'province': 'Nova Scotia',
-                        'status': 'active',
+                        'parcel_description': parcel_description,
+                        'total_taxes': opening_bid,
+                        'opening_bid': opening_bid,
+                        'hst_applicable': hst_applicable,
+                        'redeemable': redeemable,
                         'tax_year': 2024,
-                        'created_at': datetime.now()
+                        'status': 'active',
+                        'created_at': datetime.now(),
+                        'updated_at': datetime.now()
                     }
+                    
+                    # Enhanced PID parsing for multiple PIDs
+                    raw_pid = pid_number
+                    primary_pid, secondary_pids, pid_count = parse_multiple_pids(raw_pid)
+                    
+                    # Detect property type
+                    description = f"{property_data['civic_address']} {property_data['parcel_description']}"
+                    property_type = detect_property_type(description, raw_pid)
+                    
+                    # Add new fields for multiple PID support
+                    property_data.update({
+                        'pid_number': raw_pid,  # Keep original for compatibility
+                        'primary_pid': primary_pid,
+                        'secondary_pids': ','.join(secondary_pids) if secondary_pids else None,
+                        'property_type': property_type,
+                        'pid_count': pid_count
+                    })
+                    
+                    logger.debug(f"Property {property_data['assessment_number']}: "
+                               f"PIDs={pid_count} ({primary_pid}), Type={property_type}")
                     
                     properties.append(property_data)
                     logger.info(f"Parsed Halifax: {assessment_number} | {civic_address} | ${opening_bid}")
