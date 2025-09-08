@@ -195,20 +195,23 @@ class ThumbnailGenerator {
         error_log("ThumbnailGenerator: Generating boundary overlay for {$assessment_number}");
         
         try {
-            // Extract geometry rings for path overlay
+            // Extract geometry rings for path overlay - try ALL rings, not just first
             $geometry = $boundary_data['geometry'];
             if (!$geometry || !isset($geometry['rings']) || empty($geometry['rings'])) {
                 error_log("ThumbnailGenerator: No valid rings in geometry data");
                 return null;
             }
             
-            // Build path parameter for Google Maps Static API - USE ALL POINTS
+            error_log("ThumbnailGenerator: Found " . count($geometry['rings']) . " rings in boundary data");
+            
+            // Build path parameter for Google Maps Static API - USE ALL POINTS FROM ALL RINGS
             $path_points = [];
-            foreach ($geometry['rings'] as $ring) {
+            foreach ($geometry['rings'] as $ringIndex => $ring) {
+                error_log("ThumbnailGenerator: Processing ring {$ringIndex} with " . count($ring) . " points");
                 foreach ($ring as $coord) {
                     $path_points[] = $coord[1] . ',' . $coord[0]; // lat,lon format
                 }
-                // Only use first ring to avoid complexity
+                // For now, still use only first ring, but let's see what we get
                 break;
             }
             
