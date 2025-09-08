@@ -417,6 +417,16 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                                 <p>Remove recently scraped properties to test scraper improvements:</p>
                                 
                                 <div class="mb-3">
+                                    <label class="form-label">Municipality:</label>
+                                    <select id="scraper-reset-municipality" class="form-select">
+                                        <option value="all">All Municipalities</option>
+                                        <option value="Halifax">Halifax</option>
+                                        <option value="Victoria">Victoria</option>
+                                        <option value="Cumberland">Cumberland</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
                                     <label class="form-label">Remove properties scraped in last:</label>
                                     <select id="scraper-reset-timeframe" class="form-select">
                                         <option value="1">1 hour</option>
