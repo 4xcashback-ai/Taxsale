@@ -522,26 +522,28 @@ class TaxSaleScraper:
                     primary_pid, secondary_pids, pid_count = parse_multiple_pids(raw_pid)
                     
                     # Use the property type extracted from the listing (not detected)
-                    # Convert listing property types to standardized values
-                    if property_type.lower() in ['dwelling', 'building', 'house', 'residence']:
-                        standardized_type = 'building'
+                    # Convert listing property types to standardized values based on actual meaning
+                    if property_type.lower() in ['dwelling', 'house', 'residence']:
+                        standardized_type = 'mixed'  # Dwelling = building on land (both included)
                     elif property_type.lower() in ['land']:
-                        standardized_type = 'land'
+                        standardized_type = 'land'   # Land = land only, no building
                     elif 'mobile home only' in property_type.lower():
-                        standardized_type = 'mobile_home_only'
+                        standardized_type = 'mobile_home_only'  # Mobile home only = building but no land
                     elif property_type.lower() in ['mobile', 'mobile home', 'trailer']:
                         standardized_type = 'mobile_home_only'
+                    elif property_type.lower() in ['building', 'commercial', 'structure']:
+                        standardized_type = 'building'  # Building only (rare case)
                     else:
                         standardized_type = 'land'  # Default fallback
                     
-                    logger.debug(f"Property {assessment_number}: Original type='{property_type}' -> Standardized='{standardized_type}'")
+                    logger.debug(f"Property {assessment_number}: '{property_type}' -> '{standardized_type}' (PIDs: {pid_count})")
                     
                     # Add new fields for multiple PID support
                     property_data.update({
                         'pid_number': raw_pid,  # Keep original for compatibility
-                        'primary_pid': primary_pid,
+                        'primary_pid': primary_pid,  
                         'secondary_pids': ','.join(secondary_pids) if secondary_pids else None,
-                        'property_type': standardized_type,  # Use the standardized type from listing
+                        'property_type': standardized_type,  # Use accurate mapping
                         'pid_count': pid_count
                     })
                     
