@@ -995,6 +995,8 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
     // Initialize managers when page loads
     document.addEventListener('DOMContentLoaded', () => {
         new DeploymentManager();
+        window.missingPIDManager = new MissingPIDManager();
+        new ScraperTestingManager();
         new ThumbnailManager();
     });
     </script>
