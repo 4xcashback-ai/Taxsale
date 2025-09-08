@@ -1286,6 +1286,8 @@ def find_tax_sale_files(base_url: str, tax_sale_page_url: str, pdf_patterns: Lis
     """
     try:
         logger.info(f"Scanning tax sale page: {tax_sale_page_url}")
+        logger.info(f"PDF patterns to match: {pdf_patterns}")
+        logger.info(f"Excel patterns to match: {excel_patterns}")
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -1294,15 +1296,23 @@ def find_tax_sale_files(base_url: str, tax_sale_page_url: str, pdf_patterns: Lis
         response = requests.get(tax_sale_page_url, headers=headers, timeout=timeout)
         response.raise_for_status()
         
+        logger.info(f"Successfully fetched page, status: {response.status_code}, length: {len(response.content)} bytes")
+        
         soup = BeautifulSoup(response.content, 'html.parser')
         
         found_files = {'pdfs': [], 'excel': []}
         
         # Find all links
         links = soup.find_all('a', href=True)
+        logger.info(f"Found {len(links)} links on the page")
+        
+        # Debug: Log first few links to see what we're working with
+        for i, link in enumerate(links[:10]):
+            logger.debug(f"Link {i+1}: {link.get('href')} (text: {link.get_text().strip()[:50]})")
         
         for link in links:
             href = link['href']
+            link_text = link.get_text().strip()
             
             # Make absolute URL if relative
             if href.startswith('/'):
@@ -1315,17 +1325,31 @@ def find_tax_sale_files(base_url: str, tax_sale_page_url: str, pdf_patterns: Lis
                 if re.search(pattern, href, re.IGNORECASE):
                     if href not in found_files['pdfs']:
                         found_files['pdfs'].append(href)
-                        logger.info(f"Found PDF: {href}")
+                        logger.info(f"Found PDF: {href} (link text: {link_text})")
+                elif re.search(pattern, link_text, re.IGNORECASE):
+                    # Also check link text for patterns
+                    if href not in found_files['pdfs'] and ('.pdf' in href.lower() or 'pdf' in link_text.lower()):
+                        found_files['pdfs'].append(href)
+                        logger.info(f"Found PDF by text: {href} (link text: {link_text})")
             
             # Check against Excel patterns
             for pattern in excel_patterns:
                 if re.search(pattern, href, re.IGNORECASE):
                     if href not in found_files['excel']:
                         found_files['excel'].append(href)
-                        logger.info(f"Found Excel: {href}")
+                        logger.info(f"Found Excel: {href} (link text: {link_text})")
+                elif re.search(pattern, link_text, re.IGNORECASE):
+                    # Also check link text for patterns
+                    if href not in found_files['excel'] and ('.xlsx' in href.lower() or '.xls' in href.lower() or 'excel' in link_text.lower()):
+                        found_files['excel'].append(href)
+                        logger.info(f"Found Excel by text: {href} (link text: {link_text})")
         
+        logger.info(f"File scan complete - PDFs: {len(found_files['pdfs'])}, Excel: {len(found_files['excel'])}")
         return found_files
         
+    except requests.RequestException as e:
+        logger.error(f"Network error scanning tax sale page {tax_sale_page_url}: {e}")
+        return {'pdfs': [], 'excel': []}
     except Exception as e:
         logger.error(f"Error scanning tax sale page {tax_sale_page_url}: {e}")
         return {'pdfs': [], 'excel': []}
