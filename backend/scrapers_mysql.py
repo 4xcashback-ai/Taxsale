@@ -687,9 +687,18 @@ class TaxSaleScraper:
                         address_words = []
                         found_address_start = False
                         
+                        # Look for address indicators - either numbers or road keywords
+                        address_indicators = ['rd', 'road', 'st', 'street', 'ave', 'avenue', 'dr', 'drive', 'lane', 'ln', 'way', 'court', 'ct', 'blvd', 'boulevard', 'lot']
+                        
                         for i, word in enumerate(words):
                             # If we find a number (like "42" for address), that's likely start of address
                             if re.match(r'^\d+$', word) and not found_address_start:
+                                found_address_start = True
+                                address_words = words[i:]
+                                break
+                            # Also check for road names or lot references
+                            elif (word.lower() in address_indicators or 
+                                  any(indicator in word.lower() for indicator in address_indicators)) and not found_address_start:
                                 found_address_start = True
                                 address_words = words[i:]
                                 break
