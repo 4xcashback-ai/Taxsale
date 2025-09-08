@@ -829,9 +829,20 @@ class TaxSaleScraper:
                     
                     logger.debug(f"Property {assessment_number}: '{property_type}' -> '{standardized_type}' (PIDs: {pid_count})")
                     
+                    # Special handling for mobile homes - try to get coordinates
+                    if standardized_type == 'mobile_home_only' and civic_address:
+                        try:
+                            lat, lng = geocode_mobile_home_address(civic_address)
+                            if lat and lng:
+                                property_data['latitude'] = lat
+                                property_data['longitude'] = lng
+                                logger.info(f"Geocoded mobile home {assessment_number}: {lat}, {lng}")
+                        except Exception as e:
+                            logger.warning(f"Failed to geocode mobile home {assessment_number}: {e}")
+                    
                     # Add new fields for multiple PID support
                     property_data.update({
-                        'pid_number': raw_pid,  # Keep original for compatibility
+                        'pid_number': raw_pid if raw_pid else None,  # Keep original for compatibility, allow None
                         'primary_pid': primary_pid,  
                         'secondary_pids': ','.join(secondary_pids) if secondary_pids else None,
                         'property_type': standardized_type,  # Use accurate mapping
