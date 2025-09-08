@@ -454,6 +454,9 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                             <div class="col-md-4">
                                 <h5>Quick Actions</h5>
                                 <div class="d-grid gap-2">
+                                    <button id="test-api-btn" class="btn btn-info btn-sm">
+                                        <i class="fas fa-plug"></i> Test API Endpoints
+                                    </button>
                                     <button id="restart-backend-btn" class="btn btn-warning btn-sm">
                                         <i class="fas fa-redo"></i> Restart Backend
                                     </button>
