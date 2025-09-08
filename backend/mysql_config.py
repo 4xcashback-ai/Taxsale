@@ -213,9 +213,23 @@ class MySQLManager:
     def get_property_by_assessment(self, assessment_number: str) -> Optional[Dict]:
         """Get a specific property by assessment number"""
         try:
+            logger.info(f"Looking up property by assessment number: {assessment_number}")
             query = "SELECT * FROM properties WHERE assessment_number = %s"
             result = self.execute_query(query, (assessment_number,))
-            return result[0] if result else None
+            
+            if result:
+                logger.info(f"Property {assessment_number} found in database")
+                return result[0] 
+            else:
+                logger.warning(f"Property {assessment_number} not found in database")
+                # Try a broader search to see if the property exists with slight variations
+                search_query = "SELECT assessment_number FROM properties WHERE assessment_number LIKE %s LIMIT 5"
+                similar = self.execute_query(search_query, (f"%{assessment_number}%",))
+                if similar:
+                    similar_ids = [p['assessment_number'] for p in similar]
+                    logger.info(f"Similar assessment numbers found: {similar_ids}")
+                return None
+                
         except Exception as e:
             logger.error(f"Error getting property by assessment {assessment_number}: {e}")
             return None
