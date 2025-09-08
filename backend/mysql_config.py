@@ -230,6 +230,100 @@ class MySQLManager:
             logger.error(f"Error updating property {assessment_number}: {e}")
             return False
 
+    def get_scraper_config(self, municipality: str) -> Optional[Dict]:
+        """Get scraper configuration for a municipality"""
+        try:
+            query = "SELECT * FROM scraper_config WHERE municipality = %s AND enabled = 1"
+            result = self.execute_query(query, (municipality,))
+            if result:
+                config = result[0]
+                # Parse JSON fields
+                if config.get('pdf_search_patterns'):
+                    config['pdf_search_patterns'] = json.loads(config['pdf_search_patterns'])
+                if config.get('excel_search_patterns'):
+                    config['excel_search_patterns'] = json.loads(config['excel_search_patterns'])
+                if config.get('additional_headers'):
+                    config['additional_headers'] = json.loads(config['additional_headers'])
+                return config
+            return None
+        except Exception as e:
+            logger.error(f"Error getting scraper config for {municipality}: {e}")
+            return None
+
+    def get_all_scraper_configs(self) -> List[Dict]:
+        """Get all scraper configurations"""
+        try:
+            query = "SELECT * FROM scraper_config ORDER BY municipality"
+            results = self.execute_query(query)
+            configs = []
+            for config in results:
+                # Parse JSON fields
+                if config.get('pdf_search_patterns'):
+                    config['pdf_search_patterns'] = json.loads(config['pdf_search_patterns'])
+                if config.get('excel_search_patterns'):
+                    config['excel_search_patterns'] = json.loads(config['excel_search_patterns'])
+                if config.get('additional_headers'):
+                    config['additional_headers'] = json.loads(config['additional_headers'])
+                configs.append(config)
+            return configs
+        except Exception as e:
+            logger.error(f"Error getting all scraper configs: {e}")
+            return []
+
+    def update_scraper_config(self, municipality: str, config_data: Dict) -> bool:
+        """Update scraper configuration"""
+        try:
+            # Handle JSON fields
+            if 'pdf_search_patterns' in config_data and isinstance(config_data['pdf_search_patterns'], list):
+                config_data['pdf_search_patterns'] = json.dumps(config_data['pdf_search_patterns'])
+            if 'excel_search_patterns' in config_data and isinstance(config_data['excel_search_patterns'], list):
+                config_data['excel_search_patterns'] = json.dumps(config_data['excel_search_patterns'])
+            if 'additional_headers' in config_data and isinstance(config_data['additional_headers'], dict):
+                config_data['additional_headers'] = json.dumps(config_data['additional_headers'])
+            
+            # Build dynamic update query
+            set_clauses = []
+            values = []
+            
+            for key, value in config_data.items():
+                if key != 'municipality':
+                    set_clauses.append(f"{key} = %s")
+                    values.append(value)
+            
+            if not set_clauses:
+                return False
+            
+            set_clauses.append("updated_at = NOW()")
+            values.append(municipality)
+            
+            query = f"""
+                UPDATE scraper_config 
+                SET {', '.join(set_clauses)}
+                WHERE municipality = %s
+            """
+            
+            rows_affected = self.execute_update(query, tuple(values))
+            logger.info(f"Updated scraper config for {municipality}, rows affected: {rows_affected}")
+            return rows_affected > 0
+            
+        except Exception as e:
+            logger.error(f"Error updating scraper config for {municipality}: {e}")
+            return False
+
+    def update_scraper_last_run(self, municipality: str, success: bool = True) -> bool:
+        """Update last successful scrape timestamp"""
+        try:
+            query = """
+                UPDATE scraper_config 
+                SET last_successful_scrape = NOW()
+                WHERE municipality = %s
+            """
+            rows_affected = self.execute_update(query, (municipality,))
+            return rows_affected > 0
+        except Exception as e:
+            logger.error(f"Error updating scraper last run for {municipality}: {e}")
+            return False
+
     def get_municipalities(self) -> List[str]:
         """Get list of all municipalities"""
         query = "SELECT DISTINCT municipality FROM properties ORDER BY municipality"
