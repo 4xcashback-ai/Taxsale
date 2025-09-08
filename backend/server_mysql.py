@@ -266,6 +266,55 @@ async def scrape_cumberland_properties(current_user: dict = Depends(get_current_
     result = scrape_cumberland()
     return result
 
+@app.post("/api/admin/rescan-property")
+async def rescan_specific_property(request: Request, current_user: dict = Depends(get_current_user_optional)):
+    """Rescan a specific property by assessment number"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        body = await request.json()
+        assessment_number = body.get('assessment_number')
+        
+        if not assessment_number:
+            raise HTTPException(status_code=400, detail="Assessment number required")
+        
+        logger.info(f"Admin requested targeted rescan for property: {assessment_number}")
+        
+        # Get the existing property to determine which municipality/scraper to use
+        existing_property = mysql_db.get_property_by_assessment(assessment_number)
+        
+        if not existing_property:
+            return {
+                "success": False,
+                "message": f"Property {assessment_number} not found in database"
+            }
+        
+        municipality = existing_property.get('municipality', '').lower()
+        rescan_result = {"success": False, "message": "No scraper available for this municipality"}
+        
+        # Try to rescan based on municipality
+        if 'halifax' in municipality:
+            from scrapers_mysql import rescan_halifax_property
+            rescan_result = rescan_halifax_property(assessment_number)
+        elif 'victoria' in municipality:
+            from scrapers_mysql import rescan_victoria_property  
+            rescan_result = rescan_victoria_property(assessment_number)
+        elif 'cumberland' in municipality:
+            from scrapers_mysql import rescan_cumberland_property
+            rescan_result = rescan_cumberland_property(assessment_number)
+        else:
+            # Fallback: Try all scrapers to find this property
+            logger.info(f"Unknown municipality '{municipality}', trying all scrapers")
+            from scrapers_mysql import rescan_property_all_sources
+            rescan_result = rescan_property_all_sources(assessment_number)
+        
+        return rescan_result
+        
+    except Exception as e:
+        logger.error(f"Error rescanning property: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/admin/scrape/all")
 async def scrape_all_properties(current_user: dict = Depends(get_current_user_optional)):
     """Scrape all municipalities"""
