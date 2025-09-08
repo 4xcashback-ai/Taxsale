@@ -1246,6 +1246,189 @@ class TaxSaleScraper:
 tax_scraper = TaxSaleScraper()
 
 # Functions for the API endpoints
+def rescan_halifax_property(assessment_number: str) -> Dict:
+    """Rescan a specific Halifax property by assessment number"""
+    try:
+        logger.info(f"Rescanning Halifax property: {assessment_number}")
+        
+        # Try to find this property in Halifax tax sale data
+        base_url = "https://www.halifax.ca/sites/default/files/documents/"
+        
+        # Common Halifax tax sale file patterns (you may need to adjust these)
+        potential_files = [
+            "TaxSale2024.xlsx",
+            "TaxSaleProperties2024.xlsx", 
+            "tax-sale-2024.xlsx"
+        ]
+        
+        for filename in potential_files:
+            try:
+                url = f"{base_url}{filename}"
+                logger.info(f"Trying Halifax URL: {url}")
+                
+                response = requests.get(url, timeout=30)
+                if response.status_code == 200:
+                    # Process the Excel file
+                    df = pd.read_excel(io.BytesIO(response.content))
+                    
+                    # Look for the specific assessment number
+                    assessment_col = None
+                    for col in df.columns:
+                        if 'assessment' in col.lower() or 'account' in col.lower():
+                            assessment_col = col
+                            break
+                    
+                    if assessment_col:
+                        property_row = df[df[assessment_col].astype(str).str.contains(assessment_number, na=False)]
+                        
+                        if not property_row.empty:
+                            # Found the property, update it
+                            property_data = property_row.iloc[0].to_dict()
+                            
+                            # Extract data (similar to existing scraper logic)
+                            updated_data = {
+                                'assessment_number': assessment_number,
+                                'updated_at': datetime.now()
+                            }
+                            
+                            # Try to extract PID if available
+                            for col in df.columns:
+                                if 'pid' in col.lower():
+                                    pid_value = property_data.get(col)
+                                    if pid_value and str(pid_value).strip() not in ['', 'nan', 'N/A']:
+                                        primary_pid, secondary_pids, pid_count = parse_multiple_pids(str(pid_value))
+                                        if primary_pid:
+                                            updated_data['pid_number'] = primary_pid
+                                            updated_data['primary_pid'] = primary_pid
+                                            updated_data['secondary_pids'] = ','.join(secondary_pids) if secondary_pids else None
+                                            updated_data['pid_count'] = pid_count
+                                            break
+                            
+                            # Update the database
+                            success = mysql_db.update_property(assessment_number, updated_data)
+                            
+                            if success:
+                                return {
+                                    "success": True,
+                                    "message": f"Property {assessment_number} rescanned successfully",
+                                    "updated_fields": list(updated_data.keys())
+                                }
+                            
+            except requests.RequestException as e:
+                logger.warning(f"Failed to fetch {url}: {e}")
+                continue
+            except Exception as e:
+                logger.warning(f"Error processing {url}: {e}")
+                continue
+        
+        return {
+            "success": False,
+            "message": f"Property {assessment_number} not found in Halifax tax sale data"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error rescanning Halifax property {assessment_number}: {e}")
+        return {
+            "success": False,
+            "message": f"Error rescanning property: {str(e)}"
+        }
+
+def rescan_victoria_property(assessment_number: str) -> Dict:
+    """Rescan a specific Victoria County property by assessment number"""
+    try:
+        logger.info(f"Rescanning Victoria property: {assessment_number}")
+        
+        # Victoria County tax sale URL (you may need to adjust this)
+        url = "https://www.countyofvictoria.ca/departments/finance/tax-sale/"
+        
+        response = requests.get(url, timeout=30)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for the specific assessment number in the page content
+            page_text = soup.get_text()
+            if assessment_number in page_text:
+                return {
+                    "success": True,
+                    "message": f"Property {assessment_number} found on Victoria County website but detailed rescan not implemented yet"
+                }
+        
+        return {
+            "success": False,
+            "message": f"Property {assessment_number} not found in Victoria County tax sale data"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error rescanning Victoria property {assessment_number}: {e}")
+        return {
+            "success": False,
+            "message": f"Error rescanning property: {str(e)}"
+        }
+
+def rescan_cumberland_property(assessment_number: str) -> Dict:
+    """Rescan a specific Cumberland County property by assessment number"""
+    try:
+        logger.info(f"Rescanning Cumberland property: {assessment_number}")
+        
+        # Cumberland County tax sale URL (you may need to adjust this)
+        url = "https://www.cumberlandcounty.ns.ca/departments/finance-administration/tax-sale/"
+        
+        response = requests.get(url, timeout=30)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for the specific assessment number in the page content
+            page_text = soup.get_text()
+            if assessment_number in page_text:
+                return {
+                    "success": True,
+                    "message": f"Property {assessment_number} found on Cumberland County website but detailed rescan not implemented yet"
+                }
+        
+        return {
+            "success": False,
+            "message": f"Property {assessment_number} not found in Cumberland County tax sale data"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error rescanning Cumberland property {assessment_number}: {e}")
+        return {
+            "success": False,
+            "message": f"Error rescanning property: {str(e)}"
+        }
+
+def rescan_property_all_sources(assessment_number: str) -> Dict:
+    """Try to rescan a property from all available sources"""
+    try:
+        logger.info(f"Trying all sources for property: {assessment_number}")
+        
+        # Try Halifax first
+        result = rescan_halifax_property(assessment_number)
+        if result["success"]:
+            return result
+        
+        # Try Victoria
+        result = rescan_victoria_property(assessment_number)  
+        if result["success"]:
+            return result
+            
+        # Try Cumberland
+        result = rescan_cumberland_property(assessment_number)
+        if result["success"]:
+            return result
+        
+        return {
+            "success": False,
+            "message": f"Property {assessment_number} not found in any available tax sale sources"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error rescanning property from all sources {assessment_number}: {e}")
+        return {
+            "success": False,
+            "message": f"Error rescanning property: {str(e)}"
+        }
+
 def scrape_halifax():
     return tax_scraper.scrape_halifax_properties()
 
