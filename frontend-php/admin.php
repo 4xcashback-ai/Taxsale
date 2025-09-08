@@ -1199,6 +1199,221 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         }
     }
     
+    // Scraper Configuration Manager
+    class ScraperConfigManager {
+        constructor() {
+            this.currentMunicipality = null;
+            this.initEventListeners();
+            this.loadMunicipalities();
+        }
+        
+        initEventListeners() {
+            document.getElementById('config-municipality').addEventListener('change', (e) => {
+                const municipality = e.target.value;
+                if (municipality) {
+                    this.currentMunicipality = municipality;
+                    document.getElementById('load-config-btn').disabled = false;
+                    document.getElementById('test-config-btn').disabled = false;
+                } else {
+                    this.currentMunicipality = null;
+                    document.getElementById('load-config-btn').disabled = true;
+                    document.getElementById('test-config-btn').disabled = true;
+                    document.getElementById('config-form-container').style.display = 'none';
+                }
+            });
+            
+            document.getElementById('load-config-btn').addEventListener('click', () => {
+                this.loadConfiguration();
+            });
+            
+            document.getElementById('test-config-btn').addEventListener('click', () => {
+                this.testConfiguration();
+            });
+            
+            document.getElementById('save-config-btn').addEventListener('click', () => {
+                this.saveConfiguration();
+            });
+        }
+        
+        async loadMunicipalities() {
+            try {
+                const response = await fetch('/api/scraper_testing.php?action=get_municipalities');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('config-municipality');
+                    select.innerHTML = '<option value="">Choose municipality...</option>';
+                    
+                    // Add municipalities from database
+                    data.municipalities.forEach(municipality => {
+                        const option = document.createElement('option');
+                        option.value = municipality;
+                        option.textContent = municipality;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load municipalities for config:', error);
+            }
+        }
+        
+        async loadConfiguration() {
+            if (!this.currentMunicipality) return;
+            
+            try {
+                this.setStatus('Loading...', 'bg-info');
+                
+                const response = await fetch('/api/scraper_config.php?action=get_config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `municipality=${encodeURIComponent(this.currentMunicipality)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.config) {
+                    this.populateForm(data.config);
+                    document.getElementById('config-form-container').style.display = 'block';
+                    this.setStatus('Configuration loaded', 'bg-success');
+                } else {
+                    this.setStatus('Configuration not found', 'bg-warning');
+                    alert('Configuration not found for ' + this.currentMunicipality);
+                }
+            } catch (error) {
+                this.setStatus('Load failed', 'bg-danger');
+                alert('Failed to load configuration: ' + error.message);
+            }
+        }
+        
+        populateForm(config) {
+            document.getElementById('config-base-url').value = config.base_url || '';
+            document.getElementById('config-tax-sale-url').value = config.tax_sale_page_url || '';
+            document.getElementById('config-timeout').value = config.timeout_seconds || 30;
+            document.getElementById('config-enabled').checked = config.enabled !== false;
+            document.getElementById('config-notes').value = config.notes || '';
+            
+            // Handle JSON arrays for patterns
+            if (config.pdf_search_patterns && Array.isArray(config.pdf_search_patterns)) {
+                document.getElementById('config-pdf-patterns').value = config.pdf_search_patterns.join('\n');
+            }
+            
+            if (config.excel_search_patterns && Array.isArray(config.excel_search_patterns)) {
+                document.getElementById('config-excel-patterns').value = config.excel_search_patterns.join('\n');
+            }
+        }
+        
+        async saveConfiguration() {
+            if (!this.currentMunicipality) return;
+            
+            try {
+                this.setStatus('Saving...', 'bg-warning');
+                
+                const formData = {
+                    municipality: this.currentMunicipality,
+                    base_url: document.getElementById('config-base-url').value,
+                    tax_sale_page_url: document.getElementById('config-tax-sale-url').value,
+                    timeout_seconds: parseInt(document.getElementById('config-timeout').value),
+                    enabled: document.getElementById('config-enabled').checked,
+                    notes: document.getElementById('config-notes').value,
+                    pdf_search_patterns: document.getElementById('config-pdf-patterns').value.split('\n').filter(p => p.trim()),
+                    excel_search_patterns: document.getElementById('config-excel-patterns').value.split('\n').filter(p => p.trim())
+                };
+                
+                const response = await fetch('/api/scraper_config.php?action=save_config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.setStatus('Saved successfully', 'bg-success');
+                    alert('Configuration saved successfully!');
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                this.setStatus('Save failed', 'bg-danger');
+                alert('Failed to save configuration: ' + error.message);
+            }
+        }
+        
+        async testConfiguration() {
+            if (!this.currentMunicipality) return;
+            
+            try {
+                this.setStatus('Testing...', 'bg-info');
+                document.getElementById('test-results-container').style.display = 'block';
+                document.getElementById('test-results').innerHTML = 'Testing configuration...';
+                
+                const response = await fetch('/api/scraper_config.php?action=test_config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `municipality=${encodeURIComponent(this.currentMunicipality)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const results = data.test_results;
+                    let html = `
+                        <div class="alert alert-success">
+                            <strong>✅ Test Successful!</strong>
+                        </div>
+                        <p><strong>Municipality:</strong> ${results.municipality}</p>
+                        <p><strong>Total Files Found:</strong> ${results.total_files}</p>
+                        
+                        <h6>PDF Files Found (${results.files_found.pdfs.length}):</h6>
+                        <ul class="list-group list-group-flush mb-3">
+                    `;
+                    
+                    if (results.files_found.pdfs.length > 0) {
+                        results.files_found.pdfs.forEach(pdf => {
+                            html += `<li class="list-group-item small"><a href="${pdf}" target="_blank">${pdf}</a></li>`;
+                        });
+                    } else {
+                        html += '<li class="list-group-item text-muted">No PDF files found</li>';
+                    }
+                    
+                    html += `
+                        </ul>
+                        <h6>Excel Files Found (${results.files_found.excel.length}):</h6>
+                        <ul class="list-group list-group-flush">
+                    `;
+                    
+                    if (results.files_found.excel.length > 0) {
+                        results.files_found.excel.forEach(excel => {
+                            html += `<li class="list-group-item small"><a href="${excel}" target="_blank">${excel}</a></li>`;
+                        });
+                    } else {
+                        html += '<li class="list-group-item text-muted">No Excel files found</li>';
+                    }
+                    
+                    html += '</ul>';
+                    
+                    document.getElementById('test-results').innerHTML = html;
+                    this.setStatus('Test completed', 'bg-success');
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                this.setStatus('Test failed', 'bg-danger');
+                document.getElementById('test-results').innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>❌ Test Failed</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        setStatus(message, badgeClass) {
+            const statusElement = document.getElementById('config-status');
+            statusElement.innerHTML = `<span class="badge ${badgeClass}">${message}</span>`;
+        }
+    }
+
     // Scraper Testing Tools
     class ScraperTestingManager {
         constructor() {
