@@ -9,7 +9,9 @@ WHERE property_type IS NOT NULL
 GROUP BY property_type;
 
 -- Migrate existing property_type values to new standard
-UPDATE properties SET property_type = 'mixed' WHERE property_type = 'dwelling';
+UPDATE properties SET property_type = 'mixed' WHERE property_type = 'Dwelling';
+UPDATE properties SET property_type = 'land' WHERE property_type = 'Land';
+UPDATE properties SET property_type = 'land' WHERE property_type = 'Unknown';
 UPDATE properties SET property_type = 'land' WHERE property_type = 'vacant_land';
 UPDATE properties SET property_type = 'building' WHERE property_type = 'commercial';
 UPDATE properties SET property_type = 'building' WHERE property_type = 'residential';
