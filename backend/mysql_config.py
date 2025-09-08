@@ -185,11 +185,62 @@ class MySQLManager:
         return self.execute_query(query, tuple(params))
     
     def get_property_by_assessment(self, assessment_number: str) -> Optional[Dict]:
-        """Get a single property by assessment number"""
-        query = "SELECT * FROM properties WHERE assessment_number = %s"
-        result = self.execute_query(query, (assessment_number,))
-        return result[0] if result else None
-    
+        """Get a specific property by assessment number"""
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT * FROM properties WHERE assessment_number = %s",
+                (assessment_number,)
+            )
+            result = cursor.fetchone()
+            cursor.close()
+            return result
+        except Exception as e:
+            logger.error(f"Error getting property by assessment {assessment_number}: {e}")
+            return None
+
+    def update_property(self, assessment_number: str, update_data: Dict) -> bool:
+        """Update a specific property"""
+        try:
+            if not update_data:
+                return False
+                
+            # Build the SET clause dynamically
+            set_clauses = []
+            values = []
+            
+            for key, value in update_data.items():
+                if key != 'assessment_number':  # Don't update the key field
+                    set_clauses.append(f"{key} = %s")
+                    values.append(value)
+            
+            if not set_clauses:
+                return False
+            
+            # Add the WHERE parameter
+            values.append(assessment_number)
+            
+            query = f"""
+                UPDATE properties 
+                SET {', '.join(set_clauses)}
+                WHERE assessment_number = %s
+            """
+            
+            cursor = self.connection.cursor()
+            cursor.execute(query, values)
+            self.connection.commit()
+            
+            rows_affected = cursor.rowcount
+            cursor.close()
+            
+            logger.info(f"Updated property {assessment_number}, rows affected: {rows_affected}")
+            return rows_affected > 0
+            
+        except Exception as e:
+            logger.error(f"Error updating property {assessment_number}: {e}")
+            self.connection.rollback()
+            return False
+
     def get_municipalities(self) -> List[str]:
         """Get list of all municipalities"""
         query = "SELECT DISTINCT municipality FROM properties ORDER BY municipality"
