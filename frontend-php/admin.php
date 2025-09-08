@@ -316,6 +316,84 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             </div>
         </div>
 
+        <!-- Auction Information Management -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Auction Information Management</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Update auction date and type for existing active properties by municipality:</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Municipality Selection</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Municipality:</label>
+                                    <select id="auction-municipality" class="form-select">
+                                        <option value="">Select Municipality...</option>
+                                        <option value="Halifax Regional Municipality">Halifax Regional Municipality</option>
+                                        <option value="Victoria County">Victoria County</option>
+                                        <option value="Cumberland County">Cumberland County</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Auction Type:</label>
+                                    <select id="auction-type" class="form-select">
+                                        <option value="Public Auction">Public Auction</option>
+                                        <option value="Public Tender Auction">Public Tender Auction</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Sale Date:</label>
+                                    <input type="date" id="auction-sale-date" class="form-control">
+                                </div>
+                                
+                                <button id="preview-auction-update-btn" class="btn btn-info me-2">
+                                    <i class="fas fa-eye"></i> Preview Update
+                                </button>
+                                
+                                <button id="apply-auction-update-btn" class="btn btn-warning" disabled>
+                                    <i class="fas fa-save"></i> Apply Changes
+                                </button>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Update Preview</h5>
+                                <div id="auction-preview-container" class="border rounded p-3 bg-light">
+                                    <p class="text-muted">Select municipality and click "Preview Update" to see affected properties.</p>
+                                </div>
+                                
+                                <div id="auction-stats" class="mt-3">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="fw-bold text-primary fs-5" id="total-active-properties">-</div>
+                                            <div class="text-muted">Active Properties</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-warning fs-5" id="missing-auction-info">-</div>
+                                            <div class="text-muted">Missing Auction Info</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-success fs-5" id="will-be-updated">-</div>
+                                            <div class="text-muted">Will Be Updated</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="auction-update-status" class="mt-3">
+                                    <span class="badge bg-secondary">Ready</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Scraper Testing Tools -->
         <div class="row mb-4">
             <div class="col-md-12">
