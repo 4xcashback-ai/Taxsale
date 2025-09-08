@@ -274,13 +274,27 @@ class ThumbnailGenerator {
             
             // If URL is too long, try with simplified path
             if (strlen($url) > 2000) {
-                error_log("ThumbnailGenerator: URL too long, simplifying to 20 points");
-                $simplified_points = $this->simplifyPathConservative($path_points, 20);
-                $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $simplified_points);
+                error_log("ThumbnailGenerator: URL too long, trying conservative simplification");
                 
-                $params['path'] = $path_string;
-                $url = $this->base_url . '?' . http_build_query($params);
-                error_log("ThumbnailGenerator: Simplified URL length: " . strlen($url));
+                // Try different simplification levels
+                $attempts = [60, 40, 25, 15]; // Try progressively smaller point counts
+                
+                foreach ($attempts as $maxPoints) {
+                    $simplified_points = $this->simplifyPathConservative($path_points, $maxPoints);
+                    $test_path_string = 'color:0xff0000ff|weight:3|' . implode('|', $simplified_points);
+                    
+                    $test_params = $params;
+                    $test_params['path'] = $test_path_string;
+                    $test_url = $this->base_url . '?' . http_build_query($test_params);
+                    
+                    if (strlen($test_url) <= 2000) {
+                        error_log("ThumbnailGenerator: Using {$maxPoints} points, URL length: " . strlen($test_url));
+                        $path_string = $test_path_string;
+                        $params['path'] = $path_string;
+                        $url = $test_url;
+                        break;
+                    }
+                }
             }
             
             $image_data = @file_get_contents($url);
