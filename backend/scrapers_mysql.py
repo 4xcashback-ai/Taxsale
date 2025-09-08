@@ -804,9 +804,17 @@ class TaxSaleScraper:
                     raw_pid = pid_number
                     primary_pid, secondary_pids, pid_count = parse_multiple_pids(raw_pid)
                     
-                    # Use the property type extracted from the listing (not detected)
-                    # Convert listing property types to standardized values based on actual meaning
-                    if property_type.lower() in ['dwelling', 'house', 'residence']:
+                    # Enhanced property type classification for mobile homes
+                    address_lower = civic_address.lower()
+                    if any(indicator in address_lower for indicator in [
+                        'mobile home only', 'mobile home', 'trailer park', 'trailer court',
+                        'mobile park', 'manufactured home', 'chinook mobile', 'mobile only',
+                        'lot h-', 'lot a-', 'lot b-', 'lot c-', 'space #', 'site #'
+                    ]):
+                        standardized_type = 'mobile_home_only'
+                        # For mobile homes, try to geocode the address for coordinates
+                        logger.info(f"Mobile home detected: {assessment_number} - {civic_address}")
+                    elif property_type.lower() in ['dwelling', 'house', 'residence']:
                         standardized_type = 'mixed'  # Dwelling = building on land (both included)
                     elif property_type.lower() in ['land']:
                         standardized_type = 'land'   # Land = land only, no building
