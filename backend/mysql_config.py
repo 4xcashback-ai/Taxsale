@@ -80,18 +80,19 @@ class MySQLManager:
                 connection.close()
     
     def insert_property(self, property_data: Dict) -> int:
-        """Insert or update a property record with complete tax sale data and multiple PID support"""
+        """Insert or update a property record with complete tax sale data and auction information"""
         query = """
             INSERT INTO properties (
                 assessment_number, owner_name, civic_address, parcel_description, 
                 pid_number, primary_pid, secondary_pids, property_type, pid_count,
                 opening_bid, total_taxes, hst_applicable, redeemable,
-                tax_year, status, municipality, province, 
+                tax_year, status, sale_date, auction_type,
+                municipality, province, 
                 latitude, longitude, boundary_data, 
                 pvsc_assessment_value, pvsc_assessment_year,
                 created_at, updated_at
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             ON DUPLICATE KEY UPDATE
                 owner_name = VALUES(owner_name),
@@ -108,6 +109,8 @@ class MySQLManager:
                 redeemable = VALUES(redeemable),
                 tax_year = VALUES(tax_year),
                 status = VALUES(status),
+                sale_date = VALUES(sale_date),
+                auction_type = VALUES(auction_type),
                 municipality = VALUES(municipality),
                 latitude = VALUES(latitude),
                 longitude = VALUES(longitude),
@@ -138,6 +141,8 @@ class MySQLManager:
             property_data.get('redeemable', True),
             property_data.get('tax_year'),
             property_data.get('status', 'active'),
+            property_data.get('sale_date'),  # New auction date field
+            property_data.get('auction_type', 'Public Auction'),  # New auction type field
             property_data.get('municipality'),
             property_data.get('province'),
             property_data.get('latitude'),
