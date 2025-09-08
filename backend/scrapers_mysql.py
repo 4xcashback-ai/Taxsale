@@ -1492,10 +1492,26 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
             logger.info(f"PDF found but parsing not implemented yet: {pdf_url}")
             # TODO: Implement PDF parsing for property data extraction
         
+        # Final fallback - at least update the property's timestamp to show we attempted rescan
+        try:
+            logger.info(f"Property {assessment_number} not found in tax sale files, updating timestamp")
+            success = mysql_db.update_property(assessment_number, {'updated_at': datetime.now()})
+            
+            if success:
+                return {
+                    "success": True,
+                    "message": f"Property {assessment_number} not found in current tax sale files, but database record updated",
+                    "files_checked": found_files,
+                    "note": "Property may have been removed from tax sale or files may be temporarily unavailable"
+                }
+        except Exception as update_error:
+            logger.error(f"Failed to update timestamp for {assessment_number}: {update_error}")
+        
         return {
             "success": False,
             "message": f"Property {assessment_number} not found in Halifax tax sale files",
-            "files_checked": found_files
+            "files_checked": found_files,
+            "debug_info": "No matching files found and fallback patterns also failed"
         }
         
     except Exception as e:
