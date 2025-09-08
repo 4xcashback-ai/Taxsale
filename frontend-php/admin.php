@@ -886,11 +886,13 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             const saleDate = document.getElementById('auction-sale-date').value;
             
             let html = `
-                <h6>Updating: ${data.municipality}</h6>
+                <div class="alert alert-warning">
+                    <strong>Updating ACTIVE properties only in:</strong> ${data.municipality}
+                </div>
                 <p><strong>New Auction Type:</strong> <span class="badge bg-info">${auctionType}</span></p>
                 ${saleDate ? `<p><strong>New Sale Date:</strong> ${saleDate}</p>` : ''}
                 
-                <h6 class="mt-3">Sample Properties (showing first 20):</h6>
+                <h6 class="mt-3">Sample ACTIVE Properties (showing first 20):</h6>
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
