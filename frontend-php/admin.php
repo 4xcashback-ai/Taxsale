@@ -1318,6 +1318,10 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             document.getElementById('restart-backend-btn').addEventListener('click', () => {
                 this.restartBackend();
             });
+            
+            document.getElementById('test-api-btn').addEventListener('click', () => {
+                this.testApiEndpoints();
+            });
         }
         
         async loadSystemStatus() {
