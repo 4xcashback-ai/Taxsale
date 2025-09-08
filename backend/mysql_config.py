@@ -116,7 +116,9 @@ class MySQLManager:
                     if (key in safe_to_update or 
                         existing_value is None or 
                         existing_value == '' or 
-                        existing_value == 'Unknown Owner'):
+                        existing_value == 'Unknown Owner' or
+                        existing_value == 'Unknown' or
+                        str(existing_value).strip() in ['', 'nan', 'None', 'N/A']):
                         
                         if new_value and str(new_value).strip() not in ['', 'nan', 'None', 'N/A']:
                             update_data[key] = new_value
