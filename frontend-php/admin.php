@@ -1934,6 +1934,7 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         new DeploymentManager();
         new AuctionInfoManager();
         window.missingPIDManager = new MissingPIDManager();
+        new SystemDebugManager();
         new ScraperConfigManager();
         new ScraperTestingManager();
         new ThumbnailManager();
