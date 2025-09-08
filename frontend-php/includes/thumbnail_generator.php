@@ -212,23 +212,19 @@ class ThumbnailGenerator {
                 break;
             }
             
-            // Limit path points to avoid URL length issues (Google Maps has limits)
-            if (count($path_points) > 30) {
-                // Take every nth point to reduce complexity
-                $step = ceil(count($path_points) / 30);
-                $reduced_points = [];
-                for ($i = 0; $i < count($path_points); $i += $step) {
-                    $reduced_points[] = $path_points[$i];
-                }
-                $path_points = $reduced_points;
+            // Smarter path point reduction that preserves shape
+            if (count($path_points) > 40) {
+                // Use Douglas-Peucker-like simplification to preserve important points
+                $simplified_points = $this->simplifyPath($path_points, 40);
+                $path_points = $simplified_points;
             }
             
-            // Close the path by adding first point at the end if we have points
+            // Always close the path by adding first point at the end if we have points
             if (count($path_points) > 2) {
                 $path_points[] = $path_points[0];
             }
             
-            if (count($path_points) < 3) {
+            if (count($path_points) < 4) { // Need at least 4 points for a closed shape
                 error_log("ThumbnailGenerator: Not enough path points for boundary");
                 return null;
             }
