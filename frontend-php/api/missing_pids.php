@@ -38,15 +38,49 @@ try {
             throw new Exception('Assessment number required');
         }
         
-        // For now, just log the rescan request
-        // In the future, this could trigger a specific property re-scraping
-        error_log("Admin requested rescan for property: {$assessment_number}");
+        // Call the backend API to actually rescan the property
+        $api_url = API_BASE_URL . '/admin/rescan-property';
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Rescan request logged. Property will be updated in next scraping run.',
-            'assessment_number' => $assessment_number
+        $data = json_encode(['assessment_number' => $assessment_number]);
+        
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $_SESSION['access_token']
+                ],
+                'content' => $data
+            ]
         ]);
+        
+        $response = file_get_contents($api_url, false, $context);
+        
+        if ($response === false) {
+            throw new Exception('Failed to connect to backend API');
+        }
+        
+        $result = json_decode($response, true);
+        
+        if ($result && isset($result['success'])) {
+            if ($result['success']) {
+                error_log("Admin successfully rescanned property: {$assessment_number}");
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => $result['message'],
+                    'assessment_number' => $assessment_number,
+                    'updated_fields' => $result['updated_fields'] ?? []
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'warning',
+                    'message' => $result['message'],
+                    'assessment_number' => $assessment_number
+                ]);
+            }
+        } else {
+            throw new Exception('Invalid response from backend API');
+        }
         
     } elseif ($action === 'manual_edit') {
         $assessment_number = $_POST['assessment_number'] ?? '';
