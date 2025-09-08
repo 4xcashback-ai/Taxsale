@@ -668,6 +668,8 @@ class TaxSaleScraper:
                         'redeemable': redeemable,
                         'tax_year': 2024,
                         'status': 'active',
+                        'sale_date': sale_date,  # Add auction date
+                        'auction_type': auction_type,  # Add auction type
                         'created_at': datetime.now(),
                         'updated_at': datetime.now()
                     }
