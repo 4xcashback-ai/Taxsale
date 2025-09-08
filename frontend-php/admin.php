@@ -398,6 +398,105 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             </div>
         </div>
 
+        <!-- Admin Configuration Panel -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>⚙️ Scraper Configuration</h4>
+                        <small class="text-muted">Manage URLs and settings for municipality scrapers</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h5>Municipality Selection</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Municipality:</label>
+                                    <select id="config-municipality" class="form-select">
+                                        <option value="">Choose municipality...</option>
+                                    </select>
+                                </div>
+                                <button id="load-config-btn" class="btn btn-info" disabled>
+                                    <i class="fas fa-cog"></i> Load Configuration
+                                </button>
+                                <button id="test-config-btn" class="btn btn-outline-warning" disabled>
+                                    <i class="fas fa-vial"></i> Test Configuration
+                                </button>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <div id="config-form-container" style="display: none;">
+                                    <h5>Configuration Settings</h5>
+                                    <form id="scraper-config-form">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Base URL:</label>
+                                                    <input type="url" id="config-base-url" class="form-control" placeholder="https://example.com" required>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Tax Sale Page URL:</label>
+                                                    <input type="url" id="config-tax-sale-url" class="form-control" placeholder="https://example.com/tax-sale" required>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Timeout (seconds):</label>
+                                                    <input type="number" id="config-timeout" class="form-control" min="10" max="120" value="30">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">PDF Search Patterns:</label>
+                                                    <textarea id="config-pdf-patterns" class="form-control" rows="3" placeholder=".*tax.*sale.*\.pdf&#10;.*sale.*\.pdf"></textarea>
+                                                    <small class="text-muted">One regex pattern per line</small>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Excel Search Patterns:</label>
+                                                    <textarea id="config-excel-patterns" class="form-control" rows="3" placeholder=".*tax.*sale.*\.xlsx&#10;.*sale.*\.xlsx"></textarea>
+                                                    <small class="text-muted">One regex pattern per line</small>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" id="config-enabled" class="form-check-input" checked>
+                                                        <label class="form-check-label">Enabled</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Notes:</label>
+                                            <textarea id="config-notes" class="form-control" rows="2" placeholder="Optional notes about this scraper configuration"></textarea>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between">
+                                            <button type="button" id="save-config-btn" class="btn btn-success">
+                                                <i class="fas fa-save"></i> Save Configuration
+                                            </button>
+                                            <div id="config-status">
+                                                <span class="badge bg-secondary">Ready</span>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                                <div id="test-results-container" style="display: none;">
+                                    <h5>Test Results</h5>
+                                    <div id="test-results" class="border rounded p-3 bg-light">
+                                        <!-- Test results will be displayed here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Scraper Testing Tools -->
         <div class="row mb-4">
             <div class="col-md-12">
