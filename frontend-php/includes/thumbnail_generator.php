@@ -212,19 +212,31 @@ class ThumbnailGenerator {
                 break;
             }
             
-            // Smarter path point reduction that preserves shape
-            if (count($path_points) > 40) {
-                // Use Douglas-Peucker-like simplification to preserve important points
-                $simplified_points = $this->simplifyPath($path_points, 40);
+            // Only reduce points if absolutely necessary (URL length limit)
+            $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $path_points);
+            $test_url_length = strlen($this->base_url . '?' . http_build_query([
+                'key' => $this->google_api_key,
+                'center' => $center_lat . ',' . $center_lon,
+                'zoom' => '16',
+                'size' => '300x200',
+                'maptype' => 'satellite',
+                'format' => 'png',
+                'path' => $path_string
+            ]));
+            
+            // Only simplify if URL is too long (Google limit is ~2048 chars)
+            if ($test_url_length > 1800) {
+                error_log("ThumbnailGenerator: URL too long ({$test_url_length}), simplifying path");
+                $simplified_points = $this->simplifyPathConservative($path_points, 25);
                 $path_points = $simplified_points;
             }
             
-            // Always close the path by adding first point at the end if we have points
-            if (count($path_points) > 2) {
+            // Always close the path properly
+            if (count($path_points) > 2 && end($path_points) !== $path_points[0]) {
                 $path_points[] = $path_points[0];
             }
             
-            if (count($path_points) < 4) { // Need at least 4 points for a closed shape
+            if (count($path_points) < 3) {
                 error_log("ThumbnailGenerator: Not enough path points for boundary");
                 return null;
             }
