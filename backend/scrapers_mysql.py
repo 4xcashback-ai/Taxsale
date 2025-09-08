@@ -1338,10 +1338,16 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
         # Get scraper configuration from database
         config = mysql_db.get_scraper_config('Halifax Regional Municipality')
         if not config:
+            logger.error("Halifax scraper configuration not found in database")
             return {
                 "success": False,
-                "message": "Halifax scraper configuration not found in database"
+                "message": "Halifax scraper configuration not found in database",
+                "debug_info": "Database config missing for Halifax Regional Municipality"
             }
+        
+        logger.info(f"Halifax config found - URL: {config.get('tax_sale_page_url', 'NOT SET')}")
+        logger.info(f"PDF patterns: {config.get('pdf_search_patterns', [])}")
+        logger.info(f"Excel patterns: {config.get('excel_search_patterns', [])}")
         
         # Find tax sale files dynamically
         found_files = find_tax_sale_files(
@@ -1351,6 +1357,34 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
             config['excel_search_patterns'],
             config.get('timeout_seconds', 30)
         )
+        
+        logger.info(f"Files found - PDFs: {len(found_files['pdfs'])}, Excel: {len(found_files['excel'])}")
+        
+        # If no files found, try alternative approach
+        if not found_files['pdfs'] and not found_files['excel']:
+            logger.warning("No tax sale files found using current patterns - trying fallback")
+            
+            # Try fallback with more generic patterns
+            fallback_pdf_patterns = [r'\.pdf$', r'tax.*sale.*\.pdf', r'sale.*list.*\.pdf']
+            fallback_excel_patterns = [r'\.xlsx?$', r'tax.*sale.*\.xlsx?', r'sale.*list.*\.xlsx?']
+            
+            found_files = find_tax_sale_files(
+                config['base_url'],
+                config['tax_sale_page_url'],
+                fallback_pdf_patterns,
+                fallback_excel_patterns,
+                config.get('timeout_seconds', 30)
+            )
+            
+            logger.info(f"Fallback search - PDFs: {len(found_files['pdfs'])}, Excel: {len(found_files['excel'])}")
+            
+            if not found_files['pdfs'] and not found_files['excel']:
+                return {
+                    "success": False,
+                    "message": f"No Halifax tax sale files found on {config['tax_sale_page_url']}",
+                    "files_checked": found_files,
+                    "debug_info": f"Checked URL: {config['tax_sale_page_url']}, patterns failed to match any files"
+                }
         
         # Try Excel files first (usually have more detailed data)
         for excel_url in found_files['excel']:
