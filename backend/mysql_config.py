@@ -187,14 +187,9 @@ class MySQLManager:
     def get_property_by_assessment(self, assessment_number: str) -> Optional[Dict]:
         """Get a specific property by assessment number"""
         try:
-            cursor = self.connection.cursor(dictionary=True)
-            cursor.execute(
-                "SELECT * FROM properties WHERE assessment_number = %s",
-                (assessment_number,)
-            )
-            result = cursor.fetchone()
-            cursor.close()
-            return result
+            query = "SELECT * FROM properties WHERE assessment_number = %s"
+            result = self.execute_query(query, (assessment_number,))
+            return result[0] if result else None
         except Exception as e:
             logger.error(f"Error getting property by assessment {assessment_number}: {e}")
             return None
@@ -226,19 +221,13 @@ class MySQLManager:
                 WHERE assessment_number = %s
             """
             
-            cursor = self.connection.cursor()
-            cursor.execute(query, values)
-            self.connection.commit()
-            
-            rows_affected = cursor.rowcount
-            cursor.close()
+            rows_affected = self.execute_update(query, tuple(values))
             
             logger.info(f"Updated property {assessment_number}, rows affected: {rows_affected}")
             return rows_affected > 0
             
         except Exception as e:
             logger.error(f"Error updating property {assessment_number}: {e}")
-            self.connection.rollback()
             return False
 
     def get_municipalities(self) -> List[str]:
