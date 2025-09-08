@@ -521,16 +521,27 @@ class TaxSaleScraper:
                     raw_pid = pid_number
                     primary_pid, secondary_pids, pid_count = parse_multiple_pids(raw_pid)
                     
-                    # Detect property type
-                    description = f"{property_data['civic_address']} {property_data['parcel_description']}"
-                    property_type = detect_property_type(description, raw_pid)
+                    # Use the property type extracted from the listing (not detected)
+                    # Convert listing property types to standardized values
+                    if property_type.lower() in ['dwelling', 'building', 'house', 'residence']:
+                        standardized_type = 'building'
+                    elif property_type.lower() in ['land']:
+                        standardized_type = 'land'
+                    elif 'mobile home only' in property_type.lower():
+                        standardized_type = 'mobile_home_only'
+                    elif property_type.lower() in ['mobile', 'mobile home', 'trailer']:
+                        standardized_type = 'mobile_home_only'
+                    else:
+                        standardized_type = 'land'  # Default fallback
+                    
+                    logger.debug(f"Property {assessment_number}: Original type='{property_type}' -> Standardized='{standardized_type}'")
                     
                     # Add new fields for multiple PID support
                     property_data.update({
                         'pid_number': raw_pid,  # Keep original for compatibility
                         'primary_pid': primary_pid,
                         'secondary_pids': ','.join(secondary_pids) if secondary_pids else None,
-                        'property_type': property_type,
+                        'property_type': standardized_type,  # Use the standardized type from listing
                         'pid_count': pid_count
                     })
                     
