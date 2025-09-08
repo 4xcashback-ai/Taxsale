@@ -321,57 +321,28 @@ class ThumbnailGenerator {
         return null; // Fall back to regular thumbnail generation
     }
     
-    private function simplifyPath($points, $maxPoints) {
-        // If we're already under the limit, return as-is
+    private function simplifyPathConservative($points, $maxPoints) {
+        // Very conservative simplification - only remove points if absolutely necessary
         if (count($points) <= $maxPoints) {
             return $points;
         }
         
-        // For boundaries, we need to preserve shape integrity
-        // Use a more conservative approach that keeps more corner points
+        // Keep every nth point, but always keep first, last, and try to preserve shape
         $simplified = [];
-        $totalPoints = count($points);
+        $step = max(2, floor(count($points) / $maxPoints));
         
         // Always keep first point
         $simplified[] = $points[0];
         
-        // Calculate intervals but ensure we don't skip too many
-        $interval = max(1, floor($totalPoints / ($maxPoints - 2)));
-        
-        // Keep points at regular intervals, but also check for direction changes (corners)
-        for ($i = 1; $i < $totalPoints - 1; $i++) {
-            // Keep every interval point
-            if ($i % $interval === 0) {
-                $simplified[] = $points[$i];
-            } else {
-                // Also keep points that represent significant direction changes (corners)
-                if ($i > 0 && $i < $totalPoints - 1) {
-                    // This is a simplified corner detection - in a real implementation,
-                    // we'd calculate angles, but for now, keep some intermediate points
-                    if ($i % max(1, floor($interval / 2)) === 0) {
-                        $simplified[] = $points[$i];
-                    }
-                }
-            }
+        // Take every $step points
+        for ($i = $step; $i < count($points); $i += $step) {
+            $simplified[] = $points[$i];
         }
         
-        // Always keep last point if different from first
-        $lastPoint = $points[$totalPoints - 1];
-        if ($lastPoint !== $points[0]) {
+        // Always keep last point if it's not the same as first
+        $lastPoint = $points[count($points) - 1];
+        if ($lastPoint !== $points[0] && end($simplified) !== $lastPoint) {
             $simplified[] = $lastPoint;
-        }
-        
-        // If we still have too many points, remove some middle ones
-        if (count($simplified) > $maxPoints) {
-            $finalSimplified = [$simplified[0]]; // Keep first
-            $step = max(1, floor(count($simplified) / ($maxPoints - 2)));
-            
-            for ($i = $step; $i < count($simplified) - 1; $i += $step) {
-                $finalSimplified[] = $simplified[$i];
-            }
-            
-            $finalSimplified[] = end($simplified); // Keep last
-            return $finalSimplified;
         }
         
         return $simplified;
