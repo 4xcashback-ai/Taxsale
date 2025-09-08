@@ -351,12 +351,21 @@ class TaxSaleScraper:
         logger.info("Starting Halifax tax sale scraping with enhanced debugging...")
         
         try:
-            # Use the actual Halifax PDF URL
+            # Halifax tax sale webpage and PDF URLs
+            webpage_url = "https://www.halifax.ca/home-property/property-taxes/tax-sales"
             pdf_url = "https://cdn.halifax.ca/sites/default/files/documents/home-property/property-taxes/sept16.2025newspaper.website-sept3.25.pdf"
             
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
+            
+            # First, extract auction information from the Halifax tax sale webpage
+            logger.info("Step 1: Extracting auction information from Halifax webpage...")
+            sale_date_from_webpage, auction_type_from_webpage = extract_auction_info_from_webpage(webpage_url)
+            
+            # Then extract any additional info from PDF URL/filename
+            logger.info("Step 2: Extracting auction information from PDF URL...")
+            sale_date_from_url, auction_type_from_url = extract_auction_info_from_pdf_url(pdf_url)
             
             logger.info(f"Downloading Halifax PDF for debugging: {pdf_url}")
             pdf_response = self.session.get(pdf_url, headers=headers, timeout=60)
@@ -364,16 +373,18 @@ class TaxSaleScraper:
             
             logger.info(f"PDF downloaded successfully: {len(pdf_response.content)} bytes")
             
-            # Extract auction information from PDF URL and content
-            logger.info("Extracting auction information...")
-            sale_date_from_url, auction_type_from_url = extract_auction_info_from_pdf_url(pdf_url)
+            # Extract auction information from PDF content (as fallback)
+            logger.info("Step 3: Extracting auction information from PDF content...")
             sale_date_from_content, auction_type_from_content = extract_auction_info_from_pdf_content(pdf_response.content)
             
-            # Use the best available information (prefer content over URL)
-            final_sale_date = sale_date_from_content or sale_date_from_url
-            final_auction_type = auction_type_from_content if auction_type_from_content != "Public Auction" else auction_type_from_url
+            # Use the best available information (prioritize webpage > URL > content)
+            final_sale_date = sale_date_from_webpage or sale_date_from_url or sale_date_from_content
+            final_auction_type = auction_type_from_webpage  # Webpage is most reliable for auction type
+            if final_auction_type == "Public Auction":  # If webpage didn't find specific type, try other sources
+                final_auction_type = auction_type_from_content if auction_type_from_content != "Public Auction" else auction_type_from_url
             
             logger.info(f"Final auction info - Date: {final_sale_date}, Type: {final_auction_type}")
+            logger.info(f"Sources used - Webpage: {auction_type_from_webpage}, URL: {auction_type_from_url}, Content: {auction_type_from_content}")
             
             properties = []
             
