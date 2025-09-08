@@ -15,7 +15,7 @@ try {
                         WHERE pid_number IS NOT NULL 
                         AND pid_number != '' 
                         AND pid_number != 'N/A'
-                        LIMIT 5"); // Start with just 5 for testing
+                        LIMIT 20"); // Process more properties
     $properties = $stmt->fetchAll();
     
     echo "Found " . count($properties) . " properties with PID numbers\n\n";
