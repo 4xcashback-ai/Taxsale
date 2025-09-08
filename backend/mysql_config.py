@@ -22,13 +22,28 @@ class MySQLManager:
         }
         
     def get_connection(self):
-        """Create and return a MySQL connection"""
-        try:
-            connection = mysql.connector.connect(**self.connection_config)
-            return connection
-        except Error as e:
-            print(f"Error connecting to MySQL: {e}")
-            raise
+        """Create and return a MySQL connection with retry logic"""
+        import time
+        
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                connection = mysql.connector.connect(**self.connection_config)
+                # Test the connection
+                if connection.is_connected():
+                    return connection
+            except Error as e:
+                logger.error(f"MySQL connection attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    logger.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    logger.error(f"All {max_retries} connection attempts failed")
+                    raise Exception(f"Unable to connect to MySQL after {max_retries} attempts: {e}")
+        
+        raise Exception("Failed to establish MySQL connection")
     
     def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """Execute SELECT query and return results as list of dictionaries"""
