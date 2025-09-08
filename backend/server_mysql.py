@@ -542,23 +542,37 @@ async def rescan_specific_property(request: Request, current_user: dict = Depend
         if not assessment_number:
             raise HTTPException(status_code=400, detail="Assessment number required")
         
-        logger.info(f"Admin requested targeted rescan for property: {assessment_number}")
+        logger.info(f"🔍 RESCAN DEBUG: Admin requested targeted rescan for property: {assessment_number}")
         
         # Get the existing property to determine type and municipality
         existing_property = mysql_db.get_property_by_assessment(assessment_number)
         
         if not existing_property:
+            logger.error(f"🔍 RESCAN DEBUG: Property {assessment_number} not found in database")
             return {
                 "success": False,
-                "message": f"Property {assessment_number} not found in database"
+                "message": f"Property {assessment_number} not found in database",
+                "debug_info": "Property lookup failed"
             }
         
+        # DEBUG: Log all property details
         property_type = existing_property.get('property_type', '')
-        municipality = existing_property.get('municipality', '').lower()
+        municipality = existing_property.get('municipality', '')
+        civic_address = existing_property.get('civic_address', '')
+        owner_name = existing_property.get('owner_name', '')
+        
+        logger.info(f"🔍 RESCAN DEBUG: Found property in database:")
+        logger.info(f"  - Assessment: {assessment_number}")
+        logger.info(f"  - Property Type: '{property_type}'")
+        logger.info(f"  - Municipality: '{municipality}'")
+        logger.info(f"  - Address: '{civic_address}'")
+        logger.info(f"  - Owner: '{owner_name}'")
+        logger.info(f"  - Has Coordinates: lat={existing_property.get('latitude')}, lng={existing_property.get('longitude')}")
+        logger.info(f"  - PID Info: primary={existing_property.get('primary_pid')}, count={existing_property.get('pid_count', 0)}")
         
         # Handle mobile homes specially - they don't need external file scanning
         if property_type == 'mobile_home_only':
-            logger.info(f"Rescanning mobile home property: {assessment_number}")
+            logger.info(f"🔍 RESCAN DEBUG: MOBILE HOME DETECTED - Using mobile home rescan logic")
             
             updated_data = {
                 'updated_at': datetime.now()
@@ -569,59 +583,115 @@ async def rescan_specific_property(request: Request, current_user: dict = Depend
             current_lat = existing_property.get('latitude')
             current_lng = existing_property.get('longitude')
             
+            logger.info(f"🔍 RESCAN DEBUG: Checking coordinates - lat: {current_lat}, lng: {current_lng}")
+            
             if address and (not current_lat or not current_lng):
-                logger.info(f"Attempting to geocode mobile home address: {address}")
+                logger.info(f"🔍 RESCAN DEBUG: Attempting to geocode mobile home address: '{address}'")
                 # Use the mobile home geocoding function from scrapers
-                from scrapers_mysql import geocode_mobile_home_address
-                lat, lng = geocode_mobile_home_address(address)
-                
-                if lat and lng:
-                    updated_data['latitude'] = lat
-                    updated_data['longitude'] = lng
-                    logger.info(f"Updated mobile home coordinates: {lat}, {lng}")
+                try:
+                    from scrapers_mysql import geocode_mobile_home_address
+                    lat, lng = geocode_mobile_home_address(address)
+                    
+                    if lat and lng:
+                        updated_data['latitude'] = lat
+                        updated_data['longitude'] = lng
+                        logger.info(f"🔍 RESCAN DEBUG: Geocoding SUCCESS - Updated coordinates: {lat}, {lng}")
+                    else:
+                        logger.warning(f"🔍 RESCAN DEBUG: Geocoding FAILED - No coordinates returned")
+                except Exception as geocode_error:
+                    logger.error(f"🔍 RESCAN DEBUG: Geocoding ERROR - {geocode_error}")
+            else:
+                logger.info(f"🔍 RESCAN DEBUG: Coordinates already exist or no address available")
+            
+            # Check for missing basic data
+            if not owner_name or owner_name == 'Unknown Owner':
+                logger.info(f"🔍 RESCAN DEBUG: Owner name missing or generic, will attempt update")
+            if not address or 'Halifax Property' in address:
+                logger.info(f"🔍 RESCAN DEBUG: Address is generic placeholder, will attempt update")
+            
+            logger.info(f"🔍 RESCAN DEBUG: Attempting database update with data: {updated_data}")
             
             # Update the database
             success = mysql_db.update_property(assessment_number, updated_data)
             
             if success:
                 updated_fields = list(updated_data.keys())
+                logger.info(f"🔍 RESCAN DEBUG: Mobile home update SUCCESS - Fields updated: {updated_fields}")
                 return {
                     "success": True,
                     "message": f"Mobile home property {assessment_number} updated (coordinates and metadata)",
                     "updated_fields": updated_fields,
                     "property_type": "mobile_home_only",
-                    "note": "Mobile homes don't require PID numbers"
+                    "note": "Mobile homes don't require PID numbers",
+                    "debug_info": f"Mobile home logic executed successfully. Updated: {updated_fields}"
                 }
             else:
+                logger.error(f"🔍 RESCAN DEBUG: Mobile home update FAILED - Database update returned false")
                 return {
                     "success": False,
-                    "message": f"Failed to update mobile home property {assessment_number}"
+                    "message": f"Failed to update mobile home property {assessment_number}",
+                    "debug_info": "Mobile home logic executed but database update failed"
                 }
         
+        # DEBUG: Property is not mobile home, checking regular property logic
+        logger.info(f"🔍 RESCAN DEBUG: NOT a mobile home (type='{property_type}') - Using regular rescan logic")
+        
         # For regular properties, try external file scanning
+        municipality_lower = municipality.lower()
+        logger.info(f"🔍 RESCAN DEBUG: Municipality for external scanning: '{municipality_lower}'")
+        
         rescan_result = {"success": False, "message": "No scraper available for this municipality"}
         
         # Try to rescan based on municipality using external files
-        if 'halifax' in municipality:
-            from scrapers_mysql import rescan_halifax_property
-            rescan_result = rescan_halifax_property(assessment_number)
-        elif 'victoria' in municipality:
-            from scrapers_mysql import rescan_victoria_property  
-            rescan_result = rescan_victoria_property(assessment_number)
-        elif 'cumberland' in municipality:
-            from scrapers_mysql import rescan_cumberland_property
-            rescan_result = rescan_cumberland_property(assessment_number)
+        if 'halifax' in municipality_lower:
+            logger.info(f"🔍 RESCAN DEBUG: Using Halifax external file rescan")
+            try:
+                from scrapers_mysql import rescan_halifax_property
+                rescan_result = rescan_halifax_property(assessment_number)
+                logger.info(f"🔍 RESCAN DEBUG: Halifax rescan result: {rescan_result}")
+            except Exception as halifax_error:
+                logger.error(f"🔍 RESCAN DEBUG: Halifax rescan ERROR: {halifax_error}")
+                rescan_result = {"success": False, "message": f"Halifax rescan error: {str(halifax_error)}"}
+        elif 'victoria' in municipality_lower:
+            logger.info(f"🔍 RESCAN DEBUG: Using Victoria external file rescan")
+            try:
+                from scrapers_mysql import rescan_victoria_property  
+                rescan_result = rescan_victoria_property(assessment_number)
+                logger.info(f"🔍 RESCAN DEBUG: Victoria rescan result: {rescan_result}")
+            except Exception as victoria_error:
+                logger.error(f"🔍 RESCAN DEBUG: Victoria rescan ERROR: {victoria_error}")
+                rescan_result = {"success": False, "message": f"Victoria rescan error: {str(victoria_error)}"}
+        elif 'cumberland' in municipality_lower:
+            logger.info(f"🔍 RESCAN DEBUG: Using Cumberland external file rescan")
+            try:
+                from scrapers_mysql import rescan_cumberland_property
+                rescan_result = rescan_cumberland_property(assessment_number)
+                logger.info(f"🔍 RESCAN DEBUG: Cumberland rescan result: {rescan_result}")
+            except Exception as cumberland_error:
+                logger.error(f"🔍 RESCAN DEBUG: Cumberland rescan ERROR: {cumberland_error}")
+                rescan_result = {"success": False, "message": f"Cumberland rescan error: {str(cumberland_error)}"}
         else:
             # Fallback: Try all scrapers to find this property
-            logger.info(f"Unknown municipality '{municipality}', trying all scrapers")
-            from scrapers_mysql import rescan_property_all_sources
-            rescan_result = rescan_property_all_sources(assessment_number)
+            logger.info(f"🔍 RESCAN DEBUG: Unknown municipality '{municipality}', trying all scrapers")
+            try:
+                from scrapers_mysql import rescan_property_all_sources
+                rescan_result = rescan_property_all_sources(assessment_number)
+                logger.info(f"🔍 RESCAN DEBUG: All-sources rescan result: {rescan_result}")
+            except Exception as all_sources_error:
+                logger.error(f"🔍 RESCAN DEBUG: All-sources rescan ERROR: {all_sources_error}")
+                rescan_result = {"success": False, "message": f"All-sources rescan error: {str(all_sources_error)}"}
         
+        # Add debug info to result
+        if isinstance(rescan_result, dict):
+            rescan_result["debug_info"] = f"Regular property rescan attempted for municipality: {municipality}"
+        
+        logger.info(f"🔍 RESCAN DEBUG: Final result for {assessment_number}: {rescan_result}")
         return rescan_result
         
     except Exception as e:
-        logger.error(f"Error rescanning property: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"🔍 RESCAN DEBUG: EXCEPTION in rescan_specific_property: {e}")
+        logger.error(f"🔍 RESCAN DEBUG: Exception details: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Rescan error: {str(e)}")
 
 @app.post("/api/admin/scrape/all")
 async def scrape_all_properties(current_user: dict = Depends(get_current_user_optional)):
