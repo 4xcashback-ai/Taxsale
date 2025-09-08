@@ -803,6 +803,170 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         }
     }
     
+    // Auction Information Management
+    class AuctionInfoManager {
+        constructor() {
+            this.initEventListeners();
+            this.setDefaultValues();
+        }
+        
+        initEventListeners() {
+            document.getElementById('preview-auction-update-btn').addEventListener('click', () => {
+                this.previewUpdate();
+            });
+            
+            document.getElementById('apply-auction-update-btn').addEventListener('click', () => {
+                this.applyUpdate();
+            });
+            
+            // Auto-set default values when municipality changes
+            document.getElementById('auction-municipality').addEventListener('change', (e) => {
+                this.setMunicipalityDefaults(e.target.value);
+            });
+        }
+        
+        setDefaultValues() {
+            // Set default sale date to a reasonable future date
+            const today = new Date();
+            const futureDate = new Date(today.setDate(today.getDate() + 30));
+            document.getElementById('auction-sale-date').value = futureDate.toISOString().split('T')[0];
+        }
+        
+        setMunicipalityDefaults(municipality) {
+            const auctionTypeSelect = document.getElementById('auction-type');
+            
+            // Set default auction types based on municipality
+            if (municipality === 'Halifax Regional Municipality') {
+                auctionTypeSelect.value = 'Public Tender Auction';
+            } else {
+                auctionTypeSelect.value = 'Public Auction';
+            }
+        }
+        
+        async previewUpdate() {
+            const municipality = document.getElementById('auction-municipality').value;
+            
+            if (!municipality) {
+                alert('Please select a municipality');
+                return;
+            }
+            
+            try {
+                this.setStatus('Loading preview...', 'bg-info');
+                
+                const response = await fetch('/api/auction_management.php?action=preview_auction_update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `municipality=${encodeURIComponent(municipality)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.displayPreview(data);
+                    this.updateStats(data.stats);
+                    document.getElementById('apply-auction-update-btn').disabled = false;
+                    this.setStatus('Preview loaded', 'bg-success');
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                this.setStatus('Preview failed', 'bg-danger');
+                alert('Failed to load preview: ' + error.message);
+            }
+        }
+        
+        displayPreview(data) {
+            const container = document.getElementById('auction-preview-container');
+            const auctionType = document.getElementById('auction-type').value;
+            const saleDate = document.getElementById('auction-sale-date').value;
+            
+            let html = `
+                <h6>Updating: ${data.municipality}</h6>
+                <p><strong>New Auction Type:</strong> <span class="badge bg-info">${auctionType}</span></p>
+                ${saleDate ? `<p><strong>New Sale Date:</strong> ${saleDate}</p>` : ''}
+                
+                <h6 class="mt-3">Sample Properties (showing first 20):</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Assessment #</th>
+                                <th>Address</th>
+                                <th>Current Sale Date</th>
+                                <th>Current Auction Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            data.properties.forEach(property => {
+                html += `
+                    <tr>
+                        <td>${property.assessment_number}</td>
+                        <td>${property.civic_address || 'No address'}</td>
+                        <td>${property.sale_date || '<span class="text-muted">None</span>'}</td>
+                        <td>${property.auction_type || '<span class="text-muted">None</span>'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        updateStats(stats) {
+            document.getElementById('total-active-properties').textContent = stats.total_active;
+            document.getElementById('missing-auction-info').textContent = stats.missing_auction_info;
+            document.getElementById('will-be-updated').textContent = stats.will_be_updated;
+        }
+        
+        async applyUpdate() {
+            const municipality = document.getElementById('auction-municipality').value;
+            const auctionType = document.getElementById('auction-type').value;
+            const saleDate = document.getElementById('auction-sale-date').value;
+            
+            if (!confirm(`Are you sure you want to update auction information for all active properties in ${municipality}?\n\nThis will set:\n- Auction Type: ${auctionType}\n- Sale Date: ${saleDate || 'No change'}\n\nThis action cannot be undone!`)) {
+                return;
+            }
+            
+            try {
+                this.setStatus('Applying update...', 'bg-warning');
+                
+                const response = await fetch('/api/auction_management.php?action=apply_auction_update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `municipality=${encodeURIComponent(municipality)}&auction_type=${encodeURIComponent(auctionType)}&sale_date=${saleDate}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.setStatus('Update completed', 'bg-success');
+                    alert(data.message);
+                    
+                    // Refresh the preview
+                    this.previewUpdate();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                this.setStatus('Update failed', 'bg-danger');
+                alert('Failed to apply update: ' + error.message);
+            }
+        }
+        
+        setStatus(message, badgeClass) {
+            const statusElement = document.getElementById('auction-update-status');
+            statusElement.innerHTML = `<span class="badge ${badgeClass}">${message}</span>`;
+        }
+    }
+    
     // Missing PID Management
     class MissingPIDManager {
         constructor() {
