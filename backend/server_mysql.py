@@ -266,6 +266,93 @@ async def scrape_cumberland_properties(current_user: dict = Depends(get_current_
     result = scrape_cumberland()
     return result
 
+@app.get("/api/admin/scraper-configs")
+async def get_scraper_configs(current_user: dict = Depends(get_current_user_optional)):
+    """Get all scraper configurations"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        configs = mysql_db.get_all_scraper_configs()
+        return {
+            "success": True,
+            "configs": configs
+        }
+    except Exception as e:
+        logger.error(f"Error getting scraper configs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/scraper-config/{municipality}")
+async def update_scraper_config(municipality: str, request: Request, current_user: dict = Depends(get_current_user_optional)):
+    """Update scraper configuration for a municipality"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        body = await request.json()
+        
+        # Validate required fields
+        required_fields = ['base_url', 'tax_sale_page_url']
+        for field in required_fields:
+            if field not in body:
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+        
+        success = mysql_db.update_scraper_config(municipality, body)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Scraper configuration updated for {municipality}"
+            }
+        else:
+            raise HTTPException(status_code=404, detail=f"Municipality {municipality} not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating scraper config for {municipality}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/test-scraper-config/{municipality}")
+async def test_scraper_config(municipality: str, current_user: dict = Depends(get_current_user_optional)):
+    """Test scraper configuration by checking if tax sale files can be found"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        config = mysql_db.get_scraper_config(municipality)
+        if not config:
+            raise HTTPException(status_code=404, detail=f"Configuration not found for {municipality}")
+        
+        # Import the file discovery function
+        from scrapers_mysql import find_tax_sale_files
+        
+        found_files = find_tax_sale_files(
+            config['base_url'],
+            config['tax_sale_page_url'],
+            config['pdf_search_patterns'],
+            config['excel_search_patterns'],
+            config.get('timeout_seconds', 30)
+        )
+        
+        return {
+            "success": True,
+            "municipality": municipality,
+            "config_tested": {
+                "base_url": config['base_url'],
+                "tax_sale_page_url": config['tax_sale_page_url'],
+                "timeout": config.get('timeout_seconds', 30)
+            },
+            "files_found": found_files,
+            "total_files": len(found_files['pdfs']) + len(found_files['excel'])
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error testing scraper config for {municipality}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/admin/rescan-property")
 async def rescan_specific_property(request: Request, current_user: dict = Depends(get_current_user_optional)):
     """Rescan a specific property by assessment number"""
