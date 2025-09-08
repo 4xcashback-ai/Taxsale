@@ -725,6 +725,175 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         }
     }
     
+    // Missing PID Management
+    class MissingPIDManager {
+        constructor() {
+            this.initEventListeners();
+        }
+        
+        initEventListeners() {
+            document.getElementById('load-missing-pids-btn').addEventListener('click', () => {
+                this.loadMissingPIDs();
+            });
+        }
+        
+        async loadMissingPIDs() {
+            try {
+                this.setStatus('Loading...', 'bg-info');
+                
+                const response = await fetch('/api/missing_pids.php?action=get_missing_pids');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.displayMissingPIDs(data.properties);
+                    this.setStatus(`Found ${data.count} properties`, 'bg-warning');
+                    document.getElementById('missing-pids-container').style.display = 'block';
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                this.setStatus('Error', 'bg-danger');
+                alert('Failed to load missing PIDs: ' + error.message);
+            }
+        }
+        
+        displayMissingPIDs(properties) {
+            const tbody = document.getElementById('missing-pids-tbody');
+            tbody.innerHTML = '';
+            
+            properties.forEach(property => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${property.assessment_number}</strong></td>
+                    <td>${property.owner_name || 'Unknown'}</td>
+                    <td>${property.civic_address || 'No address'}</td>
+                    <td><span class="badge bg-secondary">${property.property_type || 'Unknown'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info me-1" onclick="missingPIDManager.showEditModal('${property.assessment_number}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="missingPIDManager.rescanProperty('${property.assessment_number}')">
+                            <i class="fas fa-sync"></i> Rescan
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        async rescanProperty(assessmentNumber) {
+            if (!confirm(`Request rescan for property ${assessmentNumber}?`)) return;
+            
+            try {
+                const response = await fetch('/api/missing_pids.php?action=rescan_property', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `assessment_number=${assessmentNumber}`
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Rescan request failed: ' + error.message);
+            }
+        }
+        
+        showEditModal(assessmentNumber) {
+            const pid = prompt(`Enter PID number for property ${assessmentNumber}:`);
+            if (pid) {
+                this.manualEdit(assessmentNumber, pid);
+            }
+        }
+        
+        async manualEdit(assessmentNumber, pidNumber) {
+            try {
+                const response = await fetch('/api/missing_pids.php?action=manual_edit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `assessment_number=${assessmentNumber}&pid_number=${pidNumber}`
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('Property updated successfully!');
+                    this.loadMissingPIDs(); // Refresh the list
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Manual edit failed: ' + error.message);
+            }
+        }
+        
+        setStatus(message, badgeClass) {
+            const statusElement = document.getElementById('missing-pids-status');
+            statusElement.innerHTML = `<span class="badge ${badgeClass}">${message}</span>`;
+        }
+    }
+    
+    // Scraper Testing Tools
+    class ScraperTestingManager {
+        constructor() {
+            this.initEventListeners();
+            this.updateStats();
+        }
+        
+        initEventListeners() {
+            document.getElementById('reset-recent-scraping-btn').addEventListener('click', () => {
+                this.resetRecentScraping();
+            });
+            
+            document.getElementById('refresh-scraper-stats-btn').addEventListener('click', () => {
+                this.updateStats();
+            });
+        }
+        
+        async updateStats() {
+            try {
+                const response = await fetch('/api/scraper_testing.php?action=get_scraper_stats');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const stats = data.stats;
+                    document.getElementById('recent-properties').textContent = stats.last_24_hours;
+                    document.getElementById('last-scrape-time').textContent = stats.last_scrape_relative;
+                }
+            } catch (error) {
+                console.error('Failed to update scraper stats:', error);
+            }
+        }
+        
+        async resetRecentScraping() {
+            const timeframe = document.getElementById('scraper-reset-timeframe').value;
+            
+            if (!confirm(`Are you sure you want to remove all properties scraped in the last ${timeframe} hours?\n\nThis action cannot be undone!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/scraper_testing.php?action=reset_recent_scraping', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `timeframe=${timeframe}`
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    this.updateStats(); // Refresh stats
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert('Reset failed: ' + error.message);
+            }
+        }
+    }
+    
     // Thumbnail Generation Manager
     class ThumbnailManager {
         constructor() {
