@@ -65,33 +65,35 @@ $offset = ($page - 1) * $per_page;
 
 // Get total count for pagination
 $count_query = "SELECT COUNT(*) FROM properties WHERE 1=1";
-$count_params = [];
 
-// Apply same filters to count query
+// Apply same filters to both queries - use same params array
 if ($municipality) {
     $count_query .= " AND municipality = ?";
-    $count_params[] = $municipality;
+    $query .= " AND municipality = ?";
+    $params[] = $municipality;
 }
 
 if ($status) {
     $count_query .= " AND status = ?";
-    $count_params[] = $status;
+    $query .= " AND status = ?";
+    $params[] = $status;
 }
 
 if ($search) {
     $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
-    $count_params[] = "%$search%";
-    $count_params[] = "%$search%";
-    $count_params[] = "%$search%";
+    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
 }
 
 $query .= " ORDER BY created_at DESC LIMIT $per_page OFFSET $offset";
 
 $db = getDB();
 
-// Get total count
+// Get total count using same params
 $count_stmt = $db->prepare($count_query);
-$count_stmt->execute($count_params);
+$count_stmt->execute($params);
 $total_properties = $count_stmt->fetchColumn();
 $total_pages = ceil($total_properties / $per_page);
 
