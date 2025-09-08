@@ -38,21 +38,25 @@ $search = $_GET['search'] ?? '';
 
 // Build query - ensure we get the thumbnail_path column
 $query = "SELECT *, COALESCE(thumbnail_path, '') as thumbnail_path FROM properties WHERE 1=1";
+$count_query = "SELECT COUNT(*) FROM properties WHERE 1=1";
 $params = [];
 
 if ($municipality) {
     $query .= " AND municipality = ?";
+    $count_query .= " AND municipality = ?";
     $params[] = $municipality;
 }
 
 if ($status) {
     $query .= " AND status = ?";
+    $count_query .= " AND status = ?";
     $params[] = $status;
 }
 
 if ($search) {
     // Prioritize civic_address search and make it more flexible
     $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
+    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
@@ -62,30 +66,6 @@ if ($search) {
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $per_page = 24;
 $offset = ($page - 1) * $per_page;
-
-// Get total count for pagination
-$count_query = "SELECT COUNT(*) FROM properties WHERE 1=1";
-
-// Apply same filters to both queries - use same params array
-if ($municipality) {
-    $count_query .= " AND municipality = ?";
-    $query .= " AND municipality = ?";
-    $params[] = $municipality;
-}
-
-if ($status) {
-    $count_query .= " AND status = ?";
-    $query .= " AND status = ?";
-    $params[] = $status;
-}
-
-if ($search) {
-    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
-    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
 
 $query .= " ORDER BY created_at DESC LIMIT $per_page OFFSET $offset";
 
