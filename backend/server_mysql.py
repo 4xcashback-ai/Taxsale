@@ -290,6 +290,9 @@ async def update_scraper_config(municipality: str, request: Request, current_use
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
+        # Decode the municipality name properly (fixes URL encoding issues)
+        municipality = unquote_plus(municipality)
+        
         body = await request.json()
         
         # Validate required fields
