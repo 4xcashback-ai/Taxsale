@@ -45,26 +45,38 @@ try {
         
     } elseif ($action === 'reset_recent_scraping') {
         $timeframe = $_POST['timeframe'] ?? '24'; // hours
+        $municipality = $_POST['municipality'] ?? 'all'; // municipality filter
         
         if (!in_array($timeframe, ['1', '6', '24', '72'])) {
             throw new Exception('Invalid timeframe');
+        }
+        
+        // Build WHERE clause for municipality filter
+        $where_clause = "WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)";
+        $params = [$timeframe];
+        
+        if ($municipality !== 'all' && !empty($municipality)) {
+            $where_clause .= " AND municipality = ?";
+            $params[] = $municipality;
         }
         
         // Count properties that will be removed
         $count_stmt = $db->prepare("
             SELECT COUNT(*) as count 
             FROM properties 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)
+            {$where_clause}
         ");
-        $count_stmt->execute([$timeframe]);
+        $count_stmt->execute($params);
         $count = $count_stmt->fetchColumn();
         
         if ($count == 0) {
+            $municipality_text = ($municipality === 'all') ? 'any municipality' : $municipality;
             echo json_encode([
                 'status' => 'success',
-                'message' => 'No recent properties found to remove',
+                'message' => "No recent properties found in {$municipality_text} to remove",
                 'removed_count' => 0,
-                'timeframe' => $timeframe
+                'timeframe' => $timeframe,
+                'municipality' => $municipality
             ]);
             return;
         }
@@ -72,19 +84,21 @@ try {
         // Remove recent properties
         $delete_stmt = $db->prepare("
             DELETE FROM properties 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)
+            {$where_clause}
         ");
-        $result = $delete_stmt->execute([$timeframe]);
+        $result = $delete_stmt->execute($params);
         
         if ($result) {
-            // Log the action
-            error_log("Admin reset recent scraping: Removed {$count} properties from last {$timeframe} hours");
+            $municipality_text = ($municipality === 'all') ? 'all municipalities' : $municipality;
+            $log_message = "Admin reset recent scraping: Removed {$count} properties from {$municipality_text} (last {$timeframe} hours)";
+            error_log($log_message);
             
             echo json_encode([
                 'status' => 'success',
-                'message' => "Successfully removed {$count} properties from last {$timeframe} hours",
+                'message' => "Successfully removed {$count} properties from {$municipality_text} (last {$timeframe} hours)",
                 'removed_count' => $count,
-                'timeframe' => $timeframe
+                'timeframe' => $timeframe,
+                'municipality' => $municipality
             ]);
         } else {
             throw new Exception('Failed to remove recent properties');
