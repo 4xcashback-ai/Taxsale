@@ -99,7 +99,7 @@ try {
         
         $logs = [];
         
-        // Get systemd logs for backend service
+        // Get systemd logs for backend service with enhanced filtering
         $log_command = "journalctl -u tax-sale-backend --lines {$lines} --no-pager -o json 2>/dev/null";
         $log_output = shell_exec($log_command);
         
@@ -114,9 +114,15 @@ try {
                         date('Y-m-d H:i:s', $log_entry['__REALTIME_TIMESTAMP'] / 1000000) : 
                         date('Y-m-d H:i:s');
                     
-                    // Filter by log level
+                    // Enhanced filtering with priority for debug messages
                     $include = true;
-                    if ($level === 'error') {
+                    $priority = $log_entry['PRIORITY'] ?? '6';
+                    
+                    // Special handling for RESCAN DEBUG messages
+                    if (strpos($message, 'RESCAN DEBUG') !== false) {
+                        $include = true;
+                        $priority = '5'; // Make debug messages more visible
+                    } elseif ($level === 'error') {
                         $include = stripos($message, 'error') !== false || 
                                   stripos($message, 'exception') !== false || 
                                   stripos($message, 'failed') !== false ||
@@ -129,7 +135,6 @@ try {
                     }
                     
                     if ($include) {
-                        $priority = $log_entry['PRIORITY'] ?? '6';
                         $logs[] = [
                             'timestamp' => $timestamp,
                             'message' => $message,
