@@ -1298,26 +1298,35 @@ def find_tax_sale_files(base_url: str, tax_sale_page_url: str, pdf_patterns: Lis
         return {'pdfs': [], 'excel': []}
 
 def rescan_halifax_property(assessment_number: str) -> Dict:
-    """Rescan a specific Halifax property by assessment number"""
+    """Rescan a specific Halifax property by assessment number using database config"""
     try:
         logger.info(f"Rescanning Halifax property: {assessment_number}")
         
-        # Try to find this property in Halifax tax sale data
-        base_url = "https://www.halifax.ca/sites/default/files/documents/"
+        # Get scraper configuration from database
+        config = mysql_db.get_scraper_config('Halifax Regional Municipality')
+        if not config:
+            return {
+                "success": False,
+                "message": "Halifax scraper configuration not found in database"
+            }
         
-        # Common Halifax tax sale file patterns (you may need to adjust these)
-        potential_files = [
-            "TaxSale2024.xlsx",
-            "TaxSaleProperties2024.xlsx", 
-            "tax-sale-2024.xlsx"
-        ]
+        # Find tax sale files dynamically
+        found_files = find_tax_sale_files(
+            config['base_url'],
+            config['tax_sale_page_url'], 
+            config['pdf_search_patterns'],
+            config['excel_search_patterns'],
+            config.get('timeout_seconds', 30)
+        )
         
-        for filename in potential_files:
+        # Try Excel files first (usually have more detailed data)
+        for excel_url in found_files['excel']:
             try:
-                url = f"{base_url}{filename}"
-                logger.info(f"Trying Halifax URL: {url}")
+                logger.info(f"Trying Excel file: {excel_url}")
                 
-                response = requests.get(url, timeout=30)
+                headers = {'User-Agent': config.get('user_agent', 'Mozilla/5.0')}
+                response = requests.get(excel_url, headers=headers, timeout=config.get('timeout_seconds', 30))
+                
                 if response.status_code == 200:
                     # Process the Excel file
                     df = pd.read_excel(io.BytesIO(response.content))
@@ -1325,7 +1334,7 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
                     # Look for the specific assessment number
                     assessment_col = None
                     for col in df.columns:
-                        if 'assessment' in col.lower() or 'account' in col.lower():
+                        if any(keyword in col.lower() for keyword in ['assessment', 'account', 'property']):
                             assessment_col = col
                             break
                     
@@ -1336,7 +1345,6 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
                             # Found the property, update it
                             property_data = property_row.iloc[0].to_dict()
                             
-                            # Extract data (similar to existing scraper logic)
                             updated_data = {
                                 'assessment_number': assessment_number,
                                 'updated_at': datetime.now()
@@ -1355,26 +1363,48 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
                                             updated_data['pid_count'] = pid_count
                                             break
                             
+                            # Extract other fields that might be available
+                            for col in df.columns:
+                                col_lower = col.lower()
+                                if 'owner' in col_lower and 'owner_name' not in updated_data:
+                                    owner_value = property_data.get(col)
+                                    if owner_value and str(owner_value).strip() not in ['', 'nan', 'N/A']:
+                                        updated_data['owner_name'] = str(owner_value).strip()
+                                elif 'address' in col_lower and 'civic_address' not in updated_data:
+                                    address_value = property_data.get(col)
+                                    if address_value and str(address_value).strip() not in ['', 'nan', 'N/A']:
+                                        updated_data['civic_address'] = str(address_value).strip()
+                            
                             # Update the database
                             success = mysql_db.update_property(assessment_number, updated_data)
                             
                             if success:
+                                # Update scraper last run timestamp
+                                mysql_db.update_scraper_last_run('Halifax Regional Municipality', True)
+                                
                                 return {
                                     "success": True,
-                                    "message": f"Property {assessment_number} rescanned successfully",
-                                    "updated_fields": list(updated_data.keys())
+                                    "message": f"Property {assessment_number} rescanned successfully from {excel_url}",
+                                    "updated_fields": list(updated_data.keys()),
+                                    "source_file": excel_url
                                 }
                             
             except requests.RequestException as e:
-                logger.warning(f"Failed to fetch {url}: {e}")
+                logger.warning(f"Failed to fetch {excel_url}: {e}")
                 continue
             except Exception as e:
-                logger.warning(f"Error processing {url}: {e}")
+                logger.warning(f"Error processing {excel_url}: {e}")
                 continue
+        
+        # If no Excel files worked, try PDFs (more complex parsing needed)
+        for pdf_url in found_files['pdfs']:
+            logger.info(f"PDF found but parsing not implemented yet: {pdf_url}")
+            # TODO: Implement PDF parsing for property data extraction
         
         return {
             "success": False,
-            "message": f"Property {assessment_number} not found in Halifax tax sale data"
+            "message": f"Property {assessment_number} not found in Halifax tax sale files",
+            "files_checked": found_files
         }
         
     except Exception as e:
