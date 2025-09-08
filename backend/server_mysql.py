@@ -324,6 +324,9 @@ async def test_scraper_config(municipality: str, current_user: dict = Depends(ge
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
+        # Decode the municipality name properly (fixes URL encoding issues)
+        municipality = unquote_plus(municipality)
+        
         config = mysql_db.get_scraper_config(municipality)
         if not config:
             raise HTTPException(status_code=404, detail=f"Configuration not found for {municipality}")
