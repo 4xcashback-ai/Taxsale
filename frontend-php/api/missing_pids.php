@@ -39,7 +39,73 @@ try {
             throw new Exception('Assessment number required');
         }
         
-        // Call the backend API to actually rescan the property
+        // Get property details to determine if it's a mobile home
+        $property_stmt = $db->prepare("SELECT property_type, civic_address FROM properties WHERE assessment_number = ?");
+        $property_stmt->execute([$assessment_number]);
+        $property = $property_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$property) {
+            throw new Exception('Property not found in database');
+        }
+        
+        // Handle mobile homes differently - they don't need PID rescanning
+        if ($property['property_type'] === 'mobile_home_only') {
+            // For mobile homes, focus on updating coordinates and other missing data
+            error_log("Rescan requested for mobile home property: {$assessment_number} - will attempt coordinate update");
+            
+            // Call backend API for mobile home coordinate update
+            $api_url = API_BASE_URL . '/admin/update-mobile-home-coordinates';
+            
+            $data = json_encode([
+                'assessment_number' => $assessment_number,
+                'address' => $property['civic_address']
+            ]);
+            
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'POST',
+                    'header' => [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . $_SESSION['access_token']
+                    ],
+                    'content' => $data
+                ]
+            ]);
+            
+            $response = file_get_contents($api_url, false, $context);
+            
+            if ($response === false) {
+                // Fallback: Mobile homes don't need PID data anyway
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Mobile home property - PID not required. Coordinate update may be needed.',
+                    'assessment_number' => $assessment_number,
+                    'property_type' => 'mobile_home_only'
+                ]);
+                return;
+            }
+            
+            $result = json_decode($response, true);
+            
+            if ($result && isset($result['success'])) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Mobile home coordinates updated: ' . $result['message'],
+                    'assessment_number' => $assessment_number,
+                    'property_type' => 'mobile_home_only'
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'warning',
+                    'message' => 'Mobile home property - PID not required. Coordinate update attempted.',
+                    'assessment_number' => $assessment_number,
+                    'property_type' => 'mobile_home_only'
+                ]);
+            }
+            return;
+        }
+        
+        // For regular properties, do normal PID rescan
         $api_url = API_BASE_URL . '/admin/rescan-property';
         
         $data = json_encode(['assessment_number' => $assessment_number]);
