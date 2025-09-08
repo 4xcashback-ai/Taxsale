@@ -1,6 +1,19 @@
 -- Handle Multiple PIDs and Special Property Types
 -- Run this to add support for multiple PIDs and property type classification
--- Safe migration that checks for existing columns
+-- Safe migration that handles existing data
+
+-- First, let's see what property_type values already exist
+SELECT DISTINCT property_type, COUNT(*) as count 
+FROM properties 
+WHERE property_type IS NOT NULL 
+GROUP BY property_type;
+
+-- Migrate existing property_type values to new standard
+UPDATE properties SET property_type = 'mixed' WHERE property_type = 'dwelling';
+UPDATE properties SET property_type = 'land' WHERE property_type = 'vacant_land';
+UPDATE properties SET property_type = 'building' WHERE property_type = 'commercial';
+UPDATE properties SET property_type = 'building' WHERE property_type = 'residential';
+UPDATE properties SET property_type = 'land' WHERE property_type = '' OR property_type IS NULL;
 
 -- Add columns for multiple PID support (with existence checks)
 SET @sql = (SELECT IF(
@@ -39,7 +52,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- Update property_type enum to include new values if needed
+-- Now apply the enum constraint after data is cleaned
 ALTER TABLE properties MODIFY COLUMN property_type ENUM('land', 'mobile_home_only', 'building', 'mixed') DEFAULT 'land';
 
 -- Update existing data to set primary_pid from current pid_number (only if primary_pid is empty)
@@ -55,10 +68,19 @@ CREATE INDEX IF NOT EXISTS idx_properties_primary_pid ON properties (primary_pid
 CREATE INDEX IF NOT EXISTS idx_properties_type ON properties (property_type);
 CREATE INDEX IF NOT EXISTS idx_properties_pid_count ON properties (pid_count);
 
--- Show current data structure
+-- Show current data structure after migration
+SELECT 'Migration Results:' as status;
 SELECT 
     COUNT(*) as total_properties,
     COUNT(CASE WHEN primary_pid IS NOT NULL AND primary_pid != '' THEN 1 END) as with_primary_pid,
     COUNT(CASE WHEN property_type = 'mobile_home_only' THEN 1 END) as mobile_home_only,
+    COUNT(CASE WHEN property_type = 'mixed' THEN 1 END) as mixed_properties,
+    COUNT(CASE WHEN property_type = 'land' THEN 1 END) as land_only,
+    COUNT(CASE WHEN property_type = 'building' THEN 1 END) as building_only,
     COUNT(CASE WHEN pid_count > 1 THEN 1 END) as multiple_pid_properties
 FROM properties;
+
+-- Show property type distribution
+SELECT property_type, COUNT(*) as count 
+FROM properties 
+GROUP BY property_type;
