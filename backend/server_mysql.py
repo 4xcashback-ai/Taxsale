@@ -544,7 +544,7 @@ async def rescan_specific_property(request: Request, current_user: dict = Depend
         
         logger.info(f"Admin requested targeted rescan for property: {assessment_number}")
         
-        # Get the existing property to determine which municipality/scraper to use
+        # Get the existing property to determine type and municipality
         existing_property = mysql_db.get_property_by_assessment(assessment_number)
         
         if not existing_property:
@@ -553,10 +553,55 @@ async def rescan_specific_property(request: Request, current_user: dict = Depend
                 "message": f"Property {assessment_number} not found in database"
             }
         
+        property_type = existing_property.get('property_type', '')
         municipality = existing_property.get('municipality', '').lower()
+        
+        # Handle mobile homes specially - they don't need external file scanning
+        if property_type == 'mobile_home_only':
+            logger.info(f"Rescanning mobile home property: {assessment_number}")
+            
+            updated_data = {
+                'updated_at': datetime.now()
+            }
+            
+            # Try to update coordinates if missing
+            address = existing_property.get('civic_address', '')
+            current_lat = existing_property.get('latitude')
+            current_lng = existing_property.get('longitude')
+            
+            if address and (not current_lat or not current_lng):
+                logger.info(f"Attempting to geocode mobile home address: {address}")
+                # Use the mobile home geocoding function from scrapers
+                from scrapers_mysql import geocode_mobile_home_address
+                lat, lng = geocode_mobile_home_address(address)
+                
+                if lat and lng:
+                    updated_data['latitude'] = lat
+                    updated_data['longitude'] = lng
+                    logger.info(f"Updated mobile home coordinates: {lat}, {lng}")
+            
+            # Update the database
+            success = mysql_db.update_property(assessment_number, updated_data)
+            
+            if success:
+                updated_fields = list(updated_data.keys())
+                return {
+                    "success": True,
+                    "message": f"Mobile home property {assessment_number} updated (coordinates and metadata)",
+                    "updated_fields": updated_fields,
+                    "property_type": "mobile_home_only",
+                    "note": "Mobile homes don't require PID numbers"
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": f"Failed to update mobile home property {assessment_number}"
+                }
+        
+        # For regular properties, try external file scanning
         rescan_result = {"success": False, "message": "No scraper available for this municipality"}
         
-        # Try to rescan based on municipality
+        # Try to rescan based on municipality using external files
         if 'halifax' in municipality:
             from scrapers_mysql import rescan_halifax_property
             rescan_result = rescan_halifax_property(assessment_number)
