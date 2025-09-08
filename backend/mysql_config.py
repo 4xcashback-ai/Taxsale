@@ -82,82 +82,91 @@ class MySQLManager:
             if connection and connection.is_connected():
                 connection.close()
     
-    def insert_property(self, property_data: Dict) -> int:
-        """Insert or update a property record with complete tax sale data and auction information"""
-        query = """
-            INSERT INTO properties (
-                assessment_number, owner_name, civic_address, parcel_description, 
-                pid_number, primary_pid, secondary_pids, property_type, pid_count,
-                opening_bid, total_taxes, hst_applicable, redeemable,
-                tax_year, status, sale_date, auction_type,
-                municipality, province, 
-                latitude, longitude, boundary_data, 
-                pvsc_assessment_value, pvsc_assessment_year,
-                created_at, updated_at
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            )
-            ON DUPLICATE KEY UPDATE
-                owner_name = VALUES(owner_name),
-                civic_address = VALUES(civic_address),
-                parcel_description = VALUES(parcel_description),
-                pid_number = VALUES(pid_number),
-                primary_pid = VALUES(primary_pid),
-                secondary_pids = VALUES(secondary_pids),
-                property_type = VALUES(property_type),
-                pid_count = VALUES(pid_count),
-                opening_bid = VALUES(opening_bid),
-                total_taxes = VALUES(total_taxes),
-                hst_applicable = VALUES(hst_applicable),
-                redeemable = VALUES(redeemable),
-                tax_year = VALUES(tax_year),
-                status = VALUES(status),
-                sale_date = VALUES(sale_date),
-                auction_type = VALUES(auction_type),
-                municipality = VALUES(municipality),
-                latitude = VALUES(latitude),
-                longitude = VALUES(longitude),
-                boundary_data = VALUES(boundary_data),
-                pvsc_assessment_value = VALUES(pvsc_assessment_value),
-                pvsc_assessment_year = VALUES(pvsc_assessment_year),
-                updated_at = VALUES(updated_at)
+    def insert_property(self, property_data: Dict) -> bool:
         """
-        
-        # Convert boundary data to JSON string if it exists
-        boundary_json = None
-        if property_data.get('boundary'):
-            boundary_json = json.dumps(property_data['boundary'])
-        
-        params = (
-            property_data.get('assessment_number'),
-            property_data.get('owner_name'),
-            property_data.get('civic_address'),
-            property_data.get('parcel_description'),
-            property_data.get('pid_number'),
-            property_data.get('primary_pid'),
-            property_data.get('secondary_pids'),
-            property_data.get('property_type'),
-            property_data.get('pid_count', 1),
-            property_data.get('opening_bid'),
-            property_data.get('total_taxes'),
-            property_data.get('hst_applicable', False),
-            property_data.get('redeemable', True),
-            property_data.get('tax_year'),
-            property_data.get('status', 'active'),
-            property_data.get('sale_date'),  # New auction date field
-            property_data.get('auction_type', 'Public Auction'),  # New auction type field
-            property_data.get('municipality'),
-            property_data.get('province'),
-            property_data.get('latitude'),
-            property_data.get('longitude'),
-            boundary_json,
-            property_data.get('pvsc_assessment_value'),
-            property_data.get('pvsc_assessment_year'),
-            property_data.get('created_at'),
-            property_data.get('updated_at')
-        )
-        
-        return self.execute_update(query, params)
+        Insert or update property (UPSERT operation to preserve manually corrected data)
+        """
+        try:
+            assessment_number = property_data.get('assessment_number')
+            if not assessment_number:
+                logger.error("Cannot insert property without assessment_number")
+                return False
+            
+            # Check if property already exists
+            existing_property = self.get_property_by_assessment(assessment_number)
+            
+            if existing_property:
+                # Property exists - do UPDATE (preserve manually corrected data)
+                logger.info(f"Property {assessment_number} exists, updating with new data")
+                
+                # Only update fields that are not manually corrected or are genuinely new
+                update_data = {}
+                
+                # Always update these administrative fields
+                safe_to_update = ['municipality', 'status', 'updated_at', 'created_at']
+                
+                # Update empty or missing fields with new data
+                for key, new_value in property_data.items():
+                    if key == 'assessment_number':
+                        continue  # Don't update the key field
+                    
+                    existing_value = existing_property.get(key)
+                    
+                    # Update if field is in safe list OR if existing value is empty/null
+                    if (key in safe_to_update or 
+                        existing_value is None or 
+                        existing_value == '' or 
+                        existing_value == 'Unknown Owner'):
+                        
+                        if new_value and str(new_value).strip() not in ['', 'nan', 'None', 'N/A']:
+                            update_data[key] = new_value
+                            logger.debug(f"Updating {key}: '{existing_value}' -> '{new_value}'")
+                
+                # Special handling for mobile homes - preserve their coordinates
+                if existing_property.get('property_type') == 'mobile_home_only':
+                    existing_lat = existing_property.get('latitude')
+                    existing_lng = existing_property.get('longitude')
+                    
+                    # Don't overwrite mobile home coordinates if they exist
+                    if existing_lat and existing_lng and 'latitude' in update_data:
+                        del update_data['latitude']
+                        logger.info(f"Preserving mobile home coordinates for {assessment_number}")
+                    if existing_lat and existing_lng and 'longitude' in update_data:
+                        del update_data['longitude']
+                
+                if update_data:
+                    return self.update_property(assessment_number, update_data)
+                else:
+                    logger.info(f"No updates needed for property {assessment_number}")
+                    return True
+            
+            else:
+                # Property doesn't exist - do INSERT
+                logger.info(f"Inserting new property: {assessment_number}")
+                
+                # Build INSERT query dynamically
+                columns = list(property_data.keys())
+                placeholders = ', '.join(['%s'] * len(columns))
+                column_names = ', '.join(columns)
+                
+                query = f"""
+                    INSERT INTO properties ({column_names})
+                    VALUES ({placeholders})
+                """
+                
+                values = list(property_data.values())
+                rows_affected = self.execute_update(query, tuple(values))
+                
+                if rows_affected > 0:
+                    logger.info(f"Successfully inserted property: {assessment_number}")
+                    return True
+                else:
+                    logger.error(f"Failed to insert property: {assessment_number}")
+                    return False
+                
+        except Exception as e:
+            logger.error(f"Error in insert_property for {property_data.get('assessment_number', 'unknown')}: {e}")
+            return False
         
     def get_properties(self, filters: Dict = None, limit: int = 24, offset: int = 0) -> List[Dict]:
         """Get properties with optional filters"""
