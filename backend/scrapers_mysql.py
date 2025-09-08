@@ -1457,28 +1457,38 @@ def rescan_victoria_property(assessment_number: str) -> Dict:
         }
 
 def rescan_cumberland_property(assessment_number: str) -> Dict:
-    """Rescan a specific Cumberland County property by assessment number"""
+    """Rescan a specific Cumberland County property using database config"""
     try:
         logger.info(f"Rescanning Cumberland property: {assessment_number}")
         
-        # Cumberland County tax sale URL (you may need to adjust this)
-        url = "https://www.cumberlandcounty.ns.ca/departments/finance-administration/tax-sale/"
+        config = mysql_db.get_scraper_config('Cumberland County')
+        if not config:
+            return {
+                "success": False,
+                "message": "Cumberland County scraper configuration not found in database"
+            }
         
-        response = requests.get(url, timeout=30)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Look for the specific assessment number in the page content
-            page_text = soup.get_text()
-            if assessment_number in page_text:
-                return {
-                    "success": True,
-                    "message": f"Property {assessment_number} found on Cumberland County website but detailed rescan not implemented yet"
-                }
+        # Find tax sale files dynamically
+        found_files = find_tax_sale_files(
+            config['base_url'],
+            config['tax_sale_page_url'], 
+            config['pdf_search_patterns'],
+            config['excel_search_patterns'],
+            config.get('timeout_seconds', 30)
+        )
+        
+        # TODO: Implement Cumberland-specific parsing logic
+        if found_files['excel'] or found_files['pdfs']:
+            return {
+                "success": False,
+                "message": f"Cumberland County files found but parsing not fully implemented yet",
+                "files_found": found_files
+            }
         
         return {
             "success": False,
-            "message": f"Property {assessment_number} not found in Cumberland County tax sale data"
+            "message": f"No tax sale files found for Cumberland County",
+            "files_checked": found_files
         }
         
     except Exception as e:
