@@ -1349,12 +1349,21 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             
             let html = '<div class="row small">';
             
-            // Service status
+            // Backend service status
             const serviceColor = status.backend_service === 'active' ? 'success' : 'danger';
             html += `
                 <div class="col-12 mb-2">
-                    <strong>Backend:</strong> 
+                    <strong>Backend Service:</strong> 
                     <span class="badge bg-${serviceColor}">${status.backend_service}</span>
+                </div>
+            `;
+            
+            // Port listening status
+            const portColor = status.port_8001 === 'listening' ? 'success' : 'danger';
+            html += `
+                <div class="col-12 mb-2">
+                    <strong>Port 8001:</strong> 
+                    <span class="badge bg-${portColor}">${status.port_8001}</span>
                 </div>
             `;
             
@@ -1367,32 +1376,52 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                 </div>
             `;
             
+            // API connectivity
+            const apiColor = status.api_connectivity === 'responding' ? 'success' : 'warning';
+            html += `
+                <div class="col-12 mb-2">
+                    <strong>API:</strong> 
+                    <span class="badge bg-${apiColor}">${status.api_connectivity}</span>
+                </div>
+            `;
+            
+            // Process count
+            const processColor = status.backend_processes === 1 ? 'success' : status.backend_processes > 1 ? 'warning' : 'danger';
+            html += `
+                <div class="col-12 mb-2">
+                    <strong>Processes:</strong> 
+                    <span class="badge bg-${processColor}">${status.backend_processes}</span>
+                </div>
+            `;
+            
             // Memory usage
-            if (status.memory_usage && !status.memory_usage.error) {
+            if (status.memory_usage) {
                 const memPercent = status.memory_usage.percent;
                 const memColor = memPercent > 80 ? 'danger' : memPercent > 60 ? 'warning' : 'success';
                 html += `
                     <div class="col-12 mb-2">
                         <strong>Memory:</strong> 
-                        <span class="badge bg-${memColor}">${memPercent.toFixed(1)}%</span>
+                        <span class="badge bg-${memColor}">${memPercent}%</span>
+                        <small class="text-muted">(${status.memory_usage.used_mb}/${status.memory_usage.total_mb}MB)</small>
                     </div>
                 `;
             }
             
             // Disk usage
-            if (status.disk_usage && !status.disk_usage.error) {
-                const diskPercent = status.disk_usage.percent;
+            if (status.disk_usage) {
+                const diskPercent = parseInt(status.disk_usage.percent);
                 const diskColor = diskPercent > 85 ? 'danger' : diskPercent > 70 ? 'warning' : 'success';
                 html += `
                     <div class="col-12 mb-2">
                         <strong>Disk:</strong> 
-                        <span class="badge bg-${diskColor}">${diskPercent.toFixed(1)}%</span>
+                        <span class="badge bg-${diskColor}">${diskPercent}%</span>
+                        <small class="text-muted">(${status.disk_usage.used}/${status.disk_usage.total})</small>
                     </div>
                 `;
             }
             
             html += '</div>';
-            html += `<small class="text-muted">Last updated: ${new Date().toLocaleTimeString()}</small>`;
+            html += `<small class="text-muted">Updated: ${new Date().toLocaleTimeString()}</small>`;
             
             container.innerHTML = html;
         }
