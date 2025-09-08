@@ -758,13 +758,27 @@ class TaxSaleScraper:
                     if len(parcel_description) > 500:
                         parcel_description = parcel_description[:500] + "..."
                     
-                    # Clean up extracted data
-                    if not owner_name or len(owner_name) < 2:
+                    # Clean up extracted data - ENSURE NO EMPTY CRITICAL FIELDS
+                    if not owner_name or len(owner_name.strip()) < 2 or owner_name.strip() in ['', 'nan', 'None']:
                         owner_name = "Unknown Owner"
-                    if not civic_address or len(civic_address) < 3:
+                    if not civic_address or len(civic_address.strip()) < 3 or civic_address.strip() in ['', 'nan', 'None']:
                         civic_address = f"Halifax Property {assessment_number}"
-                    if not property_type:
-                        property_type = "Unknown"
+                    if not property_type or property_type.strip() in ['', 'Unknown', 'nan', 'None']:
+                        # Try to determine property type from address
+                        if 'mobile' in civic_address.lower() or 'trailer' in civic_address.lower():
+                            property_type = "Mobile Home Only"
+                        elif 'lot' in civic_address.lower() and 'trailer park' in civic_address.lower():
+                            property_type = "Mobile Home Only" 
+                        else:
+                            property_type = "Land"  # Default fallback
+                    
+                    # Ensure we have a valid opening_bid
+                    if opening_bid <= 0:
+                        opening_bid = 1000.0  # Default reasonable bid
+                    
+                    # Enhanced parcel description
+                    if not parcel_description or len(parcel_description.strip()) < 5:
+                        parcel_description = f"{owner_name} - {civic_address} - {property_type}"
                     
                     # Create comprehensive property data
                     property_data = {
