@@ -272,9 +272,15 @@ class ThumbnailGenerator {
             $url = $this->base_url . '?' . http_build_query($params);
             error_log("ThumbnailGenerator: Boundary URL length: " . strlen($url));
             
+            // If URL is too long, try with simplified path
             if (strlen($url) > 2000) {
-                error_log("ThumbnailGenerator: URL too long, falling back to basic thumbnail");
-                return null;
+                error_log("ThumbnailGenerator: URL too long, simplifying to 20 points");
+                $simplified_points = $this->simplifyPathConservative($path_points, 20);
+                $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $simplified_points);
+                
+                $params['path'] = $path_string;
+                $url = $this->base_url . '?' . http_build_query($params);
+                error_log("ThumbnailGenerator: Simplified URL length: " . strlen($url));
             }
             
             $image_data = @file_get_contents($url);
