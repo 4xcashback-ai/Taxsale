@@ -12,7 +12,12 @@ try {
     // Get properties that have PID numbers (needed for boundary data)
     $stmt = $db->query("SELECT assessment_number, pid_number, latitude, longitude, civic_address 
                         FROM properties 
-                        WHERE assessment_number = '08968373'"); // Debug this specific property
+                        WHERE pid_number IS NOT NULL 
+                        AND pid_number != '' 
+                        AND pid_number != 'N/A'
+                        AND (thumbnail_path IS NULL OR thumbnail_path = '' OR thumbnail_path NOT LIKE '%_boundary.png')
+                        ORDER BY assessment_number
+                        LIMIT 50"); // Process properties that don't have boundary thumbnails yet
     $properties = $stmt->fetchAll();
     
     echo "Found " . count($properties) . " properties with PID numbers\n\n";
