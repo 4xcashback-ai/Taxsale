@@ -15,7 +15,7 @@ try {
     $db = getDB();
     
     if ($action === 'get_scraper_stats') {
-        // Get recent scraping statistics
+        // Get recent scraping statistics overall
         $stmt = $db->query("
             SELECT 
                 COUNT(*) as total_properties,
@@ -27,6 +27,20 @@ try {
             FROM properties
         ");
         $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Get municipality breakdown for recent properties
+        $municipality_stmt = $db->query("
+            SELECT 
+                municipality,
+                COUNT(*) as count
+            FROM properties 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            AND municipality IS NOT NULL 
+            AND municipality != ''
+            GROUP BY municipality
+            ORDER BY count DESC
+        ");
+        $municipality_stats = $municipality_stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Format last scrape time
         if ($stats['last_scrape_time']) {
@@ -40,7 +54,8 @@ try {
         
         echo json_encode([
             'status' => 'success',
-            'stats' => $stats
+            'stats' => $stats,
+            'municipality_breakdown' => $municipality_stats
         ]);
         
     } elseif ($action === 'reset_recent_scraping') {
