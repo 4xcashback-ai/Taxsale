@@ -1111,6 +1111,29 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             });
         }
         
+        async loadMunicipalities() {
+            try {
+                const response = await fetch('/api/scraper_testing.php?action=get_municipalities');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('scraper-reset-municipality');
+                    // Keep the "All Municipalities" option
+                    select.innerHTML = '<option value="all">All Municipalities</option>';
+                    
+                    // Add actual municipalities from database
+                    data.municipalities.forEach(municipality => {
+                        const option = document.createElement('option');
+                        option.value = municipality;
+                        option.textContent = municipality;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load municipalities:', error);
+            }
+        }
+        
         async updateStats() {
             try {
                 const response = await fetch('/api/scraper_testing.php?action=get_scraper_stats');
