@@ -72,10 +72,15 @@ WHERE (primary_pid IS NULL OR primary_pid = '')
   AND pid_number != '' 
   AND pid_number != 'N/A';
 
--- Add indexes for better performance (with existence checks)
-CREATE INDEX IF NOT EXISTS idx_properties_primary_pid ON properties (primary_pid);
-CREATE INDEX IF NOT EXISTS idx_properties_type ON properties (property_type);
-CREATE INDEX IF NOT EXISTS idx_properties_pid_count ON properties (pid_count);
+-- Add indexes for better performance (MySQL version compatible)
+DROP INDEX IF EXISTS idx_properties_primary_pid ON properties;
+CREATE INDEX idx_properties_primary_pid ON properties (primary_pid);
+
+DROP INDEX IF EXISTS idx_properties_type ON properties;  
+CREATE INDEX idx_properties_type ON properties (property_type);
+
+DROP INDEX IF EXISTS idx_properties_pid_count ON properties;
+CREATE INDEX idx_properties_pid_count ON properties (pid_count);
 
 -- Show current data structure after migration
 SELECT 'Migration Results:' as status;
