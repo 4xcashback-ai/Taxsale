@@ -72,15 +72,23 @@ WHERE (primary_pid IS NULL OR primary_pid = '')
   AND pid_number != '' 
   AND pid_number != 'N/A';
 
--- Add indexes for better performance (MySQL version compatible)
-DROP INDEX IF EXISTS idx_properties_primary_pid ON properties;
-CREATE INDEX idx_properties_primary_pid ON properties (primary_pid);
+-- Add indexes for better performance (MySQL compatible approach)
+-- Note: These may generate warnings if indexes already exist, but won't fail
 
-DROP INDEX IF EXISTS idx_properties_type ON properties;  
-CREATE INDEX idx_properties_type ON properties (property_type);
+-- Create primary_pid index
+SET @sql = 'CREATE INDEX idx_properties_primary_pid ON properties (primary_pid)';
+SET @sql = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_name = 'properties' AND index_name = 'idx_properties_primary_pid' AND table_schema = DATABASE()) > 0, 'SELECT "Index idx_properties_primary_pid already exists" AS notice', @sql);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-DROP INDEX IF EXISTS idx_properties_pid_count ON properties;
-CREATE INDEX idx_properties_pid_count ON properties (pid_count);
+-- Create property_type index  
+SET @sql = 'CREATE INDEX idx_properties_type ON properties (property_type)';
+SET @sql = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_name = 'properties' AND index_name = 'idx_properties_type' AND table_schema = DATABASE()) > 0, 'SELECT "Index idx_properties_type already exists" AS notice', @sql);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Create pid_count index
+SET @sql = 'CREATE INDEX idx_properties_pid_count ON properties (pid_count)';
+SET @sql = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_name = 'properties' AND index_name = 'idx_properties_pid_count' AND table_schema = DATABASE()) > 0, 'SELECT "Index idx_properties_pid_count already exists" AS notice', @sql);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Show current data structure after migration
 SELECT 'Migration Results:' as status;
