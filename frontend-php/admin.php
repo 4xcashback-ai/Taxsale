@@ -455,6 +455,13 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                                 </div>
                                 
                                 <div class="mt-3">
+                                    <h6>Municipality Breakdown (24h)</h6>
+                                    <div id="municipality-breakdown" class="small text-muted">
+                                        Loading...
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
                                     <button id="refresh-scraper-stats-btn" class="btn btn-outline-info btn-sm">
                                         <i class="fas fa-refresh"></i> Refresh Stats
                                     </button>
