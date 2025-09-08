@@ -15,11 +15,12 @@ try {
     $db = getDB();
     
     if ($action === 'get_missing_pids') {
-        // Get properties without PID numbers
+        // Get properties without PID numbers (excluding mobile homes which don't need PIDs)
         $stmt = $db->query("
             SELECT assessment_number, owner_name, civic_address, property_type, created_at, updated_at
             FROM properties 
             WHERE (pid_number IS NULL OR pid_number = '' OR pid_number = 'N/A')
+            AND property_type != 'mobile_home_only'
             ORDER BY created_at DESC
             LIMIT 50
         ");
