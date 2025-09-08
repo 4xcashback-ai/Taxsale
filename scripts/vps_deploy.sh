@@ -134,15 +134,19 @@ systemctl restart php8.1-fpm 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed t
 log "Restarting MySQL..."
 systemctl restart mysql 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed to restart MySQL"
 
+log "Restarting Tax Sale Backend..."
+systemctl restart tax-sale-backend 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed to restart Tax Sale Backend"
+
 # Check service status
 log "Checking service status..."
 NGINX_STATUS=$(systemctl is-active nginx)
 PHP_STATUS=$(systemctl is-active php8.1-fpm)
 MYSQL_STATUS=$(systemctl is-active mysql)
+BACKEND_STATUS=$(systemctl is-active tax-sale-backend)
 
-log "Service Status: nginx=$NGINX_STATUS, php8.1-fpm=$PHP_STATUS, mysql=$MYSQL_STATUS"
+log "Service Status: nginx=$NGINX_STATUS, php8.1-fpm=$PHP_STATUS, mysql=$MYSQL_STATUS, tax-sale-backend=$BACKEND_STATUS"
 
-if [ "$NGINX_STATUS" != "active" ] || [ "$PHP_STATUS" != "active" ] || [ "$MYSQL_STATUS" != "active" ]; then
+if [ "$NGINX_STATUS" != "active" ] || [ "$PHP_STATUS" != "active" ] || [ "$MYSQL_STATUS" != "active" ] || [ "$BACKEND_STATUS" != "active" ]; then
     handle_error "One or more services failed to start properly"
 fi
 
