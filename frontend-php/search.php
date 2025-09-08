@@ -533,7 +533,7 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                     $file_size = 0;
                     
                     if (strpos($thumbnail_url, '/assets/thumbnails/') === 0) {
-                        $file_path = dirname(__DIR__) . $thumbnail_url;
+                        $file_path = __DIR__ . $thumbnail_url; // Use current directory (frontend-php)
                         $file_exists = file_exists($file_path);
                         if ($file_exists) {
                             $file_size = filesize($file_path);
