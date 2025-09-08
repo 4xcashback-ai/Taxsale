@@ -1127,8 +1127,11 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         
         async resetRecentScraping() {
             const timeframe = document.getElementById('scraper-reset-timeframe').value;
+            const municipality = document.getElementById('scraper-reset-municipality').value;
             
-            if (!confirm(`Are you sure you want to remove all properties scraped in the last ${timeframe} hours?\n\nThis action cannot be undone!`)) {
+            const municipalityText = municipality === 'all' ? 'all municipalities' : municipality;
+            
+            if (!confirm(`Are you sure you want to remove properties from ${municipalityText} scraped in the last ${timeframe} hours?\n\nThis action cannot be undone!`)) {
                 return;
             }
             
@@ -1136,7 +1139,7 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                 const response = await fetch('/api/scraper_testing.php?action=reset_recent_scraping', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `timeframe=${timeframe}`
+                    body: `timeframe=${timeframe}&municipality=${municipality}`
                 });
                 
                 const data = await response.json();
