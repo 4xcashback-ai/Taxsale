@@ -202,7 +202,7 @@ class ThumbnailGenerator {
                 return null;
             }
             
-            // Build path parameter for Google Maps Static API
+            // Build path parameter for Google Maps Static API - USE ALL POINTS
             $path_points = [];
             foreach ($geometry['rings'] as $ring) {
                 foreach ($ring as $coord) {
@@ -210,25 +210,6 @@ class ThumbnailGenerator {
                 }
                 // Only use first ring to avoid complexity
                 break;
-            }
-            
-            // Only reduce points if absolutely necessary (URL length limit)
-            $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $path_points);
-            $test_url_length = strlen($this->base_url . '?' . http_build_query([
-                'key' => $this->google_api_key,
-                'center' => $center_lat . ',' . $center_lon,
-                'zoom' => '16',
-                'size' => '300x200',
-                'maptype' => 'satellite',
-                'format' => 'png',
-                'path' => $path_string
-            ]));
-            
-            // Only simplify if URL is too long (Google limit is ~2048 chars)
-            if ($test_url_length > 1800) {
-                error_log("ThumbnailGenerator: URL too long ({$test_url_length}), simplifying path");
-                $simplified_points = $this->simplifyPathConservative($path_points, 25);
-                $path_points = $simplified_points;
             }
             
             // Always close the path properly
@@ -240,6 +221,8 @@ class ThumbnailGenerator {
                 error_log("ThumbnailGenerator: Not enough path points for boundary");
                 return null;
             }
+            
+            error_log("ThumbnailGenerator: Using " . count($path_points) . " boundary points for complete shape");
             
             $path_string = 'color:0xff0000ff|weight:3|' . implode('|', $path_points);
             
