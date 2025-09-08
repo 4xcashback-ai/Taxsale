@@ -937,7 +937,7 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             const auctionType = document.getElementById('auction-type').value;
             const saleDate = document.getElementById('auction-sale-date').value;
             
-            if (!confirm(`Are you sure you want to update auction information for all active properties in ${municipality}?\n\nThis will set:\n- Auction Type: ${auctionType}\n- Sale Date: ${saleDate || 'No change'}\n\nThis action cannot be undone!`)) {
+            if (!confirm(`Are you sure you want to update auction information for all ACTIVE properties in ${municipality}?\n\nThis will affect ONLY active properties (not sold/inactive ones).\n\nThis will set:\n- Auction Type: ${auctionType}\n- Sale Date: ${saleDate || 'No change'}\n\nThis action cannot be undone!`)) {
                 return;
             }
             
