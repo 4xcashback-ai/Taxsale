@@ -515,7 +515,7 @@ class TaxSaleScraper:
         
         return properties
 
-    def _parse_halifax_pdf_text(self, text: str) -> List[Dict]:
+    def _parse_halifax_pdf_text(self, text: str, sale_date: Optional[str] = None, auction_type: Optional[str] = None) -> List[Dict]:
         """Parse Halifax PDF text - SIMPLE and RELIABLE version"""
         properties = []
         processed_assessments = set()  # Prevent duplicates
