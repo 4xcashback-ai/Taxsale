@@ -37,6 +37,7 @@ class ThumbnailGenerator {
     
     public function getThumbnail($property) {
         $assessment_number = $property['assessment_number'];
+        $property_type = $property['property_type'] ?? '';
         
         // First check if we already have a pre-generated thumbnail path in the database
         if (isset($property['thumbnail_path']) && !empty($property['thumbnail_path'])) {
@@ -45,6 +46,11 @@ class ThumbnailGenerator {
             if (file_exists($thumbnail_file)) {
                 return $property['thumbnail_path'];
             }
+        }
+        
+        // Handle mobile homes specially - they may not have coordinates but still need thumbnails
+        if ($property_type === 'mobile_home_only') {
+            return $this->getMobileHomeThumbnail($property);
         }
         
         // For search page performance, return a simple placeholder for properties without thumbnails
