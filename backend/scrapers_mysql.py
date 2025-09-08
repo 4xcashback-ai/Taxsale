@@ -1246,6 +1246,57 @@ class TaxSaleScraper:
 tax_scraper = TaxSaleScraper()
 
 # Functions for the API endpoints
+def find_tax_sale_files(base_url: str, tax_sale_page_url: str, pdf_patterns: List[str], excel_patterns: List[str], timeout: int = 30) -> Dict[str, List[str]]:
+    """
+    Dynamically find PDF and Excel files on a tax sale webpage
+    Returns: {'pdfs': [urls], 'excel': [urls]}
+    """
+    try:
+        logger.info(f"Scanning tax sale page: {tax_sale_page_url}")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(tax_sale_page_url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        found_files = {'pdfs': [], 'excel': []}
+        
+        # Find all links
+        links = soup.find_all('a', href=True)
+        
+        for link in links:
+            href = link['href']
+            
+            # Make absolute URL if relative
+            if href.startswith('/'):
+                href = base_url + href
+            elif not href.startswith('http'):
+                href = base_url + '/' + href
+            
+            # Check against PDF patterns
+            for pattern in pdf_patterns:
+                if re.search(pattern, href, re.IGNORECASE):
+                    if href not in found_files['pdfs']:
+                        found_files['pdfs'].append(href)
+                        logger.info(f"Found PDF: {href}")
+            
+            # Check against Excel patterns
+            for pattern in excel_patterns:
+                if re.search(pattern, href, re.IGNORECASE):
+                    if href not in found_files['excel']:
+                        found_files['excel'].append(href)
+                        logger.info(f"Found Excel: {href}")
+        
+        return found_files
+        
+    except Exception as e:
+        logger.error(f"Error scanning tax sale page {tax_sale_page_url}: {e}")
+        return {'pdfs': [], 'excel': []}
+
 def rescan_halifax_property(assessment_number: str) -> Dict:
     """Rescan a specific Halifax property by assessment number"""
     try:
