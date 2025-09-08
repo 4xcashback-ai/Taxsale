@@ -41,6 +41,98 @@ def parse_multiple_pids(pid_string: str) -> Tuple[str, List[str], int]:
     
     return pid_string, [], 1
 
+def extract_auction_info_from_webpage(webpage_url: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Extract auction date and type from Halifax tax sale webpage
+    Returns: (sale_date, auction_type)
+    """
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        import re
+        from datetime import datetime
+        
+        logger.info(f"Extracting auction info from webpage: {webpage_url}")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(webpage_url, headers=headers, timeout=30)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        page_text = soup.get_text().lower()
+        
+        logger.info(f"Webpage text length: {len(page_text)} characters")
+        
+        # Extract auction type from webpage content
+        auction_type = "Public Auction"  # Default
+        
+        if 'sold by tender' in page_text or 'public tender' in page_text:
+            auction_type = "Public Tender Auction"
+            logger.info("Found 'sold by tender' - setting auction type to Public Tender Auction")
+        elif 'sold by auction' in page_text or 'public auction' in page_text:
+            auction_type = "Public Auction" 
+            logger.info("Found 'sold by auction' - setting auction type to Public Auction")
+        else:
+            logger.info("No specific auction type found on webpage, using default: Public Auction")
+        
+        # Try to extract sale date from webpage content
+        sale_date = None
+        
+        # Look for various date patterns on the webpage
+        date_patterns = [
+            r'sale date[:\s]+([a-z]+ \d{1,2},? \d{4})',  # "Sale Date: September 16, 2025" 
+            r'tender date[:\s]+([a-z]+ \d{1,2},? \d{4})',  # "Tender Date: September 16, 2025"
+            r'auction date[:\s]+([a-z]+ \d{1,2},? \d{4})',  # "Auction Date: September 16, 2025"
+            r'([a-z]+ \d{1,2},? \d{4})',  # General "Month DD, YYYY" pattern
+            r'(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})',  # MM/DD/YYYY or MM-DD-YYYY format
+        ]
+        
+        for pattern in date_patterns:
+            matches = re.findall(pattern, page_text)
+            if matches:
+                for match in matches:
+                    try:
+                        # Try to parse the date
+                        if '/' in match or '-' in match:
+                            # Handle MM/DD/YYYY format
+                            parsed_date = datetime.strptime(match, '%m/%d/%Y' if '/' in match else '%m-%d-%Y')
+                        else:
+                            # Handle "Month DD, YYYY" format
+                            clean_match = re.sub(r'[^\w\s,]', '', match).strip()
+                            for fmt in ['%B %d, %Y', '%b %d, %Y', '%B %d %Y', '%b %d %Y']:
+                                try:
+                                    parsed_date = datetime.strptime(clean_match.title(), fmt)
+                                    break
+                                except ValueError:
+                                    continue
+                            else:
+                                continue  # Skip if no format worked
+                        
+                        # Only accept future dates (tax sales are upcoming events)
+                        if parsed_date.date() >= datetime.now().date():
+                            sale_date = parsed_date.strftime('%Y-%m-%d')
+                            logger.info(f"Extracted sale date from webpage: {sale_date}")
+                            break
+                            
+                    except (ValueError, AttributeError):
+                        continue
+                        
+                if sale_date:
+                    break
+        
+        if not sale_date:
+            logger.info("No sale date found on webpage")
+        
+        logger.info(f"Final auction info from webpage: Date={sale_date}, Type={auction_type}")
+        return sale_date, auction_type
+        
+    except Exception as e:
+        logger.error(f"Error extracting auction info from webpage: {e}")
+        return None, "Public Auction"
+
 def extract_auction_info_from_pdf_url(pdf_url: str) -> Tuple[Optional[str], Optional[str]]:
     """
     Extract auction date and type from PDF URL and filename
