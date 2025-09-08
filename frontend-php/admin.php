@@ -274,6 +274,106 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             </div>
         </div>
 
+        <!-- Missing PID Management -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Missing PID Management</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Properties without PID numbers cannot generate boundary thumbnails:</p>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <button id="load-missing-pids-btn" class="btn btn-warning me-2">
+                                <i class="fas fa-search"></i> Show Missing PIDs
+                            </button>
+                            <div id="missing-pids-status" class="ms-3">
+                                <span class="badge bg-secondary">Ready</span>
+                            </div>
+                        </div>
+                        
+                        <div id="missing-pids-container" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="missing-pids-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Assessment #</th>
+                                            <th>Owner</th>
+                                            <th>Address</th>
+                                            <th>Property Type</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="missing-pids-tbody">
+                                        <!-- Data loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scraper Testing Tools -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning">
+                        <h4 class="text-dark">🧪 Scraper Testing Tools</h4>
+                        <small class="text-dark">For development and testing only</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> These tools modify live data. Use with caution!
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Recent Scraping Data</h5>
+                                <p>Remove recently scraped properties to test scraper improvements:</p>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Remove properties scraped in last:</label>
+                                    <select id="scraper-reset-timeframe" class="form-select">
+                                        <option value="1">1 hour</option>
+                                        <option value="6">6 hours</option>
+                                        <option value="24" selected>24 hours</option>
+                                        <option value="72">3 days</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="reset-recent-scraping-btn" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Reset Recent Scraping
+                                </button>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Scraper Status</h5>
+                                <div id="scraper-test-stats" class="row text-center">
+                                    <div class="col-6">
+                                        <div class="fw-bold text-info fs-5" id="recent-properties">-</div>
+                                        <div class="text-muted">Recent Properties</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="fw-bold text-warning fs-5" id="last-scrape-time">-</div>
+                                        <div class="text-muted">Last Scrape</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <button id="refresh-scraper-stats-btn" class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-refresh"></i> Refresh Stats
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- System Update Controls -->
         <div class="row mb-4">
             <div class="col-md-12">
