@@ -10,12 +10,83 @@ import io
 import subprocess
 from datetime import datetime
 from bs4 import BeautifulSoup
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 import logging
 import pandas as pd
 from mysql_config import mysql_db
 
 logger = logging.getLogger(__name__)
+
+def parse_multiple_pids(pid_string: str) -> Tuple[str, List[str], int]:
+    """
+    Parse PID string that might contain multiple PIDs
+    Returns: (primary_pid, secondary_pids_list, total_count)
+    """
+    if not pid_string or pid_string.strip() in ['', 'N/A', 'None']:
+        return None, [], 0
+    
+    # Clean the PID string
+    pid_string = str(pid_string).strip()
+    
+    # Check for multiple PIDs (comma or semicolon separated)
+    if ',' in pid_string or ';' in pid_string:
+        # Split by comma or semicolon
+        pids = re.split(r'[,;]', pid_string)
+        pids = [pid.strip() for pid in pids if pid.strip()]
+        
+        if len(pids) > 1:
+            return pids[0], pids[1:], len(pids)
+        elif len(pids) == 1:
+            return pids[0], [], 1
+    
+    return pid_string, [], 1
+
+def detect_property_type(description: str, pid_info: str = '') -> str:
+    """
+    Detect property type based on description and PID information
+    Returns: 'land', 'mobile_home_only', 'building', 'mixed'
+    """
+    if not description:
+        return 'land'
+    
+    description_lower = description.lower()
+    pid_info_lower = (pid_info or '').lower()
+    
+    # Check for mobile home only
+    mobile_indicators = [
+        'mobile home only',
+        'mobile only',
+        'trailer only',
+        'manufactured home only'
+    ]
+    
+    if any(indicator in description_lower for indicator in mobile_indicators):
+        return 'mobile_home_only'
+    
+    # Check for building/structure indicators
+    building_indicators = [
+        'building',
+        'house',
+        'residence',
+        'commercial',
+        'structure'
+    ]
+    
+    if any(indicator in description_lower for indicator in building_indicators):
+        return 'building'
+    
+    # Check for mixed land indicators
+    mixed_indicators = [
+        'land and building',
+        'property and building',
+        'lot and building'
+    ]
+    
+    if any(indicator in description_lower for indicator in mixed_indicators):
+        return 'mixed'
+    
+    # Default to land
+    return 'land'
 
 def run_post_scraping_tasks():
     """Run post-scraping tasks like thumbnail generation"""
