@@ -606,15 +606,27 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label">
-                                    <i class="fas fa-map-marker-alt me-2 text-info"></i>Municipality
+                                    <i class="fas fa-id-card me-2 text-info"></i>AAN
                                 </div>
-                                <div class="detail-value"><?php echo htmlspecialchars($property['municipality']); ?></div>
+                                <div class="detail-value"><?php echo htmlspecialchars($property['assessment_number']); ?></div>
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label">
-                                    <i class="fas fa-dollar-sign me-2 text-success"></i>Total Taxes
+                                    <i class="fas fa-map me-2 text-warning"></i>PID
                                 </div>
-                                <div class="detail-value tax-amount">$<?php echo number_format($property['total_taxes'], 2); ?></div>
+                                <div class="detail-value"><?php echo htmlspecialchars($property['pid_number'] ?? 'N/A'); ?></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">
+                                    <i class="fas fa-gavel me-2 text-success"></i>Min Bid
+                                </div>
+                                <div class="detail-value tax-amount">$<?php echo number_format($property['opening_bid'] ?? $property['total_taxes'], 2); ?></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">
+                                    <i class="fas fa-calendar me-2 text-danger"></i>Sale Date
+                                </div>
+                                <div class="detail-value"><?php echo htmlspecialchars($property['sale_date'] ?? 'TBD'); ?></div>
                             </div>
                             <div class="mt-3">
                                 <a href="property.php?id=<?php echo $property['assessment_number']; ?>" 
