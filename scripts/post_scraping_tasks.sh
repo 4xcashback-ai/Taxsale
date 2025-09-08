@@ -19,9 +19,28 @@ cd /var/www/tax-sale-compass || {
     exit 1
 }
 
-# 1. Generate thumbnails for new properties
-log "Step 1: Generating thumbnails for new properties..."
-php "$SCRIPT_DIR/batch_thumbnail_generator.php" >> "$LOG_FILE" 2>&1
+# 1. Generate thumbnails for new properties only (properties without thumbnail_path)
+log "Step 1: Generating thumbnails for newly scraped properties only..."
+
+# Use PHP to generate thumbnails only for properties that don't have thumbnails yet
+php << 'EOF' >> "$LOG_FILE" 2>&1
+<?php
+require_once __DIR__ . '/batch_thumbnail_generator.php';
+
+echo "Generating thumbnails for newly scraped properties only...\n";
+
+try {
+    $generator = new BatchThumbnailGenerator();
+    
+    // Only generate for properties that don't have thumbnails yet
+    $generator->generateMissingThumbnails();
+    
+    echo "✅ Thumbnail generation for new properties completed\n";
+} catch (Exception $e) {
+    echo "❌ Error: " . $e->getMessage() . "\n";
+}
+?>
+EOF
 
 if [ $? -eq 0 ]; then
     log "✅ Thumbnail generation completed successfully"
