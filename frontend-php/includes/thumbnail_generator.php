@@ -337,6 +337,223 @@ class ThumbnailGenerator {
         return $simplified;
     }
     
+    public function getMobileHomeThumbnail($property) {
+        $assessment_number = $property['assessment_number'];
+        $address = $property['civic_address'] ?? '';
+        
+        // Try to get coordinates for mobile home
+        $latitude = $property['latitude'] ?? null;
+        $longitude = $property['longitude'] ?? null;
+        
+        // If no coordinates, try to geocode the address
+        if (!$latitude || !$longitude) {
+            $coordinates = $this->geocodeMobileHomeAddress($address);
+            if ($coordinates) {
+                $latitude = $coordinates['lat'];
+                $longitude = $coordinates['lng'];
+            }
+        }
+        
+        // If still no coordinates, return mobile home placeholder
+        if (!$latitude || !$longitude) {
+            return $this->generateMobileHomePlaceholder($property);
+        }
+        
+        // Generate mobile home thumbnail with special styling
+        $filename = "{$assessment_number}_mobile_home.png";
+        $thumbnail_file = $this->thumbnail_dir . $filename;
+        
+        // Check if file already exists
+        if (file_exists($thumbnail_file)) {
+            return "/assets/thumbnails/" . $filename;
+        }
+        
+        try {
+            // Build Google Maps Static API URL for mobile home
+            $params = [
+                'center' => "{$latitude},{$longitude}",
+                'zoom' => '16', // Closer zoom for mobile home parks
+                'size' => '300x200',
+                'format' => 'png',
+                'maptype' => 'hybrid', // Hybrid view shows more detail for mobile home parks
+                'key' => $this->google_api_key
+            ];
+            
+            // Add mobile home marker
+            $params['markers'] = "color:orange|label:M|{$latitude},{$longitude}";
+            
+            $url = $this->base_url . '?' . http_build_query($params);
+            
+            error_log("Generating mobile home thumbnail: {$url}");
+            
+            // Download the image
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 30,
+                    'user_agent' => 'Mozilla/5.0 (compatible; PHP ThumbnailGenerator)'
+                ]
+            ]);
+            
+            $image_data = file_get_contents($url, false, $context);
+            
+            if (!$image_data) {
+                error_log("Failed to download mobile home thumbnail from Google Maps");
+                return $this->generateMobileHomePlaceholder($property);
+            }
+            
+            // Add mobile home overlay/badge
+            $image_data = $this->addMobileHomeBadge($image_data);
+            
+            if (file_put_contents($thumbnail_file, $image_data)) {
+                error_log("Mobile home thumbnail saved: {$thumbnail_file}");
+                return "/assets/thumbnails/" . $filename;
+            } else {
+                error_log("Failed to save mobile home thumbnail: {$thumbnail_file}");
+                return $this->generateMobileHomePlaceholder($property);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error generating mobile home thumbnail: " . $e->getMessage());
+            return $this->generateMobileHomePlaceholder($property);
+        }
+    }
+    
+    private function geocodeMobileHomeAddress($address) {
+        if (empty($address)) {
+            return null;
+        }
+        
+        try {
+            // Clean up address for geocoding
+            $address_clean = trim($address);
+            
+            // Extract trailer park name
+            $park_patterns = [
+                '/(.+?trailer park)/i',
+                '/(.+?mobile park)/i',
+                '/(.+?rv park)/i',
+                '/(.+?mobile home park)/i'
+            ];
+            
+            $search_addresses = [];
+            
+            foreach ($park_patterns as $pattern) {
+                if (preg_match($pattern, $address_clean, $matches)) {
+                    $park_name = trim($matches[1]);
+                    $search_addresses[] = "{$park_name}, Nova Scotia, Canada";
+                    break;
+                }
+            }
+            
+            // Add full address as fallback
+            $search_addresses[] = "{$address_clean}, Nova Scotia, Canada";
+            
+            // Use Google Geocoding API
+            foreach ($search_addresses as $search_address) {
+                $geocode_url = "https://maps.googleapis.com/maps/api/geocode/json?" . http_build_query([
+                    'address' => $search_address,
+                    'key' => $this->google_api_key
+                ]);
+                
+                $geocode_response = file_get_contents($geocode_url);
+                if ($geocode_response) {
+                    $geocode_data = json_decode($geocode_response, true);
+                    
+                    if ($geocode_data['status'] === 'OK' && !empty($geocode_data['results'])) {
+                        $location = $geocode_data['results'][0]['geometry']['location'];
+                        error_log("Geocoded mobile home address '{$search_address}': {$location['lat']}, {$location['lng']}");
+                        return ['lat' => $location['lat'], 'lng' => $location['lng']];
+                    }
+                }
+            }
+            
+            // Default Nova Scotia coordinates if geocoding fails
+            error_log("Geocoding failed for mobile home address: {$address}");
+            return ['lat' => 44.6820, 'lng' => -63.7443];
+            
+        } catch (Exception $e) {
+            error_log("Error geocoding mobile home address: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    private function addMobileHomeBadge($image_data) {
+        try {
+            // Create image from data
+            $image = imagecreatefromstring($image_data);
+            if (!$image) {
+                return $image_data; // Return original if processing fails
+            }
+            
+            // Add "Mobile Home" badge in bottom right corner
+            $badge_color = imagecolorallocate($image, 255, 140, 0); // Orange
+            $text_color = imagecolorallocate($image, 255, 255, 255); // White
+            $border_color = imagecolorallocate($image, 0, 0, 0); // Black
+            
+            // Badge dimensions
+            $badge_width = 80;
+            $badge_height = 20;
+            $image_width = imagesx($image);
+            $image_height = imagesy($image);
+            
+            $badge_x = $image_width - $badge_width - 5;
+            $badge_y = $image_height - $badge_height - 5;
+            
+            // Draw badge background
+            imagefilledrectangle($image, $badge_x, $badge_y, $badge_x + $badge_width, $badge_y + $badge_height, $badge_color);
+            imagerectangle($image, $badge_x, $badge_y, $badge_x + $badge_width, $badge_y + $badge_height, $border_color);
+            
+            // Add text
+            $font_size = 2;
+            $text = "MOBILE HOME";
+            $text_width = imagefontwidth($font_size) * strlen($text);
+            $text_x = $badge_x + ($badge_width - $text_width) / 2;
+            $text_y = $badge_y + ($badge_height - imagefontheight($font_size)) / 2;
+            
+            imagestring($image, $font_size, $text_x, $text_y, $text, $text_color);
+            
+            // Convert back to PNG data
+            ob_start();
+            imagepng($image);
+            $modified_image_data = ob_get_contents();
+            ob_end_clean();
+            
+            imagedestroy($image);
+            
+            return $modified_image_data;
+            
+        } catch (Exception $e) {
+            error_log("Error adding mobile home badge: " . $e->getMessage());
+            return $image_data; // Return original if processing fails
+        }
+    }
+    
+    private function generateMobileHomePlaceholder($property) {
+        // Generate SVG placeholder for mobile homes
+        $assessment_number = $property['assessment_number'] ?? 'Unknown';
+        $address = $property['civic_address'] ?? 'Mobile Home Property';
+        
+        // Truncate address if too long
+        if (strlen($address) > 30) {
+            $address = substr($address, 0, 27) . '...';
+        }
+        
+        $svg = '
+            <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="300" height="200" fill="#fff3cd" stroke="#ffc107" stroke-width="2"/>
+                <rect x="50" y="80" width="200" height="40" fill="#ffc107" rx="5"/>
+                <text x="150" y="60" font-family="Arial" font-size="12" fill="#856404" text-anchor="middle" font-weight="bold">MOBILE HOME</text>
+                <text x="150" y="105" font-family="Arial" font-size="10" fill="#ffffff" text-anchor="middle">' . htmlspecialchars($assessment_number) . '</text>
+                <text x="150" y="140" font-family="Arial" font-size="8" fill="#856404" text-anchor="middle">' . htmlspecialchars($address) . '</text>
+                <text x="150" y="155" font-family="Arial" font-size="8" fill="#856404" text-anchor="middle">Location coordinates needed</text>
+                <circle cx="75" cy="100" r="8" fill="#ffffff" opacity="0.8"/>
+                <text x="75" y="105" font-family="Arial" font-size="10" fill="#ffc107" text-anchor="middle">🏠</text>
+            </svg>
+        ';
+        
+        return 'data:image/svg+xml;base64,' . base64encode($svg);
+    }
+
     public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
         error_log("ThumbnailGenerator: Generating thumbnail for {$assessment_number}");
         
