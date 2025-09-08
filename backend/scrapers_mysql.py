@@ -371,7 +371,7 @@ class TaxSaleScraper:
                             logger.info(f"Extracted text length: {len(all_text)} characters")
                             logger.info(f"Text sample: {all_text[:500]}...")
                             
-                            properties = self._parse_halifax_pdf_text(all_text)
+                            properties = self._parse_halifax_pdf_text(all_text, final_sale_date, final_auction_type)
                             extraction_methods.append(f"Text parsing: {len(properties)} properties")
                             
                     except Exception as e:
