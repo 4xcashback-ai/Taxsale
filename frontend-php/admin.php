@@ -398,6 +398,89 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             </div>
         </div>
 
+        <!-- System Debug Panel -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h4>🔍 System Debug & Monitoring</h4>
+                        <small>Real-time server logs and system status</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- System Status -->
+                            <div class="col-md-4">
+                                <h5>System Status</h5>
+                                <div id="system-status-container">
+                                    <div id="system-status" class="mb-3">
+                                        <div class="text-muted">Loading...</div>
+                                    </div>
+                                    <button id="refresh-status-btn" class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-sync"></i> Refresh Status
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Log Controls -->
+                            <div class="col-md-4">
+                                <h5>Server Logs</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Log Level:</label>
+                                    <select id="log-level" class="form-select form-select-sm">
+                                        <option value="all">All Logs</option>
+                                        <option value="error">Errors Only</option>
+                                        <option value="warning">Warnings</option>
+                                        <option value="info">Info</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Lines:</label>
+                                    <select id="log-lines" class="form-select form-select-sm">
+                                        <option value="25">Last 25</option>
+                                        <option value="50" selected>Last 50</option>
+                                        <option value="100">Last 100</option>
+                                        <option value="200">Last 200</option>
+                                    </select>
+                                </div>
+                                <button id="load-logs-btn" class="btn btn-info btn-sm">
+                                    <i class="fas fa-file-alt"></i> Load Logs
+                                </button>
+                                <button id="auto-refresh-logs-btn" class="btn btn-outline-secondary btn-sm" data-auto="false">
+                                    <i class="fas fa-play"></i> Auto Refresh
+                                </button>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <div class="col-md-4">
+                                <h5>Quick Actions</h5>
+                                <div class="d-grid gap-2">
+                                    <button id="restart-backend-btn" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-redo"></i> Restart Backend
+                                    </button>
+                                    <button id="clear-logs-btn" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Clear Log Display
+                                    </button>
+                                    <button id="download-logs-btn" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download"></i> Download Logs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Log Display -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <h5>Recent Server Logs</h5>
+                                <div id="logs-container" class="border rounded p-3 bg-dark text-light" style="height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.85em;">
+                                    <div class="text-muted">Click "Load Logs" to view recent server activity...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Admin Configuration Panel -->
         <div class="row mb-4">
             <div class="col-md-12">
