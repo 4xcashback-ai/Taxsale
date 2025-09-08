@@ -7,6 +7,9 @@ from mysql.connector import Error
 from typing import Optional, Dict, List
 import json
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MySQLManager:
     def __init__(self):
