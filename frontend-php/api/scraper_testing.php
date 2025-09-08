@@ -104,6 +104,21 @@ try {
             throw new Exception('Failed to remove recent properties');
         }
         
+    } elseif ($action === 'get_municipalities') {
+        // Get list of municipalities that have properties
+        $stmt = $db->query("
+            SELECT DISTINCT municipality 
+            FROM properties 
+            WHERE municipality IS NOT NULL AND municipality != ''
+            ORDER BY municipality
+        ");
+        $municipalities = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        echo json_encode([
+            'status' => 'success',
+            'municipalities' => $municipalities
+        ]);
+        
     } elseif ($action === 'reset_specific_property') {
         $assessment_number = $_POST['assessment_number'] ?? '';
         
