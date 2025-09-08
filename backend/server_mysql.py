@@ -360,6 +360,175 @@ async def test_scraper_config(municipality: str, current_user: dict = Depends(ge
         logger.error(f"Error testing scraper config for {municipality}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/admin/logs")
+async def get_recent_logs(current_user: dict = Depends(get_current_user_optional), lines: int = 50, level: str = "all"):
+    """Get recent application logs for debugging"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        import subprocess
+        logs = []
+        
+        # Get systemd logs for the backend service
+        try:
+            cmd = ["journalctl", "-u", "tax-sale-backend", "--lines", str(lines), "--no-pager", "-o", "json"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    if line.strip():
+                        try:
+                            import json as json_lib
+                            log_entry = json_lib.loads(line)
+                            
+                            # Filter by log level if specified
+                            message = log_entry.get('MESSAGE', '')
+                            if level != "all":
+                                if level == "error" and not any(x in message.lower() for x in ['error', 'exception', 'failed', 'traceback']):
+                                    continue
+                                elif level == "warning" and not any(x in message.lower() for x in ['warning', 'warn']):
+                                    continue
+                                elif level == "info" and any(x in message.lower() for x in ['error', 'exception', 'failed', 'warning']):
+                                    continue
+                            
+                            logs.append({
+                                "timestamp": log_entry.get('__REALTIME_TIMESTAMP', ''),
+                                "message": message,
+                                "priority": log_entry.get('PRIORITY', '6'),
+                                "service": "tax-sale-backend"
+                            })
+                        except json_lib.JSONDecodeError:
+                            continue
+        except subprocess.TimeoutExpired:
+            logs.append({
+                "timestamp": str(int(datetime.now().timestamp() * 1000000)),
+                "message": "Log retrieval timeout",
+                "priority": "4",
+                "service": "system"
+            })
+        except Exception as e:
+            logs.append({
+                "timestamp": str(int(datetime.now().timestamp() * 1000000)),
+                "message": f"Error retrieving logs: {str(e)}",
+                "priority": "3",
+                "service": "system"
+            })
+        
+        # Also get Python application logs if available
+        try:
+            # Check for application log file
+            import os
+            app_log_path = "/var/www/tax-sale-compass/backend/backend.log"
+            if os.path.exists(app_log_path):
+                with open(app_log_path, 'r') as f:
+                    app_lines = f.readlines()[-lines//2:]  # Get half from app log
+                    
+                for line in reversed(app_lines):
+                    if line.strip():
+                        logs.append({
+                            "timestamp": str(int(datetime.now().timestamp() * 1000000)),
+                            "message": line.strip(),
+                            "priority": "6",
+                            "service": "application"
+                        })
+        except Exception:
+            pass  # App log is optional
+        
+        # Sort by timestamp (most recent first)
+        logs.sort(key=lambda x: int(x.get('timestamp', '0')), reverse=True)
+        
+        return {
+            "success": True,
+            "logs": logs[:lines],
+            "total_logs": len(logs),
+            "filter": level
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/system-status")
+async def get_system_status(current_user: dict = Depends(get_current_user_optional)):
+    """Get system status information for debugging"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        import subprocess
+        import psutil
+        
+        status = {
+            "backend_service": "unknown",
+            "database_connection": "unknown",
+            "memory_usage": {},
+            "disk_usage": {},
+            "process_info": {}
+        }
+        
+        # Check backend service status
+        try:
+            result = subprocess.run(["systemctl", "is-active", "tax-sale-backend"], 
+                                    capture_output=True, text=True, timeout=5)
+            status["backend_service"] = result.stdout.strip()
+        except:
+            status["backend_service"] = "check_failed"
+        
+        # Check database connection
+        try:
+            # Test database connection
+            test_connection = mysql_db.get_municipalities()
+            status["database_connection"] = "connected" if test_connection else "disconnected"
+        except Exception as e:
+            status["database_connection"] = f"error: {str(e)[:100]}"
+        
+        # Get memory usage
+        try:
+            memory = psutil.virtual_memory()
+            status["memory_usage"] = {
+                "total": memory.total,
+                "available": memory.available,
+                "percent": memory.percent,
+                "used": memory.used
+            }
+        except:
+            status["memory_usage"] = {"error": "unavailable"}
+        
+        # Get disk usage
+        try:
+            disk = psutil.disk_usage('/')
+            status["disk_usage"] = {
+                "total": disk.total,
+                "used": disk.used,
+                "free": disk.free,
+                "percent": (disk.used / disk.total) * 100
+            }
+        except:
+            status["disk_usage"] = {"error": "unavailable"}
+        
+        # Get process info
+        try:
+            current_process = psutil.Process()
+            status["process_info"] = {
+                "pid": current_process.pid,
+                "cpu_percent": current_process.cpu_percent(),
+                "memory_percent": current_process.memory_percent(),
+                "create_time": current_process.create_time()
+            }
+        except:
+            status["process_info"] = {"error": "unavailable"}
+        
+        return {
+            "success": True,
+            "status": status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting system status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/admin/rescan-property")
 async def rescan_specific_property(request: Request, current_user: dict = Depends(get_current_user_optional)):
     """Rescan a specific property by assessment number"""
