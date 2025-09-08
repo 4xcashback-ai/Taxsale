@@ -1150,6 +1150,17 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                     const stats = data.stats;
                     document.getElementById('recent-properties').textContent = stats.last_24_hours;
                     document.getElementById('last-scrape-time').textContent = stats.last_scrape_relative;
+                    
+                    // Update municipality breakdown
+                    const breakdownDiv = document.getElementById('municipality-breakdown');
+                    if (data.municipality_breakdown && data.municipality_breakdown.length > 0) {
+                        const breakdown = data.municipality_breakdown
+                            .map(item => `${item.municipality}: ${item.count}`)
+                            .join(' • ');
+                        breakdownDiv.innerHTML = breakdown;
+                    } else {
+                        breakdownDiv.innerHTML = 'No recent properties';
+                    }
                 }
             } catch (error) {
                 console.error('Failed to update scraper stats:', error);
