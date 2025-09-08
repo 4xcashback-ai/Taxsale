@@ -328,27 +328,53 @@ class ThumbnailGenerator {
     }
     
     private function simplifyPathConservative($points, $maxPoints) {
-        // Very conservative simplification - only remove points if absolutely necessary
+        // Very conservative simplification that tries to preserve important corners
         if (count($points) <= $maxPoints) {
             return $points;
         }
         
-        // Keep every nth point, but always keep first, last, and try to preserve shape
         $simplified = [];
-        $step = max(2, floor(count($points) / $maxPoints));
+        $totalPoints = count($points);
         
         // Always keep first point
         $simplified[] = $points[0];
         
-        // Take every $step points
-        for ($i = $step; $i < count($points); $i += $step) {
-            $simplified[] = $points[$i];
+        // For triangular/polygonal shapes, try to keep points that are evenly distributed
+        // but also preserve potential corner points
+        $interval = max(1, floor($totalPoints / ($maxPoints - 2)));
+        
+        // Keep every interval point, but also check for potential corners
+        for ($i = 1; $i < $totalPoints - 1; $i++) {
+            // Keep points at regular intervals
+            if ($i % $interval === 0) {
+                $simplified[] = $points[$i];
+            }
+            // Also keep some intermediate points that might be corners
+            elseif ($maxPoints > 25 && $i % max(1, floor($interval / 2)) === 0) {
+                $simplified[] = $points[$i];
+            }
         }
         
-        // Always keep last point if it's not the same as first
-        $lastPoint = $points[count($points) - 1];
+        // Always keep last point if different from first
+        $lastPoint = $points[$totalPoints - 1];
         if ($lastPoint !== $points[0] && end($simplified) !== $lastPoint) {
             $simplified[] = $lastPoint;
+        }
+        
+        // If still too many, do a final reduction
+        if (count($simplified) > $maxPoints) {
+            $finalReduced = [$simplified[0]];
+            $step = max(1, floor(count($simplified) / ($maxPoints - 2)));
+            
+            for ($i = $step; $i < count($simplified) - 1; $i += $step) {
+                $finalReduced[] = $simplified[$i];
+            }
+            
+            if (end($simplified) !== $simplified[0]) {
+                $finalReduced[] = end($simplified);
+            }
+            
+            return $finalReduced;
         }
         
         return $simplified;
