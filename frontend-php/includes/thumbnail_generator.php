@@ -309,6 +309,31 @@ class ThumbnailGenerator {
         return null; // Fall back to regular thumbnail generation
     }
     
+    private function simplifyPath($points, $maxPoints) {
+        // If we're already under the limit, return as-is
+        if (count($points) <= $maxPoints) {
+            return $points;
+        }
+        
+        // Keep first and last points, then select important points in between
+        $simplified = [$points[0]]; // Always keep first point
+        
+        // Calculate step size to get approximately the right number of points
+        $step = max(1, floor(count($points) / ($maxPoints - 2)));
+        
+        // Add points at regular intervals, but ensure we get corner points
+        for ($i = $step; $i < count($points) - 1; $i += $step) {
+            $simplified[] = $points[$i];
+        }
+        
+        // Always keep the last point if it's different from first
+        if (end($points) !== $points[0]) {
+            $simplified[] = end($points);
+        }
+        
+        return $simplified;
+    }
+    
     public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
         error_log("ThumbnailGenerator: Generating thumbnail for {$assessment_number}");
         
