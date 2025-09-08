@@ -41,6 +41,150 @@ def parse_multiple_pids(pid_string: str) -> Tuple[str, List[str], int]:
     
     return pid_string, [], 1
 
+def extract_auction_info_from_pdf_url(pdf_url: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Extract auction date and type from PDF URL and filename
+    Returns: (sale_date, auction_type)
+    """
+    try:
+        from urllib.parse import urlparse
+        from datetime import datetime
+        import re
+        
+        # Parse filename from URL
+        parsed_url = urlparse(pdf_url)
+        filename = parsed_url.path.split('/')[-1]
+        
+        logger.info(f"Extracting auction info from filename: {filename}")
+        
+        # Extract date from filename patterns like:
+        # sept16.2025newspaper.website-sept3.25.pdf
+        # Format appears to be: [month][day].[year]...
+        
+        sale_date = None
+        auction_type = "Public Auction"  # Default
+        
+        # Try to extract date from filename
+        date_patterns = [
+            r'sept(\d{1,2})\.(\d{4})',  # sept16.2025
+            r'([a-z]{3,4})(\d{1,2})\.(\d{4})',  # general month pattern
+            r'(\d{1,2})-(\d{1,2})-(\d{4})',  # DD-MM-YYYY
+            r'(\d{4})-(\d{1,2})-(\d{1,2})',  # YYYY-MM-DD
+        ]
+        
+        for pattern in date_patterns:
+            match = re.search(pattern, filename.lower())
+            if match:
+                if 'sept' in pattern:
+                    # Handle September specifically
+                    day = int(match.group(1))
+                    year = int(match.group(2))
+                    month = 9  # September
+                    
+                    try:
+                        sale_date = datetime(year, month, day).strftime('%Y-%m-%d')
+                        logger.info(f"Extracted sale date from filename: {sale_date}")
+                        break
+                    except ValueError:
+                        continue
+                        
+                # Add more date parsing logic for other months as needed
+        
+        # Check filename for auction type indicators
+        filename_lower = filename.lower()
+        if 'tender' in filename_lower:
+            auction_type = "Public Tender Auction"
+        elif 'auction' in filename_lower:
+            auction_type = "Public Auction"
+            
+        logger.info(f"Extracted auction info: Date={sale_date}, Type={auction_type}")
+        return sale_date, auction_type
+        
+    except Exception as e:
+        logger.error(f"Error extracting auction info from URL: {e}")
+        return None, "Public Auction"
+
+def extract_auction_info_from_pdf_content(pdf_content: bytes) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Extract auction date and type from PDF content text
+    Returns: (sale_date, auction_type)
+    """
+    try:
+        import PyPDF2
+        import io
+        import re
+        from datetime import datetime
+        
+        # Extract text from PDF
+        pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
+        full_text = ""
+        
+        # Read first few pages to find auction info
+        max_pages = min(3, len(pdf_reader.pages))
+        for page_num in range(max_pages):
+            page = pdf_reader.pages[page_num]
+            full_text += page.extract_text() + "\n"
+        
+        logger.info(f"Extracted {len(full_text)} characters from PDF for auction info parsing")
+        
+        sale_date = None
+        auction_type = "Public Auction"  # Default
+        
+        # Look for auction type keywords
+        text_lower = full_text.lower()
+        if 'public tender' in text_lower or 'tender auction' in text_lower:
+            auction_type = "Public Tender Auction"
+        elif 'public auction' in text_lower:
+            auction_type = "Public Auction"
+            
+        # Look for date patterns in PDF text
+        date_patterns = [
+            r'sale date[:\s]+([a-z]+ \d{1,2},? \d{4})',  # "Sale Date: September 16, 2025"
+            r'auction date[:\s]+([a-z]+ \d{1,2},? \d{4})',  # "Auction Date: September 16, 2025"
+            r'([a-z]+ \d{1,2},? \d{4})',  # General "Month DD, YYYY" pattern
+            r'(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})',  # MM/DD/YYYY or MM-DD-YYYY
+        ]
+        
+        for pattern in date_patterns:
+            matches = re.findall(pattern, text_lower)
+            if matches:
+                for match in matches:
+                    try:
+                        # Try to parse the date
+                        if '/' in match or '-' in match:
+                            # Handle MM/DD/YYYY format
+                            parsed_date = datetime.strptime(match, '%m/%d/%Y' if '/' in match else '%m-%d-%Y')
+                        else:
+                            # Handle "Month DD, YYYY" format
+                            # Clean up the match
+                            clean_match = re.sub(r'[^\w\s,]', '', match).strip()
+                            for fmt in ['%B %d, %Y', '%b %d, %Y', '%B %d %Y', '%b %d %Y']:
+                                try:
+                                    parsed_date = datetime.strptime(clean_match.title(), fmt)
+                                    break
+                                except ValueError:
+                                    continue
+                            else:
+                                continue  # Skip if no format worked
+                        
+                        sale_date = parsed_date.strftime('%Y-%m-%d')
+                        logger.info(f"Extracted sale date from PDF content: {sale_date}")
+                        break
+                        
+                    except (ValueError, AttributeError):
+                        continue
+                        
+                if sale_date:
+                    break
+        
+        logger.info(f"Final auction info from PDF: Date={sale_date}, Type={auction_type}")
+        return sale_date, auction_type
+        
+    except Exception as e:
+        logger.error(f"Error extracting auction info from PDF content: {e}")
+        return None, "Public Auction"
+
+# Default property type detection from existing logic
 def detect_property_type(description: str, pid_info: str = '') -> str:
     """
     Detect property type based on description and PID information
