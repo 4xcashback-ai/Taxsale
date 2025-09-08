@@ -599,7 +599,26 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                                 <div class="detail-label">
                                     <i class="fas fa-map me-2 text-warning"></i>PID
                                 </div>
-                                <div class="detail-value"><?php echo htmlspecialchars($property['pid_number'] ?? 'N/A'); ?></div>
+                                <div class="detail-value">
+                                    <?php 
+                                    // Handle different PID scenarios
+                                    $pid_display = '';
+                                    
+                                    if (isset($property['property_type']) && $property['property_type'] === 'mobile_home_only') {
+                                        $pid_display = '<span class="badge bg-warning text-dark">Mobile Home Only</span>';
+                                    } elseif (isset($property['pid_count']) && $property['pid_count'] > 1) {
+                                        // Multiple PIDs - show primary and count
+                                        $primary = htmlspecialchars($property['primary_pid'] ?? $property['pid_number'] ?? 'N/A');
+                                        $count = intval($property['pid_count']);
+                                        $pid_display = $primary . ' <span class="badge bg-info">+' . ($count - 1) . ' more</span>';
+                                    } else {
+                                        // Single PID
+                                        $pid_display = htmlspecialchars($property['pid_number'] ?? 'N/A');
+                                    }
+                                    
+                                    echo $pid_display;
+                                    ?>
+                                </div>
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label">
