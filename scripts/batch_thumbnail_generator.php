@@ -119,6 +119,40 @@ class BatchThumbnailGenerator {
             $longitude = $property['longitude'];
             
             // Generate thumbnail (this will fetch boundary data if needed)
+            // Try to generate boundary overlay with government data
+            if ($pidNumber) {
+                $backend_url = API_BASE_URL . "/query-ns-government-parcel/{$pidNumber}";
+                $response = @file_get_contents($backend_url);
+                
+                if ($response) {
+                    $data = json_decode($response, true);
+                    if ($data && $data['found'] && isset($data['geometry'])) {
+                        $center = $data['center'];
+                        
+                        // Use the improved boundary overlay generation with triangle corner detection
+                        $thumbnailPath = $this->thumbnailGenerator->generateBoundaryOverlayThumbnail(
+                            $assessmentNumber, 
+                            $data, 
+                            $center['lat'], 
+                            $center['lon']
+                        );
+                        
+                        if ($thumbnailPath) {
+                            $this->log("Generated boundary overlay: {$thumbnailPath}");
+                            return [
+                                'success' => true,
+                                'thumbnail_path' => $thumbnailPath,
+                                'coordinates' => [
+                                    'latitude' => $center['lat'],
+                                    'longitude' => $center['lon']
+                                ]
+                            ];
+                        }
+                    }
+                }
+            }
+            
+            // Fallback to regular thumbnail generation
             $thumbnailPath = $this->thumbnailGenerator->generateThumbnail(
                 $assessmentNumber,
                 $latitude,
