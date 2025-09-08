@@ -327,57 +327,103 @@ class ThumbnailGenerator {
         return null; // Fall back to regular thumbnail generation
     }
     
-    private function simplifyPathConservative($points, $maxPoints) {
-        // Very conservative simplification that tries to preserve important corners
-        if (count($points) <= $maxPoints) {
+    private function findTriangleCorners($points) {
+        // For triangular properties, find the 3 main corner points
+        if (count($points) < 10) {
+            return $points; // Too few points to analyze
+        }
+        
+        // Convert lat,lon strings back to coordinates for analysis
+        $coords = [];
+        foreach ($points as $point) {
+            $parts = explode(',', $point);
+            if (count($parts) == 2) {
+                $coords[] = ['lat' => floatval($parts[0]), 'lon' => floatval($parts[1]), 'point' => $point];
+            }
+        }
+        
+        if (count($coords) < 10) {
             return $points;
         }
         
-        $simplified = [];
-        $totalPoints = count($points);
+        // Find 3 points that are furthest apart (triangle corners)
+        $corners = [];
         
-        // Always keep first point
-        $simplified[] = $points[0];
+        // Start with first point
+        $corners[] = $coords[0];
         
-        // For triangular/polygonal shapes, try to keep points that are evenly distributed
-        // but also preserve potential corner points
-        $interval = max(1, floor($totalPoints / ($maxPoints - 2)));
-        
-        // Keep every interval point, but also check for potential corners
-        for ($i = 1; $i < $totalPoints - 1; $i++) {
-            // Keep points at regular intervals
-            if ($i % $interval === 0) {
-                $simplified[] = $points[$i];
-            }
-            // Also keep some intermediate points that might be corners
-            elseif ($maxPoints > 25 && $i % max(1, floor($interval / 2)) === 0) {
-                $simplified[] = $points[$i];
+        // Find point furthest from first point
+        $maxDist1 = 0;
+        $corner2Index = 0;
+        for ($i = 1; $i < count($coords); $i++) {
+            $dist = $this->calculateDistance($coords[0], $coords[$i]);
+            if ($dist > $maxDist1) {
+                $maxDist1 = $dist;
+                $corner2Index = $i;
             }
         }
+        $corners[] = $coords[$corner2Index];
         
-        // Always keep last point if different from first
-        $lastPoint = $points[$totalPoints - 1];
-        if ($lastPoint !== $points[0] && end($simplified) !== $lastPoint) {
-            $simplified[] = $lastPoint;
+        // Find point furthest from the line between first two corners
+        $maxDist2 = 0;
+        $corner3Index = 0;
+        for ($i = 1; $i < count($coords); $i++) {
+            if ($i == $corner2Index) continue;
+            
+            $dist = $this->calculateDistanceFromLine($coords[$i], $corners[0], $corners[1]);
+            if ($dist > $maxDist2) {
+                $maxDist2 = $dist;
+                $corner3Index = $i;
+            }
+        }
+        $corners[] = $coords[$corner3Index];
+        
+        // Add a few points along each edge for better shape
+        $trianglePoints = [];
+        foreach ($corners as $corner) {
+            $trianglePoints[] = $corner['point'];
         }
         
-        // If still too many, do a final reduction
-        if (count($simplified) > $maxPoints) {
-            $finalReduced = [$simplified[0]];
-            $step = max(1, floor(count($simplified) / ($maxPoints - 2)));
-            
-            for ($i = $step; $i < count($simplified) - 1; $i += $step) {
-                $finalReduced[] = $simplified[$i];
-            }
-            
-            if (end($simplified) !== $simplified[0]) {
-                $finalReduced[] = end($simplified);
-            }
-            
-            return $finalReduced;
-        }
+        // Add the first point again to close the triangle
+        $trianglePoints[] = $corners[0]['point'];
         
-        return $simplified;
+        error_log("ThumbnailGenerator: Identified triangle with " . count($trianglePoints) . " key points");
+        return $trianglePoints;
+    }
+    
+    private function calculateDistance($point1, $point2) {
+        $latDiff = $point1['lat'] - $point2['lat'];
+        $lonDiff = $point1['lon'] - $point2['lon'];
+        return sqrt($latDiff * $latDiff + $lonDiff * $lonDiff);
+    }
+    
+    private function calculateDistanceFromLine($point, $lineStart, $lineEnd) {
+        // Calculate perpendicular distance from point to line
+        $A = $point['lat'] - $lineStart['lat'];
+        $B = $point['lon'] - $lineStart['lon'];
+        $C = $lineEnd['lat'] - $lineStart['lat'];
+        $D = $lineEnd['lon'] - $lineStart['lon'];
+        
+        $dot = $A * $C + $B * $D;
+        $lenSq = $C * $C + $D * $D;
+        
+        if ($lenSq == 0) return sqrt($A * $A + $B * $B);
+        
+        $param = $dot / $lenSq;
+        
+        if ($param < 0) {
+            return sqrt($A * $A + $B * $B);
+        } elseif ($param > 1) {
+            $dx = $point['lat'] - $lineEnd['lat'];
+            $dy = $point['lon'] - $lineEnd['lon'];
+            return sqrt($dx * $dx + $dy * $dy);
+        } else {
+            $projX = $lineStart['lat'] + $param * $C;
+            $projY = $lineStart['lon'] + $param * $D;
+            $dx = $point['lat'] - $projX;
+            $dy = $point['lon'] - $projY;
+            return sqrt($dx * $dx + $dy * $dy);
+        }
     }
     
     public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
