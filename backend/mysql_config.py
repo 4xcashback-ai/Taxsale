@@ -80,28 +80,32 @@ class MySQLManager:
                 connection.close()
     
     def insert_property(self, property_data: Dict) -> int:
-        """Insert or update a property record with complete tax sale data"""
+        """Insert or update a property record with complete tax sale data and multiple PID support"""
         query = """
             INSERT INTO properties (
                 assessment_number, owner_name, civic_address, parcel_description, 
-                pid_number, opening_bid, total_taxes, hst_applicable, redeemable,
-                property_type, tax_year, status, municipality, province, 
+                pid_number, primary_pid, secondary_pids, property_type, pid_count,
+                opening_bid, total_taxes, hst_applicable, redeemable,
+                tax_year, status, municipality, province, 
                 latitude, longitude, boundary_data, 
                 pvsc_assessment_value, pvsc_assessment_year,
                 created_at, updated_at
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             ON DUPLICATE KEY UPDATE
                 owner_name = VALUES(owner_name),
                 civic_address = VALUES(civic_address),
                 parcel_description = VALUES(parcel_description),
                 pid_number = VALUES(pid_number),
+                primary_pid = VALUES(primary_pid),
+                secondary_pids = VALUES(secondary_pids),
+                property_type = VALUES(property_type),
+                pid_count = VALUES(pid_count),
                 opening_bid = VALUES(opening_bid),
                 total_taxes = VALUES(total_taxes),
                 hst_applicable = VALUES(hst_applicable),
                 redeemable = VALUES(redeemable),
-                property_type = VALUES(property_type),
                 tax_year = VALUES(tax_year),
                 status = VALUES(status),
                 municipality = VALUES(municipality),
@@ -124,11 +128,14 @@ class MySQLManager:
             property_data.get('civic_address'),
             property_data.get('parcel_description'),
             property_data.get('pid_number'),
+            property_data.get('primary_pid'),
+            property_data.get('secondary_pids'),
+            property_data.get('property_type'),
+            property_data.get('pid_count', 1),
             property_data.get('opening_bid'),
             property_data.get('total_taxes'),
             property_data.get('hst_applicable', False),
             property_data.get('redeemable', True),
-            property_data.get('property_type'),
             property_data.get('tax_year'),
             property_data.get('status', 'active'),
             property_data.get('municipality'),
