@@ -272,6 +272,17 @@ class TaxSaleScraper:
             
             logger.info(f"PDF downloaded successfully: {len(pdf_response.content)} bytes")
             
+            # Extract auction information from PDF URL and content
+            logger.info("Extracting auction information...")
+            sale_date_from_url, auction_type_from_url = extract_auction_info_from_pdf_url(pdf_url)
+            sale_date_from_content, auction_type_from_content = extract_auction_info_from_pdf_content(pdf_response.content)
+            
+            # Use the best available information (prefer content over URL)
+            final_sale_date = sale_date_from_content or sale_date_from_url
+            final_auction_type = auction_type_from_content if auction_type_from_content != "Public Auction" else auction_type_from_url
+            
+            logger.info(f"Final auction info - Date: {final_sale_date}, Type: {final_auction_type}")
+            
             properties = []
             
             # Save PDF to temporary file
