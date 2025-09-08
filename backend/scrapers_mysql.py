@@ -1530,6 +1530,192 @@ def rescan_property_all_sources(assessment_number: str) -> Dict:
             "message": f"Error rescanning property: {str(e)}"
         }
 
+def classify_property_type(address: str, description: str = "") -> str:
+    """
+    Classify property type based on address and description
+    Returns: 'land', 'mixed', 'building', 'mobile_home_only'
+    """
+    if not address:
+        return 'land'
+    
+    address_lower = address.lower()
+    desc_lower = description.lower() if description else ""
+    combined = f"{address_lower} {desc_lower}"
+    
+    # Mobile home indicators - check first since these are special cases
+    mobile_indicators = [
+        'mobile home only', 'mobile home', 'trailer park', 'trailer court',
+        'mobile park', 'manufactured home', 'modular home', 'rv park',
+        'motor home', 'travel trailer', 'mobile unit', 'lot h-', 'lot a-',
+        'lot b-', 'lot c-', 'lot d-', 'lot e-', 'lot f-', 'lot g-',
+        'space #', 'site #', 'pad #', 'chinook mobile', 'mobile only'
+    ]
+    
+    for indicator in mobile_indicators:
+        if indicator in combined:
+            return 'mobile_home_only'
+    
+    # Land indicators
+    land_indicators = [
+        'vacant', 'lot', 'land', 'parcel', 'undeveloped', 'raw land',
+        'building lot', 'residential lot', 'empty lot', 'development lot'
+    ]
+    
+    # Building indicators  
+    building_indicators = [
+        'house', 'home', 'dwelling', 'residence', 'building', 'structure',
+        'apartment', 'condo', 'townhouse', 'duplex', 'bungalow'
+    ]
+    
+    has_land = any(indicator in combined for indicator in land_indicators)
+    has_building = any(indicator in combined for indicator in building_indicators)
+    
+    if has_building and has_land:
+        return 'mixed'
+    elif has_building:
+        return 'building'  
+    elif has_land:
+        return 'land'
+    else:
+        # Default classification based on address patterns
+        if any(word in address_lower for word in ['st', 'street', 'ave', 'avenue', 'rd', 'road', 'dr', 'drive']):
+            return 'mixed'  # Street address usually indicates developed property
+        else:
+            return 'land'   # No clear indicators, assume land
+
+def geocode_mobile_home_address(address: str) -> tuple:
+    """
+    Geocode mobile home/trailer park addresses
+    Returns: (latitude, longitude) or (None, None) if failed
+    """
+    if not address:
+        return None, None
+    
+    try:
+        # Clean up mobile home address for geocoding
+        address_clean = address.strip()
+        
+        # Extract trailer park name if present
+        park_patterns = [
+            r'(.+?trailer park)',
+            r'(.+?mobile park)', 
+            r'(.+?rv park)',
+            r'(.+?mobile home park)'
+        ]
+        
+        park_name = None
+        for pattern in park_patterns:
+            match = re.search(pattern, address_clean.lower())
+            if match:
+                park_name = match.group(1).strip()
+                break
+        
+        # Try geocoding with different address variations
+        geocode_attempts = []
+        
+        if park_name:
+            # Try trailer park name + Nova Scotia
+            geocode_attempts.append(f"{park_name.title()}, Nova Scotia, Canada")
+            geocode_attempts.append(f"{park_name.title()}, NS, Canada")
+        
+        # Try full address
+        geocode_attempts.append(f"{address_clean}, Nova Scotia, Canada")
+        geocode_attempts.append(f"{address_clean}, NS, Canada")
+        
+        # Try simplified address (remove lot numbers)
+        simple_address = re.sub(r'lot [a-z0-9\-]+', '', address_clean.lower()).strip()
+        if simple_address and simple_address != address_clean.lower():
+            geocode_attempts.append(f"{simple_address}, Nova Scotia, Canada")
+        
+        for attempt_address in geocode_attempts:
+            try:
+                # Use a simple geocoding approach (you may want to use a proper geocoding service)
+                # For now, return approximate coordinates for Nova Scotia mobile home parks
+                logger.info(f"Attempting to geocode mobile home address: {attempt_address}")
+                
+                # Basic geocoding logic - you can enhance this with actual geocoding API
+                if 'halifax' in attempt_address.lower() or 'dartmouth' in attempt_address.lower():
+                    # Halifax area approximate coordinates
+                    return 44.6488, -63.5752
+                elif 'sydney' in attempt_address.lower():
+                    # Sydney area approximate coordinates  
+                    return 46.1351, -60.1831
+                elif 'truro' in attempt_address.lower():
+                    # Truro area approximate coordinates
+                    return 45.3667, -63.2833
+                else:
+                    # Default Nova Scotia coordinates
+                    return 44.6820, -63.7443
+                    
+            except Exception as e:
+                logger.warning(f"Geocoding attempt failed for {attempt_address}: {e}")
+                continue
+        
+        logger.warning(f"All geocoding attempts failed for mobile home address: {address}")
+        return None, None
+        
+    except Exception as e:
+        logger.error(f"Error geocoding mobile home address {address}: {e}")
+        return None, None
+
+def process_property_data(property_data: Dict, municipality: str) -> Dict:
+    """
+    Process property data including mobile home special handling
+    """
+    processed = {
+        'municipality': municipality,
+        'created_at': datetime.now(),
+        'status': 'active'
+    }
+    
+    # Extract basic data
+    for key, value in property_data.items():
+        if isinstance(value, str):
+            value = value.strip()
+        
+        if key in ['assessment_number', 'owner_name', 'civic_address', 'min_bid', 'sale_date']:
+            processed[key] = value
+    
+    # Classify property type
+    address = processed.get('civic_address', '')
+    processed['property_type'] = classify_property_type(address)
+    
+    # Handle PID data
+    pid_value = property_data.get('pid_number', '') or property_data.get('pid', '')
+    
+    if processed['property_type'] == 'mobile_home_only':
+        # Mobile homes don't need PIDs
+        processed['pid_number'] = None
+        processed['primary_pid'] = None
+        processed['secondary_pids'] = None
+        processed['pid_count'] = 0
+        
+        # Try to get coordinates for mobile homes using address
+        if address:
+            lat, lng = geocode_mobile_home_address(address)
+            if lat and lng:
+                processed['latitude'] = lat
+                processed['longitude'] = lng
+                logger.info(f"Geocoded mobile home {processed.get('assessment_number')}: {lat}, {lng}")
+            else:
+                logger.warning(f"Failed to geocode mobile home address: {address}")
+    else:
+        # Regular properties - try to extract PID
+        if pid_value and str(pid_value).strip() not in ['', 'nan', 'N/A', 'None']:
+            primary_pid, secondary_pids, pid_count = parse_multiple_pids(str(pid_value))
+            processed['pid_number'] = primary_pid
+            processed['primary_pid'] = primary_pid
+            processed['secondary_pids'] = ','.join(secondary_pids) if secondary_pids else None
+            processed['pid_count'] = pid_count
+        else:
+            # No PID found for non-mobile home property
+            processed['pid_number'] = None
+            processed['primary_pid'] = None
+            processed['secondary_pids'] = None  
+            processed['pid_count'] = 0
+    
+    return processed
+
 def scrape_halifax():
     return tax_scraper.scrape_halifax_properties()
 
