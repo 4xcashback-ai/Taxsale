@@ -12,10 +12,7 @@ try {
     // Get properties that have PID numbers (needed for boundary data)
     $stmt = $db->query("SELECT assessment_number, pid_number, latitude, longitude, civic_address 
                         FROM properties 
-                        WHERE pid_number IS NOT NULL 
-                        AND pid_number != '' 
-                        AND pid_number != 'N/A'
-                        LIMIT 20"); // Process more properties
+                        WHERE assessment_number = '08968373'"); // Debug this specific property
     $properties = $stmt->fetchAll();
     
     echo "Found " . count($properties) . " properties with PID numbers\n\n";
