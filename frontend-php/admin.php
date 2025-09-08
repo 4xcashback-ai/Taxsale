@@ -1282,6 +1282,243 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         }
     }
     
+    // System Debug Manager
+    class SystemDebugManager {
+        constructor() {
+            this.autoRefreshInterval = null;
+            this.isAutoRefreshing = false;
+            this.initEventListeners();
+            this.loadSystemStatus();
+        }
+        
+        initEventListeners() {
+            document.getElementById('refresh-status-btn').addEventListener('click', () => {
+                this.loadSystemStatus();
+            });
+            
+            document.getElementById('load-logs-btn').addEventListener('click', () => {
+                this.loadLogs();
+            });
+            
+            document.getElementById('auto-refresh-logs-btn').addEventListener('click', (e) => {
+                this.toggleAutoRefresh(e.target);
+            });
+            
+            document.getElementById('clear-logs-btn').addEventListener('click', () => {
+                this.clearLogs();
+            });
+            
+            document.getElementById('download-logs-btn').addEventListener('click', () => {
+                this.downloadLogs();
+            });
+            
+            document.getElementById('restart-backend-btn').addEventListener('click', () => {
+                this.restartBackend();
+            });
+        }
+        
+        async loadSystemStatus() {
+            try {
+                const response = await fetch('/api/debug_status.php?action=system_status');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.displaySystemStatus(data.system_status);
+                } else {
+                    document.getElementById('system-status').innerHTML = `
+                        <div class="alert alert-danger">Failed to load system status</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to load system status:', error);
+                document.getElementById('system-status').innerHTML = `
+                    <div class="alert alert-danger">Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        displaySystemStatus(status) {
+            const container = document.getElementById('system-status');
+            
+            let html = '<div class="row small">';
+            
+            // Service status
+            const serviceColor = status.backend_service === 'active' ? 'success' : 'danger';
+            html += `
+                <div class="col-12 mb-2">
+                    <strong>Backend:</strong> 
+                    <span class="badge bg-${serviceColor}">${status.backend_service}</span>
+                </div>
+            `;
+            
+            // Database connection
+            const dbColor = status.database_connection === 'connected' ? 'success' : 'danger';
+            html += `
+                <div class="col-12 mb-2">
+                    <strong>Database:</strong> 
+                    <span class="badge bg-${dbColor}">${status.database_connection}</span>
+                </div>
+            `;
+            
+            // Memory usage
+            if (status.memory_usage && !status.memory_usage.error) {
+                const memPercent = status.memory_usage.percent;
+                const memColor = memPercent > 80 ? 'danger' : memPercent > 60 ? 'warning' : 'success';
+                html += `
+                    <div class="col-12 mb-2">
+                        <strong>Memory:</strong> 
+                        <span class="badge bg-${memColor}">${memPercent.toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+            
+            // Disk usage
+            if (status.disk_usage && !status.disk_usage.error) {
+                const diskPercent = status.disk_usage.percent;
+                const diskColor = diskPercent > 85 ? 'danger' : diskPercent > 70 ? 'warning' : 'success';
+                html += `
+                    <div class="col-12 mb-2">
+                        <strong>Disk:</strong> 
+                        <span class="badge bg-${diskColor}">${diskPercent.toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            html += `<small class="text-muted">Last updated: ${new Date().toLocaleTimeString()}</small>`;
+            
+            container.innerHTML = html;
+        }
+        
+        async loadLogs() {
+            try {
+                const level = document.getElementById('log-level').value;
+                const lines = document.getElementById('log-lines').value;
+                
+                const response = await fetch(`/api/debug_status.php?action=get_logs&level=${level}&lines=${lines}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.displayLogs(data.logs);
+                } else {
+                    this.displayError('Failed to load logs: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                this.displayError('Error loading logs: ' + error.message);
+            }
+        }
+        
+        displayLogs(logs) {
+            const container = document.getElementById('logs-container');
+            let html = '';
+            
+            logs.forEach(log => {
+                const timestamp = new Date(parseInt(log.timestamp) / 1000).toLocaleString();
+                const priority = parseInt(log.priority);
+                
+                let logClass = 'text-light';
+                if (priority <= 3) logClass = 'text-danger';      // Error
+                else if (priority === 4) logClass = 'text-warning'; // Warning
+                else if (priority === 6) logClass = 'text-info';    // Info
+                
+                html += `
+                    <div class="${logClass} mb-1">
+                        <span class="text-muted">[${timestamp}]</span>
+                        <span class="badge bg-secondary me-1">${log.service}</span>
+                        ${this.escapeHtml(log.message)}
+                    </div>
+                `;
+            });
+            
+            if (!html) {
+                html = '<div class="text-muted">No logs found</div>';
+            }
+            
+            container.innerHTML = html;
+            container.scrollTop = 0; // Scroll to top (most recent)
+        }
+        
+        displayError(message) {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = `<div class="text-danger">${this.escapeHtml(message)}</div>`;
+        }
+        
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        toggleAutoRefresh(button) {
+            if (this.isAutoRefreshing) {
+                // Stop auto refresh
+                clearInterval(this.autoRefreshInterval);
+                this.isAutoRefreshing = false;
+                button.innerHTML = '<i class="fas fa-play"></i> Auto Refresh';
+                button.className = 'btn btn-outline-secondary btn-sm';
+            } else {
+                // Start auto refresh
+                this.isAutoRefreshing = true;
+                button.innerHTML = '<i class="fas fa-pause"></i> Stop Auto';
+                button.className = 'btn btn-success btn-sm';
+                
+                // Refresh every 5 seconds
+                this.autoRefreshInterval = setInterval(() => {
+                    this.loadLogs();
+                }, 5000);
+                
+                // Load immediately
+                this.loadLogs();
+            }
+        }
+        
+        clearLogs() {
+            document.getElementById('logs-container').innerHTML = 
+                '<div class="text-muted">Logs cleared. Click "Load Logs" to refresh.</div>';
+        }
+        
+        downloadLogs() {
+            const container = document.getElementById('logs-container');
+            const logText = container.textContent;
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `server-logs-${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        async restartBackend() {
+            if (!confirm('Are you sure you want to restart the backend service? This may cause a brief interruption.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/debug_status.php?action=restart_backend', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('Backend restart initiated. Check the logs for status.');
+                    setTimeout(() => {
+                        this.loadSystemStatus();
+                        this.loadLogs();
+                    }, 3000);
+                } else {
+                    alert('Failed to restart backend: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error restarting backend: ' + error.message);
+            }
+        }
+    }
+
     // Scraper Configuration Manager
     class ScraperConfigManager {
         constructor() {
