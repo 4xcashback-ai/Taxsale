@@ -272,27 +272,43 @@ class ThumbnailGenerator {
             $url = $this->base_url . '?' . http_build_query($params);
             error_log("ThumbnailGenerator: Boundary URL length: " . strlen($url));
             
-            // If URL is too long, try with simplified path
+            // If URL is too long, try triangle corner detection first
             if (strlen($url) > 2000) {
-                error_log("ThumbnailGenerator: URL too long, trying conservative simplification");
+                error_log("ThumbnailGenerator: URL too long, trying triangle corner detection");
                 
-                // Try different simplification levels
-                $attempts = [60, 40, 25, 15]; // Try progressively smaller point counts
+                // Try to identify triangle corners
+                $triangle_points = $this->findTriangleCorners($path_points);
+                $triangle_path_string = 'color:0xff0000ff|weight:3|' . implode('|', $triangle_points);
                 
-                foreach ($attempts as $maxPoints) {
-                    $simplified_points = $this->simplifyPathConservative($path_points, $maxPoints);
-                    $test_path_string = 'color:0xff0000ff|weight:3|' . implode('|', $simplified_points);
+                $triangle_params = $params;
+                $triangle_params['path'] = $triangle_path_string;
+                $triangle_url = $this->base_url . '?' . http_build_query($triangle_params);
+                
+                error_log("ThumbnailGenerator: Triangle URL length: " . strlen($triangle_url));
+                
+                if (strlen($triangle_url) <= 2000) {
+                    $path_string = $triangle_path_string;
+                    $params['path'] = $path_string;
+                    $url = $triangle_url;
+                } else {
+                    // Fallback to progressive simplification
+                    $attempts = [60, 40, 25, 15];
                     
-                    $test_params = $params;
-                    $test_params['path'] = $test_path_string;
-                    $test_url = $this->base_url . '?' . http_build_query($test_params);
-                    
-                    if (strlen($test_url) <= 2000) {
-                        error_log("ThumbnailGenerator: Using {$maxPoints} points, URL length: " . strlen($test_url));
-                        $path_string = $test_path_string;
-                        $params['path'] = $path_string;
-                        $url = $test_url;
-                        break;
+                    foreach ($attempts as $maxPoints) {
+                        $simplified_points = $this->simplifyPathConservative($path_points, $maxPoints);
+                        $test_path_string = 'color:0xff0000ff|weight:3|' . implode('|', $simplified_points);
+                        
+                        $test_params = $params;
+                        $test_params['path'] = $test_path_string;
+                        $test_url = $this->base_url . '?' . http_build_query($test_params);
+                        
+                        if (strlen($test_url) <= 2000) {
+                            error_log("ThumbnailGenerator: Using {$maxPoints} points, URL length: " . strlen($test_url));
+                            $path_string = $test_path_string;
+                            $params['path'] = $path_string;
+                            $url = $test_url;
+                            break;
+                        }
                     }
                 }
             }
