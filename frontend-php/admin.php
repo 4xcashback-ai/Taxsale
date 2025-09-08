@@ -1529,6 +1529,43 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             window.URL.revokeObjectURL(url);
         }
         
+        async testApiEndpoints() {
+            try {
+                const container = document.getElementById('logs-container');
+                container.innerHTML = '<div class="text-info">Testing API endpoints...</div>';
+                
+                const response = await fetch('/api/debug_status.php?action=test_api');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = '<div class="text-success mb-3">🧪 API Endpoint Tests</div>';
+                    
+                    Object.entries(data.api_tests).forEach(([name, test]) => {
+                        const statusColor = test.status === 'success' ? 'text-success' : 'text-danger';
+                        html += `
+                            <div class="mb-2">
+                                <span class="${statusColor}">
+                                    ${test.status === 'success' ? '✅' : '❌'} ${name}
+                                </span>
+                                <small class="text-muted ms-2">(${test.response_time_ms}ms)</small>
+                                <br>
+                                <small class="text-muted ms-3">${test.url}</small>
+                                <br>
+                                <small class="text-muted ms-3">${test.response_preview}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `<div class="text-muted mt-3">Tested at: ${data.timestamp}</div>`;
+                    container.innerHTML = html;
+                } else {
+                    this.displayError('Failed to test API endpoints: ' + data.message);
+                }
+            } catch (error) {
+                this.displayError('Error testing API endpoints: ' + error.message);
+            }
+        }
+        
         async restartBackend() {
             if (!confirm('Are you sure you want to restart the backend service? This may cause a brief interruption.')) {
                 return;
