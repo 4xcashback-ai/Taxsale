@@ -47,14 +47,14 @@ class ThumbnailGenerator {
             }
         }
         
-        // For search page performance, return a simple placeholder instead of generating on-demand
-        // Actual generation should be done by batch process
+        // For search page performance, return a simple placeholder for properties without thumbnails
         return 'data:image/svg+xml;base64,' . base64_encode('
             <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-                <rect width="300" height="200" fill="#667eea"/>
-                <text x="150" y="90" font-family="Arial" font-size="14" fill="white" text-anchor="middle">Property Boundary</text>
-                <text x="150" y="110" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Generating...</text>
-                <text x="150" y="130" font-family="Arial" font-size="10" fill="white" text-anchor="middle">Use admin panel to generate</text>
+                <rect width="300" height="200" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+                <text x="150" y="85" font-family="Arial" font-size="14" fill="#6c757d" text-anchor="middle">Property Image</text>
+                <text x="150" y="105" font-family="Arial" font-size="14" fill="#6c757d" text-anchor="middle">Not Available</text>
+                <text x="150" y="125" font-family="Arial" font-size="14" fill="#6c757d" text-anchor="middle">At This Time</text>
+                <circle cx="150" cy="140" r="8" fill="#6c757d" opacity="0.3"/>
             </svg>
         ');
     }
