@@ -1205,6 +1205,201 @@ async def capture_all_boundaries():
         logger.error(f"Error in batch boundary capture: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/pvsc-data/{assessment_number}")
+async def get_pvsc_data(assessment_number: str):
+    """Get PVSC data for a property, fetch from API if not in database"""
+    try:
+        # First check if we have this data in our database
+        query = "SELECT * FROM pvsc_data WHERE assessment_number = %s"
+        existing_data = mysql_db.execute_query(query, [assessment_number])
+        
+        if existing_data:
+            # Return cached data if it's less than 30 days old
+            data = existing_data[0]
+            scraped_at = data.get('scraped_at')
+            if scraped_at:
+                from datetime import datetime, timedelta
+                if datetime.now() - scraped_at < timedelta(days=30):
+                    logger.info(f"Returning cached PVSC data for {assessment_number}")
+                    return data
+        
+        # If no cached data or it's stale, fetch from PVSC API
+        logger.info(f"Fetching fresh PVSC data for {assessment_number}")
+        pvsc_data = await scrape_pvsc_data(assessment_number)
+        
+        if pvsc_data:
+            # Store in database
+            await store_pvsc_data(assessment_number, pvsc_data)
+            return pvsc_data
+        else:
+            return {"error": "No PVSC data found for this assessment number"}
+            
+    except Exception as e:
+        logger.error(f"Error getting PVSC data for {assessment_number}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def scrape_pvsc_data(assessment_number: str):
+    """Scrape property data from PVSC API"""
+    try:
+        import requests
+        import json
+        
+        # PVSC API endpoint
+        api_url = f"https://webapi.pvsc.ca/Search/Property?ain={assessment_number}"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.pvsc.ca/'
+        }
+        
+        response = requests.get(api_url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if data and len(data) > 0:
+            # Extract relevant data from PVSC response
+            prop_data = data[0] if isinstance(data, list) else data
+            
+            extracted_data = {
+                'assessment_number': assessment_number,
+                'ain': prop_data.get('AIN'),
+                'civic_address': prop_data.get('CivicAddress'),
+                'legal_description': prop_data.get('LegalDescription'),
+                'pid_number': prop_data.get('PID'),
+                'latitude': prop_data.get('Latitude'),
+                'longitude': prop_data.get('Longitude'),
+                'municipal_unit': prop_data.get('MunicipalUnit'),
+                'planning_district': prop_data.get('PlanningDistrict'),
+                'assessed_value': prop_data.get('AssessedValue'),
+                'taxable_assessed_value': prop_data.get('TaxableAssessedValue'),
+                'capped_assessment_value': prop_data.get('CappedAssessmentValue'),
+                'assessment_year': prop_data.get('AssessmentYear'),
+                'property_type': prop_data.get('PropertyType'),
+                'property_use': prop_data.get('PropertyUse'),
+                'land_size': prop_data.get('LandSize'),
+                'land_size_unit': prop_data.get('LandSizeUnit'),
+                'building_size': prop_data.get('BuildingSize'),
+                'building_size_unit': prop_data.get('BuildingSizeUnit'),
+                'dwelling_type': prop_data.get('DwellingType'),
+                'year_built': prop_data.get('YearBuilt'),
+                'number_of_bedrooms': prop_data.get('Bedrooms'),
+                'number_of_bathrooms': prop_data.get('Bathrooms'),
+                'basement_type': prop_data.get('BasementType'),
+                'heating_type': prop_data.get('HeatingType'),
+                'exterior_finish': prop_data.get('ExteriorFinish'),
+                'roof_type': prop_data.get('RoofType'),
+                'building_class': prop_data.get('BuildingClass'),
+                'building_type': prop_data.get('BuildingType'),
+                'construction_type': prop_data.get('ConstructionType'),
+                'occupancy_type': prop_data.get('OccupancyType'),
+                'last_sale_date': prop_data.get('LastSaleDate'),
+                'last_sale_price': prop_data.get('LastSalePrice'),
+                'previous_sale_date': prop_data.get('PreviousSaleDate'),
+                'previous_sale_price': prop_data.get('PreviousSalePrice'),
+                'neighborhood_code': prop_data.get('NeighborhoodCode'),
+                'zoning': prop_data.get('Zoning'),
+                'school_district': prop_data.get('SchoolDistrict'),
+                'raw_json': json.dumps(prop_data)
+            }
+            
+            # Filter out None values
+            extracted_data = {k: v for k, v in extracted_data.items() if v is not None and v != ''}
+            
+            logger.info(f"Successfully scraped PVSC data for {assessment_number}")
+            return extracted_data
+        else:
+            logger.warning(f"No PVSC data found for {assessment_number}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"HTTP error scraping PVSC data for {assessment_number}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error scraping PVSC data for {assessment_number}: {e}")
+        return None
+
+async def store_pvsc_data(assessment_number: str, pvsc_data: dict):
+    """Store PVSC data in database"""
+    try:
+        # Build dynamic INSERT query based on available data
+        fields = list(pvsc_data.keys())
+        placeholders = ', '.join(['%s'] * len(fields))
+        field_names = ', '.join(fields)
+        
+        # Handle duplicate key updates
+        update_clause = ', '.join([f"{field} = VALUES({field})" for field in fields if field != 'assessment_number'])
+        
+        query = f"""
+            INSERT INTO pvsc_data ({field_names})
+            VALUES ({placeholders})
+            ON DUPLICATE KEY UPDATE
+            {update_clause},
+            updated_at = CURRENT_TIMESTAMP
+        """
+        
+        values = list(pvsc_data.values())
+        
+        mysql_db.execute_update(query, values)
+        logger.info(f"Stored PVSC data for {assessment_number}")
+        
+    except Exception as e:
+        logger.error(f"Error storing PVSC data for {assessment_number}: {e}")
+
+@app.post("/api/admin/scrape-pvsc-batch")
+async def scrape_pvsc_batch(current_user: dict = Depends(get_current_user_optional)):
+    """Batch scrape PVSC data for all properties"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # Get all properties that don't have PVSC data or have stale data
+        query = """
+            SELECT p.assessment_number 
+            FROM properties p 
+            LEFT JOIN pvsc_data pd ON p.assessment_number = pd.assessment_number 
+            WHERE pd.assessment_number IS NULL 
+               OR pd.scraped_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
+            LIMIT 50
+        """
+        
+        properties = mysql_db.execute_query(query)
+        
+        scraped_count = 0
+        failed_count = 0
+        
+        for property_row in properties:
+            assessment_number = property_row['assessment_number']
+            
+            try:
+                pvsc_data = await scrape_pvsc_data(assessment_number)
+                if pvsc_data:
+                    await store_pvsc_data(assessment_number, pvsc_data)
+                    scraped_count += 1
+                else:
+                    failed_count += 1
+                
+                # Add delay to be respectful to PVSC API
+                import asyncio
+                await asyncio.sleep(2)
+                
+            except Exception as e:
+                logger.error(f"Error processing {assessment_number}: {e}")
+                failed_count += 1
+        
+        return {
+            "message": f"PVSC batch scraping completed",
+            "scraped": scraped_count,
+            "failed": failed_count,
+            "total_processed": scraped_count + failed_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in PVSC batch scraping: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/property-details/{pid_number}")
 async def get_enhanced_property_details(pid_number: str):
     """Get enhanced property details from PSC services"""
