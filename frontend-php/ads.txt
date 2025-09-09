@@ -1,0 +1,15 @@
+# ads.txt file for Tax Sale Compass
+# This file is used to authorize digital advertising sellers
+
+# Google AdSense
+google.com, pub-5947395928510215, DIRECT, f08c47fec0942fa0
+
+# Google Ad Manager (if using)
+# google.com, pub-5947395928510215, DIRECT, f08c47fec0942fa0
+
+# Note: Only include the lines above for networks you actually use
+# The format is: <Field #1>, <Field #2>, <Field #3>, <Field #4>
+# Field #1: Domain name of the advertising system
+# Field #2: Publisher's Account ID
+# Field #3: Type of relationship (DIRECT or RESELLER)
+# Field #4: Certification Authority ID (optional)
