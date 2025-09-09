@@ -14,3 +14,4 @@ PyPDF2
 camelot-py[cv]
 pandas
 aiohttp
+python-dotenv==1.0.1
