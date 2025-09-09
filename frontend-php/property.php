@@ -2,14 +2,14 @@
 session_start();
 require_once 'config/database.php';
 
-$assessment_number = $_GET['id'] ?? '';
+$assessment_number = $_GET['assessment'] ?? $_GET['id'] ?? '';
 
 if (!$assessment_number) {
     header('Location: index.php');
     exit;
 }
 
-// Check if user is logged in for detailed view
+// Check if user is logged in for detailed view  
 $is_logged_in = isset($_SESSION['user_id']);
 $is_paid_user = $is_logged_in && ($_SESSION['subscription_tier'] === 'paid' || $_SESSION['is_admin']);
 
@@ -36,6 +36,24 @@ if ($property['status'] === 'active' && !$is_paid_user) {
     // Show upgrade modal for active properties
     $show_upgrade_modal = true;
 }
+
+// Get PSC property details if we have a PID
+$psc_data = null;
+if ($property['pid_number']) {
+    // Call backend API to get enhanced property details
+    $api_url = API_BASE_URL . '/property-details/' . $property['pid_number'];
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 10,
+            'ignore_errors' => true
+        ]
+    ]);
+    
+    $response = @file_get_contents($api_url, false, $context);
+    if ($response) {
+        $psc_data = json_decode($response, true);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,6 +64,195 @@ if ($property['status'] === 'active' && !$is_paid_user) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&libraries=geometry"></script>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #00d4aa;
+            --warning-color: #ff8f00;
+            --danger-color: #ff5252;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .container-fluid {
+            padding: 2rem 1rem;
+        }
+        
+        .property-header {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .property-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .property-address {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 1.5rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-item {
+            background: #f8f9ff;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            font-size: 1.1rem;
+            color: #2d3748;
+            font-weight: 500;
+        }
+        
+        .map-container {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            border-radius: 10px;
+            padding: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-map-control {
+            border: none;
+            background: none;
+            padding: 0.5rem;
+            margin: 0 0.2rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-map-control:hover, .btn-map-control.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 15px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .psc-data {
+            background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .property-type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        
+        .property-type-apartment { background: #e1f5fe; color: #0277bd; }
+        .property-type-regular { background: #f3e5f5; color: #7b1fa2; }
+        .property-type-land { background: #e8f5e8; color: #388e3c; }
+        .property-type-mixed { background: #fff3e0; color: #f57c00; }
+        .property-type-mobile_home_only { background: #fce4ec; color: #c2185b; }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
