@@ -9,6 +9,9 @@ WHERE TABLE_SCHEMA = 'tax_sale_compass'
   AND COLUMN_NAME = 'property_type';
 
 -- Update the ENUM to include all property types used by the application
+-- Current ENUM: enum('land','building','mixed','mobile_home_only','regular')
+-- Need to add: 'apartment'
+
 ALTER TABLE properties 
 MODIFY COLUMN property_type 
 ENUM(
@@ -17,10 +20,7 @@ ENUM(
     'mixed',               -- Land + Building properties (houses, etc.)
     'mobile_home_only',    -- Mobile home properties
     'regular',             -- Regular properties (from enhanced scraper)
-    'apartment',           -- Apartment/Condo properties
-    'Unknown',             -- Legacy value from old scraper
-    'Land',                -- Legacy capitalized value
-    'Mobile Home Only'     -- Legacy capitalized value
+    'apartment'            -- Apartment/Condo properties (NEW)
 ) DEFAULT 'land';
 
 -- Verify the update
