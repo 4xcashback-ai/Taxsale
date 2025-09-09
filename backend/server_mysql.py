@@ -1289,11 +1289,19 @@ async def scrape_pvsc_data(assessment_number: str):
                 
                 # Map HTML labels to database fields
                 if 'land size' in label:
-                    # Extract numeric value and unit
-                    land_match = re.search(r'([\d,]+)\s*(.+)', value)
+                    # Extract numeric value and unit - handle decimals properly
+                    land_match = re.search(r'([\d,]+\.?\d*)\s*(.+)', value)
                     if land_match:
                         extracted_data['land_size'] = float(land_match.group(1).replace(',', ''))
                         extracted_data['land_size_unit'] = land_match.group(2).strip()
+                    else:
+                        # Fallback: try to extract any numbers and assume acres
+                        numbers = re.findall(r'[\d,]+\.?\d*', value)
+                        if numbers:
+                            # If multiple numbers, sum them (e.g., "1.00 .94 Acres" -> 1.94)
+                            total_size = sum(float(num.replace(',', '')) for num in numbers)
+                            extracted_data['land_size'] = total_size
+                            extracted_data['land_size_unit'] = 'Acres'
                 
                 elif 'current property assessment' in label:
                     # Extract numeric value from currency
