@@ -332,8 +332,54 @@ if ($property['status'] === 'active' && !$is_paid_user) {
             map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(legend);
         }
         
+        // Map control functions
+        function toggleMapType(type) {
+            if (map) {
+                const mapTypes = {
+                    'satellite': google.maps.MapTypeId.SATELLITE,
+                    'roadmap': google.maps.MapTypeId.ROADMAP,
+                    'hybrid': google.maps.MapTypeId.HYBRID,
+                    'terrain': google.maps.MapTypeId.TERRAIN
+                };
+                
+                map.setMapTypeId(mapTypes[type]);
+                document.getElementById('current-map-type').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+                
+                // Update button states
+                document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.closest('button').classList.add('active');
+            }
+        }
+        
+        function centerOnProperty() {
+            if (map) {
+                const lat = <?php echo $property['latitude'] ?? 44.6488; ?>;
+                const lng = <?php echo $property['longitude'] ?? -63.5752; ?>;
+                
+                map.setCenter({ lat: lat, lng: lng });
+                map.setZoom(18);
+                
+                // Animate to center
+                map.panTo({ lat: lat, lng: lng });
+            }
+        }
+        
+        // Update zoom level display
+        function updateZoomDisplay() {
+            if (map) {
+                google.maps.event.addListener(map, 'zoom_changed', function() {
+                    document.getElementById('current-zoom').textContent = map.getZoom();
+                });
+            }
+        }
+        
         // Initialize map when page loads
-        google.maps.event.addDomListener(window, 'load', initMap);
+        google.maps.event.addDomListener(window, 'load', function() {
+            initMap();
+            setTimeout(updateZoomDisplay, 1000); // Allow map to initialize
+        });
         
         function addToFavorites() {
             // AJAX call to add to favorites
