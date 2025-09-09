@@ -9,7 +9,7 @@ define('DB_NAME', 'tax_sale_compass');
 define('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY');
 
 // Backend API URL
-define('API_BASE_URL', 'http://localhost:8002/api');
+define('API_BASE_URL', 'http://localhost:8001/api');
 
 // Site configuration
 define('SITE_NAME', 'Tax Sale Compass');
