@@ -397,6 +397,24 @@ if ($property['assessment_number']) {
 
     <!-- Main Content -->
     <div class="container-fluid">
+        <?php if (isset($show_limited_view) && $show_limited_view): ?>
+        <!-- Login Prompt Banner for Non-Logged Users -->
+        <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                    <h5 class="alert-heading mb-1">Limited Preview Mode</h5>
+                    <p class="mb-2">You're viewing an inactive property. <strong>Join Tax Sale Compass</strong> to access all active properties, advanced search, and exclusive features!</p>
+                </div>
+                <div class="ms-3">
+                    <a href="register.php" class="btn btn-primary me-2">Sign Up Free</a>
+                    <a href="login.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>" class="btn btn-outline-primary">Login</a>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
+        
         <!-- Property Header -->
         <div class="property-header">
             <div class="row align-items-center">
