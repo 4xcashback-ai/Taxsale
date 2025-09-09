@@ -1815,6 +1815,66 @@ def classify_property_type(address: str, description: str = "") -> str:
         else:
             return 'land'   # No clear indicators, assume land
 
+def geocode_address_google_maps(address: str) -> tuple:
+    """
+    Geocode address using Google Maps API
+    Returns: (latitude, longitude) or (None, None) if failed
+    """
+    if not address:
+        return None, None
+    
+    try:
+        import requests
+        import os
+        
+        # Get API key from environment
+        api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+        if not api_key:
+            logger.error("Google Maps API key not found in environment")
+            return None, None
+        
+        # Clean up address for geocoding
+        address_clean = address.strip()
+        
+        # Add Nova Scotia, Canada if not present
+        if 'nova scotia' not in address_clean.lower() and 'ns' not in address_clean.lower():
+            address_clean += ', Nova Scotia, Canada'
+        
+        # Make request to Google Maps Geocoding API
+        geocoding_url = "https://maps.googleapis.com/maps/api/geocode/json"
+        params = {
+            'address': address_clean,
+            'key': api_key,
+            'region': 'ca'  # Bias towards Canada
+        }
+        
+        logger.info(f"Geocoding address via Google Maps: {address_clean}")
+        
+        response = requests.get(geocoding_url, params=params, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if data['status'] == 'OK' and data['results']:
+            location = data['results'][0]['geometry']['location']
+            lat = location['lat']
+            lng = location['lng']
+            
+            # Validate coordinates are in Nova Scotia (approximate bounds)
+            if 43.0 <= lat <= 47.0 and -67.0 <= lng <= -59.0:
+                logger.info(f"Successfully geocoded '{address}' to coordinates: {lat}, {lng}")
+                return lat, lng
+            else:
+                logger.warning(f"Geocoded coordinates ({lat}, {lng}) appear to be outside Nova Scotia")
+                return lat, lng  # Return anyway, might be valid
+        else:
+            logger.warning(f"Google Maps geocoding failed for '{address}': {data.get('status', 'Unknown error')}")
+            return None, None
+            
+    except Exception as e:
+        logger.error(f"Error geocoding address '{address}' with Google Maps: {e}")
+        return None, None
+
 def geocode_mobile_home_address(address: str) -> tuple:
     """
     Geocode mobile home/trailer park addresses
@@ -1824,6 +1884,14 @@ def geocode_mobile_home_address(address: str) -> tuple:
         return None, None
     
     try:
+        # First try Google Maps geocoding
+        lat, lng = geocode_address_google_maps(address)
+        if lat and lng:
+            return lat, lng
+        
+        # Fallback to approximate coordinates if Google Maps fails
+        logger.info(f"Google Maps geocoding failed, using approximate coordinates for: {address}")
+        
         # Clean up mobile home address for geocoding
         address_clean = address.strip()
         
@@ -1842,49 +1910,19 @@ def geocode_mobile_home_address(address: str) -> tuple:
                 park_name = match.group(1).strip()
                 break
         
-        # Try geocoding with different address variations
-        geocode_attempts = []
-        
-        if park_name:
-            # Try trailer park name + Nova Scotia
-            geocode_attempts.append(f"{park_name.title()}, Nova Scotia, Canada")
-            geocode_attempts.append(f"{park_name.title()}, NS, Canada")
-        
-        # Try full address
-        geocode_attempts.append(f"{address_clean}, Nova Scotia, Canada")
-        geocode_attempts.append(f"{address_clean}, NS, Canada")
-        
-        # Try simplified address (remove lot numbers)
-        simple_address = re.sub(r'lot [a-z0-9\-]+', '', address_clean.lower()).strip()
-        if simple_address and simple_address != address_clean.lower():
-            geocode_attempts.append(f"{simple_address}, Nova Scotia, Canada")
-        
-        for attempt_address in geocode_attempts:
-            try:
-                # Use a simple geocoding approach (you may want to use a proper geocoding service)
-                # For now, return approximate coordinates for Nova Scotia mobile home parks
-                logger.info(f"Attempting to geocode mobile home address: {attempt_address}")
-                
-                # Basic geocoding logic - you can enhance this with actual geocoding API
-                if 'halifax' in attempt_address.lower() or 'dartmouth' in attempt_address.lower():
-                    # Halifax area approximate coordinates
-                    return 44.6488, -63.5752
-                elif 'sydney' in attempt_address.lower():
-                    # Sydney area approximate coordinates  
-                    return 46.1351, -60.1831
-                elif 'truro' in attempt_address.lower():
-                    # Truro area approximate coordinates
-                    return 45.3667, -63.2833
-                else:
-                    # Default Nova Scotia coordinates
-                    return 44.6820, -63.7443
-                    
-            except Exception as e:
-                logger.warning(f"Geocoding attempt failed for {attempt_address}: {e}")
-                continue
-        
-        logger.warning(f"All geocoding attempts failed for mobile home address: {address}")
-        return None, None
+        # Basic geocoding logic - approximate coordinates based on location
+        if 'halifax' in address_clean.lower() or 'dartmouth' in address_clean.lower():
+            # Halifax area approximate coordinates
+            return 44.6488, -63.5752
+        elif 'sydney' in address_clean.lower():
+            # Sydney area approximate coordinates  
+            return 46.1351, -60.1831
+        elif 'truro' in address_clean.lower():
+            # Truro area approximate coordinates
+            return 45.3667, -63.2833
+        else:
+            # Default Nova Scotia coordinates
+            return 44.6820, -63.7443
         
     except Exception as e:
         logger.error(f"Error geocoding mobile home address {address}: {e}")
