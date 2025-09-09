@@ -1248,6 +1248,48 @@ Downloaded on: ${new Date().toLocaleString()}
             window.URL.revokeObjectURL(url);
         }
         
+        // Countdown Timer Function
+        function updateCountdown() {
+            <?php if ($property['sale_date']): ?>
+            const saleDate = new Date('<?php echo date('c', strtotime($property['sale_date'])); ?>');
+            const now = new Date();
+            const timeDiff = saleDate.getTime() - now.getTime();
+            
+            const countdownElement = document.getElementById('countdown-text-<?php echo $assessment_number; ?>');
+            
+            if (timeDiff > 0) {
+                const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                
+                if (days > 0) {
+                    countdownElement.textContent = `${days} days ${hours} hours`;
+                } else if (hours > 0) {
+                    countdownElement.textContent = `${hours} hours remaining`;
+                } else {
+                    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                    countdownElement.textContent = `${minutes} minutes remaining`;
+                }
+                
+                // Update countdown color based on time remaining
+                const countdownContainer = document.getElementById('countdown-<?php echo $assessment_number; ?>');
+                if (days < 7) {
+                    countdownContainer.classList.remove('bg-warning');
+                    countdownContainer.classList.add('bg-danger', 'text-white');
+                } else if (days < 30) {
+                    countdownContainer.classList.remove('bg-warning');
+                    countdownContainer.classList.add('bg-warning', 'text-dark');
+                } else {
+                    countdownContainer.classList.add('bg-success', 'text-white');
+                }
+            } else {
+                countdownElement.textContent = 'Auction has ended';
+                const countdownContainer = document.getElementById('countdown-<?php echo $assessment_number; ?>');
+                countdownContainer.classList.remove('bg-warning');
+                countdownContainer.classList.add('bg-secondary', 'text-white');
+            }
+            <?php endif; ?>
+        }
+        
         // Initialize map when page loads
         window.onload = function() {
             if (typeof google !== 'undefined' && google.maps) {
@@ -1255,6 +1297,13 @@ Downloaded on: ${new Date().toLocaleString()}
             } else {
                 console.error('Google Maps API not loaded');
             }
+            
+            // Initialize countdown
+            <?php if ($property['sale_date']): ?>
+            updateCountdown();
+            // Update countdown every minute
+            setInterval(updateCountdown, 60000);
+            <?php endif; ?>
         };
         
         // Show upgrade modal if needed
