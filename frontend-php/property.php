@@ -27,9 +27,15 @@ if (!$property) {
 
 // Check access permissions
 if (!$is_logged_in) {
-    // Redirect to login for property details
-    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
-    exit;
+    // Allow viewing inactive properties without login
+    if ($property['status'] !== 'active') {
+        // Allow access to inactive properties for preview
+        $show_limited_view = true;
+    } else {
+        // Redirect to login for active property details
+        header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+        exit;
+    }
 }
 
 if ($property['status'] === 'active' && !$is_paid_user) {
