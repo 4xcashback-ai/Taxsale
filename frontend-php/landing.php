@@ -236,6 +236,98 @@
         </div>
     </section>
 
+    <!-- Properties Showcase Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="fw-bold mb-3">Featured Properties</h2>
+                    <p class="lead text-muted">Explore some of the latest tax sale opportunities available across Canada</p>
+                </div>
+            </div>
+            
+            <?php if (!empty($landing_properties)): ?>
+            <div class="row">
+                <?php foreach ($landing_properties as $property): ?>
+                    <?php $thumbnail_url = $thumbnail_generator->getThumbnail($property); ?>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card property-preview-card h-100 border-0 shadow-sm">
+                            <!-- Property Thumbnail -->
+                            <div class="property-preview-thumbnail">
+                                <img src="<?php echo htmlspecialchars($thumbnail_url); ?>?v=<?php echo time(); ?>" 
+                                     alt="Property <?php echo htmlspecialchars($property['assessment_number']); ?>"
+                                     class="card-img-top"
+                                     loading="lazy">
+                                <div class="property-status-overlay">
+                                    <span class="badge status-<?php echo $property['status']; ?>">
+                                        <?php echo ucfirst($property['status']); ?>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <h6 class="card-title text-primary fw-bold">
+                                    Property #<?php echo htmlspecialchars($property['assessment_number']); ?>
+                                </h6>
+                                <p class="card-text text-muted small mb-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    <?php echo htmlspecialchars($property['civic_address'] ?? 'Address Not Available'); ?>
+                                </p>
+                                <p class="card-text text-muted small mb-2">
+                                    <i class="fas fa-city me-1"></i>
+                                    <?php echo htmlspecialchars($property['municipality'] ?? 'N/A'); ?>
+                                </p>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <span class="fw-bold text-success">
+                                            $<?php echo number_format($property['opening_bid'] ?? $property['total_taxes'] ?? 0, 2); ?>
+                                        </span>
+                                        <small class="text-muted d-block">Min Bid</small>
+                                    </div>
+                                    <?php if ($property['property_type']): ?>
+                                    <span class="badge bg-info">
+                                        <?php echo ucfirst(str_replace('_', ' ', $property['property_type'])); ?>
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <?php if ($property['status'] === 'active'): ?>
+                                    <!-- Active property - requires login -->
+                                    <a href="login.php?redirect=<?php echo urlencode('property.php?assessment=' . $property['assessment_number']); ?>" 
+                                       class="btn btn-primary btn-sm w-100">
+                                        <i class="fas fa-sign-in-alt me-1"></i>Login to View Details
+                                    </a>
+                                <?php else: ?>
+                                    <!-- Inactive property - can view directly -->
+                                    <a href="property.php?assessment=<?php echo $property['assessment_number']; ?>" 
+                                       class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="register.php" class="btn btn-primary btn-lg px-4">
+                    <i class="fas fa-search me-2"></i>Search All Properties
+                </a>
+                <p class="text-muted mt-2 small">Join now to access all active properties and advanced search features</p>
+            </div>
+            
+            <?php else: ?>
+            <div class="text-center py-5">
+                <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No properties available at the moment</h5>
+                <p class="text-muted">Check back soon for new listings</p>
+            </div>
+            <?php endif; ?>
+        </div>
+    </section>
+
     <!-- About Section -->
     <section class="py-5 bg-light" id="about">
         <div class="container">
