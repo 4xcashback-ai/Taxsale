@@ -342,10 +342,10 @@
                                         <i class="fas fa-sign-in-alt me-1"></i>Login to View Details
                                     </a>
                                 <?php else: ?>
-                                    <!-- Inactive property - can view directly -->
+                                    <!-- Inactive property (sold/withdrawn) - can view directly -->
                                     <a href="property.php?assessment=<?php echo $property['assessment_number']; ?>" 
-                                       class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="fas fa-eye me-1"></i>View Details
+                                       class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fas fa-eye me-1"></i>View Details (<?php echo ucfirst($property['status']); ?>)
                                     </a>
                                 <?php endif; ?>
                             </div>
