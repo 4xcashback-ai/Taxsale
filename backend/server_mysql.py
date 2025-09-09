@@ -1205,6 +1205,63 @@ async def capture_all_boundaries():
         logger.error(f"Error in batch boundary capture: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/property-details/{pid_number}")
+async def get_enhanced_property_details(pid_number: str):
+    """Get enhanced property details from PSC services"""
+    try:
+        import requests
+        
+        # PSC Property Services API endpoint
+        api_url = "https://nsgiwa2.novascotia.ca/arcgis/rest/services/PLAN/PLAN_NSPRD_WM84/MapServer/0/query"
+        
+        params = {
+            'where': f"PID = '{pid_number}'",
+            'outFields': '*',
+            'returnGeometry': 'false',
+            'f': 'json'
+        }
+        
+        response = requests.get(api_url, params=params, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if data.get('features'):
+            feature = data['features'][0]
+            attributes = feature.get('attributes', {})
+            
+            # Extract relevant property details
+            psc_details = {
+                'legal_description': attributes.get('LEGAL_DESC'),
+                'area': attributes.get('AREA_CALC'),
+                'deed_info': attributes.get('DEED'),
+                'plan_number': attributes.get('PLAN_NO'),
+                'lot_number': attributes.get('LOT_NO'),
+                'block_number': attributes.get('BLOCK_NO'),
+                'parish': attributes.get('PARISH'),
+                'county': attributes.get('COUNTY'),
+                'registration_district': attributes.get('REG_DIST'),
+                'source_document': attributes.get('SOURCE_DOC'),
+                'created_date': attributes.get('CREATED_DATE'),
+                'modified_date': attributes.get('MODIFIED_DATE')
+            }
+            
+            # Filter out None values
+            psc_details = {k: v for k, v in psc_details.items() if v is not None and v != ''}
+            
+            logger.info(f"Successfully retrieved PSC details for PID {pid_number}")
+            return psc_details
+        else:
+            logger.warning(f"No PSC data found for PID {pid_number}")
+            return {}
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching PSC data for PID {pid_number}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Unexpected error getting PSC details for PID {pid_number}: {e}")
+        return {}
+
 @app.post("/api/generate-boundary-thumbnail/{assessment_number}")
 async def generate_boundary_thumbnail(assessment_number: str):
     """Generate boundary thumbnail for a specific property"""
