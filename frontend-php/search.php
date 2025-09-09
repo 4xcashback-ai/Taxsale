@@ -8,6 +8,14 @@ $is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
 
 // If user is not logged in, show landing page content
 if (!$is_logged_in) {
+    // Get 6 random properties for landing page preview
+    $db = getDB();
+    $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
+    $landing_properties = $stmt->fetchAll();
+    
+    // Initialize thumbnail generator for landing page
+    $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
+    
     require_once 'landing.php';
     exit;
 }
