@@ -1234,7 +1234,7 @@ async def generate_boundary_thumbnail(assessment_number: str):
                 update_query = """UPDATE properties 
                                  SET latitude = %s, longitude = %s, boundary_data = %s 
                                  WHERE assessment_number = %s"""
-                mysql_db.execute_query(update_query, [
+                mysql_db.execute_update(update_query, [
                     center['lat'], 
                     center['lon'], 
                     boundary_data_json,
