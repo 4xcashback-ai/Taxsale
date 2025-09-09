@@ -647,7 +647,7 @@ if ($property['pid_number']) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // SIMPLE, CLEAN GOOGLE MAPS INTEGRATION - NO REACT WRAPPER CONFLICTS!
+        // Enhanced Google Maps Integration
         let map;
         
         function initMap() {
@@ -655,9 +655,224 @@ if ($property['pid_number']) {
             const lng = <?php echo $property['longitude'] ?? -63.5752; ?>;
             
             // Enhanced map configuration with satellite view
-            map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 17,  // Closer zoom for property details
+            map = new google.maps.Map(document.getElementById("property-map"), {
+                zoom: 17,
                 center: { lat: lat, lng: lng },
+                mapTypeId: google.maps.MapTypeId.SATELLITE,
+                mapTypeControl: false,
+                streetViewControl: true,
+                fullscreenControl: true,
+                zoomControl: true,
+                styles: [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "off" }]
+                    }
+                ]
+            });
+            
+            // Add custom marker for property location
+            const marker = new google.maps.Marker({
+                position: { lat: lat, lng: lng },
+                map: map,
+                title: "Property <?php echo htmlspecialchars($assessment_number); ?>",
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: "#FF4444",
+                    fillOpacity: 0.9,
+                    strokeColor: "#FFFFFF",
+                    strokeWeight: 3
+                },
+                animation: google.maps.Animation.DROP
+            });
+            
+            // Add info window with property details
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="max-width: 250px;">
+                        <h6 class="fw-bold text-primary mb-2">
+                            <i class="fas fa-home me-1"></i>Property ${<?php echo json_encode($assessment_number); ?>}
+                        </h6>
+                        <div class="small">
+                            <div class="mb-1">
+                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                ${<?php echo json_encode($property['civic_address'] ?? 'Address not available'); ?>}
+                            </div>
+                            <div class="mb-1">
+                                <i class="fas fa-city text-info me-1"></i>
+                                ${<?php echo json_encode($property['municipality'] ?? ''); ?>}
+                            </div>
+                            <?php if ($property['property_type']): ?>
+                            <div class="mb-1">
+                                <i class="fas fa-tag text-success me-1"></i>
+                                ${<?php echo json_encode(ucfirst(str_replace('_', ' ', $property['property_type']))); ?>}
+                            </div>
+                            <?php endif; ?>
+                            <div class="text-muted mt-2">
+                                <small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+                            </div>
+                        </div>
+                    </div>
+                `
+            });
+            
+            marker.addListener("click", () => {
+                infoWindow.open(map, marker);
+            });
+            
+            // Show info window by default
+            setTimeout(() => {
+                infoWindow.open(map, marker);
+            }, 1000);
+            
+            <?php if ($property['boundary_data']): ?>
+            // Add property boundary if available
+            try {
+                const boundaryData = <?php echo $property['boundary_data']; ?>;
+                if (boundaryData && boundaryData.coordinates) {
+                    const boundaries = boundaryData.coordinates[0].map(coord => ({
+                        lat: coord[1],
+                        lng: coord[0]
+                    }));
+                    
+                    const propertyPolygon = new google.maps.Polygon({
+                        paths: boundaries,
+                        strokeColor: "#FF6B35",
+                        strokeOpacity: 0.9,
+                        strokeWeight: 3,
+                        fillColor: "#FF6B35",
+                        fillOpacity: 0.2,
+                        map: map,
+                        clickable: true
+                    });
+                    
+                    const boundaryInfoWindow = new google.maps.InfoWindow({
+                        content: `
+                            <div>
+                                <h6><strong>Property Boundary</strong></h6>
+                                <p>Assessment: <?php echo htmlspecialchars($assessment_number); ?></p>
+                                <p>Area boundary as recorded in government records</p>
+                            </div>
+                        `
+                    });
+                    
+                    propertyPolygon.addListener("click", (event) => {
+                        boundaryInfoWindow.setPosition(event.latLng);
+                        boundaryInfoWindow.open(map);
+                    });
+                    
+                    // Fit map to show entire property boundary
+                    if (boundaries.length > 0) {
+                        const bounds = new google.maps.LatLngBounds();
+                        boundaries.forEach(point => bounds.extend(point));
+                        
+                        const extendedBounds = new google.maps.LatLngBounds(
+                            new google.maps.LatLng(bounds.getSouthWest().lat() - 0.0005, bounds.getSouthWest().lng() - 0.0005),
+                            new google.maps.LatLng(bounds.getNorthEast().lat() + 0.0005, bounds.getNorthEast().lng() + 0.0005)
+                        );
+                        
+                        map.fitBounds(extendedBounds);
+                        
+                        google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                            if (map.getZoom() > 19) {
+                                map.setZoom(19);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log("No boundary data to display");
+            }
+            <?php else: ?>
+            // No boundary data - just center on coordinates with appropriate zoom
+            map.setZoom(17);
+            <?php endif; ?>
+        }
+        
+        // Map control functions
+        function toggleMapType(type) {
+            if (map) {
+                const mapTypes = {
+                    'satellite': google.maps.MapTypeId.SATELLITE,
+                    'roadmap': google.maps.MapTypeId.ROADMAP,
+                    'hybrid': google.maps.MapTypeId.HYBRID,
+                    'terrain': google.maps.MapTypeId.TERRAIN
+                };
+                
+                map.setMapTypeId(mapTypes[type]);
+                
+                // Update button states
+                document.querySelectorAll('.btn-map-control[data-type]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-type="${type}"]`).classList.add('active');
+            }
+        }
+        
+        function centerOnProperty() {
+            if (map) {
+                const lat = <?php echo $property['latitude'] ?? 44.6488; ?>;
+                const lng = <?php echo $property['longitude'] ?? -63.5752; ?>;
+                
+                map.setCenter({ lat: lat, lng: lng });
+                map.setZoom(18);
+                
+                // Add a subtle animation
+                setTimeout(() => {
+                    map.setZoom(17);
+                }, 1000);
+            }
+        }
+        
+        // Property action functions
+        function addToFavorites() {
+            // Placeholder for favorites functionality
+            alert('Favorites functionality coming soon!');
+        }
+        
+        function shareProperty() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Property <?php echo htmlspecialchars($assessment_number); ?>',
+                    text: 'Check out this tax sale property: <?php echo htmlspecialchars($property['civic_address'] ?? ''); ?>',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Property link copied to clipboard!');
+                });
+            }
+        }
+        
+        function downloadDetails() {
+            // Placeholder for download functionality
+            alert('Download functionality coming soon!');
+        }
+        
+        // Load PSC data asynchronously if we have a PID
+        <?php if ($property['pid_number'] && !$psc_data): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            // This would be handled by the PSC API call in PHP
+            console.log('PSC data loading...');
+        });
+        <?php endif; ?>
+        
+        // Initialize map when page loads
+        window.onload = initMap;
+        
+        // Show upgrade modal if needed
+        <?php if (isset($show_upgrade_modal)): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            const upgradeModal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+            upgradeModal.show();
+        });
+        <?php endif; ?>
+    </script>
+</body>
+</html>
                 mapTypeId: google.maps.MapTypeId.SATELLITE,  // Default to satellite view
                 mapTypeControl: true,
                 mapTypeControlOptions: {
