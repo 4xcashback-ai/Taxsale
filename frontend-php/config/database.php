@@ -1,19 +1,19 @@
 <?php
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'taxsale');
-define('DB_PASS', 'SecureTaxSale2025!');
-define('DB_NAME', 'tax_sale_compass');
+// Database configuration - Use environment variables with fallbacks
+define('DB_HOST', $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost');
+define('DB_USER', $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'taxsale');
+define('DB_PASS', $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: 'SecureTaxSale2025!');
+define('DB_NAME', $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'tax_sale_compass');
 
 // Google Maps API Key
-define('GOOGLE_MAPS_API_KEY', 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY');
+define('GOOGLE_MAPS_API_KEY', $_ENV['GOOGLE_MAPS_API_KEY'] ?? getenv('GOOGLE_MAPS_API_KEY') ?: 'AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY');
 
 // Backend API URL
-define('API_BASE_URL', 'http://localhost:8001/api');
+define('API_BASE_URL', $_ENV['API_BASE_URL'] ?? getenv('API_BASE_URL') ?: 'http://localhost:8001/api');
 
 // Site configuration
 define('SITE_NAME', 'Tax Sale Compass');
-define('SITE_URL', 'http://localhost:3000');
+define('SITE_URL', $_ENV['SITE_URL'] ?? getenv('SITE_URL') ?: 'http://localhost:3000');
 
 // Database connection function
 function getDB() {
