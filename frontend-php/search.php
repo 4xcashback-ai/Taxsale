@@ -8,18 +8,37 @@ $is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
 
 // If user is not logged in, show landing page content
 if (!$is_logged_in) {
+    $landing_properties = [];
+    $debug_info = [];
+    
     try {
         // Get 6 random properties for landing page preview
         $db = getDB();
+        $debug_info[] = "Database connection established";
+        
+        // Test the query
         $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
         $landing_properties = $stmt->fetchAll();
         
+        $debug_info[] = "Query executed, found " . count($landing_properties) . " properties";
+        
         // Initialize thumbnail generator for landing page
         $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
+        $debug_info[] = "Thumbnail generator initialized";
         
-    } catch (Exception $e) {
+    } catch (PDOException $pdo_e) {
+        $debug_info[] = "PDO Error: " . $pdo_e->getMessage();
         $landing_properties = [];
         $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
+    } catch (Exception $e) {
+        $debug_info[] = "General Error: " . $e->getMessage();
+        $landing_properties = [];
+        $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
+    }
+    
+    // For debugging - can be removed later
+    if (empty($landing_properties)) {
+        $debug_info[] = "No properties found - will show empty state";
     }
     
     require_once 'landing.php';
