@@ -130,6 +130,26 @@
         </div>
     </section>
 
+    <!-- Google AdSense Ad -->
+    <section class="py-0">
+        <div class="container">
+            <div class="ad-container-landing">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215"
+                     crossorigin="anonymous"></script>
+                <!-- landing page -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-5947395928510215"
+                     data-ad-slot="AUTO_GENERATED_SLOT_ID"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
     <section class="py-5" id="features">
         <div class="container">
