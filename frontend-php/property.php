@@ -585,11 +585,11 @@ if ($property['assessment_number']) {
                 <?php endif; ?>
 
                 <!-- PVSC Property Data Table -->
-                <?php if ($pvsc_data && !empty($pvsc_data)): ?>
+                <?php if ($pvsc_data && !empty($pvsc_data) && !isset($pvsc_data['error'])): ?>
                 <div class="card">
                     <div class="card-header">
                         <i class="fas fa-database me-2"></i>PVSC Property Data
-                        <small class="badge bg-success ms-2">Detailed</small>
+                        <small class="badge bg-success ms-2"><?php echo isset($pvsc_data['scraped_at']) ? 'Cached' : 'Live'; ?></small>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -775,17 +775,48 @@ if ($property['assessment_number']) {
                 <div class="card">
                     <div class="card-header">
                         <i class="fas fa-database me-2"></i>PVSC Property Data
-                        <span class="loading-spinner ms-2"></span>
+                        <?php if ($pvsc_error): ?>
+                        <small class="badge bg-warning ms-2">Error</small>
+                        <?php else: ?>
+                        <small class="badge bg-info ms-2">No Data</small>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body text-center py-4">
+                        <?php if ($pvsc_error): ?>
                         <div class="mb-3">
-                            <i class="fas fa-search fa-2x text-muted"></i>
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
                         </div>
-                        <p class="text-muted mb-2">Loading detailed property data from PVSC...</p>
-                        <small class="text-info">
-                            <i class="fas fa-info-circle me-1"></i>
-                            This may take a moment for first-time requests
+                        <p class="text-muted mb-2">Unable to load PVSC data</p>
+                        <small class="text-warning">
+                            <?php echo htmlspecialchars($pvsc_error); ?>
                         </small>
+                        
+                        <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
+                        <div class="mt-3 p-3 bg-light border rounded">
+                            <small class="text-muted">
+                                <strong>Admin Debug Info:</strong><br>
+                                Assessment Number: <?php echo htmlspecialchars($property['assessment_number']); ?><br>
+                                API URL: <?php echo htmlspecialchars(API_BASE_URL . '/pvsc-data/' . $property['assessment_number']); ?><br>
+                                Error: <?php echo htmlspecialchars($pvsc_error); ?>
+                            </small>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php else: ?>
+                        <div class="mb-3">
+                            <i class="fas fa-info-circle fa-2x text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-2">PVSC data not available for this property</p>
+                        <small class="text-info">
+                            This property may not have detailed assessment information available
+                        </small>
+                        <?php endif; ?>
+                        
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                                <i class="fas fa-sync-alt me-1"></i>Retry Loading
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <?php endif; ?>
