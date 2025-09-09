@@ -1214,46 +1214,86 @@ async def generate_boundary_thumbnail(assessment_number: str):
         
         property_data = properties[0]
         pid_number = property_data.get('pid_number')
+        civic_address = property_data.get('civic_address', '')
+        property_type = property_data.get('property_type', '')
         
-        if not pid_number:
-            return {"message": "Property has no PID number", "thumbnail_generated": False}
-        
-        # Get boundary data from government service
-        boundary_result = await query_ns_government_parcel(pid_number)
-        
-        if boundary_result.get('found'):
-            # Update property with coordinates AND boundary data
-            center = boundary_result.get('center')
-            boundary_geometry = boundary_result.get('geometry')
+        # First, try PID-based boundary data if available
+        if pid_number:
+            # Get boundary data from government service
+            boundary_result = await query_ns_government_parcel(pid_number)
             
-            if center:
-                # Update coordinates and boundary data
-                import json
-                boundary_data_json = json.dumps(boundary_geometry) if boundary_geometry else None
+            if boundary_result.get('found'):
+                # Update property with coordinates AND boundary data
+                center = boundary_result.get('center')
+                boundary_geometry = boundary_result.get('geometry')
                 
+                if center:
+                    # Update coordinates and boundary data
+                    import json
+                    boundary_data_json = json.dumps(boundary_geometry) if boundary_geometry else None
+                    
+                    update_query = """UPDATE properties 
+                                     SET latitude = %s, longitude = %s, boundary_data = %s 
+                                     WHERE assessment_number = %s"""
+                    mysql_db.execute_update(update_query, [
+                        center['lat'], 
+                        center['lon'], 
+                        boundary_data_json,
+                        assessment_number
+                    ])
+                    
+                    logger.info(f"Updated property {assessment_number} with PID-based coordinates and boundary data")
+                
+                return {
+                    "message": f"Boundary thumbnail generated for {assessment_number}",
+                    "thumbnail_generated": True,
+                    "center": center,
+                    "boundary_data": boundary_result,
+                    "method": "pid_based"
+                }
+        
+        # Fallback: Use address-based geocoding for properties without PID boundaries
+        # This is especially useful for apartment/condo properties
+        if civic_address:
+            logger.info(f"PID-based boundary not available for {assessment_number}, trying address-based geocoding")
+            
+            # Import geocoding function
+            from scrapers_mysql import geocode_address_google_maps
+            
+            # Geocode the civic address
+            lat, lng = geocode_address_google_maps(civic_address)
+            
+            if lat and lng:
+                # Update property with geocoded coordinates (no boundary data)
                 update_query = """UPDATE properties 
-                                 SET latitude = %s, longitude = %s, boundary_data = %s 
+                                 SET latitude = %s, longitude = %s, boundary_data = NULL 
                                  WHERE assessment_number = %s"""
-                mysql_db.execute_update(update_query, [
-                    center['lat'], 
-                    center['lon'], 
-                    boundary_data_json,
-                    assessment_number
-                ])
+                mysql_db.execute_update(update_query, [lat, lng, assessment_number])
                 
-                logger.info(f"Updated property {assessment_number} with coordinates and boundary data")
-            
-            return {
-                "message": f"Boundary thumbnail generated for {assessment_number}",
-                "thumbnail_generated": True,
-                "center": center,
-                "boundary_data": boundary_result
+                logger.info(f"Updated property {assessment_number} with geocoded coordinates: {lat}, {lng}")
+                
+                return {
+                    "message": f"Address-based coordinates generated for {assessment_number}",
+                    "thumbnail_generated": True,
+                    "center": {"lat": lat, "lon": lng},
+                    "boundary_data": None,
+                    "method": "address_based",
+                    "note": f"No PID boundaries available for {property_type.replace('_', ' ').title()} property. Using address-based coordinates."
+                }
+            else:
+                logger.warning(f"Geocoding failed for property {assessment_number} with address: {civic_address}")
+        
+        # If all methods fail
+        return {
+            "message": f"No location data could be generated for {assessment_number}",
+            "thumbnail_generated": False,
+            "method": "failed",
+            "details": {
+                "pid_available": bool(pid_number),
+                "address_available": bool(civic_address),
+                "property_type": property_type
             }
-        else:
-            return {
-                "message": f"No boundary data found for {assessment_number}",
-                "thumbnail_generated": False
-            }
+        }
         
     except Exception as e:
         logger.error(f"Error generating thumbnail for {assessment_number}: {e}")
