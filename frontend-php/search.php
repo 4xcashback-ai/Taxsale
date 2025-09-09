@@ -14,14 +14,10 @@ if (!$is_logged_in) {
         $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
         $landing_properties = $stmt->fetchAll();
         
-        // Debug: Log the properties count
-        error_log("Landing properties count: " . count($landing_properties));
-        
         // Initialize thumbnail generator for landing page
         $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
         
     } catch (Exception $e) {
-        error_log("Error fetching landing properties: " . $e->getMessage());
         $landing_properties = [];
         $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
     }
