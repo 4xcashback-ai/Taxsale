@@ -1286,32 +1286,33 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                                     
                                     <div class="mb-3">
                                         <label for="edit_pid_number" class="form-label">PID Number</label>
-                                        <input type="text" class="form-control" id="edit_pid_number" placeholder="Enter PID number">
-                                        <div class="form-text">Leave blank to keep existing value</div>
+                                        <input type="text" class="form-control" id="edit_pid_number" value="${propertyData.pid_number || ''}" placeholder="Enter PID number">
+                                        <div class="form-text">Current value pre-loaded</div>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label for="edit_civic_address" class="form-label">Civic Address</label>
-                                        <textarea class="form-control" id="edit_civic_address" rows="2" placeholder="Enter civic address"></textarea>
-                                        <div class="form-text">Leave blank to keep existing value</div>
+                                        <textarea class="form-control" id="edit_civic_address" rows="2" placeholder="Enter civic address">${propertyData.civic_address || ''}</textarea>
+                                        <div class="form-text">Current value pre-loaded</div>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label for="edit_owner_name" class="form-label">Owner Name</label>
-                                        <input type="text" class="form-control" id="edit_owner_name" placeholder="Enter owner name">
-                                        <div class="form-text">Leave blank to keep existing value</div>
+                                        <input type="text" class="form-control" id="edit_owner_name" value="${propertyData.owner_name || ''}" placeholder="Enter owner name">
+                                        <div class="form-text">Current value pre-loaded</div>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label for="edit_property_type" class="form-label">Property Type</label>
                                         <select class="form-control" id="edit_property_type">
-                                            <option value="">Keep existing value</option>
-                                            <option value="land">Land</option>
-                                            <option value="apartment">Apartment/Condo</option>
-                                            <option value="building">Building</option>
-                                            <option value="mixed">Mixed (Land + Building)</option>
-                                            <option value="mobile_home_only">Mobile Home Only</option>
+                                            <option value="land" ${propertyData.property_type === 'land' ? 'selected' : ''}>Land</option>
+                                            <option value="apartment" ${propertyData.property_type === 'apartment' ? 'selected' : ''}>Apartment/Condo</option>
+                                            <option value="building" ${propertyData.property_type === 'building' ? 'selected' : ''}>Building</option>
+                                            <option value="mixed" ${propertyData.property_type === 'mixed' ? 'selected' : ''}>Mixed (Land + Building)</option>
+                                            <option value="mobile_home_only" ${propertyData.property_type === 'mobile_home_only' ? 'selected' : ''}>Mobile Home Only</option>
+                                            <option value="regular" ${propertyData.property_type === 'regular' ? 'selected' : ''}>Regular</option>
                                         </select>
+                                        <div class="form-text">Current value pre-selected</div>
                                     </div>
                                 </form>
                             </div>
