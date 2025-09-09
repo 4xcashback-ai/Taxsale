@@ -509,56 +509,116 @@ if ($property['pid_number']) {
                     </div>
                 </div>
                 <?php endif; ?>
-                                <i class="fas fa-layer-group"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-success" onclick="centerOnProperty()" title="Center on Property">
-                                <i class="fas fa-crosshairs"></i>
-                            </button>
-                        </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Interactive Property Map -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-map-marked-alt me-2"></i>Interactive Property Map
                     </div>
                     <div class="card-body p-0">
-                        <div id="map" style="height: 500px; width: 100%; border-radius: 0 0 0.375rem 0.375rem;"></div>
+                        <div class="map-container">
+                            <div id="property-map" class="w-100 h-100"></div>
+                            <div class="map-controls">
+                                <button type="button" class="btn-map-control active" onclick="toggleMapType('satellite')" title="Satellite View" data-type="satellite">
+                                    <i class="fas fa-satellite"></i>
+                                </button>
+                                <button type="button" class="btn-map-control" onclick="toggleMapType('roadmap')" title="Map View" data-type="roadmap">
+                                    <i class="fas fa-map"></i>
+                                </button>
+                                <button type="button" class="btn-map-control" onclick="toggleMapType('hybrid')" title="Hybrid View" data-type="hybrid">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                                <button type="button" class="btn-map-control" onclick="centerOnProperty()" title="Center on Property">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div class="p-3 bg-light border-top">
                             <div class="row text-center">
-                                <div class="col-md-3">
-                                    <small class="text-muted"><strong>Coordinates</strong></small><br>
-                                    <small><?php echo number_format($property['latitude'] ?? 44.6488, 6); ?>, <?php echo number_format($property['longitude'] ?? -63.5752, 6); ?></small>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Coordinates</small>
+                                    <small class="fw-bold"><?php echo number_format($property['latitude'] ?? 44.6488, 6); ?>, <?php echo number_format($property['longitude'] ?? -63.5752, 6); ?></small>
                                 </div>
-                                <div class="col-md-3">
-                                    <small class="text-muted"><strong>View Type</strong></small><br>
-                                    <small id="current-map-type">Satellite</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <small class="text-muted"><strong>Zoom Level</strong></small><br>
-                                    <small id="current-zoom">17</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <small class="text-muted"><strong>Boundary Data</strong></small><br>
-                                    <small><?php echo $property['boundary_data'] ? '✅ Available' : '❌ Not Available'; ?></small>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Boundary Data</small>
+                                    <small class="fw-bold"><?php echo $property['boundary_data'] ? '✅ Available' : '📍 Coordinates Only'; ?></small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-lg-4">
+
+                <!-- Property Actions -->
                 <div class="card">
                     <div class="card-header">
-                        <h4>Property Actions</h4>
+                        <i class="fas fa-tools me-2"></i>Property Actions
                     </div>
                     <div class="card-body">
                         <?php if ($is_logged_in): ?>
-                            <button class="btn btn-outline-primary btn-sm" onclick="addToFavorites()">
-                                ⭐ Add to Favorites
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-danger" onclick="addToFavorites()">
+                                <i class="fas fa-heart me-2"></i>Add to Favorites
                             </button>
+                            <button class="btn btn-outline-info" onclick="shareProperty()">
+                                <i class="fas fa-share-alt me-2"></i>Share Property
+                            </button>
+                            <button class="btn btn-outline-success" onclick="downloadDetails()">
+                                <i class="fas fa-download me-2"></i>Download Details
+                            </button>
+                        </div>
                         <?php endif; ?>
                         
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                Last updated: <?php echo date('M j, Y', strtotime($property['updated_at'])); ?>
+                        <div class="mt-4 pt-3 border-top">
+                            <small class="text-muted d-block mb-2">
+                                <i class="fas fa-clock me-1"></i>Last updated: 
+                                <?php echo date('M j, Y \a\t g:i A', strtotime($property['updated_at'] ?? $property['created_at'])); ?>
                             </small>
+                            <?php if ($property['boundary_data']): ?>
+                            <small class="text-success d-block">
+                                <i class="fas fa-check-circle me-1"></i>Boundary data available
+                            </small>
+                            <?php else: ?>
+                            <small class="text-warning d-block">
+                                <i class="fas fa-info-circle me-1"></i>Location based on address geocoding
+                            </small>
+                            <?php endif; ?>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <?php if ($property['tax_year']): ?>
+                            <div class="col-6 mb-3">
+                                <div class="text-primary h4 mb-0"><?php echo $property['tax_year']; ?></div>
+                                <small class="text-muted">Tax Year</small>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($property['pvsc_assessment_year']): ?>
+                            <div class="col-6 mb-3">
+                                <div class="text-info h4 mb-0"><?php echo $property['pvsc_assessment_year']; ?></div>
+                                <small class="text-muted">Assessment Year</small>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <?php if ($property['opening_bid'] && $property['total_taxes']): ?>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <?php 
+                            $percentage = min(($property['opening_bid'] / $property['total_taxes']) * 100, 100);
+                            ?>
+                            <div class="progress-bar" role="progressbar" style="width: <?php echo $percentage; ?>%"></div>
+                        </div>
+                        <small class="text-muted">Opening bid is <?php echo number_format($percentage, 1); ?>% of total taxes due</small>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
