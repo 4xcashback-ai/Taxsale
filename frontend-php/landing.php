@@ -289,6 +289,19 @@
                 </div>
             </div>
             
+            <!-- Debug Info (temporary) -->
+            <?php if (isset($debug_info) && !empty($debug_info)): ?>
+            <div class="alert alert-info">
+                <strong>Debug Info:</strong>
+                <ul class="mb-0">
+                    <?php foreach ($debug_info as $info): ?>
+                    <li><?php echo htmlspecialchars($info); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <p class="mb-0 mt-2"><strong>Properties Array:</strong> <?php echo isset($landing_properties) ? (is_array($landing_properties) ? count($landing_properties) . ' items' : 'Not an array') : 'Not set'; ?></p>
+            </div>
+            <?php endif; ?>
+            
             <?php if (!empty($landing_properties)): ?>
             <div class="row">
                 <?php foreach ($landing_properties as $property): ?>
