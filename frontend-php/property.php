@@ -525,6 +525,12 @@ if ($property['assessment_number']) {
                                 <div class="info-value text-warning">
                                     <?php echo date('F j, Y', strtotime($property['sale_date'])); ?>
                                 </div>
+                                <div class="mt-2">
+                                    <div id="countdown-<?php echo $assessment_number; ?>" class="badge bg-warning text-dark fs-6 p-2">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span id="countdown-text-<?php echo $assessment_number; ?>">Loading...</span>
+                                    </div>
+                                </div>
                             </div>
                             <?php endif; ?>
                             
