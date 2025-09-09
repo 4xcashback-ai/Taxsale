@@ -541,6 +541,12 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                                     <p><strong>File size:</strong> <?php echo number_format($file_size); ?> bytes</p>
                                 <?php endif; ?>
                             <?php endif; ?>
+                            <p><strong>Property Type:</strong> <span class="badge bg-info"><?php echo htmlspecialchars($property['property_type'] ?? 'Unknown'); ?></span></p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-sm btn-outline-primary" onclick="debugPanelManager.showEditModal('<?php echo htmlspecialchars($property['assessment_number']); ?>')">
+                                <i class="fas fa-edit"></i> Edit Property
+                            </button>
                         </div>
                     </div>
                 </div>
