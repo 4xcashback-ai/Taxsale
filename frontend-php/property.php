@@ -920,17 +920,21 @@ if ($property['assessment_number']) {
                 zoom: 17,
                 center: { lat: lat, lng: lng },
                 mapTypeId: google.maps.MapTypeId.SATELLITE,
-                mapTypeControl: false,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                    position: google.maps.ControlPosition.TOP_RIGHT,
+                    mapTypeIds: [
+                        google.maps.MapTypeId.ROADMAP,
+                        google.maps.MapTypeId.SATELLITE,
+                        google.maps.MapTypeId.HYBRID,
+                        google.maps.MapTypeId.TERRAIN
+                    ]
+                },
                 streetViewControl: true,
                 fullscreenControl: true,
                 zoomControl: true,
-                styles: [
-                    {
-                        featureType: "poi",
-                        elementType: "labels",
-                        stylers: [{ visibility: "off" }]
-                    }
-                ]
+                scaleControl: true
             });
             
             // Add custom marker for property location
@@ -952,23 +956,31 @@ if ($property['assessment_number']) {
             // Add info window with property details
             const infoWindow = new google.maps.InfoWindow({
                 content: `
-                    <div style="max-width: 250px;">
+                    <div style="max-width: 300px;">
                         <h6 class="fw-bold text-primary mb-2">
-                            <i class="fas fa-home me-1"></i>Property ${<?php echo json_encode($assessment_number); ?>}
+                            <i class="fas fa-home me-1"></i>Property <?php echo htmlspecialchars($assessment_number); ?>
                         </h6>
                         <div class="small">
                             <div class="mb-1">
                                 <i class="fas fa-map-marker-alt text-danger me-1"></i>
-                                ${<?php echo json_encode($property['civic_address'] ?? 'Address not available'); ?>}
+                                <?php echo htmlspecialchars($property['civic_address'] ?? 'Address not available'); ?>
                             </div>
+                            <?php if ($property['municipality']): ?>
                             <div class="mb-1">
                                 <i class="fas fa-city text-info me-1"></i>
-                                ${<?php echo json_encode($property['municipality'] ?? ''); ?>}
+                                <?php echo htmlspecialchars($property['municipality']); ?>
                             </div>
+                            <?php endif; ?>
                             <?php if ($property['property_type']): ?>
                             <div class="mb-1">
                                 <i class="fas fa-tag text-success me-1"></i>
-                                ${<?php echo json_encode(ucfirst(str_replace('_', ' ', $property['property_type']))); ?>}
+                                <?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $property['property_type']))); ?>
+                            </div>
+                            <?php endif; ?>
+                            <?php if ($property['opening_bid']): ?>
+                            <div class="mb-1">
+                                <i class="fas fa-gavel text-warning me-1"></i>
+                                Opening Bid: $<?php echo number_format($property['opening_bid'], 2); ?>
                             </div>
                             <?php endif; ?>
                             <div class="text-muted mt-2">
@@ -983,7 +995,7 @@ if ($property['assessment_number']) {
                 infoWindow.open(map, marker);
             });
             
-            // Show info window by default
+            // Show info window by default after a short delay
             setTimeout(() => {
                 infoWindow.open(map, marker);
             }, 1000);
@@ -1014,7 +1026,7 @@ if ($property['assessment_number']) {
                             <div>
                                 <h6><strong>Property Boundary</strong></h6>
                                 <p>Assessment: <?php echo htmlspecialchars($assessment_number); ?></p>
-                                <p>Area boundary as recorded in government records</p>
+                                <p>Boundary as recorded in government records</p>
                             </div>
                         `
                     });
@@ -1044,12 +1056,37 @@ if ($property['assessment_number']) {
                     }
                 }
             } catch (e) {
-                console.log("No boundary data to display");
+                console.log("No boundary data to display:", e);
             }
             <?php else: ?>
             // No boundary data - just center on coordinates with appropriate zoom
             map.setZoom(17);
             <?php endif; ?>
+            
+            // Add map legend
+            const legend = document.createElement('div');
+            legend.style.backgroundColor = 'white';
+            legend.style.border = '2px solid #ccc';
+            legend.style.borderRadius = '8px';
+            legend.style.margin = '10px';
+            legend.style.padding = '12px';
+            legend.style.fontSize = '12px';
+            legend.style.fontFamily = 'Arial, sans-serif';
+            legend.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+            legend.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 8px; color: #333;">Property Map Legend</div>
+                <div style="margin-bottom: 4px;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #FF4444; border-radius: 50%; margin-right: 8px;"></span>
+                    Property Location
+                </div>
+                <?php if ($property['boundary_data']): ?>
+                <div>
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #FF6B35; opacity: 0.5; margin-right: 8px;"></span>
+                    Property Boundary
+                </div>
+                <?php endif; ?>
+            `;
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(legend);
         }
         
         // Map control functions
@@ -1068,7 +1105,10 @@ if ($property['assessment_number']) {
                 document.querySelectorAll('.btn-map-control[data-type]').forEach(btn => {
                     btn.classList.remove('active');
                 });
-                document.querySelector(`[data-type="${type}"]`).classList.add('active');
+                const targetBtn = document.querySelector(`[data-type="${type}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                }
             }
         }
         
@@ -1089,8 +1129,27 @@ if ($property['assessment_number']) {
         
         // Property action functions
         function addToFavorites() {
-            // Placeholder for favorites functionality
-            alert('Favorites functionality coming soon!');
+            fetch('/api/favorites.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    assessment_number: '<?php echo htmlspecialchars($assessment_number); ?>'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Added to favorites!');
+                } else {
+                    alert('Error: ' + (data.message || 'Unable to add to favorites'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding to favorites. Please try again.');
+            });
         }
         
         function shareProperty() {
@@ -1104,25 +1163,62 @@ if ($property['assessment_number']) {
                 // Fallback: copy to clipboard
                 navigator.clipboard.writeText(window.location.href).then(() => {
                     alert('Property link copied to clipboard!');
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = window.location.href;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Property link copied to clipboard!');
                 });
             }
         }
         
         function downloadDetails() {
-            // Placeholder for download functionality
-            alert('Download functionality coming soon!');
+            // Create a simple property details text file
+            const propertyDetails = `
+Tax Sale Property Details
+
+Assessment Number: <?php echo htmlspecialchars($assessment_number); ?>
+Address: <?php echo htmlspecialchars($property['civic_address'] ?? 'N/A'); ?>
+Municipality: <?php echo htmlspecialchars($property['municipality'] ?? 'N/A'); ?>
+Property Type: <?php echo htmlspecialchars($property['property_type'] ?? 'N/A'); ?>
+<?php if ($property['opening_bid']): ?>
+Opening Bid: $<?php echo number_format($property['opening_bid'], 2); ?>
+<?php endif; ?>
+<?php if ($property['total_taxes']): ?>
+Total Taxes Due: $<?php echo number_format($property['total_taxes'], 2); ?>
+<?php endif; ?>
+Tax Year: <?php echo htmlspecialchars($property['tax_year'] ?? 'N/A'); ?>
+Status: <?php echo htmlspecialchars($property['status'] ?? 'N/A'); ?>
+
+Coordinates: <?php echo number_format($property['latitude'] ?? 44.6488, 6); ?>, <?php echo number_format($property['longitude'] ?? -63.5752, 6); ?>
+
+Downloaded from: ${window.location.href}
+Downloaded on: ${new Date().toLocaleString()}
+            `.trim();
+            
+            const blob = new Blob([propertyDetails], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `property_${<?php echo json_encode($assessment_number); ?>}_details.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
         
-        // Load PSC data asynchronously if we have a PID
-        <?php if ($property['pid_number'] && !$psc_data): ?>
-        document.addEventListener('DOMContentLoaded', function() {
-            // This would be handled by the PSC API call in PHP
-            console.log('PSC data loading...');
-        });
-        <?php endif; ?>
-        
         // Initialize map when page loads
-        window.onload = initMap;
+        window.onload = function() {
+            if (typeof google !== 'undefined' && google.maps) {
+                initMap();
+            } else {
+                console.error('Google Maps API not loaded');
+            }
+        };
         
         // Show upgrade modal if needed
         <?php if (isset($show_upgrade_modal)): ?>
