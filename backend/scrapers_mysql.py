@@ -1547,7 +1547,7 @@ def extract_property_details_from_pdf(assessment_number: str, pdf_text: str) -> 
     return {
         'owner_name': owner_name if owner_name else 'Unknown',
         'civic_address': civic_address if civic_address else f'{assessment_number} Halifax Property',
-        'minimum_bid': bid_amount,
+        'opening_bid': bid_amount,
         'property_type': 'mobile_home_only' if 'mobile' in property_line.lower() else 'regular'
     }
 
