@@ -7,9 +7,8 @@ CREATE TABLE IF NOT EXISTS user_favorites (
     assessment_number VARCHAR(20) NOT NULL,
     favorited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Foreign key constraints
+    -- Foreign key constraints (without FK to properties since assessment_number might not be primary key)
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (assessment_number) REFERENCES properties(assessment_number) ON DELETE CASCADE,
     
     -- Ensure unique favorite per user per property
     UNIQUE KEY unique_user_property (user_id, assessment_number),
