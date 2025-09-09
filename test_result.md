@@ -366,6 +366,48 @@ The rescan functionality returns `"files_checked": {"pdfs": [], "excel": []}` be
 - Enhanced Halifax rescan functionality with embedded PID extraction fully tested and working
 - Ready to proceed with thumbnail generation path fixes
 
+### Session 13: Property Details Page UI/UX Improvements
+**Date**: September 9, 2025
+**Phase**: Property page layout enhancements and user experience improvements
+**Status**: COMPLETED ✅
+
+**UI/UX Improvements Implemented**:
+- ✅ **PVSC Data Two-Column Layout**: Converted single table format to clean two-column card layout
+  - Left Column: Assessed Value, Land Size, Year Built, Bedrooms, Basement, Construction Quality, Last Sale Date
+  - Right Column: Taxable Assessed Value, Building Size, Building Style, Bathrooms, Garage, Living Units, Last Sale Price
+- ✅ **Owner Name Removal**: Removed owner name field from Property Information section as requested
+- ✅ **Right Column Financial Updates**: 
+  - Replaced "Total Taxes Due" with "Assessed Value" ($185,000.00)
+  - Added "Potential Profit" calculation (+$170,000.00)
+  - Added explanatory text "(Assessed Value - Min Bid)"
+- ✅ **Countdown Timer**: Added dynamic countdown to auction date showing "96 days 1 hours" format
+  - Updates in real-time with color coding (green > 30 days, yellow 7-30 days, red < 7 days)
+  - Handles expired auctions with "Auction has ended" message
+
+**Technical Implementation**:
+- ✅ **Database Setup**: Installed and configured MariaDB/MySQL with proper schema
+- ✅ **PHP Environment**: Set up PHP 8.2 with FPM, nginx configuration for port 3000
+- ✅ **Sample Data**: Added test properties and PVSC data for demonstration
+- ✅ **Responsive Design**: Two-column PVSC layout adapts to screen size
+- ✅ **JavaScript Integration**: Countdown timer with automatic updates every minute
+
+**Testing Results**:
+- ✅ **Login System**: Admin authentication working with credentials (admin / TaxSale2025!SecureAdmin)
+- ✅ **Property Display**: Property #07737947 displays correctly with all improvements
+- ✅ **Interactive Map**: Google Maps integration showing satellite view with property marker
+- ✅ **PVSC Data Integration**: Comprehensive property data from database displayed in organized layout
+- ✅ **Financial Calculations**: Accurate profit/loss calculations based on assessed value vs minimum bid
+- ✅ **User Experience**: Clean, modern interface with improved readability and organization
+
+**Files Modified**:
+- `/app/frontend-php/property.php` - Complete UI/UX redesign with two-column PVSC layout
+- Database setup with sample data for testing
+- Nginx and PHP-FPM configuration for proper frontend serving
+
+**Success Rate**: 100% (All requested improvements implemented and tested)
+
+**Status**: 🎉 **PROPERTY PAGE IMPROVEMENTS COMPLETE** - All user-requested changes successfully implemented with enhanced two-column PVSC data layout, countdown timer, financial calculations, and improved user experience.
+
 ### Session 12: Enhanced Generate-Boundary-Thumbnail Testing for Apartment Property 07737947
 **Date**: September 9, 2025
 **Phase**: Testing enhanced generate-boundary-thumbnail endpoint with environment variable fix
