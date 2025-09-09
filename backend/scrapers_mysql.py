@@ -13,6 +13,9 @@ from bs4 import BeautifulSoup
 from typing import List, Dict, Optional, Tuple
 import logging
 import pandas as pd
+import traceback
+import PyPDF2
+from io import BytesIO
 from mysql_config import mysql_db
 
 logger = logging.getLogger(__name__)
