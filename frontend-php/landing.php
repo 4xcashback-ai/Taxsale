@@ -56,6 +56,49 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        .property-preview-card {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .property-preview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15) !important;
+        }
+        .property-preview-thumbnail {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+        .property-preview-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .property-preview-card:hover .property-preview-thumbnail img {
+            transform: scale(1.05);
+        }
+        .property-status-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .status-active {
+            background-color: #28a745 !important;
+            color: white;
+        }
+        .status-inactive {
+            background-color: #6c757d !important;
+            color: white;
+        }
+        .status-sold {
+            background-color: #dc3545 !important;
+            color: white;
+        }
+        .status-withdrawn {
+            background-color: #ffc107 !important;
+            color: black;
+        }
     </style>
 </head>
 <body>
