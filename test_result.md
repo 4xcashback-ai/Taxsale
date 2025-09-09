@@ -314,3 +314,44 @@ The rescan functionality returns `"files_checked": {"pdfs": [], "excel": []}` be
 - Backend testing completed and operational
 - Enhanced Halifax rescan functionality with embedded PID extraction fully tested and working
 - Ready to proceed with thumbnail generation path fixes
+
+### Session 12: Enhanced Generate-Boundary-Thumbnail Testing for Apartment Property 07737947
+**Date**: September 9, 2025
+**Phase**: Testing enhanced generate-boundary-thumbnail endpoint with environment variable fix
+**Status**: COMPLETED ✅
+
+**Test Request**: Test the enhanced generate-boundary-thumbnail endpoint for apartment property 07737947 with python-dotenv environment variable loading fix.
+
+**Enhanced Boundary Thumbnail Test Results**:
+- ✅ **Environment Variable Loading**: python-dotenv successfully loads environment variables including Google Maps API key
+- ✅ **PID-Based Boundary Attempt**: System correctly attempts PID-based boundary lookup first (PID: 40498370)
+- ✅ **Address-Based Fallback**: Successfully falls back to Google Maps geocoding when PID boundaries unavailable for apartment
+- ✅ **Google Maps Geocoding**: Successfully geocodes address "80 Spinnaker Dr Unit 209 Halifax" to coordinates 44.6379021, -63.61754689999999
+- ✅ **Halifax Area Validation**: Coordinates correctly fall within Halifax area bounds (lat 44.0-45.5, lng -64.5 to -63.0)
+- ✅ **Response Method**: API response correctly shows method: "address_based"
+- ✅ **Database Update**: Property successfully updated in database with geocoded coordinates
+- ✅ **Boundary Data NULL**: boundary_data correctly set to NULL in database (appropriate for apartment properties)
+
+**API Endpoint Testing**:
+- ✅ **POST /api/generate-boundary-thumbnail/07737947**: Returns 200 OK with correct response structure
+- ✅ **Response Validation**: All required fields present (method, center, boundary_data, message)
+- ✅ **Coordinate Accuracy**: Geocoded coordinates match database updates within floating-point tolerance
+- ✅ **Property Type Handling**: Apartment property correctly handled with address-based geocoding fallback
+
+**Backend Functionality Verification**:
+- ✅ **Google Maps API Integration**: API key working correctly with successful geocoding requests
+- ✅ **Database Persistence**: Coordinates and boundary_data updates persist correctly in MySQL database
+- ✅ **Error Handling**: Graceful fallback from PID-based to address-based method
+- ✅ **Logging**: Comprehensive debug logging shows complete flow from PID attempt to geocoding success
+
+**Success Rate**: 100% (8/8 core requirements passed)
+
+**Critical Functionality Status**:
+- ✅ Environment variable loading issue fixed with python-dotenv
+- ✅ PID-based boundary attempt works but fails appropriately for apartment properties
+- ✅ Google Maps geocoding fallback working perfectly for apartment properties
+- ✅ Halifax area coordinate validation working correctly
+- ✅ Database updates with coordinates and NULL boundary_data working as expected
+- ✅ API response format matches requirements (method: "address_based")
+
+**Test Summary**: The enhanced generate-boundary-thumbnail endpoint is working perfectly for apartment property 07737947. The system correctly attempts PID-based boundaries first, then falls back to Google Maps geocoding using the property address. The geocoded coordinates are valid for the Halifax area, the database is properly updated, and boundary_data is correctly set to NULL for apartment properties that don't have PID-based boundaries.
