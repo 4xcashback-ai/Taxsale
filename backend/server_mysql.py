@@ -1350,6 +1350,27 @@ async def scrape_pvsc_data(assessment_number: str):
                     bath_match = re.search(r'(\d+\.?\d*)', value)
                     if bath_match:
                         extracted_data['number_of_bathrooms'] = float(bath_match.group(1))
+                
+                elif 'finished basement' in label:
+                    extracted_data['basement_type'] = 'Finished' if value.upper() == 'Y' else 'Unfinished' if value.upper() == 'N' else value
+                
+                elif 'garage' in label:
+                    extracted_data['garage'] = 'Yes' if value.upper() == 'Y' else 'No' if value.upper() == 'N' else value
+                
+                elif 'quality of construction' in label:
+                    extracted_data['construction_quality'] = value
+                
+                elif 'under construction' in label:
+                    extracted_data['under_construction'] = 'Yes' if value.upper() == 'Y' else 'No' if value.upper() == 'N' else value
+                
+                elif 'living units' in label:
+                    units_match = re.search(r'(\d+)', value)
+                    if units_match:
+                        extracted_data['living_units'] = int(units_match.group(1))
+                
+                elif 'building style' in label:
+                    extracted_data['dwelling_type'] = value
+                    extracted_data['building_style'] = value
         
         # Extract assessment history from table
         history_table = soup.find('table', id='tblValuesHistory')
