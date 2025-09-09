@@ -759,6 +759,15 @@ class TaxSaleCompassTester:
         self.test_map_data_endpoint()
         self.test_search_endpoint()
         
+        # Enhanced Halifax rescan functionality tests
+        print("\n🔍 Testing Enhanced Halifax Rescan Functionality...")
+        if admin_login_ok:
+            self.test_halifax_pdf_download()
+            self.test_extract_property_details_function()
+            self.test_halifax_rescan_with_embedded_pid()
+        else:
+            print("⚠️  Skipping Halifax rescan tests - admin login failed")
+        
         # Summary
         print("\n" + "=" * 60)
         print("TEST SUMMARY")
