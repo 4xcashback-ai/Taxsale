@@ -1304,18 +1304,18 @@ async def scrape_pvsc_data(assessment_number: str):
                             extracted_data['land_size_unit'] = 'Acres'
                 
                 elif 'current property assessment' in label:
-                    # Extract numeric value from currency
-                    price_match = re.search(r'\$([\d,]+)', value)
+                    # Extract numeric value from currency - handle decimals
+                    price_match = re.search(r'\$([\d,]+\.?\d*)', value)
                     if price_match:
                         extracted_data['assessed_value'] = float(price_match.group(1).replace(',', ''))
                 
                 elif 'current taxable assessed value' in label:
-                    price_match = re.search(r'\$([\d,]+)', value)
+                    price_match = re.search(r'\$([\d,]+\.?\d*)', value)
                     if price_match:
                         extracted_data['taxable_assessed_value'] = float(price_match.group(1).replace(',', ''))
                 
                 elif 'sale price' in label and '$' in value:
-                    price_match = re.search(r'\$([\d,]+)', value)
+                    price_match = re.search(r'\$([\d,]+\.?\d*)', value)
                     if price_match:
                         extracted_data['last_sale_price'] = float(price_match.group(1).replace(',', ''))
                 
@@ -1336,7 +1336,7 @@ async def scrape_pvsc_data(assessment_number: str):
                     extracted_data['dwelling_type'] = value
                 
                 elif 'total living area' in label:
-                    area_match = re.search(r'([\d,]+)', value)
+                    area_match = re.search(r'([\d,]+\.?\d*)', value)
                     if area_match:
                         extracted_data['building_size'] = float(area_match.group(1).replace(',', ''))
                         extracted_data['building_size_unit'] = 'Sq. Ft.'
@@ -1347,7 +1347,7 @@ async def scrape_pvsc_data(assessment_number: str):
                         extracted_data['number_of_bedrooms'] = int(bedroom_match.group(1))
                 
                 elif 'baths' in label:
-                    bath_match = re.search(r'(\d+)', value)
+                    bath_match = re.search(r'(\d+\.?\d*)', value)
                     if bath_match:
                         extracted_data['number_of_bathrooms'] = float(bath_match.group(1))
         
