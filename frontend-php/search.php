@@ -566,8 +566,12 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
 
         <!-- Properties Grid -->
         <div class="row">
-            <?php foreach ($properties as $property): ?>
-                <?php $thumbnail_url = $thumbnail_generator->getThumbnail($property); ?>
+            <?php 
+            $property_count = 0;
+            foreach ($properties as $property): 
+                $property_count++;
+                $thumbnail_url = $thumbnail_generator->getThumbnail($property); 
+            ?>
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="property-card">
                         <!-- Property Boundary Thumbnail -->
@@ -649,6 +653,35 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                         </div>
                     </div>
                 </div>
+                
+                <?php 
+                // Insert Google Ad after every 6 properties (every 2 rows since 3 properties per row)
+                if ($property_count % 6 == 0 && $property_count < count($properties)): 
+                ?>
+                </div> <!-- Close current row -->
+                
+                <!-- Google AdSense Ad -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="ad-container text-center p-3" style="background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef;">
+                            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215"
+                                 crossorigin="anonymous"></script>
+                            <!-- search page -->
+                            <ins class="adsbygoogle"
+                                 style="display:block"
+                                 data-ad-client="ca-pub-5947395928510215"
+                                 data-ad-slot="2293195574"
+                                 data-ad-format="auto"
+                                 data-full-width-responsive="true"></ins>
+                            <script>
+                                 (adsbygoogle = window.adsbygoogle || []).push({});
+                            </script>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row"> <!-- Start new row -->
+                <?php endif; ?>
             <?php endforeach; ?>
         </div>
 
