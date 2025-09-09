@@ -72,20 +72,36 @@ if ($property['status'] === 'active' && !$is_paid_user) {
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong>Civic Address:</strong> <?php echo htmlspecialchars($property['civic_address'] ?? 'N/A'); ?></p>
-                                <p><strong>Municipality:</strong> <?php echo htmlspecialchars($property['municipality']); ?></p>
-                                <p><strong>Property Type:</strong> <?php echo htmlspecialchars($property['property_type'] ?? 'N/A'); ?></p>
-                                <p><strong>Tax Year:</strong> <?php echo $property['tax_year']; ?></p>
+                                <p><i class="fas fa-map-marker-alt text-primary"></i> <strong>Civic Address:</strong><br>
+                                   <span class="ms-3"><?php echo htmlspecialchars($property['civic_address'] ?? 'N/A'); ?></span></p>
+                                <p><i class="fas fa-city text-primary"></i> <strong>Municipality:</strong><br>
+                                   <span class="ms-3"><?php echo htmlspecialchars($property['municipality']); ?></span></p>
+                                <p><i class="fas fa-home text-primary"></i> <strong>Property Type:</strong><br>
+                                   <span class="ms-3 badge bg-info text-white"><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $property['property_type'] ?? 'N/A'))); ?></span></p>
+                                <?php if ($property['pid_number']): ?>
+                                <p><i class="fas fa-fingerprint text-primary"></i> <strong>PID Number:</strong><br>
+                                   <span class="ms-3"><code><?php echo htmlspecialchars($property['pid_number']); ?></code></span></p>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Total Taxes:</strong> $<?php echo number_format($property['total_taxes'], 2); ?></p>
-                                <p><strong>Status:</strong> 
+                                <?php if ($property['opening_bid']): ?>
+                                <p><i class="fas fa-gavel text-success"></i> <strong>Opening Bid:</strong><br>
+                                   <span class="ms-3 text-success fw-bold fs-5">$<?php echo number_format($property['opening_bid'], 2); ?></span></p>
+                                <?php endif; ?>
+                                <p><i class="fas fa-calendar text-primary"></i> <strong>Tax Year:</strong><br>
+                                   <span class="ms-3"><?php echo $property['tax_year']; ?></span></p>
+                                <p><i class="fas fa-receipt text-primary"></i> <strong>Total Taxes:</strong><br>
+                                   <span class="ms-3 text-danger fw-bold">$<?php echo number_format($property['total_taxes'], 2); ?></span></p>
+                                <p><i class="fas fa-info-circle text-primary"></i> <strong>Status:</strong><br>
+                                   <span class="ms-3">
                                     <span class="badge bg-<?php echo $property['status'] === 'active' ? 'success' : 'secondary'; ?>">
                                         <?php echo ucfirst($property['status']); ?>
                                     </span>
+                                   </span>
                                 </p>
                                 <?php if ($property['pvsc_assessment_value']): ?>
-                                    <p><strong>PVSC Assessment:</strong> $<?php echo number_format($property['pvsc_assessment_value'], 2); ?> (<?php echo $property['pvsc_assessment_year']; ?>)</p>
+                                <p><i class="fas fa-calculator text-primary"></i> <strong>PVSC Assessment:</strong><br>
+                                   <span class="ms-3">$<?php echo number_format($property['pvsc_assessment_value'], 2); ?> (<?php echo $property['pvsc_assessment_year']; ?>)</span></p>
                                 <?php endif; ?>
                             </div>
                         </div>
