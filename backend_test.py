@@ -938,6 +938,14 @@ class TaxSaleCompassTester:
         self.test_map_data_endpoint()
         self.test_search_endpoint()
         
+        # Enhanced apartment property thumbnail generation test
+        print("\n🏢 Testing Enhanced Apartment Property Thumbnail Generation...")
+        if admin_login_ok:
+            self.test_google_maps_api_key_usage()
+            self.test_enhanced_boundary_thumbnail_apartment_property()
+        else:
+            print("⚠️  Skipping apartment property tests - admin login failed")
+        
         # Enhanced Halifax rescan functionality tests
         print("\n🔍 Testing Enhanced Halifax Rescan Functionality...")
         if admin_login_ok:
