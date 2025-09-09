@@ -1252,8 +1252,21 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
             }
         }
         
-        showEditModal(assessmentNumber) {
-            // Create a comprehensive edit modal
+        async showEditModal(assessmentNumber) {
+            // First fetch the current property data from database
+            let propertyData = {};
+            
+            try {
+                const response = await fetch(`/api/missing_pids.php?action=get_property&assessment_number=${assessmentNumber}`);
+                const data = await response.json();
+                if (data.status === 'success' && data.property) {
+                    propertyData = data.property;
+                }
+            } catch (error) {
+                console.error('Failed to fetch property data:', error);
+            }
+            
+            // Create a comprehensive edit modal with pre-populated data
             const modalHTML = `
                 <div class="modal fade" id="editPropertyModal" tabindex="-1">
                     <div class="modal-dialog">
