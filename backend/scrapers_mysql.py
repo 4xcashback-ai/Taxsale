@@ -1610,11 +1610,33 @@ def extract_property_details_from_pdf(assessment_number: str, pdf_text: str) -> 
     if not cleaned_civic_address or len(cleaned_civic_address.strip()) < 3:
         cleaned_civic_address = f'{assessment_number} Halifax Property'
     
+    # Enhanced property type detection
+    property_type = 'land'  # default
+    
+    # Check the cleaned civic address for property type indicators
+    address_lower = cleaned_civic_address.lower()
+    property_line_lower = property_line.lower()
+    
+    if 'mobile home only' in property_line_lower or 'mobile' in property_line_lower:
+        property_type = 'mobile_home_only'
+    elif any(indicator in address_lower for indicator in [
+        'unit ', 'apt ', 'suite ', 'apartment', 'condo', 'condominium', '#'
+    ]) or any(indicator in address_lower for indicator in [
+        'unit#', 'apt#', 'suite#', 'level ', 'floor '
+    ]):
+        property_type = 'apartment'  # Apartment/Condo units have no land component
+    elif any(indicator in property_line_lower for indicator in [
+        'dwelling', 'house', 'residence', 'building'
+    ]):
+        property_type = 'mixed'  # House/building with land
+    else:
+        property_type = 'land'  # Vacant land or default
+    
     result = {
         'owner_name': owner_name if owner_name else 'Unknown',
         'civic_address': cleaned_civic_address,
         'opening_bid': bid_amount,
-        'property_type': 'mobile_home_only' if 'mobile' in property_line.lower() else 'regular'
+        'property_type': property_type
     }
     
     # Add the extracted PID if found
