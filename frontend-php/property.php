@@ -357,6 +357,44 @@ if ($property['pid_number']) {
 
         <div class="row">
             <div class="col-lg-8">
+                <!-- Interactive Property Map -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-map-marked-alt me-2"></i>Interactive Property Map
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="map-container">
+                            <div id="property-map" class="w-100 h-100"></div>
+                            <div class="map-controls">
+                                <button type="button" class="btn-map-control active" onclick="toggleMapType('satellite')" title="Satellite View" data-type="satellite">
+                                    <i class="fas fa-satellite"></i>
+                                </button>
+                                <button type="button" class="btn-map-control" onclick="toggleMapType('roadmap')" title="Map View" data-type="roadmap">
+                                    <i class="fas fa-map"></i>
+                                </button>
+                                <button type="button" class="btn-map-control" onclick="toggleMapType('hybrid')" title="Hybrid View" data-type="hybrid">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                                <button type="button" class="btn-map-control" onclick="centerOnProperty()" title="Center on Property">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-light border-top">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Coordinates</small>
+                                    <small class="fw-bold"><?php echo number_format($property['latitude'] ?? 44.6488, 6); ?>, <?php echo number_format($property['longitude'] ?? -63.5752, 6); ?></small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Boundary Data</small>
+                                    <small class="fw-bold"><?php echo $property['boundary_data'] ? '✅ Available' : '📍 Coordinates Only'; ?></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Basic Property Information -->
                 <div class="card">
                     <div class="card-header">
@@ -435,54 +473,147 @@ if ($property['pid_number']) {
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Minimum Bid - Prominently at Top -->
+                <?php if ($property['opening_bid'] || $property['total_taxes']): ?>
+                <div class="card mb-3" style="border: 2px solid var(--success-color);">
+                    <div class="card-header text-center" style="background: linear-gradient(135deg, var(--success-color), #00b894); color: white;">
+                        <h4 class="mb-0">
+                            <i class="fas fa-gavel me-2"></i>Minimum Bid
+                        </h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <?php if ($property['opening_bid']): ?>
+                        <div class="display-4 text-success fw-bold mb-2">
+                            $<?php echo number_format($property['opening_bid'], 2); ?>
+                        </div>
+                        <div class="text-muted mb-3">Opening Bid Amount</div>
+                        <?php endif; ?>
+                        
+                        <?php if ($property['total_taxes']): ?>
+                        <div class="border-top pt-3">
+                            <div class="h5 text-danger mb-1">
+                                $<?php echo number_format($property['total_taxes'], 2); ?>
+                            </div>
+                            <small class="text-muted">Total Taxes Due</small>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($property['opening_bid'] && $property['total_taxes']): ?>
+                        <div class="mt-3 pt-3 border-top">
+                            <?php $percentage = ($property['opening_bid'] / $property['total_taxes']) * 100; ?>
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: <?php echo min($percentage, 100); ?>%"></div>
+                            </div>
+                            <small class="text-muted">
+                                Bid is <?php echo number_format($percentage, 1); ?>% of taxes due
+                            </small>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
 
-                <!-- PSC Enhanced Property Details -->
+                <!-- PSC Property Data Table -->
                 <?php if ($psc_data && !empty($psc_data)): ?>
                 <div class="card">
                     <div class="card-header">
-                        <i class="fas fa-database me-2"></i>Enhanced Property Details
-                        <small class="badge bg-success ms-2">Live Data from Nova Scotia PSC</small>
+                        <i class="fas fa-database me-2"></i>Nova Scotia PSC Data
+                        <small class="badge bg-success ms-2">Live</small>
                     </div>
-                    <div class="card-body">
-                        <div class="info-grid">
-                            <?php if (isset($psc_data['legal_description'])): ?>
-                            <div class="info-item psc-data">
-                                <div class="info-label">
-                                    <i class="fas fa-file-alt me-1"></i>Legal Description
-                                </div>
-                                <div class="info-value">
-                                    <?php echo htmlspecialchars($psc_data['legal_description']); ?>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if (isset($psc_data['area'])): ?>
-                            <div class="info-item psc-data">
-                                <div class="info-label">
-                                    <i class="fas fa-ruler-combined me-1"></i>Property Area
-                                </div>
-                                <div class="info-value">
-                                    <?php echo htmlspecialchars($psc_data['area']); ?>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if (isset($psc_data['deed_info'])): ?>
-                            <div class="info-item psc-data">
-                                <div class="info-label">
-                                    <i class="fas fa-scroll me-1"></i>Deed Information
-                                </div>
-                                <div class="info-value">
-                                    <?php echo htmlspecialchars($psc_data['deed_info']); ?>
-                                </div>
-                            </div>
-                            <?php endif; ?>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0">
+                                <tbody>
+                                    <?php if (isset($psc_data['legal_description']) && $psc_data['legal_description']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted" style="width: 40%;">
+                                            <i class="fas fa-file-alt me-1"></i>Legal Description
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['legal_description']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['area']) && $psc_data['area']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-ruler-combined me-1"></i>Area
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['area']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['deed_info']) && $psc_data['deed_info']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-scroll me-1"></i>Deed Info
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['deed_info']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['plan_number']) && $psc_data['plan_number']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-map me-1"></i>Plan Number
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['plan_number']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['lot_number']) && $psc_data['lot_number']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-square me-1"></i>Lot Number
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['lot_number']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['block_number']) && $psc_data['block_number']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-th-large me-1"></i>Block Number
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['block_number']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['parish']) && $psc_data['parish']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-church me-1"></i>Parish
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['parish']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['county']) && $psc_data['county']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-landmark me-1"></i>County
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['county']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($psc_data['registration_district']) && $psc_data['registration_district']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-clipboard-list me-1"></i>Registration District
+                                        </td>
+                                        <td><?php echo htmlspecialchars($psc_data['registration_district']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
-                        
-                        <div class="mt-3">
+                        <div class="card-footer bg-light">
                             <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                This data is retrieved in real-time from the Nova Scotia Property Services Corporation (PSC)
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Data retrieved from Nova Scotia Property Services Corporation
                             </small>
                         </div>
                     </div>
@@ -490,65 +621,23 @@ if ($property['pid_number']) {
                 <?php else: ?>
                 <div class="card">
                     <div class="card-header">
-                        <i class="fas fa-database me-2"></i>Enhanced Property Details
+                        <i class="fas fa-database me-2"></i>Nova Scotia PSC Data
                         <span class="loading-spinner ms-2"></span>
                     </div>
-                    <div class="card-body">
-                        <div class="text-center py-4">
-                            <div class="mb-3">
-                                <i class="fas fa-search fa-2x text-muted"></i>
-                            </div>
-                            <p class="text-muted">Loading additional property details from Nova Scotia PSC...</p>
-                            <?php if (!$property['pid_number']): ?>
-                            <small class="text-warning">
-                                <i class="fas fa-exclamation-triangle me-1"></i>
-                                Enhanced details require a valid PID number
-                            </small>
-                            <?php endif; ?>
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-search fa-2x text-muted"></i>
                         </div>
+                        <p class="text-muted mb-2">Retrieving property data from PSC...</p>
+                        <?php if (!$property['pid_number']): ?>
+                        <small class="text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Requires valid PID number
+                        </small>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endif; ?>
-            </div>
-            
-            <div class="col-lg-4">
-                <!-- Interactive Property Map -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-map-marked-alt me-2"></i>Interactive Property Map
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="map-container">
-                            <div id="property-map" class="w-100 h-100"></div>
-                            <div class="map-controls">
-                                <button type="button" class="btn-map-control active" onclick="toggleMapType('satellite')" title="Satellite View" data-type="satellite">
-                                    <i class="fas fa-satellite"></i>
-                                </button>
-                                <button type="button" class="btn-map-control" onclick="toggleMapType('roadmap')" title="Map View" data-type="roadmap">
-                                    <i class="fas fa-map"></i>
-                                </button>
-                                <button type="button" class="btn-map-control" onclick="toggleMapType('hybrid')" title="Hybrid View" data-type="hybrid">
-                                    <i class="fas fa-layer-group"></i>
-                                </button>
-                                <button type="button" class="btn-map-control" onclick="centerOnProperty()" title="Center on Property">
-                                    <i class="fas fa-crosshairs"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-3 bg-light border-top">
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Coordinates</small>
-                                    <small class="fw-bold"><?php echo number_format($property['latitude'] ?? 44.6488, 6); ?>, <?php echo number_format($property['longitude'] ?? -63.5752, 6); ?></small>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Boundary Data</small>
-                                    <small class="fw-bold"><?php echo $property['boundary_data'] ? '✅ Available' : '📍 Coordinates Only'; ?></small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Property Actions -->
                 <div class="card">
@@ -609,16 +698,6 @@ if ($property['pid_number']) {
                             </div>
                             <?php endif; ?>
                         </div>
-                        
-                        <?php if ($property['opening_bid'] && $property['total_taxes']): ?>
-                        <div class="progress mb-2" style="height: 8px;">
-                            <?php 
-                            $percentage = min(($property['opening_bid'] / $property['total_taxes']) * 100, 100);
-                            ?>
-                            <div class="progress-bar" role="progressbar" style="width: <?php echo $percentage; ?>%"></div>
-                        </div>
-                        <small class="text-muted">Opening bid is <?php echo number_format($percentage, 1); ?>% of total taxes due</small>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
