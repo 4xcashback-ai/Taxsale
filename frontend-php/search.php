@@ -606,6 +606,8 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
                                     
                                     if (isset($property['property_type']) && $property['property_type'] === 'mobile_home_only') {
                                         $pid_display = '<span class="badge bg-warning text-dark">Mobile Home Only</span>';
+                                    } elseif (isset($property['property_type']) && $property['property_type'] === 'apartment') {
+                                        $pid_display = '<span class="badge bg-info text-white">Apartment/Condo</span>';
                                     } elseif (isset($property['pid_count']) && $property['pid_count'] > 1) {
                                         // Multiple PIDs - show primary and count
                                         $primary = htmlspecialchars($property['primary_pid'] ?? $property['pid_number'] ?? 'N/A');
