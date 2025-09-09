@@ -559,6 +559,67 @@ class ThumbnailGenerator {
         return 'data:image/svg+xml;base64,' . base64encode($svg);
     }
 
+    public function getAddressBasedThumbnail($property) {
+        $assessment_number = $property['assessment_number'];
+        $address = $property['civic_address'] ?? 'Apartment Property';
+        $pid_number = $property['pid_number'] ?? null;
+        
+        error_log("ThumbnailGenerator: Generating address-based thumbnail for apartment {$assessment_number}");
+        
+        // Try to get coordinates using PID first
+        if ($pid_number) {
+            $thumbnail = $this->generateThumbnail($assessment_number, null, null, $pid_number, $address, $property['municipality'] ?? null);
+            if ($thumbnail && $thumbnail !== '/assets/images/placeholder-property.jpg') {
+                return $thumbnail;
+            }
+        }
+        
+        // Try geocoding the address for apartments
+        if ($address && $address !== 'Halifax Property ' . $assessment_number) {
+            $geocoded = $this->geocodeAddress($address);
+            if ($geocoded && isset($geocoded['lat']) && isset($geocoded['lng'])) {
+                return $this->generateThumbnail($assessment_number, $geocoded['lat'], $geocoded['lng'], $pid_number, $address, $property['municipality'] ?? null);
+            }
+        }
+        
+        // Generate apartment placeholder with proper styling
+        $svg = '
+            <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="300" height="200" fill="#e3f2fd"/>
+                <rect x="10" y="10" width="280" height="180" fill="#1976d2" opacity="0.1" rx="10"/>
+                <text x="150" y="40" font-family="Arial" font-size="16" fill="#1976d2" text-anchor="middle" font-weight="bold">APARTMENT/CONDO</text>
+                <text x="150" y="60" font-family="Arial" font-size="12" fill="#1565c0" text-anchor="middle" font-weight="bold">UNIT PROPERTY</text>
+                <text x="150" y="105" font-family="Arial" font-size="10" fill="#ffffff" text-anchor="middle">' . htmlspecialchars($assessment_number) . '</text>
+                <text x="150" y="140" font-family="Arial" font-size="8" fill="#1565c0" text-anchor="middle">' . htmlspecialchars(substr($address, 0, 40)) . '</text>
+                <text x="150" y="155" font-family="Arial" font-size="8" fill="#1565c0" text-anchor="middle">Address-based coordinates needed</text>
+                <circle cx="75" cy="100" r="8" fill="#ffffff" opacity="0.8"/>
+                <text x="75" y="105" font-family="Arial" font-size="10" fill="#1976d2" text-anchor="middle">🏢</text>
+            </svg>
+        ';
+        
+        return 'data:image/svg+xml;base64,' . base64encode($svg);
+    }
+
+    private function geocodeAddress($address) {
+        // Simple geocoding using Google Maps API
+        if (!$this->google_api_key) {
+            return null;
+        }
+        
+        $geocode_url = "https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($address) . "&key=" . $this->google_api_key;
+        $response = @file_get_contents($geocode_url);
+        
+        if ($response) {
+            $data = json_decode($response, true);
+            if ($data && $data['status'] === 'OK' && isset($data['results'][0])) {
+                $location = $data['results'][0]['geometry']['location'];
+                return ['lat' => $location['lat'], 'lng' => $location['lng']];
+            }
+        }
+        
+        return null;
+    }
+
     public function generateThumbnail($assessment_number, $latitude = null, $longitude = null, $pid_number = null, $address = null, $municipality = null) {
         error_log("ThumbnailGenerator: Generating thumbnail for {$assessment_number}");
         
