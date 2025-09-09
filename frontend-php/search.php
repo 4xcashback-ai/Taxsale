@@ -6,64 +6,9 @@ require_once 'includes/thumbnail_generator.php';
 // Check if user is logged in
 $is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
 
-// If user is not logged in, show landing page content
+// If user is not logged in, redirect to landing page
 if (!$is_logged_in) {
-    $landing_properties = [];
-    $db_error = null;
-    
-    // Debug logging for VPS troubleshooting
-    error_log("=== LANDING PAGE DEBUG START ===");
-    error_log("DB_HOST: " . DB_HOST);
-    error_log("DB_NAME: " . DB_NAME);
-    error_log("DB_USER: " . DB_USER);
-    
-    try {
-        // Get 6 random properties for landing page preview
-        $db = getDB();
-        
-        if ($db === null) {
-            $db_error = "Database connection failed - getDB() returned null";
-            error_log("Landing page: Database connection is null");
-        } else {
-            error_log("Landing page: Database connection successful");
-            
-            // Test if properties table exists first
-            $stmt = $db->query("SHOW TABLES LIKE 'properties'");
-            $table_exists = $stmt->fetch();
-            
-            if (!$table_exists) {
-                $db_error = "Properties table does not exist";
-                error_log("Landing page: Properties table not found");
-            } else {
-                error_log("Landing page: Properties table exists");
-                
-                // Get properties
-                $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
-                $landing_properties = $stmt->fetchAll();
-                error_log("Landing page: Found " . count($landing_properties) . " properties");
-                
-                // Log each property for debugging
-                foreach ($landing_properties as $i => $prop) {
-                    error_log("Property $i: " . $prop['assessment_number'] . " - " . ($prop['civic_address'] ?? 'No address'));
-                }
-            }
-        }
-        
-        // Initialize thumbnail generator for landing page
-        $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
-        error_log("Landing page: Thumbnail generator initialized");
-        
-    } catch (Exception $e) {
-        $db_error = $e->getMessage();
-        error_log("Landing page error: " . $e->getMessage());
-        error_log("Landing page error trace: " . $e->getTraceAsString());
-        $landing_properties = [];
-        $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
-    }
-    
-    error_log("=== LANDING PAGE DEBUG END (Properties: " . count($landing_properties) . ") ===");
-    
-    require_once 'landing.php';
+    header('Location: index.php');
     exit;
 }
 
