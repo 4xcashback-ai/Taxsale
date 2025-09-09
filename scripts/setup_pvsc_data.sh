@@ -73,24 +73,36 @@ else
     echo "⚠️  No properties found to test PVSC endpoint" | tee -a $LOG_FILE
 fi
 
-# Step 4: Start batch PVSC scraping
-echo "Step 4: Starting initial PVSC batch scraping..." | tee -a $LOG_FILE
+# Step 4: Start comprehensive PVSC scraping for ALL properties
+echo "Step 4: Starting comprehensive PVSC scraping for ALL properties..." | tee -a $LOG_FILE
 
-echo "This will scrape PVSC data for up to 50 properties..." | tee -a $LOG_FILE
-echo "Please be patient, this may take several minutes..." | tee -a $LOG_FILE
+# Get total property count
+TOTAL_PROPERTIES=$(mysql -u taxsale -p'SecureTaxSale2025!' $DB_NAME -s -N -e "SELECT COUNT(*) FROM properties;")
+echo "Found $TOTAL_PROPERTIES total properties in database" | tee -a $LOG_FILE
 
+echo "This will scrape PVSC data for ALL properties with Assessment Numbers..." | tee -a $LOG_FILE
+echo "Please be patient, this may take 10-30 minutes depending on property count..." | tee -a $LOG_FILE
+echo "Processing with 1-second delays to be respectful to PVSC API..." | tee -a $LOG_FILE
+
+# Use the comprehensive scraping endpoint
 BATCH_RESPONSE=$(curl -s -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
-    "http://localhost:8001/api/admin/scrape-pvsc-batch")
+    "http://localhost:8001/api/admin/scrape-pvsc-all")
 
 if echo "$BATCH_RESPONSE" | jq -e . >/dev/null 2>&1; then
-    SCRAPED=$(echo "$BATCH_RESPONSE" | jq -r '.scraped // 0')
-    FAILED=$(echo "$BATCH_RESPONSE" | jq -r '.failed // 0')
+    TOTAL_DB=$(echo "$BATCH_RESPONSE" | jq -r '.total_properties_in_db // 0')
+    EXISTING=$(echo "$BATCH_RESPONSE" | jq -r '.existing_pvsc_records // 0')
+    SCRAPED=$(echo "$BATCH_RESPONSE" | jq -r '.scraping_result.scraped // 0')
+    FAILED=$(echo "$BATCH_RESPONSE" | jq -r '.scraping_result.failed // 0')
+    SUCCESS_RATE=$(echo "$BATCH_RESPONSE" | jq -r '.scraping_result.success_rate // "0%"')
     
-    echo "✅ Batch scraping completed:" | tee -a $LOG_FILE
+    echo "✅ Comprehensive PVSC scraping completed:" | tee -a $LOG_FILE
+    echo "   - Total properties in database: $TOTAL_DB" | tee -a $LOG_FILE
+    echo "   - Already had PVSC data: $EXISTING" | tee -a $LOG_FILE
     echo "   - Successfully scraped: $SCRAPED properties" | tee -a $LOG_FILE
     echo "   - Failed: $FAILED properties" | tee -a $LOG_FILE
+    echo "   - Success rate: $SUCCESS_RATE" | tee -a $LOG_FILE
 else
-    echo "❌ Batch scraping failed or returned invalid response" | tee -a $LOG_FILE
+    echo "❌ Comprehensive scraping failed or returned invalid response" | tee -a $LOG_FILE
     echo "Response: $BATCH_RESPONSE" | tee -a $LOG_FILE
 fi
 
