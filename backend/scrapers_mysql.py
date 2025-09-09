@@ -1482,7 +1482,7 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
 
 
 def extract_property_details_from_pdf(assessment_number: str, pdf_text: str) -> Dict:
-    """Extract full property details from Halifax PDF text"""
+    """Extract full property details from Halifax PDF text with embedded PID extraction"""
     
     # Look for the property line in the PDF
     lines = pdf_text.split('\n')
@@ -1544,12 +1544,74 @@ def extract_property_details_from_pdf(assessment_number: str, pdf_text: str) -> 
     
     civic_address = ' '.join(clean_address_parts)
     
-    return {
+    # NEW: Extract embedded PID from civic_address
+    extracted_pid = None
+    cleaned_civic_address = civic_address
+    
+    if civic_address:
+        # Look for PID patterns in the civic_address
+        # PIDs are typically 8-11 digit numbers that appear embedded in addresses
+        pid_patterns = [
+            r'\b(\d{8,11})\b',  # Generic 8-11 digit numbers
+            r'(\d{8,11})',      # Numbers that might be part of longer strings
+        ]
+        
+        for pattern in pid_patterns:
+            pid_matches = re.findall(pattern, civic_address)
+            
+            for match in pid_matches:
+                # Filter out numbers that are clearly not PIDs
+                # PIDs should be 8-11 digits, avoid phone numbers, postal codes, etc.
+                if len(match) >= 8 and len(match) <= 11:
+                    # Check if this number looks like a PID (not a year, phone, etc.)
+                    potential_pid = match
+                    
+                    # Skip if it looks like a year (1900-2100)
+                    if 1900 <= int(potential_pid) <= 2100:
+                        continue
+                    
+                    # Skip if it's too short to be a real PID
+                    if len(potential_pid) < 8:
+                        continue
+                    
+                    # Found a likely PID
+                    extracted_pid = potential_pid
+                    logger.info(f"Extracted embedded PID {extracted_pid} from civic_address: {civic_address}")
+                    
+                    # Clean the civic_address by removing the embedded PID
+                    # Remove the PID number from the address string
+                    cleaned_civic_address = civic_address.replace(potential_pid, '').strip()
+                    
+                    # Clean up extra spaces and commas
+                    cleaned_civic_address = re.sub(r'\s+', ' ', cleaned_civic_address)  # Multiple spaces to single
+                    cleaned_civic_address = re.sub(r',\s*,', ',', cleaned_civic_address)  # Double commas
+                    cleaned_civic_address = re.sub(r'^\s*,\s*', '', cleaned_civic_address)  # Leading comma
+                    cleaned_civic_address = re.sub(r'\s*,\s*$', '', cleaned_civic_address)  # Trailing comma
+                    cleaned_civic_address = cleaned_civic_address.strip()
+                    
+                    logger.info(f"Cleaned civic_address after PID extraction: {cleaned_civic_address}")
+                    break
+            
+            if extracted_pid:
+                break
+    
+    # If cleaning resulted in empty address, use a default
+    if not cleaned_civic_address or len(cleaned_civic_address.strip()) < 3:
+        cleaned_civic_address = f'{assessment_number} Halifax Property'
+    
+    result = {
         'owner_name': owner_name if owner_name else 'Unknown',
-        'civic_address': civic_address if civic_address else f'{assessment_number} Halifax Property',
+        'civic_address': cleaned_civic_address,
         'opening_bid': bid_amount,
         'property_type': 'mobile_home_only' if 'mobile' in property_line.lower() else 'regular'
     }
+    
+    # Add the extracted PID if found
+    if extracted_pid:
+        result['pid_number'] = extracted_pid
+        logger.info(f"Property {assessment_number}: Extracted PID {extracted_pid}, cleaned address: {cleaned_civic_address}")
+    
+    return result
 
 def rescan_victoria_property(assessment_number: str) -> Dict:
     """Rescan a specific Victoria County property using database config"""
