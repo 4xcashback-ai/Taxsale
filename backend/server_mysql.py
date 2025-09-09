@@ -1363,8 +1363,8 @@ async def scrape_pvsc_data(assessment_number: str):
                         assessed_text = cells[1].get_text().strip()
                         taxable_text = cells[2].get_text().strip()
                         
-                        assessed_match = re.search(r'\$([\d,]+)', assessed_text)
-                        taxable_match = re.search(r'\$([\d,]+)', taxable_text)
+                        assessed_match = re.search(r'\$([\d,]+\.?\d*)', assessed_text)
+                        taxable_match = re.search(r'\$([\d,]+\.?\d*)', taxable_text)
                         
                         if assessed_match and 'assessed_value' not in extracted_data:
                             extracted_data['assessed_value'] = float(assessed_match.group(1).replace(',', ''))
