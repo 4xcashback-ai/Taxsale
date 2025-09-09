@@ -238,6 +238,21 @@ The rescan functionality returns `"files_checked": {"pdfs": [], "excel": []}` be
 - ✅ **PID Extraction**: Embedded PID detection and extraction working correctly
 - ✅ **All Core APIs**: Authentication, property search, admin functions all operational
 
+**VPS Connectivity Issue Resolution**:
+- ✅ **Root Cause Found**: API_BASE_URL in frontend config was pointing to wrong port (8002 instead of 8001)
+- ✅ **Configuration Fixed**: Updated `/app/frontend-php/config/database.php` to use correct port 8001
+- ✅ **PHP Frontend**: Configured nginx and PHP-FPM to serve the frontend properly
+- ✅ **Backend API**: Confirmed accessible and working on port 8001
+- ✅ **Authentication**: Admin login working with credentials (admin / TaxSale2025!SecureAdmin)
+
+**FINAL VALIDATION - Enhanced PID Extraction Working**:
+- ✅ **Property 07737947**: Successfully extracted PID `40498370` and cleaned address to "80 Spinnaker Dr Unit 209 Halifax Cc Level 2 Unit # 9"
+- ✅ **Property 09192891**: Successfully extracted PID `40180606` and cleaned address to "Lot 60-X Halifax -Land"  
+- ✅ **Database Updates**: Both properties updated with extracted PIDs and cleaned addresses
+- ✅ **Backend API Connectivity**: "Failed to connect to backend API" error completely resolved
+
+**Status**: 🎉 **ENHANCEMENT COMPLETE AND FULLY FUNCTIONAL** - The embedded PID extraction feature is working perfectly and the connectivity issue has been resolved.
+
 ### Session 9: Enhanced Halifax Property Rescan Functionality Testing
 **Date**: September 9, 2025
 **Phase**: Testing enhanced PID extraction and rescan functionality
