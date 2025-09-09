@@ -354,12 +354,26 @@ class TaxSaleScraper:
         logger.info("Starting Halifax tax sale scraping with enhanced debugging...")
         
         try:
-            # Halifax tax sale webpage and PDF URLs
-            webpage_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
-            pdf_url = "https://cdn.halifax.ca/sites/default/files/documents/home-property/property-taxes/sept16.2025newspaper.website-sept3.25.pdf"
+            # Get Halifax scraper configuration from database
+            config = mysql_db.get_scraper_config('Halifax Regional Municipality')
+            if not config:
+                logger.error("Halifax scraper configuration not found in database")
+                return {
+                    "success": False,
+                    "message": "Halifax scraper configuration not found in database",
+                    "properties_found": 0
+                }
+            
+            webpage_url = config['tax_sale_page_url']
+            # Use the direct PDF URL we know works
+            pdf_url = "https://www.halifax.ca/media/91740"
             
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': config.get('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'DNT': '1',
+                'Connection': 'keep-alive'
             }
             
             # First, extract auction information from the Halifax tax sale webpage
