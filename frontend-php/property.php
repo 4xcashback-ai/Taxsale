@@ -324,6 +324,28 @@ if ($property['assessment_number']) {
         .property-type-land { background: #e8f5e8; color: #388e3c; }
         .property-type-mixed { background: #fff3e0; color: #f57c00; }
         .property-type-mobile_home_only { background: #fce4ec; color: #c2185b; }
+        
+        .ad-container-detail {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.5rem;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ad-container-detail::before {
+            content: "Advertisement";
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
