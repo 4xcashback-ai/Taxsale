@@ -1430,7 +1430,7 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
                     if property_details.get('minimum_bid'):
                         try:
                             bid_clean = property_details['minimum_bid'].replace('$', '').replace(',', '')
-                            update_data['minimum_bid'] = float(bid_clean)
+                            update_data['opening_bid'] = float(bid_clean)
                         except ValueError:
                             logger.warning(f"Could not parse minimum bid: {property_details['minimum_bid']}")
                     
