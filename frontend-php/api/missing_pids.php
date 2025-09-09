@@ -228,6 +228,29 @@ try {
             throw new Exception('Failed to update property');
         }
         
+    } elseif ($action === 'get_property') {
+        $assessment_number = $_GET['assessment_number'] ?? '';
+        
+        if (!$assessment_number) {
+            throw new Exception('Assessment number required');
+        }
+        
+        // Fetch property data from database
+        $query = "SELECT * FROM properties WHERE assessment_number = ?";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$assessment_number]);
+        $property = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($property) {
+            echo json_encode([
+                'status' => 'success',
+                'property' => $property,
+                'message' => 'Property data retrieved successfully'
+            ]);
+        } else {
+            throw new Exception('Property not found');
+        }
+        
     } else {
         throw new Exception('Invalid action');
     }
