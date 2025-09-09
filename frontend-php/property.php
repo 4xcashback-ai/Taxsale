@@ -39,22 +39,86 @@ if ($property['status'] === 'active' && !$is_paid_user) {
 
 // Get PVSC property details
 $pvsc_data = null;
+$pvsc_error = null;
+
 if ($property['assessment_number']) {
     // Call backend API to get PVSC property details
     $api_url = API_BASE_URL . '/pvsc-data/' . $property['assessment_number'];
+    
+    // Add debug logging for admin users
+    $debug_mode = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
+    
+    if ($debug_mode) {
+        error_log("PVSC DEBUG: Calling API URL: $api_url");
+    }
+    
     $context = stream_context_create([
         'http' => [
             'timeout' => 15,
-            'ignore_errors' => true
+            'ignore_errors' => true,
+            'method' => 'GET',
+            'header' => [
+                'User-Agent: Tax-Sale-Compass-Frontend/1.0',
+                'Accept: application/json'
+            ]
         ]
     ]);
     
     $response = @file_get_contents($api_url, false, $context);
+    
+    if ($debug_mode) {
+        error_log("PVSC DEBUG: Response received: " . ($response ? 'Yes' : 'No'));
+        if ($response) {
+            error_log("PVSC DEBUG: Response content: " . substr($response, 0, 200));
+        }
+    }
+    
     if ($response) {
         $pvsc_data = json_decode($response, true);
-        // Don't treat error responses as valid data
+        
+        // Check for API errors
         if (isset($pvsc_data['error'])) {
+            $pvsc_error = $pvsc_data['error'];
             $pvsc_data = null;
+            if ($debug_mode) {
+                error_log("PVSC DEBUG: API returned error: $pvsc_error");
+            }
+        } else if (is_array($pvsc_data) && !empty($pvsc_data)) {
+            if ($debug_mode) {
+                error_log("PVSC DEBUG: Successfully loaded PVSC data with " . count($pvsc_data) . " fields");
+            }
+        }
+    } else {
+        $pvsc_error = "Failed to connect to backend API";
+        if ($debug_mode) {
+            error_log("PVSC DEBUG: Failed to get response from API");
+        }
+    }
+    
+    // Fallback: Try to get data directly from database if API fails
+    if (!$pvsc_data && !$pvsc_error) {
+        try {
+            $stmt = $db->prepare("SELECT * FROM pvsc_data WHERE assessment_number = ?");
+            $stmt->execute([$property['assessment_number']]);
+            $db_pvsc_data = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($db_pvsc_data) {
+                // Convert database row to expected format
+                $pvsc_data = $db_pvsc_data;
+                if ($debug_mode) {
+                    error_log("PVSC DEBUG: Loaded data directly from database as fallback");
+                }
+            } else {
+                $pvsc_error = "No PVSC data found in database";
+                if ($debug_mode) {
+                    error_log("PVSC DEBUG: No data found in database for assessment " . $property['assessment_number']);
+                }
+            }
+        } catch (Exception $e) {
+            $pvsc_error = "Database error: " . $e->getMessage();
+            if ($debug_mode) {
+                error_log("PVSC DEBUG: Database fallback failed: " . $e->getMessage());
+            }
         }
     }
 }
