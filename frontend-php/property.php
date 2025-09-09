@@ -432,6 +432,11 @@ if ($property['assessment_number']) {
                             <i class="fas fa-<?php echo $property['status'] === 'active' ? 'check-circle' : 'clock'; ?> me-1"></i>
                             <?php echo ucfirst($property['status'] ?? 'Unknown'); ?>
                         </span>
+                        <?php if (isset($property['favorite_count']) && $property['favorite_count'] > 0): ?>
+                        <span class="favorite-count-badge ms-2">
+                            <i class="fas fa-heart text-danger me-1"></i><?php echo $property['favorite_count']; ?>
+                        </span>
+                        <?php endif; ?>
                         <?php if ($property['property_type']): ?>
                         <span class="property-type-badge property-type-<?php echo $property['property_type']; ?>">
                             <i class="fas fa-tag me-1"></i>
