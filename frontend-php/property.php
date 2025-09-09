@@ -255,99 +255,260 @@ if ($property['pid_number']) {
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><?php echo SITE_NAME; ?></a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="index.php">← Back to Search</a>
-                <?php if ($is_logged_in): ?>
-                    <a class="nav-link" href="logout.php">Logout</a>
-                <?php endif; ?>
+            <a class="navbar-brand text-primary" href="search.php">
+                <i class="fas fa-compass me-2"></i><?php echo SITE_NAME; ?>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="back-button" href="search.php">
+                            <i class="fas fa-arrow-left"></i> Back to Search
+                        </a>
+                    </li>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <li class="nav-item ms-3">
+                            <a class="nav-link" href="favorites.php">
+                                <i class="fas fa-heart me-1"></i>Favorites
+                            </a>
+                        </li>
+                        <?php if ($_SESSION['is_admin'] ?? false): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="admin.php">
+                                    <i class="fas fa-cog me-1"></i>Admin
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout.php">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Property Header -->
+        <div class="property-header">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="property-title">
+                        <i class="fas fa-home me-2"></i>
+                        Property #<?php echo htmlspecialchars($assessment_number); ?>
+                    </h1>
+                    <div class="property-address">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <?php echo htmlspecialchars($property['civic_address'] ?? 'Address Not Available'); ?>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="status-badge bg-<?php echo $property['status'] === 'active' ? 'success' : 'secondary'; ?>">
+                            <i class="fas fa-<?php echo $property['status'] === 'active' ? 'check-circle' : 'clock'; ?> me-1"></i>
+                            <?php echo ucfirst($property['status'] ?? 'Unknown'); ?>
+                        </span>
+                        <?php if ($property['property_type']): ?>
+                        <span class="property-type-badge property-type-<?php echo $property['property_type']; ?>">
+                            <i class="fas fa-tag me-1"></i>
+                            <?php echo ucfirst(str_replace('_', ' ', $property['property_type'])); ?>
+                        </span>
+                        <?php endif; ?>
+                        <?php if ($property['municipality']): ?>
+                        <span class="badge bg-info">
+                            <i class="fas fa-city me-1"></i>
+                            <?php echo htmlspecialchars($property['municipality']); ?>
+                        </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <?php if ($property['opening_bid'] || $property['total_taxes']): ?>
+                    <div class="text-end">
+                        <?php if ($property['opening_bid']): ?>
+                        <div class="mb-2">
+                            <small class="text-muted">Opening Bid</small>
+                            <div class="h4 text-success mb-0">
+                                <i class="fas fa-gavel me-1"></i>
+                                $<?php echo number_format($property['opening_bid'], 2); ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($property['total_taxes']): ?>
+                        <div>
+                            <small class="text-muted">Total Taxes Due</small>
+                            <div class="h5 text-danger mb-0">
+                                <i class="fas fa-receipt me-1"></i>
+                                $<?php echo number_format($property['total_taxes'], 2); ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-lg-8">
-                <h1>Property Details</h1>
-                
-                <div class="card mb-4">
+                <!-- Basic Property Information -->
+                <div class="card">
                     <div class="card-header">
-                        <h3>Assessment #<?php echo htmlspecialchars($property['assessment_number']); ?></h3>
+                        <i class="fas fa-info-circle me-2"></i>Property Information
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><i class="fas fa-map-marker-alt text-primary"></i> <strong>Civic Address:</strong><br>
-                                   <span class="ms-3"><?php echo htmlspecialchars($property['civic_address'] ?? 'N/A'); ?></span></p>
-                                <p><i class="fas fa-city text-primary"></i> <strong>Municipality:</strong><br>
-                                   <span class="ms-3"><?php echo htmlspecialchars($property['municipality']); ?></span></p>
-                                <p><i class="fas fa-home text-primary"></i> <strong>Property Type:</strong><br>
-                                   <span class="ms-3 badge bg-info text-white"><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $property['property_type'] ?? 'N/A'))); ?></span></p>
-                                <?php if ($property['pid_number']): ?>
-                                <p><i class="fas fa-fingerprint text-primary"></i> <strong>PID Number:</strong><br>
-                                   <span class="ms-3"><code><?php echo htmlspecialchars($property['pid_number']); ?></code></span></p>
-                                <?php endif; ?>
+                        <div class="info-grid">
+                            <?php if ($property['pid_number']): ?>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-fingerprint me-1"></i>PID Number
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['pid_number']); ?>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <?php if ($property['opening_bid']): ?>
-                                <p><i class="fas fa-gavel text-success"></i> <strong>Opening Bid:</strong><br>
-                                   <span class="ms-3 text-success fw-bold fs-5">$<?php echo number_format($property['opening_bid'], 2); ?></span></p>
-                                <?php endif; ?>
-                                <p><i class="fas fa-calendar text-primary"></i> <strong>Tax Year:</strong><br>
-                                   <span class="ms-3"><?php echo $property['tax_year']; ?></span></p>
-                                <p><i class="fas fa-receipt text-primary"></i> <strong>Total Taxes:</strong><br>
-                                   <span class="ms-3 text-danger fw-bold">$<?php echo number_format($property['total_taxes'], 2); ?></span></p>
-                                <p><i class="fas fa-info-circle text-primary"></i> <strong>Status:</strong><br>
-                                   <span class="ms-3">
-                                    <span class="badge bg-<?php echo $property['status'] === 'active' ? 'success' : 'secondary'; ?>">
-                                        <?php echo ucfirst($property['status']); ?>
-                                    </span>
-                                   </span>
-                                </p>
-                                <?php if ($property['pvsc_assessment_value']): ?>
-                                <p><i class="fas fa-calculator text-primary"></i> <strong>PVSC Assessment:</strong><br>
-                                   <span class="ms-3">$<?php echo number_format($property['pvsc_assessment_value'], 2); ?> (<?php echo $property['pvsc_assessment_year']; ?>)</span></p>
-                                <?php endif; ?>
+                            <?php endif; ?>
+                            
+                            <?php if ($property['tax_year']): ?>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar me-1"></i>Tax Year
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['tax_year']); ?>
+                                </div>
                             </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($property['pvsc_assessment_value']): ?>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calculator me-1"></i>PVSC Assessment
+                                </div>
+                                <div class="info-value">
+                                    $<?php echo number_format($property['pvsc_assessment_value'], 2); ?>
+                                    <?php if ($property['pvsc_assessment_year']): ?>
+                                    <small class="text-muted">(<?php echo $property['pvsc_assessment_year']; ?>)</small>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($property['owner_name']): ?>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user me-1"></i>Property Owner
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['owner_name']); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($property['sale_date']): ?>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>Tax Sale Date
+                                </div>
+                                <div class="info-value text-warning">
+                                    <?php echo date('F j, Y', strtotime($property['sale_date'])); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($property['auction_type']): ?>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-hammer me-1"></i>Auction Type
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['auction_type']); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
-                <!-- Property Owner Information -->
-                <?php if ($property['owner_name']): ?>
-                <div class="card mb-4">
+                <!-- PSC Enhanced Property Details -->
+                <?php if ($psc_data && !empty($psc_data)): ?>
+                <div class="card">
                     <div class="card-header">
-                        <h4><i class="fas fa-user"></i> Property Owner Information</h4>
+                        <i class="fas fa-database me-2"></i>Enhanced Property Details
+                        <small class="badge bg-success ms-2">Live Data from Nova Scotia PSC</small>
                     </div>
                     <div class="card-body">
-                        <p><i class="fas fa-id-card text-primary"></i> <strong>Owner Name:</strong><br>
-                           <span class="ms-3"><?php echo htmlspecialchars($property['owner_name']); ?></span></p>
-                        <?php if ($property['sale_date']): ?>
-                        <p><i class="fas fa-calendar-alt text-primary"></i> <strong>Tax Sale Date:</strong><br>
-                           <span class="ms-3 text-warning fw-bold"><?php echo date('F j, Y', strtotime($property['sale_date'])); ?></span></p>
-                        <?php endif; ?>
-                        <?php if ($property['auction_type']): ?>
-                        <p><i class="fas fa-hammer text-primary"></i> <strong>Auction Type:</strong><br>
-                           <span class="ms-3 badge bg-warning text-dark"><?php echo htmlspecialchars($property['auction_type']); ?></span></p>
-                        <?php endif; ?>
+                        <div class="info-grid">
+                            <?php if (isset($psc_data['legal_description'])): ?>
+                            <div class="info-item psc-data">
+                                <div class="info-label">
+                                    <i class="fas fa-file-alt me-1"></i>Legal Description
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($psc_data['legal_description']); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (isset($psc_data['area'])): ?>
+                            <div class="info-item psc-data">
+                                <div class="info-label">
+                                    <i class="fas fa-ruler-combined me-1"></i>Property Area
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($psc_data['area']); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (isset($psc_data['deed_info'])): ?>
+                            <div class="info-item psc-data">
+                                <div class="info-label">
+                                    <i class="fas fa-scroll me-1"></i>Deed Information
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($psc_data['deed_info']); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                This data is retrieved in real-time from the Nova Scotia Property Services Corporation (PSC)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-database me-2"></i>Enhanced Property Details
+                        <span class="loading-spinner ms-2"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-search fa-2x text-muted"></i>
+                            </div>
+                            <p class="text-muted">Loading additional property details from Nova Scotia PSC...</p>
+                            <?php if (!$property['pid_number']): ?>
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Enhanced details require a valid PID number
+                            </small>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
                 <?php endif; ?>
-
-                <!-- Interactive Property Map -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4><i class="fas fa-map-marked-alt"></i> Interactive Property Map</h4>
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-outline-primary" onclick="toggleMapType('satellite')" title="Satellite View">
-                                <i class="fas fa-satellite"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" onclick="toggleMapType('roadmap')" title="Map View">
-                                <i class="fas fa-map"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" onclick="toggleMapType('hybrid')" title="Hybrid View">
                                 <i class="fas fa-layer-group"></i>
                             </button>
                             <button type="button" class="btn btn-outline-success" onclick="centerOnProperty()" title="Center on Property">
