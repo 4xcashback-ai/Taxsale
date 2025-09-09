@@ -1426,8 +1426,19 @@ def rescan_halifax_property(assessment_number: str) -> Dict:
                         'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
                     
-                    # Extract and clean minimum bid
-                    if property_details.get('minimum_bid'):
+                    # Add extracted PID if found
+                    if property_details.get('pid_number'):
+                        update_data['pid_number'] = property_details['pid_number']
+                        logger.info(f"Updating property {assessment_number} with extracted PID: {property_details['pid_number']}")
+                    
+                    # Extract and clean opening bid (corrected field name)
+                    if property_details.get('opening_bid'):
+                        try:
+                            bid_clean = property_details['opening_bid'].replace('$', '').replace(',', '')
+                            update_data['opening_bid'] = float(bid_clean)
+                        except ValueError:
+                            logger.warning(f"Could not parse opening bid: {property_details['opening_bid']}")
+                    elif property_details.get('minimum_bid'):
                         try:
                             bid_clean = property_details['minimum_bid'].replace('$', '').replace(',', '')
                             update_data['opening_bid'] = float(bid_clean)
