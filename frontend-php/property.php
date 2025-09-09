@@ -27,8 +27,8 @@ if (!$property) {
 
 // Check access permissions
 if (!$is_logged_in) {
-    // Allow viewing inactive properties without login
-    if ($property['status'] !== 'active') {
+    // Allow viewing inactive properties (sold, withdrawn) without login
+    if (in_array($property['status'], ['sold', 'withdrawn'])) {
         // Allow access to inactive properties for preview
         $show_limited_view = true;
     } else {
