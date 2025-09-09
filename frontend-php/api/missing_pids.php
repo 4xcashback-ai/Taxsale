@@ -154,6 +154,7 @@ try {
         $pid_number = $_POST['pid_number'] ?? '';
         $civic_address = $_POST['civic_address'] ?? '';
         $owner_name = $_POST['owner_name'] ?? '';
+        $property_type = $_POST['property_type'] ?? '';
         
         if (!$assessment_number) {
             throw new Exception('Assessment number required');
@@ -180,6 +181,11 @@ try {
             $params[] = $owner_name;
         }
         
+        if ($property_type) {
+            $updates[] = "property_type = ?";
+            $params[] = $property_type;
+        }
+        
         if (empty($updates)) {
             throw new Exception('No data to update');
         }
@@ -196,7 +202,13 @@ try {
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Property updated successfully',
-                'assessment_number' => $assessment_number
+                'assessment_number' => $assessment_number,
+                'updated_fields' => array_filter([
+                    'pid_number' => $pid_number ?: null,
+                    'civic_address' => $civic_address ?: null,
+                    'owner_name' => $owner_name ?: null,
+                    'property_type' => $property_type ?: null
+                ])
             ]);
         } else {
             throw new Exception('Failed to update property');
