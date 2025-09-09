@@ -716,9 +716,62 @@ if ($property['assessment_number']) {
                                     <?php if (isset($pvsc_data['basement_type']) && $pvsc_data['basement_type']): ?>
                                     <tr>
                                         <td class="fw-bold text-muted">
-                                            <i class="fas fa-layer-group me-1"></i>Basement Type
+                                            <i class="fas fa-layer-group me-1"></i>Basement
                                         </td>
                                         <td><?php echo htmlspecialchars($pvsc_data['basement_type']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($pvsc_data['garage']) && $pvsc_data['garage']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-car me-1"></i>Garage
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<?php echo $pvsc_data['garage'] === 'Yes' ? 'success' : 'secondary'; ?>">
+                                                <?php echo htmlspecialchars($pvsc_data['garage']); ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($pvsc_data['construction_quality']) && $pvsc_data['construction_quality']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-hammer me-1"></i>Construction Quality
+                                        </td>
+                                        <td><?php echo htmlspecialchars($pvsc_data['construction_quality']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($pvsc_data['building_style']) && $pvsc_data['building_style']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-home me-1"></i>Building Style
+                                        </td>
+                                        <td><?php echo htmlspecialchars($pvsc_data['building_style']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($pvsc_data['living_units']) && $pvsc_data['living_units']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-door-open me-1"></i>Living Units
+                                        </td>
+                                        <td><?php echo htmlspecialchars($pvsc_data['living_units']); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($pvsc_data['under_construction']) && $pvsc_data['under_construction']): ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">
+                                            <i class="fas fa-hard-hat me-1"></i>Under Construction
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<?php echo $pvsc_data['under_construction'] === 'Yes' ? 'warning' : 'success'; ?>">
+                                                <?php echo htmlspecialchars($pvsc_data['under_construction']); ?>
+                                            </span>
+                                        </td>
                                     </tr>
                                     <?php endif; ?>
                                     
