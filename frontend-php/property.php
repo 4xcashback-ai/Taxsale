@@ -91,13 +91,47 @@ if ($property['status'] === 'active' && !$is_paid_user) {
                     </div>
                 </div>
 
-                <!-- Google Map -->
+                <!-- Interactive Property Map -->
                 <div class="card">
-                    <div class="card-header">
-                        <h4>Property Location</h4>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4><i class="fas fa-map-marked-alt"></i> Interactive Property Map</h4>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="toggleMapType('satellite')" title="Satellite View">
+                                <i class="fas fa-satellite"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="toggleMapType('roadmap')" title="Map View">
+                                <i class="fas fa-map"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="toggleMapType('hybrid')" title="Hybrid View">
+                                <i class="fas fa-layer-group"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-success" onclick="centerOnProperty()" title="Center on Property">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div id="map" style="height: 400px; width: 100%;"></div>
+                    <div class="card-body p-0">
+                        <div id="map" style="height: 500px; width: 100%; border-radius: 0 0 0.375rem 0.375rem;"></div>
+                        <div class="p-3 bg-light border-top">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <small class="text-muted"><strong>Coordinates</strong></small><br>
+                                    <small><?php echo number_format($property['latitude'] ?? 44.6488, 6); ?>, <?php echo number_format($property['longitude'] ?? -63.5752, 6); ?></small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted"><strong>View Type</strong></small><br>
+                                    <small id="current-map-type">Satellite</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted"><strong>Zoom Level</strong></small><br>
+                                    <small id="current-zoom">17</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted"><strong>Boundary Data</strong></small><br>
+                                    <small><?php echo $property['boundary_data'] ? '✅ Available' : '❌ Not Available'; ?></small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
