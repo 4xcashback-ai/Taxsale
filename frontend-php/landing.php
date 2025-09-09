@@ -38,6 +38,24 @@
             font-weight: bold;
             color: #667eea;
         }
+        .ad-container-landing {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 3rem 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .ad-container-landing::before {
+            content: "Advertisement";
+            display: block;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
