@@ -155,6 +155,8 @@ try {
         $civic_address = $_POST['civic_address'] ?? '';
         $owner_name = $_POST['owner_name'] ?? '';
         $property_type = $_POST['property_type'] ?? '';
+        $latitude = $_POST['latitude'] ?? '';
+        $longitude = $_POST['longitude'] ?? '';
         
         if (!$assessment_number) {
             throw new Exception('Assessment number required');
@@ -184,6 +186,16 @@ try {
         if ($property_type) {
             $updates[] = "property_type = ?";
             $params[] = $property_type;
+        }
+        
+        if ($latitude && is_numeric($latitude)) {
+            $updates[] = "latitude = ?";
+            $params[] = floatval($latitude);
+        }
+        
+        if ($longitude && is_numeric($longitude)) {
+            $updates[] = "longitude = ?";
+            $params[] = floatval($longitude);
         }
         
         if (empty($updates)) {
