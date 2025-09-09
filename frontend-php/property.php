@@ -549,155 +549,157 @@ if ($property['assessment_number']) {
                         <i class="fas fa-database me-2"></i>PVSC Property Data
                         <small class="badge bg-success ms-2"><?php echo isset($pvsc_data['scraped_at']) ? 'Cached' : 'Live'; ?></small>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover mb-0">
-                                <tbody>
-                                    <?php if (isset($pvsc_data['assessed_value']) && $pvsc_data['assessed_value']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted" style="width: 40%;">
-                                            <i class="fas fa-calculator me-1"></i>Assessed Value
-                                        </td>
-                                        <td class="text-success fw-bold">$<?php echo number_format($pvsc_data['assessed_value'], 2); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['taxable_assessed_value']) && $pvsc_data['taxable_assessed_value']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-receipt me-1"></i>Taxable Assessed Value
-                                        </td>
-                                        <td class="text-info fw-bold">$<?php echo number_format($pvsc_data['taxable_assessed_value'], 2); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['land_size']) && $pvsc_data['land_size']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-ruler-combined me-1"></i>Land Size
-                                        </td>
-                                        <td>
-                                            <?php echo number_format($pvsc_data['land_size'], 2); ?>
-                                            <?php if (isset($pvsc_data['land_size_unit'])): ?>
-                                                <?php echo htmlspecialchars($pvsc_data['land_size_unit']); ?>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['building_size']) && $pvsc_data['building_size']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-building me-1"></i>Building Size
-                                        </td>
-                                        <td>
-                                            <?php echo number_format($pvsc_data['building_size'], 0); ?>
-                                            <?php if (isset($pvsc_data['building_size_unit'])): ?>
-                                                <?php echo htmlspecialchars($pvsc_data['building_size_unit']); ?>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['year_built']) && $pvsc_data['year_built']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-calendar-alt me-1"></i>Year Built
-                                        </td>
-                                        <td><?php echo htmlspecialchars($pvsc_data['year_built']); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['building_style']) && $pvsc_data['building_style']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-home me-1"></i>Building Style
-                                        </td>
-                                        <td><?php echo htmlspecialchars($pvsc_data['building_style']); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['number_of_bedrooms']) && $pvsc_data['number_of_bedrooms']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-bed me-1"></i>Bedrooms
-                                        </td>
-                                        <td><?php echo htmlspecialchars($pvsc_data['number_of_bedrooms']); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['number_of_bathrooms']) && $pvsc_data['number_of_bathrooms']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-bath me-1"></i>Bathrooms
-                                        </td>
-                                        <td><?php echo htmlspecialchars($pvsc_data['number_of_bathrooms']); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['basement_type']) && $pvsc_data['basement_type']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-layer-group me-1"></i>Basement
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-<?php echo $pvsc_data['basement_type'] === 'Finished' ? 'success' : 'secondary'; ?>">
-                                                <?php echo htmlspecialchars($pvsc_data['basement_type']); ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['garage']) && $pvsc_data['garage']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-car me-1"></i>Garage
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-<?php echo $pvsc_data['garage'] === 'Yes' ? 'success' : 'secondary'; ?>">
-                                                <?php echo htmlspecialchars($pvsc_data['garage']); ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['construction_quality']) && $pvsc_data['construction_quality']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-hammer me-1"></i>Construction Quality
-                                        </td>
-                                        <td><?php echo htmlspecialchars($pvsc_data['construction_quality']); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['living_units']) && $pvsc_data['living_units']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-door-open me-1"></i>Living Units
-                                        </td>
-                                        <td><?php echo htmlspecialchars($pvsc_data['living_units']); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['last_sale_date']) && $pvsc_data['last_sale_date']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-handshake me-1"></i>Last Sale Date
-                                        </td>
-                                        <td class="text-warning"><?php echo date('M j, Y', strtotime($pvsc_data['last_sale_date'])); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (isset($pvsc_data['last_sale_price']) && $pvsc_data['last_sale_price']): ?>
-                                    <tr>
-                                        <td class="fw-bold text-muted">
-                                            <i class="fas fa-dollar-sign me-1"></i>Last Sale Price
-                                        </td>
-                                        <td class="text-warning fw-bold">$<?php echo number_format($pvsc_data['last_sale_price'], 2); ?></td>
-                                    </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <?php if (isset($pvsc_data['assessed_value']) && $pvsc_data['assessed_value']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-calculator me-1"></i>Assessed Value
+                                    </div>
+                                    <div class="info-value text-success fw-bold">$<?php echo number_format($pvsc_data['assessed_value'], 2); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['land_size']) && $pvsc_data['land_size']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-ruler-combined me-1"></i>Land Size
+                                    </div>
+                                    <div class="info-value">
+                                        <?php echo number_format($pvsc_data['land_size'], 2); ?>
+                                        <?php if (isset($pvsc_data['land_size_unit'])): ?>
+                                            <?php echo htmlspecialchars($pvsc_data['land_size_unit']); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['year_built']) && $pvsc_data['year_built']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-calendar-alt me-1"></i>Year Built
+                                    </div>
+                                    <div class="info-value"><?php echo htmlspecialchars($pvsc_data['year_built']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['number_of_bedrooms']) && $pvsc_data['number_of_bedrooms']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-bed me-1"></i>Bedrooms
+                                    </div>
+                                    <div class="info-value"><?php echo htmlspecialchars($pvsc_data['number_of_bedrooms']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['basement_type']) && $pvsc_data['basement_type']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-layer-group me-1"></i>Basement
+                                    </div>
+                                    <div class="info-value">
+                                        <span class="badge bg-<?php echo $pvsc_data['basement_type'] === 'Finished' ? 'success' : 'secondary'; ?>">
+                                            <?php echo htmlspecialchars($pvsc_data['basement_type']); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['construction_quality']) && $pvsc_data['construction_quality']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-hammer me-1"></i>Construction Quality
+                                    </div>
+                                    <div class="info-value"><?php echo htmlspecialchars($pvsc_data['construction_quality']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['last_sale_date']) && $pvsc_data['last_sale_date']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-handshake me-1"></i>Last Sale Date
+                                    </div>
+                                    <div class="info-value text-warning"><?php echo date('M j, Y', strtotime($pvsc_data['last_sale_date'])); ?></div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <?php if (isset($pvsc_data['taxable_assessed_value']) && $pvsc_data['taxable_assessed_value']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-receipt me-1"></i>Taxable Assessed Value
+                                    </div>
+                                    <div class="info-value text-info fw-bold">$<?php echo number_format($pvsc_data['taxable_assessed_value'], 2); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['building_size']) && $pvsc_data['building_size']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-building me-1"></i>Building Size
+                                    </div>
+                                    <div class="info-value">
+                                        <?php echo number_format($pvsc_data['building_size'], 0); ?>
+                                        <?php if (isset($pvsc_data['building_size_unit'])): ?>
+                                            <?php echo htmlspecialchars($pvsc_data['building_size_unit']); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['building_style']) && $pvsc_data['building_style']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-home me-1"></i>Building Style
+                                    </div>
+                                    <div class="info-value"><?php echo htmlspecialchars($pvsc_data['building_style']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['number_of_bathrooms']) && $pvsc_data['number_of_bathrooms']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-bath me-1"></i>Bathrooms
+                                    </div>
+                                    <div class="info-value"><?php echo htmlspecialchars($pvsc_data['number_of_bathrooms']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['garage']) && $pvsc_data['garage']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-car me-1"></i>Garage
+                                    </div>
+                                    <div class="info-value">
+                                        <span class="badge bg-<?php echo $pvsc_data['garage'] === 'Yes' ? 'success' : 'secondary'; ?>">
+                                            <?php echo htmlspecialchars($pvsc_data['garage']); ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['living_units']) && $pvsc_data['living_units']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-door-open me-1"></i>Living Units
+                                    </div>
+                                    <div class="info-value"><?php echo htmlspecialchars($pvsc_data['living_units']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (isset($pvsc_data['last_sale_price']) && $pvsc_data['last_sale_price']): ?>
+                                <div class="info-item mb-3">
+                                    <div class="info-label">
+                                        <i class="fas fa-dollar-sign me-1"></i>Last Sale Price
+                                    </div>
+                                    <div class="info-value text-warning fw-bold">$<?php echo number_format($pvsc_data['last_sale_price'], 2); ?></div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="card-footer bg-light">
                             <small class="text-muted">
