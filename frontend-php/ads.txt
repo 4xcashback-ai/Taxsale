@@ -4,8 +4,10 @@
 # Google AdSense
 google.com, pub-5947395928510215, DIRECT, f08c47fec0942fa0
 
-# Google Ad Manager (if using)
-# google.com, pub-5947395928510215, DIRECT, f08c47fec0942fa0
+# Ad Slots configured:
+# - Landing Page: 6272201514
+# - Search Page: 2293195574  
+# - Property Details: 3653544552
 
 # Note: Only include the lines above for networks you actually use
 # The format is: <Field #1>, <Field #2>, <Field #3>, <Field #4>
