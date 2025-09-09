@@ -188,6 +188,16 @@ if ($property['assessment_number']) {
             border-radius: 20px;
         }
         
+        .favorite-count-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #495057;
+        }
+        
         .card {
             border: none;
             border-radius: 20px;
