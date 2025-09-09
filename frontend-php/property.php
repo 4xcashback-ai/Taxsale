@@ -775,12 +775,30 @@ if ($property['assessment_number']) {
                         <div class="text-muted mb-3">Opening Bid Amount</div>
                         <?php endif; ?>
                         
-                        <?php if ($property['total_taxes']): ?>
+                        <!-- Assessed Value from PVSC -->
+                        <?php if (isset($pvsc_data['assessed_value']) && $pvsc_data['assessed_value']): ?>
                         <div class="border-top pt-3">
-                            <div class="h5 text-danger mb-1">
-                                $<?php echo number_format($property['total_taxes'], 2); ?>
+                            <div class="h5 text-info mb-1">
+                                $<?php echo number_format($pvsc_data['assessed_value'], 2); ?>
                             </div>
-                            <small class="text-muted">Total Taxes Due</small>
+                            <small class="text-muted">Assessed Value</small>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Potential Profit Calculation -->
+                        <?php if ($property['opening_bid'] && isset($pvsc_data['assessed_value']) && $pvsc_data['assessed_value']): ?>
+                        <?php 
+                            $potential_profit = $pvsc_data['assessed_value'] - $property['opening_bid']; 
+                            $is_profit = $potential_profit > 0;
+                        ?>
+                        <div class="border-top pt-3 mt-3">
+                            <div class="h5 text-<?php echo $is_profit ? 'success' : 'danger'; ?> mb-1">
+                                <?php echo $is_profit ? '+' : ''; ?>$<?php echo number_format($potential_profit, 2); ?>
+                            </div>
+                            <small class="text-muted">
+                                Potential <?php echo $is_profit ? 'Profit' : 'Loss'; ?>
+                                <small class="d-block">(Assessed Value - Min Bid)</small>
+                            </small>
                         </div>
                         <?php endif; ?>
                         
