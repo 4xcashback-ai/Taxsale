@@ -720,6 +720,180 @@ class TaxSaleCompassTester:
             self.log_result("Search Endpoint", False, "Search endpoint test failed", str(e))
             return False
     
+    def test_enhanced_boundary_thumbnail_apartment_property(self):
+        """Test enhanced generate-boundary-thumbnail endpoint specifically for apartment property 07737947"""
+        try:
+            assessment_number = "07737947"
+            
+            # First, get the current property data to check initial state
+            property_response = self.session.get(f"{self.base_url}/api/property/{assessment_number}", timeout=10)
+            
+            if property_response.status_code == 401:
+                # Need authentication for property details
+                if not self.admin_token:
+                    self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, "No admin token available for property access")
+                    return False
+            elif property_response.status_code != 200:
+                self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, f"Could not fetch property {assessment_number}: HTTP {property_response.status_code}")
+                return False
+            
+            initial_property = property_response.json() if property_response.status_code == 200 else None
+            
+            # Test the enhanced generate-boundary-thumbnail endpoint
+            response = self.session.post(f"{self.base_url}/api/generate-boundary-thumbnail/{assessment_number}", timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check that the response indicates address-based method was used
+                method = data.get('method')
+                if method == 'address_based':
+                    self.log_result("Enhanced Boundary Thumbnail - Property 07737947", True, 
+                                  f"Successfully used address-based geocoding for apartment property")
+                    
+                    # Verify response contains geocoded coordinates
+                    center = data.get('center')
+                    if center and center.get('lat') and center.get('lon'):
+                        lat = center['lat']
+                        lon = center['lon']
+                        
+                        # Verify coordinates are reasonable for Halifax area
+                        if 44.0 <= lat <= 45.5 and -64.5 <= lon <= -63.0:
+                            self.log_result("Enhanced Boundary Thumbnail - Coordinates", True, 
+                                          f"Valid Halifax coordinates: lat={lat}, lon={lon}")
+                            
+                            # Verify boundary_data is NULL for apartment (as expected)
+                            boundary_data = data.get('boundary_data')
+                            if boundary_data is None:
+                                self.log_result("Enhanced Boundary Thumbnail - Boundary Data", True, 
+                                              "Boundary data correctly set to NULL for apartment property")
+                                
+                                # Now verify the property was updated in the database
+                                updated_property_response = self.session.get(f"{self.base_url}/api/property/{assessment_number}", timeout=10)
+                                
+                                if updated_property_response.status_code == 200:
+                                    updated_property = updated_property_response.json()
+                                    
+                                    # Check if coordinates were updated
+                                    db_lat = updated_property.get('latitude')
+                                    db_lon = updated_property.get('longitude')
+                                    
+                                    if db_lat and db_lon and abs(float(db_lat) - lat) < 0.001 and abs(float(db_lon) - lon) < 0.001:
+                                        self.log_result("Enhanced Boundary Thumbnail - Database Update", True, 
+                                                      f"Property successfully updated in database with coordinates: {db_lat}, {db_lon}")
+                                        
+                                        # Check that boundary_data is NULL in database
+                                        db_boundary = updated_property.get('boundary_data')
+                                        if db_boundary is None:
+                                            self.log_result("Enhanced Boundary Thumbnail - Database Boundary", True, 
+                                                          "Database boundary_data correctly set to NULL")
+                                            return True
+                                        else:
+                                            self.log_result("Enhanced Boundary Thumbnail - Database Boundary", False, 
+                                                          f"Database boundary_data should be NULL but got: {db_boundary}")
+                                            return False
+                                    else:
+                                        self.log_result("Enhanced Boundary Thumbnail - Database Update", False, 
+                                                      f"Coordinates not updated in database. Expected: {lat}, {lon}, Got: {db_lat}, {db_lon}")
+                                        return False
+                                else:
+                                    self.log_result("Enhanced Boundary Thumbnail - Database Update", False, 
+                                                  f"Could not fetch updated property: HTTP {updated_property_response.status_code}")
+                                    return False
+                            else:
+                                self.log_result("Enhanced Boundary Thumbnail - Boundary Data", False, 
+                                              f"Expected boundary_data to be NULL but got: {boundary_data}")
+                                return False
+                        else:
+                            self.log_result("Enhanced Boundary Thumbnail - Coordinates", False, 
+                                          f"Invalid coordinates for Halifax area: lat={lat}, lon={lon}")
+                            return False
+                    else:
+                        self.log_result("Enhanced Boundary Thumbnail - Coordinates", False, 
+                                      f"Missing or invalid coordinates in response: {center}")
+                        return False
+                        
+                elif method == 'pid_based':
+                    # This would be unexpected for apartment property 07737947
+                    self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, 
+                                  "Unexpected: PID-based method used for apartment property (should fall back to address-based)")
+                    return False
+                elif method == 'failed':
+                    self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, 
+                                  f"Thumbnail generation failed: {data.get('message', 'Unknown error')}")
+                    return False
+                else:
+                    self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, 
+                                  f"Unknown method returned: {method}")
+                    return False
+            else:
+                self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, 
+                              f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Enhanced Boundary Thumbnail - Property 07737947", False, 
+                          "Request failed", str(e))
+            return False
+    
+    def test_google_maps_api_key_usage(self):
+        """Test that Google Maps API key is being used correctly for geocoding"""
+        try:
+            # Check if the Google Maps API key is configured in backend
+            google_maps_key = "AIzaSyACMb9WO0Y-f0-qNraOgInWvSdErwyrCdY"  # From backend .env
+            
+            # Test a simple geocoding request to verify the API key works
+            import requests
+            test_address = "Halifax, Nova Scotia, Canada"
+            geocoding_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={test_address}&key={google_maps_key}"
+            
+            response = requests.get(geocoding_url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                status = data.get('status')
+                
+                if status == 'OK':
+                    results = data.get('results', [])
+                    if results:
+                        location = results[0].get('geometry', {}).get('location', {})
+                        lat = location.get('lat')
+                        lng = location.get('lng')
+                        
+                        if lat and lng:
+                            self.log_result("Google Maps API Key", True, 
+                                          f"Google Maps API key working correctly. Test geocoding: {lat}, {lng}")
+                            return True
+                        else:
+                            self.log_result("Google Maps API Key", False, 
+                                          "Google Maps API returned results but no coordinates")
+                            return False
+                    else:
+                        self.log_result("Google Maps API Key", False, 
+                                      "Google Maps API returned OK status but no results")
+                        return False
+                elif status == 'REQUEST_DENIED':
+                    self.log_result("Google Maps API Key", False, 
+                                  "Google Maps API key denied - check API key validity and permissions")
+                    return False
+                elif status == 'OVER_QUERY_LIMIT':
+                    self.log_result("Google Maps API Key", True, 
+                                  "Google Maps API key working but over query limit (expected for testing)")
+                    return True
+                else:
+                    self.log_result("Google Maps API Key", False, 
+                                  f"Google Maps API returned status: {status}")
+                    return False
+            else:
+                self.log_result("Google Maps API Key", False, 
+                              f"Google Maps API request failed: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Google Maps API Key", False, 
+                          "Google Maps API test failed", str(e))
+            return False
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("=" * 60)
