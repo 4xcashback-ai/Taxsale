@@ -361,6 +361,25 @@ $municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER
             padding: 0.75rem 2rem;
             font-weight: 600;
         }
+        
+        .ad-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            padding: 1rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .ad-container::before {
+            content: "Advertisement";
+            display: block;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
