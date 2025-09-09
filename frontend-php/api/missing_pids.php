@@ -219,7 +219,9 @@ try {
                     'pid_number' => $pid_number ?: null,
                     'civic_address' => $civic_address ?: null,
                     'owner_name' => $owner_name ?: null,
-                    'property_type' => $property_type ?: null
+                    'property_type' => $property_type ?: null,
+                    'latitude' => $latitude ?: null,
+                    'longitude' => $longitude ?: null
                 ])
             ]);
         } else {
