@@ -21,6 +21,10 @@ import time
 import re
 from urllib.parse import unquote_plus
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 import jwt
 from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
