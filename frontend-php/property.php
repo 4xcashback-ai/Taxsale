@@ -1250,29 +1250,152 @@ if ($property['assessment_number']) {
         }
         
         // Property action functions
+        // Favorites functionality
+        let isInFavorites = false;
+        let currentFavoriteCount = <?php echo $property['favorite_count'] ?? 0; ?>;
+
+        // Check if property is already in user's favorites
+        function checkFavoriteStatus() {
+            fetch('/api/favorites.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const favorites = data.favorites || [];
+                        isInFavorites = favorites.some(fav => fav.assessment_number === '<?php echo $assessment_number; ?>');
+                        updateFavoriteButton();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking favorite status:', error);
+                });
+        }
+
+        function updateFavoriteButton() {
+            const button = document.querySelector('[onclick="addToFavorites()"]');
+            if (!button) return;
+
+            if (isInFavorites) {
+                button.innerHTML = '<i class="fas fa-heart-broken me-2"></i>Remove from Favorites';
+                button.className = 'btn btn-outline-danger';
+                button.onclick = removeFromFavorites;
+            } else {
+                button.innerHTML = '<i class="fas fa-heart me-2"></i>Add to Favorites';
+                button.className = 'btn btn-outline-danger';
+                button.onclick = addToFavorites;
+            }
+        }
+
+        function updateFavoriteCount(newCount) {
+            currentFavoriteCount = newCount;
+            const countBadge = document.querySelector('.favorite-count-badge');
+            
+            if (newCount > 0) {
+                if (countBadge) {
+                    countBadge.innerHTML = '<i class="fas fa-heart text-danger me-1"></i>' + newCount;
+                } else {
+                    // Create new badge if it doesn't exist
+                    const statusSpan = document.querySelector('.d-flex.flex-wrap.gap-2.mb-3');
+                    if (statusSpan) {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'favorite-count-badge ms-2';
+                        newBadge.innerHTML = '<i class="fas fa-heart text-danger me-1"></i>' + newCount;
+                        statusSpan.appendChild(newBadge);
+                    }
+                }
+            } else {
+                if (countBadge) {
+                    countBadge.remove();
+                }
+            }
+        }
+
         function addToFavorites() {
             fetch('/api/favorites.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    assessment_number: '<?php echo htmlspecialchars($assessment_number); ?>'
+                    assessment_number: '<?php echo $assessment_number; ?>'
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Added to favorites!');
+                    isInFavorites = true;
+                    updateFavoriteButton();
+                    updateFavoriteCount(data.favorite_count);
+                    showToast('Added to favorites!', 'success');
                 } else {
-                    alert('Error: ' + (data.message || 'Unable to add to favorites'));
+                    showToast('Error: ' + (data.message || 'Unable to add to favorites'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error adding to favorites. Please try again.');
+                showToast('Error adding to favorites. Please try again.', 'error');
             });
         }
+
+        function removeFromFavorites() {
+            fetch('/api/favorites.php', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    assessment_number: '<?php echo $assessment_number; ?>'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isInFavorites = false;
+                    updateFavoriteButton();
+                    updateFavoriteCount(data.favorite_count);
+                    showToast('Removed from favorites!', 'success');
+                } else {
+                    showToast('Error: ' + (data.message || 'Unable to remove from favorites'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error removing from favorites. Please try again.', 'error');
+            });
+        }
+
+        function showToast(message, type) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; opacity: 0; transition: opacity 0.3s ease;';
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Fade in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+            }, 100);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // Initialize favorite status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkFavoriteStatus();
+        });
         
         function shareProperty() {
             if (navigator.share) {
