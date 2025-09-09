@@ -1294,6 +1294,7 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                                         <select class="form-control" id="edit_property_type">
                                             <option value="">Keep existing value</option>
                                             <option value="land">Land</option>
+                                            <option value="apartment">Apartment/Condo</option>
                                             <option value="building">Building</option>
                                             <option value="mixed">Mixed (Land + Building)</option>
                                             <option value="mobile_home_only">Mobile Home Only</option>
