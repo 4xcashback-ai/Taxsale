@@ -136,11 +136,11 @@
             <div class="ad-container-landing">
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5947395928510215"
                      crossorigin="anonymous"></script>
-                <!-- landing page -->
+                <!-- Landing Page -->
                 <ins class="adsbygoogle"
                      style="display:block"
                      data-ad-client="ca-pub-5947395928510215"
-                     data-ad-slot="AUTO_GENERATED_SLOT_ID"
+                     data-ad-slot="6272201514"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
                 <script>
