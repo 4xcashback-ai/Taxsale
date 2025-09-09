@@ -8,16 +8,28 @@ $is_logged_in = isset($_SESSION['user_id']) && isset($_SESSION['access_token']);
 
 // If user is not logged in, show landing page content
 if (!$is_logged_in) {
+    $landing_properties = [];
+    $db_error = null;
+    
     try {
         // Get 6 random properties for landing page preview
         $db = getDB();
-        $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
-        $landing_properties = $stmt->fetchAll();
+        
+        if ($db === null) {
+            $db_error = "Database connection failed";
+            error_log("Landing page: Database connection is null");
+        } else {
+            $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
+            $landing_properties = $stmt->fetchAll();
+            error_log("Landing page: Found " . count($landing_properties) . " properties");
+        }
         
         // Initialize thumbnail generator for landing page
         $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
         
     } catch (Exception $e) {
+        $db_error = $e->getMessage();
+        error_log("Landing page error: " . $e->getMessage());
         $landing_properties = [];
         $thumbnail_generator = new ThumbnailGenerator(GOOGLE_MAPS_API_KEY);
     }
