@@ -1276,13 +1276,18 @@ async def generate_boundary_thumbnail(assessment_number: str):
                 
                 logger.info(f"Updated property {assessment_number} with geocoded coordinates: {lat}, {lng}")
                 
+                # Format property type safely
+                property_type_display = "Unknown"
+                if property_type:
+                    property_type_display = property_type.replace('_', ' ').title()
+                
                 return {
                     "message": f"Address-based coordinates generated for {assessment_number}",
                     "thumbnail_generated": True,
                     "center": {"lat": lat, "lon": lng},
                     "boundary_data": None,
                     "method": "address_based",
-                    "note": f"No PID boundaries available for {property_type.replace('_', ' ').title()} property. Using address-based coordinates."
+                    "note": f"No PID boundaries available for {property_type_display} property. Using address-based coordinates."
                 }
             else:
                 logger.warning(f"Geocoding failed for property {assessment_number} with address: {civic_address}")
