@@ -1349,55 +1349,123 @@ async def store_pvsc_data(assessment_number: str, pvsc_data: dict):
         logger.error(f"Error storing PVSC data for {assessment_number}: {e}")
 
 @app.post("/api/admin/scrape-pvsc-batch")
-async def scrape_pvsc_batch(current_user: dict = Depends(get_current_user_optional)):
+async def scrape_pvsc_batch(
+    batch_size: int = 100,
+    current_user: dict = Depends(get_current_user_optional)
+):
     """Batch scrape PVSC data for all properties"""
     if not current_user or not current_user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
-        # Get all properties that don't have PVSC data or have stale data
+        # Get ALL properties that don't have PVSC data or have stale data
         query = """
             SELECT p.assessment_number 
             FROM properties p 
             LEFT JOIN pvsc_data pd ON p.assessment_number = pd.assessment_number 
             WHERE pd.assessment_number IS NULL 
                OR pd.scraped_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
-            LIMIT 50
+            ORDER BY p.assessment_number
         """
         
         properties = mysql_db.execute_query(query)
+        total_properties = len(properties)
+        
+        if total_properties == 0:
+            return {
+                "message": "No properties need PVSC data scraping",
+                "total_properties": 0,
+                "scraped": 0,
+                "failed": 0
+            }
+        
+        logger.info(f"Starting PVSC batch scraping for {total_properties} properties")
         
         scraped_count = 0
         failed_count = 0
+        batch_count = 0
         
-        for property_row in properties:
-            assessment_number = property_row['assessment_number']
+        # Process in batches to avoid overwhelming the API
+        for i in range(0, total_properties, batch_size):
+            batch = properties[i:i + batch_size]
+            batch_count += 1
             
-            try:
-                pvsc_data = await scrape_pvsc_data(assessment_number)
-                if pvsc_data:
-                    await store_pvsc_data(assessment_number, pvsc_data)
-                    scraped_count += 1
-                else:
+            logger.info(f"Processing batch {batch_count}, properties {i+1}-{min(i+batch_size, total_properties)} of {total_properties}")
+            
+            for property_row in batch:
+                assessment_number = property_row['assessment_number']
+                
+                try:
+                    pvsc_data = await scrape_pvsc_data(assessment_number)
+                    if pvsc_data:
+                        await store_pvsc_data(assessment_number, pvsc_data)
+                        scraped_count += 1
+                        logger.info(f"✅ Scraped PVSC data for {assessment_number} ({scraped_count}/{total_properties})")
+                    else:
+                        failed_count += 1
+                        logger.warning(f"❌ No PVSC data found for {assessment_number}")
+                    
+                except Exception as e:
+                    logger.error(f"Error processing {assessment_number}: {e}")
                     failed_count += 1
                 
-                # Add delay to be respectful to PVSC API
+                # Add delay to be respectful to PVSC API (1 second between requests)
                 import asyncio
-                await asyncio.sleep(2)
-                
-            except Exception as e:
-                logger.error(f"Error processing {assessment_number}: {e}")
-                failed_count += 1
+                await asyncio.sleep(1)
+            
+            # Longer delay between batches
+            if i + batch_size < total_properties:
+                logger.info(f"Completed batch {batch_count}, waiting 5 seconds before next batch...")
+                await asyncio.sleep(5)
+        
+        success_rate = (scraped_count / total_properties * 100) if total_properties > 0 else 0
+        
+        logger.info(f"PVSC batch scraping completed: {scraped_count}/{total_properties} successful ({success_rate:.1f}%)")
         
         return {
             "message": f"PVSC batch scraping completed",
+            "total_properties": total_properties,
             "scraped": scraped_count,
             "failed": failed_count,
-            "total_processed": scraped_count + failed_count
+            "success_rate": f"{success_rate:.1f}%",
+            "batches_processed": batch_count
         }
         
     except Exception as e:
         logger.error(f"Error in PVSC batch scraping: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/scrape-pvsc-all")
+async def scrape_pvsc_all_properties(current_user: dict = Depends(get_current_user_optional)):
+    """Scrape PVSC data for ALL properties in the database"""
+    if not current_user or not current_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # Get count of all properties
+        total_query = "SELECT COUNT(*) as total FROM properties"
+        total_result = mysql_db.execute_query(total_query)
+        total_properties = total_result[0]['total']
+        
+        # Get count of properties with existing PVSC data
+        existing_query = "SELECT COUNT(*) as existing FROM pvsc_data"
+        existing_result = mysql_db.execute_query(existing_query)
+        existing_count = existing_result[0]['existing']
+        
+        logger.info(f"Starting comprehensive PVSC scraping: {total_properties} total properties, {existing_count} already have data")
+        
+        # Use the batch endpoint with no limit
+        result = await scrape_pvsc_batch(batch_size=50, current_user=current_user)
+        
+        return {
+            "message": "Comprehensive PVSC scraping initiated",
+            "total_properties_in_db": total_properties,
+            "existing_pvsc_records": existing_count,
+            "scraping_result": result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in comprehensive PVSC scraping: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/property-details/{pid_number}")
