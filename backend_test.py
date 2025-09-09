@@ -8,7 +8,12 @@ import requests
 import json
 import sys
 import time
+import logging
 from datetime import datetime
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class TaxSaleCompassTester:
     def __init__(self, base_url="http://localhost:8001"):
