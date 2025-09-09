@@ -355,7 +355,7 @@ class TaxSaleScraper:
         
         try:
             # Halifax tax sale webpage and PDF URLs
-            webpage_url = "https://www.halifax.ca/home-property/property-taxes/tax-sales"
+            webpage_url = "https://www.halifax.ca/home-property/property-taxes/tax-sale"
             pdf_url = "https://cdn.halifax.ca/sites/default/files/documents/home-property/property-taxes/sept16.2025newspaper.website-sept3.25.pdf"
             
             headers = {
