@@ -37,21 +37,25 @@ if ($property['status'] === 'active' && !$is_paid_user) {
     $show_upgrade_modal = true;
 }
 
-// Get PSC property details if we have a PID
-$psc_data = null;
-if ($property['pid_number']) {
-    // Call backend API to get enhanced property details
-    $api_url = API_BASE_URL . '/property-details/' . $property['pid_number'];
+// Get PVSC property details
+$pvsc_data = null;
+if ($property['assessment_number']) {
+    // Call backend API to get PVSC property details
+    $api_url = API_BASE_URL . '/pvsc-data/' . $property['assessment_number'];
     $context = stream_context_create([
         'http' => [
-            'timeout' => 10,
+            'timeout' => 15,
             'ignore_errors' => true
         ]
     ]);
     
     $response = @file_get_contents($api_url, false, $context);
     if ($response) {
-        $psc_data = json_decode($response, true);
+        $pvsc_data = json_decode($response, true);
+        // Don't treat error responses as valid data
+        if (isset($pvsc_data['error'])) {
+            $pvsc_data = null;
+        }
     }
 }
 ?>
