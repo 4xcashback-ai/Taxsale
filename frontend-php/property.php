@@ -515,16 +515,7 @@ if ($property['assessment_number']) {
                             </div>
                             <?php endif; ?>
                             
-                            <?php if ($property['owner_name']): ?>
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="fas fa-user me-1"></i>Property Owner
-                                </div>
-                                <div class="info-value">
-                                    <?php echo htmlspecialchars($property['owner_name']); ?>
-                                </div>
-                            </div>
-                            <?php endif; ?>
+
                             
                             <?php if ($property['sale_date']): ?>
                             <div class="info-item">
