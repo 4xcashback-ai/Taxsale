@@ -1222,11 +1222,26 @@ async def generate_boundary_thumbnail(assessment_number: str):
         boundary_result = await query_ns_government_parcel(pid_number)
         
         if boundary_result.get('found'):
-            # Update property with coordinates if found
+            # Update property with coordinates AND boundary data
             center = boundary_result.get('center')
+            boundary_geometry = boundary_result.get('geometry')
+            
             if center:
-                update_query = "UPDATE properties SET latitude = %s, longitude = %s WHERE assessment_number = %s"
-                mysql_db.execute_query(update_query, [center['lat'], center['lon'], assessment_number])
+                # Update coordinates and boundary data
+                import json
+                boundary_data_json = json.dumps(boundary_geometry) if boundary_geometry else None
+                
+                update_query = """UPDATE properties 
+                                 SET latitude = %s, longitude = %s, boundary_data = %s 
+                                 WHERE assessment_number = %s"""
+                mysql_db.execute_query(update_query, [
+                    center['lat'], 
+                    center['lon'], 
+                    boundary_data_json,
+                    assessment_number
+                ])
+                
+                logger.info(f"Updated property {assessment_number} with coordinates and boundary data")
             
             return {
                 "message": f"Boundary thumbnail generated for {assessment_number}",
