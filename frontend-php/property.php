@@ -108,6 +108,27 @@ if ($property['status'] === 'active' && !$is_paid_user) {
                     </div>
                 </div>
 
+                <!-- Property Owner Information -->
+                <?php if ($property['owner_name']): ?>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4><i class="fas fa-user"></i> Property Owner Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <p><i class="fas fa-id-card text-primary"></i> <strong>Owner Name:</strong><br>
+                           <span class="ms-3"><?php echo htmlspecialchars($property['owner_name']); ?></span></p>
+                        <?php if ($property['sale_date']): ?>
+                        <p><i class="fas fa-calendar-alt text-primary"></i> <strong>Tax Sale Date:</strong><br>
+                           <span class="ms-3 text-warning fw-bold"><?php echo date('F j, Y', strtotime($property['sale_date'])); ?></span></p>
+                        <?php endif; ?>
+                        <?php if ($property['auction_type']): ?>
+                        <p><i class="fas fa-hammer text-primary"></i> <strong>Auction Type:</strong><br>
+                           <span class="ms-3 badge bg-warning text-dark"><?php echo htmlspecialchars($property['auction_type']); ?></span></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Interactive Property Map -->
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
