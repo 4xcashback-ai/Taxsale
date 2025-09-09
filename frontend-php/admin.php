@@ -1253,29 +1253,119 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
         }
         
         showEditModal(assessmentNumber) {
-            const pid = prompt(`Enter PID number for property ${assessmentNumber}:`);
-            if (pid) {
-                this.manualEdit(assessmentNumber, pid);
+            // Create a comprehensive edit modal
+            const modalHTML = `
+                <div class="modal fade" id="editPropertyModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Property ${assessmentNumber}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editPropertyForm">
+                                    <input type="hidden" id="edit_assessment_number" value="${assessmentNumber}">
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Assessment Number (Read-only)</label>
+                                        <input type="text" class="form-control" value="${assessmentNumber}" readonly>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_pid_number" class="form-label">PID Number</label>
+                                        <input type="text" class="form-control" id="edit_pid_number" placeholder="Enter PID number">
+                                        <div class="form-text">Leave blank to keep existing value</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_civic_address" class="form-label">Civic Address</label>
+                                        <textarea class="form-control" id="edit_civic_address" rows="2" placeholder="Enter civic address"></textarea>
+                                        <div class="form-text">Leave blank to keep existing value</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_owner_name" class="form-label">Owner Name</label>
+                                        <input type="text" class="form-control" id="edit_owner_name" placeholder="Enter owner name">
+                                        <div class="form-text">Leave blank to keep existing value</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_property_type" class="form-label">Property Type</label>
+                                        <select class="form-control" id="edit_property_type">
+                                            <option value="">Keep existing value</option>
+                                            <option value="land">Land</option>
+                                            <option value="building">Building</option>
+                                            <option value="mixed">Mixed (Land + Building)</option>
+                                            <option value="mobile_home_only">Mobile Home Only</option>
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="missingPIDManager.savePropertyEdit()">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('editPropertyModal');
+            if (existingModal) {
+                existingModal.remove();
             }
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editPropertyModal'));
+            modal.show();
         }
         
-        async manualEdit(assessmentNumber, pidNumber) {
+        async savePropertyEdit() {
+            const assessmentNumber = document.getElementById('edit_assessment_number').value;
+            const pidNumber = document.getElementById('edit_pid_number').value.trim();
+            const civicAddress = document.getElementById('edit_civic_address').value.trim();
+            const ownerName = document.getElementById('edit_owner_name').value.trim();
+            const propertyType = document.getElementById('edit_property_type').value;
+            
+            // Build form data
+            let formData = `assessment_number=${encodeURIComponent(assessmentNumber)}`;
+            
+            if (pidNumber) formData += `&pid_number=${encodeURIComponent(pidNumber)}`;
+            if (civicAddress) formData += `&civic_address=${encodeURIComponent(civicAddress)}`;
+            if (ownerName) formData += `&owner_name=${encodeURIComponent(ownerName)}`;
+            if (propertyType) formData += `&property_type=${encodeURIComponent(propertyType)}`;
+            
+            if (formData === `assessment_number=${encodeURIComponent(assessmentNumber)}`) {
+                alert('Please enter at least one field to update');
+                return;
+            }
+            
             try {
                 const response = await fetch('/api/missing_pids.php?action=manual_edit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `assessment_number=${assessmentNumber}&pid_number=${pidNumber}`
+                    body: formData
                 });
                 
                 const data = await response.json();
                 if (data.status === 'success') {
-                    alert('Property updated successfully!');
-                    this.loadMissingPIDs(); // Refresh the list
+                    alert('Property updated successfully');
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editPropertyModal'));
+                    modal.hide();
+                    
+                    // Refresh the list
+                    this.loadMissingPIDs();
                 } else {
                     throw new Error(data.message);
                 }
             } catch (error) {
-                alert('Manual edit failed: ' + error.message);
+                alert('Failed to update property: ' + error.message);
             }
         }
         
