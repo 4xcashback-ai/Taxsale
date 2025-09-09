@@ -53,6 +53,11 @@ class ThumbnailGenerator {
             return $this->getMobileHomeThumbnail($property);
         }
         
+        // Handle apartments/condos - they should generate thumbnails based on address
+        if ($property_type === 'apartment' && empty($property['latitude'])) {
+            return $this->getAddressBasedThumbnail($property);
+        }
+        
         // For search page performance, return a simple placeholder for properties without thumbnails
         return 'data:image/svg+xml;base64,' . base64_encode('
             <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
