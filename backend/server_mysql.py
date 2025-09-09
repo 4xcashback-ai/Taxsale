@@ -1239,17 +1239,19 @@ async def get_pvsc_data(assessment_number: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def scrape_pvsc_data(assessment_number: str):
-    """Scrape property data from PVSC API"""
+    """Scrape property data from PVSC HTML response"""
     try:
         import requests
         import json
+        from bs4 import BeautifulSoup
+        import re
         
-        # PVSC API endpoint
+        # PVSC API endpoint - returns HTML
         api_url = f"https://webapi.pvsc.ca/Search/Property?ain={assessment_number}"
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
             'Referer': 'https://www.pvsc.ca/'
         }
@@ -1257,68 +1259,136 @@ async def scrape_pvsc_data(assessment_number: str):
         response = requests.get(api_url, headers=headers, timeout=15)
         response.raise_for_status()
         
-        data = response.json()
+        # Parse HTML response
+        soup = BeautifulSoup(response.text, 'html.parser')
         
-        if data and len(data) > 0:
-            # Extract relevant data from PVSC response
-            prop_data = data[0] if isinstance(data, list) else data
+        # Extract data from HTML structure
+        extracted_data = {
+            'assessment_number': assessment_number,
+            'ain': assessment_number
+        }
+        
+        # Extract civic address from h1 tag
+        h1_element = soup.find('h1')
+        if h1_element:
+            extracted_data['civic_address'] = h1_element.get_text().strip()
+        
+        # Extract data from definition lists
+        dl_elements = soup.find_all('dl', class_='two-column')
+        for dl in dl_elements:
+            dt_elements = dl.find_all('dt')
+            dd_elements = dl.find_all('dd')
             
-            extracted_data = {
-                'assessment_number': assessment_number,
-                'ain': prop_data.get('AIN'),
-                'civic_address': prop_data.get('CivicAddress'),
-                'legal_description': prop_data.get('LegalDescription'),
-                'pid_number': prop_data.get('PID'),
-                'latitude': prop_data.get('Latitude'),
-                'longitude': prop_data.get('Longitude'),
-                'municipal_unit': prop_data.get('MunicipalUnit'),
-                'planning_district': prop_data.get('PlanningDistrict'),
-                'assessed_value': prop_data.get('AssessedValue'),
-                'taxable_assessed_value': prop_data.get('TaxableAssessedValue'),
-                'capped_assessment_value': prop_data.get('CappedAssessmentValue'),
-                'assessment_year': prop_data.get('AssessmentYear'),
-                'property_type': prop_data.get('PropertyType'),
-                'property_use': prop_data.get('PropertyUse'),
-                'land_size': prop_data.get('LandSize'),
-                'land_size_unit': prop_data.get('LandSizeUnit'),
-                'building_size': prop_data.get('BuildingSize'),
-                'building_size_unit': prop_data.get('BuildingSizeUnit'),
-                'dwelling_type': prop_data.get('DwellingType'),
-                'year_built': prop_data.get('YearBuilt'),
-                'number_of_bedrooms': prop_data.get('Bedrooms'),
-                'number_of_bathrooms': prop_data.get('Bathrooms'),
-                'basement_type': prop_data.get('BasementType'),
-                'heating_type': prop_data.get('HeatingType'),
-                'exterior_finish': prop_data.get('ExteriorFinish'),
-                'roof_type': prop_data.get('RoofType'),
-                'building_class': prop_data.get('BuildingClass'),
-                'building_type': prop_data.get('BuildingType'),
-                'construction_type': prop_data.get('ConstructionType'),
-                'occupancy_type': prop_data.get('OccupancyType'),
-                'last_sale_date': prop_data.get('LastSaleDate'),
-                'last_sale_price': prop_data.get('LastSalePrice'),
-                'previous_sale_date': prop_data.get('PreviousSaleDate'),
-                'previous_sale_price': prop_data.get('PreviousSalePrice'),
-                'neighborhood_code': prop_data.get('NeighborhoodCode'),
-                'zoning': prop_data.get('Zoning'),
-                'school_district': prop_data.get('SchoolDistrict'),
-                'raw_json': json.dumps(prop_data)
-            }
-            
-            # Filter out None values
-            extracted_data = {k: v for k, v in extracted_data.items() if v is not None and v != ''}
-            
-            logger.info(f"Successfully scraped PVSC data for {assessment_number}")
+            for dt, dd in zip(dt_elements, dd_elements):
+                label = dt.get_text().strip().lower()
+                value = dd.get_text().strip()
+                
+                # Skip empty values and dashes
+                if value in ['—', '—', '', 'N/A']:
+                    continue
+                
+                # Map HTML labels to database fields
+                if 'land size' in label:
+                    # Extract numeric value and unit
+                    land_match = re.search(r'([\d,]+)\s*(.+)', value)
+                    if land_match:
+                        extracted_data['land_size'] = float(land_match.group(1).replace(',', ''))
+                        extracted_data['land_size_unit'] = land_match.group(2).strip()
+                
+                elif 'current property assessment' in label:
+                    # Extract numeric value from currency
+                    price_match = re.search(r'\$([\d,]+)', value)
+                    if price_match:
+                        extracted_data['assessed_value'] = float(price_match.group(1).replace(',', ''))
+                
+                elif 'current taxable assessed value' in label:
+                    price_match = re.search(r'\$([\d,]+)', value)
+                    if price_match:
+                        extracted_data['taxable_assessed_value'] = float(price_match.group(1).replace(',', ''))
+                
+                elif 'sale price' in label and '$' in value:
+                    price_match = re.search(r'\$([\d,]+)', value)
+                    if price_match:
+                        extracted_data['last_sale_price'] = float(price_match.group(1).replace(',', ''))
+                
+                elif 'sale date' in label and value != '—':
+                    try:
+                        from datetime import datetime
+                        # Try to parse date
+                        extracted_data['last_sale_date'] = value
+                    except:
+                        pass
+                
+                elif 'year built' in label:
+                    year_match = re.search(r'(\d{4})', value)
+                    if year_match:
+                        extracted_data['year_built'] = int(year_match.group(1))
+                
+                elif 'building style' in label:
+                    extracted_data['dwelling_type'] = value
+                
+                elif 'total living area' in label:
+                    area_match = re.search(r'([\d,]+)', value)
+                    if area_match:
+                        extracted_data['building_size'] = float(area_match.group(1).replace(',', ''))
+                        extracted_data['building_size_unit'] = 'Sq. Ft.'
+                
+                elif 'bedrooms' in label:
+                    bedroom_match = re.search(r'(\d+)', value)
+                    if bedroom_match:
+                        extracted_data['number_of_bedrooms'] = int(bedroom_match.group(1))
+                
+                elif 'baths' in label:
+                    bath_match = re.search(r'(\d+)', value)
+                    if bath_match:
+                        extracted_data['number_of_bathrooms'] = float(bath_match.group(1))
+        
+        # Extract assessment history from table
+        history_table = soup.find('table', id='tblValuesHistory')
+        if history_table:
+            rows = history_table.find_all('tr')[1:]  # Skip header
+            for row in rows:
+                cells = row.find_all('td')
+                if len(cells) >= 3:
+                    year = cells[0].get_text().strip()
+                    if year == '2025' or year == str(2025):  # Current year
+                        assessed_text = cells[1].get_text().strip()
+                        taxable_text = cells[2].get_text().strip()
+                        
+                        assessed_match = re.search(r'\$([\d,]+)', assessed_text)
+                        taxable_match = re.search(r'\$([\d,]+)', taxable_text)
+                        
+                        if assessed_match and 'assessed_value' not in extracted_data:
+                            extracted_data['assessed_value'] = float(assessed_match.group(1).replace(',', ''))
+                        
+                        if taxable_match and 'taxable_assessed_value' not in extracted_data:
+                            extracted_data['taxable_assessed_value'] = float(taxable_match.group(1).replace(',', ''))
+                        
+                        extracted_data['assessment_year'] = int(year)
+                        break
+        
+        # Store raw HTML for debugging
+        extracted_data['raw_json'] = json.dumps({
+            'source': 'PVSC_HTML',
+            'url': api_url,
+            'scraped_fields': len(extracted_data)
+        })
+        
+        # Filter out None values and ensure we have some data
+        extracted_data = {k: v for k, v in extracted_data.items() if v is not None and v != ''}
+        
+        if len(extracted_data) > 3:  # More than just basic fields
+            logger.info(f"Successfully scraped PVSC HTML data for {assessment_number} - {len(extracted_data)} fields")
             return extracted_data
         else:
-            logger.warning(f"No PVSC data found for {assessment_number}")
+            logger.warning(f"Insufficient PVSC data scraped for {assessment_number}")
             return None
             
     except requests.exceptions.RequestException as e:
         logger.error(f"HTTP error scraping PVSC data for {assessment_number}: {e}")
         return None
     except Exception as e:
-        logger.error(f"Error scraping PVSC data for {assessment_number}: {e}")
+        logger.error(f"Error scraping PVSC HTML data for {assessment_number}: {e}")
         return None
 
 async def store_pvsc_data(assessment_number: str, pvsc_data: dict):
