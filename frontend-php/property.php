@@ -424,8 +424,9 @@ if ($property['assessment_number']) {
         </div>
 
         <div class="row">
-            <!-- Full Width Interactive Map at Top -->
-            <div class="col-12">
+            <!-- Left Column: Map + Property Info + PVSC Data -->
+            <div class="col-lg-8">
+                <!-- Interactive Property Map -->
                 <div class="card">
                     <div class="card-header">
                         <i class="fas fa-map-marked-alt me-2"></i>Interactive Property Map
@@ -470,52 +471,6 @@ if ($property['assessment_number']) {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Side by Side: Property Information and PVSC Data -->
-        <div class="row mt-4">
-            <!-- Left Column: Basic Property Information -->
-            <div class="col-lg-6">
-                <!-- Minimum Bid - Prominently at Top -->
-                <?php if ($property['opening_bid'] || $property['total_taxes']): ?>
-                <div class="card mb-3" style="border: 2px solid var(--success-color);">
-                    <div class="card-header text-center" style="background: linear-gradient(135deg, var(--success-color), #00b894); color: white;">
-                        <h4 class="mb-0">
-                            <i class="fas fa-gavel me-2"></i>Minimum Bid
-                        </h4>
-                    </div>
-                    <div class="card-body text-center">
-                        <?php if ($property['opening_bid']): ?>
-                        <div class="display-4 text-success fw-bold mb-2">
-                            $<?php echo number_format($property['opening_bid'], 2); ?>
-                        </div>
-                        <div class="text-muted mb-3">Opening Bid Amount</div>
-                        <?php endif; ?>
-                        
-                        <?php if ($property['total_taxes']): ?>
-                        <div class="border-top pt-3">
-                            <div class="h5 text-danger mb-1">
-                                $<?php echo number_format($property['total_taxes'], 2); ?>
-                            </div>
-                            <small class="text-muted">Total Taxes Due</small>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($property['opening_bid'] && $property['total_taxes']): ?>
-                        <div class="mt-3 pt-3 border-top">
-                            <?php $percentage = ($property['opening_bid'] / $property['total_taxes']) * 100; ?>
-                            <div class="progress mb-2" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: <?php echo min($percentage, 100); ?>%"></div>
-                            </div>
-                            <small class="text-muted">
-                                Bid is <?php echo number_format($percentage, 1); ?>% of taxes due
-                            </small>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
 
                 <!-- Basic Property Information -->
                 <div class="card">
@@ -523,84 +478,72 @@ if ($property['assessment_number']) {
                         <i class="fas fa-info-circle me-2"></i>Property Information
                     </div>
                     <div class="card-body">
-                        <div class="row">
+                        <div class="info-grid">
                             <?php if ($property['pid_number']): ?>
-                            <div class="col-md-6 mb-3">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-fingerprint me-1"></i>PID Number
-                                    </div>
-                                    <div class="info-value">
-                                        <?php echo htmlspecialchars($property['pid_number']); ?>
-                                    </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-fingerprint me-1"></i>PID Number
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['pid_number']); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
                             
                             <?php if ($property['tax_year']): ?>
-                            <div class="col-md-6 mb-3">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-calendar me-1"></i>Tax Year
-                                    </div>
-                                    <div class="info-value">
-                                        <?php echo htmlspecialchars($property['tax_year']); ?>
-                                    </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar me-1"></i>Tax Year
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['tax_year']); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
                             
                             <?php if ($property['pvsc_assessment_value']): ?>
-                            <div class="col-md-6 mb-3">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-calculator me-1"></i>PVSC Assessment
-                                    </div>
-                                    <div class="info-value">
-                                        $<?php echo number_format($property['pvsc_assessment_value'], 2); ?>
-                                        <?php if ($property['pvsc_assessment_year']): ?>
-                                        <small class="text-muted">(<?php echo $property['pvsc_assessment_year']; ?>)</small>
-                                        <?php endif; ?>
-                                    </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calculator me-1"></i>PVSC Assessment
+                                </div>
+                                <div class="info-value">
+                                    $<?php echo number_format($property['pvsc_assessment_value'], 2); ?>
+                                    <?php if ($property['pvsc_assessment_year']): ?>
+                                    <small class="text-muted">(<?php echo $property['pvsc_assessment_year']; ?>)</small>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <?php endif; ?>
                             
                             <?php if ($property['owner_name']): ?>
-                            <div class="col-md-12 mb-3">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-user me-1"></i>Property Owner
-                                    </div>
-                                    <div class="info-value">
-                                        <?php echo htmlspecialchars($property['owner_name']); ?>
-                                    </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user me-1"></i>Property Owner
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['owner_name']); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
                             
                             <?php if ($property['sale_date']): ?>
-                            <div class="col-md-6 mb-3">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-calendar-alt me-1"></i>Tax Sale Date
-                                    </div>
-                                    <div class="info-value text-warning">
-                                        <?php echo date('F j, Y', strtotime($property['sale_date'])); ?>
-                                    </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>Tax Sale Date
+                                </div>
+                                <div class="info-value text-warning">
+                                    <?php echo date('F j, Y', strtotime($property['sale_date'])); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
                             
                             <?php if ($property['auction_type']): ?>
-                            <div class="col-md-6 mb-3">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-hammer me-1"></i>Auction Type
-                                    </div>
-                                    <div class="info-value">
-                                        <?php echo htmlspecialchars($property['auction_type']); ?>
-                                    </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-hammer me-1"></i>Auction Type
+                                </div>
+                                <div class="info-value">
+                                    <?php echo htmlspecialchars($property['auction_type']); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
@@ -608,47 +551,6 @@ if ($property['assessment_number']) {
                     </div>
                 </div>
 
-                <!-- Property Actions -->
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <i class="fas fa-tools me-2"></i>Property Actions
-                    </div>
-                    <div class="card-body">
-                        <?php if ($is_logged_in): ?>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-danger" onclick="addToFavorites()">
-                                <i class="fas fa-heart me-2"></i>Add to Favorites
-                            </button>
-                            <button class="btn btn-outline-info" onclick="shareProperty()">
-                                <i class="fas fa-share-alt me-2"></i>Share Property
-                            </button>
-                            <button class="btn btn-outline-success" onclick="downloadDetails()">
-                                <i class="fas fa-download me-2"></i>Download Details
-                            </button>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <div class="mt-4 pt-3 border-top">
-                            <small class="text-muted d-block mb-2">
-                                <i class="fas fa-clock me-1"></i>Last updated: 
-                                <?php echo date('M j, Y \a\t g:i A', strtotime($property['updated_at'] ?? $property['created_at'])); ?>
-                            </small>
-                            <?php if ($property['boundary_data']): ?>
-                            <small class="text-success d-block">
-                                <i class="fas fa-check-circle me-1"></i>Boundary data available
-                            </small>
-                            <?php else: ?>
-                            <small class="text-warning d-block">
-                                <i class="fas fa-info-circle me-1"></i>Location based on address geocoding
-                            </small>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Column: PVSC Property Data -->
-            <div class="col-lg-6">
                 <!-- PVSC Property Data Table -->
                 <?php if ($pvsc_data && !empty($pvsc_data) && !isset($pvsc_data['error'])): ?>
                 <div class="card">
@@ -662,7 +564,7 @@ if ($property['assessment_number']) {
                                 <tbody>
                                     <?php if (isset($pvsc_data['assessed_value']) && $pvsc_data['assessed_value']): ?>
                                     <tr>
-                                        <td class="fw-bold text-muted" style="width: 45%;">
+                                        <td class="fw-bold text-muted" style="width: 40%;">
                                             <i class="fas fa-calculator me-1"></i>Assessed Value
                                         </td>
                                         <td class="text-success fw-bold">$<?php echo number_format($pvsc_data['assessed_value'], 2); ?></td>
@@ -672,7 +574,7 @@ if ($property['assessment_number']) {
                                     <?php if (isset($pvsc_data['taxable_assessed_value']) && $pvsc_data['taxable_assessed_value']): ?>
                                     <tr>
                                         <td class="fw-bold text-muted">
-                                            <i class="fas fa-receipt me-1"></i>Taxable Value
+                                            <i class="fas fa-receipt me-1"></i>Taxable Assessed Value
                                         </td>
                                         <td class="text-info fw-bold">$<?php echo number_format($pvsc_data['taxable_assessed_value'], 2); ?></td>
                                     </tr>
@@ -854,9 +756,90 @@ if ($property['assessment_number']) {
                     </div>
                 </div>
                 <?php endif; ?>
+            </div>
+            
+            <!-- Right Column: Minimum Bid + Actions + Stats -->
+            <div class="col-lg-4">
+                <!-- Minimum Bid - Prominently at Top -->
+                <?php if ($property['opening_bid'] || $property['total_taxes']): ?>
+                <div class="card mb-3" style="border: 2px solid var(--success-color);">
+                    <div class="card-header text-center" style="background: linear-gradient(135deg, var(--success-color), #00b894); color: white;">
+                        <h4 class="mb-0">
+                            <i class="fas fa-gavel me-2"></i>Minimum Bid
+                        </h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <?php if ($property['opening_bid']): ?>
+                        <div class="display-4 text-success fw-bold mb-2">
+                            $<?php echo number_format($property['opening_bid'], 2); ?>
+                        </div>
+                        <div class="text-muted mb-3">Opening Bid Amount</div>
+                        <?php endif; ?>
+                        
+                        <?php if ($property['total_taxes']): ?>
+                        <div class="border-top pt-3">
+                            <div class="h5 text-danger mb-1">
+                                $<?php echo number_format($property['total_taxes'], 2); ?>
+                            </div>
+                            <small class="text-muted">Total Taxes Due</small>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if ($property['opening_bid'] && $property['total_taxes']): ?>
+                        <div class="mt-3 pt-3 border-top">
+                            <?php $percentage = ($property['opening_bid'] / $property['total_taxes']) * 100; ?>
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: <?php echo min($percentage, 100); ?>%"></div>
+                            </div>
+                            <small class="text-muted">
+                                Bid is <?php echo number_format($percentage, 1); ?>% of taxes due
+                            </small>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Property Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-tools me-2"></i>Property Actions
+                    </div>
+                    <div class="card-body">
+                        <?php if ($is_logged_in): ?>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-danger" onclick="addToFavorites()">
+                                <i class="fas fa-heart me-2"></i>Add to Favorites
+                            </button>
+                            <button class="btn btn-outline-info" onclick="shareProperty()">
+                                <i class="fas fa-share-alt me-2"></i>Share Property
+                            </button>
+                            <button class="btn btn-outline-success" onclick="downloadDetails()">
+                                <i class="fas fa-download me-2"></i>Download Details
+                            </button>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="mt-4 pt-3 border-top">
+                            <small class="text-muted d-block mb-2">
+                                <i class="fas fa-clock me-1"></i>Last updated: 
+                                <?php echo date('M j, Y \a\t g:i A', strtotime($property['updated_at'] ?? $property['created_at'])); ?>
+                            </small>
+                            <?php if ($property['boundary_data']): ?>
+                            <small class="text-success d-block">
+                                <i class="fas fa-check-circle me-1"></i>Boundary data available
+                            </small>
+                            <?php else: ?>
+                            <small class="text-warning d-block">
+                                <i class="fas fa-info-circle me-1"></i>Location based on address geocoding
+                            </small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Quick Stats -->
-                <div class="card mt-3">
+                <div class="card">
                     <div class="card-header">
                         <i class="fas fa-chart-bar me-2"></i>Quick Stats
                     </div>
