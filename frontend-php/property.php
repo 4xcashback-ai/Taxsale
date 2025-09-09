@@ -1004,11 +1004,33 @@ if ($property['assessment_number']) {
             // Add property boundary if available
             try {
                 const boundaryData = <?php echo $property['boundary_data']; ?>;
+                console.log("Boundary data structure:", boundaryData);
+                
+                let boundaries = null;
+                
+                // Handle different boundary data formats
                 if (boundaryData && boundaryData.coordinates) {
-                    const boundaries = boundaryData.coordinates[0].map(coord => ({
+                    // GeoJSON format
+                    boundaries = boundaryData.coordinates[0].map(coord => ({
                         lat: coord[1],
                         lng: coord[0]
                     }));
+                } else if (boundaryData && boundaryData.rings) {
+                    // ArcGIS format
+                    boundaries = boundaryData.rings[0].map(coord => ({
+                        lat: coord[1],
+                        lng: coord[0]
+                    }));
+                } else if (Array.isArray(boundaryData)) {
+                    // Direct coordinate array
+                    boundaries = boundaryData.map(coord => ({
+                        lat: Array.isArray(coord) ? coord[1] : coord.lat,
+                        lng: Array.isArray(coord) ? coord[0] : coord.lng
+                    }));
+                }
+                
+                if (boundaries && boundaries.length > 0) {
+                    console.log("Rendering boundaries with", boundaries.length, "points");
                     
                     const propertyPolygon = new google.maps.Polygon({
                         paths: boundaries,
@@ -1027,6 +1049,7 @@ if ($property['assessment_number']) {
                                 <h6><strong>Property Boundary</strong></h6>
                                 <p>Assessment: <?php echo htmlspecialchars($assessment_number); ?></p>
                                 <p>Boundary as recorded in government records</p>
+                                <p><small>${boundaries.length} boundary points</small></p>
                             </div>
                         `
                     });
@@ -1037,29 +1060,35 @@ if ($property['assessment_number']) {
                     });
                     
                     // Fit map to show entire property boundary
-                    if (boundaries.length > 0) {
-                        const bounds = new google.maps.LatLngBounds();
-                        boundaries.forEach(point => bounds.extend(point));
-                        
-                        const extendedBounds = new google.maps.LatLngBounds(
-                            new google.maps.LatLng(bounds.getSouthWest().lat() - 0.0005, bounds.getSouthWest().lng() - 0.0005),
-                            new google.maps.LatLng(bounds.getNorthEast().lat() + 0.0005, bounds.getNorthEast().lng() + 0.0005)
-                        );
-                        
-                        map.fitBounds(extendedBounds);
-                        
-                        google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
-                            if (map.getZoom() > 19) {
-                                map.setZoom(19);
-                            }
-                        });
-                    }
+                    const bounds = new google.maps.LatLngBounds();
+                    boundaries.forEach(point => bounds.extend(point));
+                    
+                    // Add some padding around the boundary
+                    const extendedBounds = new google.maps.LatLngBounds(
+                        new google.maps.LatLng(bounds.getSouthWest().lat() - 0.0005, bounds.getSouthWest().lng() - 0.0005),
+                        new google.maps.LatLng(bounds.getNorthEast().lat() + 0.0005, bounds.getNorthEast().lng() + 0.0005)
+                    );
+                    
+                    map.fitBounds(extendedBounds);
+                    
+                    google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                        if (map.getZoom() > 19) {
+                            map.setZoom(19);
+                        }
+                    });
+                    
+                    console.log("✅ Property boundary rendered successfully");
+                } else {
+                    console.log("⚠️ No valid boundary coordinates found");
                 }
+                
             } catch (e) {
-                console.log("No boundary data to display:", e);
+                console.error("❌ Error rendering boundary data:", e);
+                console.log("Raw boundary data:", <?php echo json_encode($property['boundary_data']); ?>);
             }
             <?php else: ?>
             // No boundary data - just center on coordinates with appropriate zoom
+            console.log("No boundary data available for this property");
             map.setZoom(17);
             <?php endif; ?>
             
