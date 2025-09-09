@@ -14,10 +14,13 @@ MODIFY COLUMN property_type
 ENUM(
     'land',                -- Vacant land properties
     'building',            -- Building only properties  
-    'mixed',               -- Land + Building properties
+    'mixed',               -- Land + Building properties (houses, etc.)
     'mobile_home_only',    -- Mobile home properties
     'regular',             -- Regular properties (from enhanced scraper)
-    'apartment'            -- Apartment/Condo properties
+    'apartment',           -- Apartment/Condo properties
+    'Unknown',             -- Legacy value from old scraper
+    'Land',                -- Legacy capitalized value
+    'Mobile Home Only'     -- Legacy capitalized value
 ) DEFAULT 'land';
 
 -- Verify the update
