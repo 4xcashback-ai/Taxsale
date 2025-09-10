@@ -154,6 +154,37 @@ if [ "$NGINX_STATUS" != "active" ] || [ "$PHP_STATUS" != "active" ] || [ "$MYSQL
     handle_error "One or more services failed to start properly"
 fi
 
+# Test MongoDB connection and PHP extension
+log "Testing MongoDB connection..."
+MONGO_TEST=$(mongosh --eval "db.runCommand('ping')" --quiet 2>/dev/null | grep -c "ok.*1" || echo "0")
+if [ "$MONGO_TEST" = "1" ]; then
+    log "✅ MongoDB connection successful"
+else
+    log "⚠️ MongoDB connection test failed"
+fi
+
+# Check PHP MongoDB extension
+PHP_MONGO_EXT=$(php -m | grep -c mongodb || echo "0")
+if [ "$PHP_MONGO_EXT" = "1" ]; then
+    log "✅ PHP MongoDB extension loaded"
+else
+    log "⚠️ PHP MongoDB extension not found"
+fi
+
+# Test database connection via PHP
+log "Testing PHP MongoDB connection..."
+DB_TEST_RESULT=$(php -r "
+require_once '$APP_DIR/frontend-php/config/database.php';
+\$db = getDB();
+echo \$db ? 'SUCCESS' : 'FAILED';
+" 2>/dev/null || echo "ERROR")
+
+if [ "$DB_TEST_RESULT" = "SUCCESS" ]; then
+    log "✅ PHP MongoDB connection successful"
+else
+    log "⚠️ PHP MongoDB connection failed: $DB_TEST_RESULT"
+fi
+
 # Test website (check both HTTP and HTTPS)
 log "Testing website response..."
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ 2>/dev/null || echo "000")
