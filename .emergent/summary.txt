@@ -1,107 +1,119 @@
 <analysis>
-The AI engineer successfully enhanced the Tax Sale Compass application through multiple iterations of feature development and critical bug fixes. Initial work focused on fixing PID extraction, property type classification (especially for apartment properties), and interactive map functionalities, including boundary data persistence. A significant phase involved implementing Google Maps address-based geocoding for properties lacking PID-based boundaries. This required debugging environment variables (), fixing  errors in API responses, and running batch updates. Subsequently, the focus shifted to a major UI/UX redesign of the property details page and a robust integration with the Property Valuation Services Corporation (PVSC) data. This involved creating new database tables, developing HTML scraping logic (as the PVSC API returned HTML, not JSON), handling complex data parsing (e.g., decimal land sizes), and adding new display fields. The final tasks revolved around refining the layout of the property details page based on user feedback, ensuring map boundaries displayed correctly, and fixing various deployment and data population issues on a VPS environment, confirming a working end-to-end PVSC data display.
+The AI engineer successfully enhanced the Tax Sale Compass application through multiple feature additions and significant refactoring. Initially, the focus was on implementing user-requested UI/UX improvements for the property details page, including PVSC data display, financial calculations, and a dynamic auction countdown. This involved extensive PHP frontend modifications and debugging environment setup issues like missing PHP and MySQL. Subsequently, Google AdSense integration was added across the search, property, and landing pages, along with an  file. A major feature, Favorites for paying users, was then implemented. This led to a critical architectural shift: migrating the database from MySQL to MongoDB. This migration, particularly on the user's VPS, became the central and most challenging task, involving installing MongoDB, updating all PHP files to use MongoDB drivers, and debugging persistent  class not found and configuration issues ( constant errors) on the VPS, despite successful local development environment tests. The latest issue revolves around PHP's inability to connect to MongoDB on the VPS, likely due to Composer autoloader problems.
 </analysis>
 
 <product_requirements>
-The Tax Sale Compass application provides centralized Canada-wide tax sale data with an interactive map, PDF scraping, and property filtering, supported by a subscription model. It uses a PHP frontend, Python FastAPI backend, and MySQL database.
-
-The core problem addressed was the inability of the Rescan functionality to find and update data reliably. Key enhancements and bug fixes implemented or requested include:
-1.  **Embedded PID Extraction**: Extract PIDs from civic address strings.
-2.  **Frontend Connectivity**: Ensure PHP frontend connects to Python backend.
-3.  **Property Type Classification**: Accurately classify properties as apartment.
-4.  **Enhanced Admin Edit Functionality**: Pre-populate edit modals for properties, including coordinate updates.
-5.  **Interactive Property Map**: Display a satellite map with property boundaries, controls, and smart zooming.
-6.  **Boundary Data Persistence**: Fix bugs preventing boundary data from saving.
-7.  **Retroactive Boundary Generation**: Populate missing boundary data for existing properties.
-8.  **Address-based Geocoding**: Implement geocoding for properties (like apartments) without PID-based boundaries to ensure map display.
-9.  **Property Details Page Redesign**: Modernize styling of , displaying property info, map, and PVSC data coherently.
-10. **PVSC Data Integration**: Scrape comprehensive data from PVSC (Property Valuation Services Corporation) using Assessment Numbers, store it in the database, and display it in a detailed table on the property page. This includes specific fields like Finished Basement and Garage.
-11. **Layout Refinement**: Arrange map, property info, minimum bid, and PVSC data in a specific side-by-side layout on the property details page.
+The Tax Sale Compass application aims to centralize Canada-wide tax sale data with an interactive map, PDF scraping, and property filtering, supported by a subscription model. The core problem involved unreliable Rescan functionality. User requests and implemented enhancements include:
+1.  **Property Details Page Redesign**: Modernize  to display property info, map, and PVSC data coherently. This involved a two-column layout, moving the interactive map to the top-left, with property information and PVSC data stacked below.
+2.  **PVSC Data Integration**: Scrape comprehensive data from Property Valuation Services Corporation, store it, and display it in a detailed, two-column table on the property page, including fields like Finished Basement and Garage.
+3.  **Financial Insights**: On the property details page, replace Total Taxes Due with Assessed Value (from PVSC) and add Potential Profit (Assessed Value - Min Bid) with color-coding.
+4.  **Auction Countdown**: Implement a dynamic X days Y hours countdown to the auction date on the property details page.
+5.  **Google AdSense Integration**: Display ads on the search page (every second row of properties), property details page (right column, between bid and actions), and landing page (between stats and features). Creation of an  file.
+6.  **Landing Page Property Showcase**: Display 6 random properties with smart access control: active properties require login, while inactive (sold/withdrawn) properties can be viewed directly.
+7.  **Favorites Feature**: Allow paying users to add up to 50 properties to a favorites list, with the property details page showing how many users have favorited it.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Development**: PHP (frontend), FastAPI (Python backend), MySQL/MariaDB (database).
--   **Web Scraping**: , , , regex, .
--   **Geocoding**: Google Maps API integration for address-to-coordinate conversion.
--   **Deployment & Operations**: , backend                          RUNNING   pid 26, uptime 0:00:05
-code-server                      RUNNING   pid 28, uptime 0:00:05
-frontend                         STOPPED   Jan 01 12:00 AM
-mongodb                          RUNNING   pid 30, uptime 0:00:05
+-   **Full-stack Development**: PHP (frontend), FastAPI (Python backend), MySQL/MariaDB (initial database), MongoDB (target database).
+-   **Web Scraping**:  for PVSC HTML parsing.
+-   **Geocoding**: Google Maps API.
+-   **Deployment & Operations**: backend                          RUNNING   pid 26, uptime 0:00:04
+code-server                      RUNNING   pid 28, uptime 0:00:04
+frontend                         BACKOFF   can't find command '/usr/sbin/nginx'
+mongodb                          RUNNING   pid 31, uptime 0:00:04
 php-fpm                          BACKOFF   can't find command '/usr/sbin/php-fpm8.2'
-supervisor> , Git, Bash scripting, .
--   **Database**: SQL (, , ), .
+supervisor> , , Nginx, PHP-FPM, Composer (PHP dependency management).
+-   **Database Migration**: From MySQL to MongoDB, including schema conversion and data transfer.
+-   **Authentication**: Session-based user management.
 </key_technical_concepts>
 
 <code_architecture>
 
 
--   ****: The main FastAPI backend application.
-    -   **Importance**: Exposes API endpoints for property management, data generation, and PVSC data.
-    -   **Changes**:
-        -   Modified  endpoint to include Google Maps address-based geocoding as a fallback for properties without PID-based boundaries (e.g., apartments).
-        -   Fixed a  error in the response formatting when  was null.
-        -   Added  endpoint to fetch cached or scrape new PVSC data.
-        -   Added  and  for PVSC data population.
--   ****: Contains web scraping and data processing logic.
-    -   **Importance**: Handles extraction of property details from PDFs and PVSC website.
-    -   **Changes**:
-        -   Enhanced  to extract PIDs and classify property types including apartment.
-        -   Introduced  function for precise address-based geocoding using Google Maps API.
-        -   Updated PVSC scraping logic to parse HTML responses (using ) instead of expecting JSON, extracting comprehensive property details, including land size (handling decimals), building characteristics (basement, garage), and assessment history.
--   ****: Environment variables for backend configuration.
-    -   **Importance**: Stores sensitive keys and database connection details.
-    -   **Changes**: Updated with  and corrected , , ,  for MySQL.
--   ****: Python dependencies.
-    -   **Importance**: Lists all necessary Python libraries for the backend.
-    -   **Changes**: Added  and .
--   ****: Individual property details page.
-    -   **Importance**: Displays detailed property information, interactive map, and PVSC data.
-    -   **Changes**:
-        -   Major redesign: updated styling (background, card-based layout, modern navigation).
-        -   Enhanced interactive map: defaults to satellite view, map type controls, custom markers, info windows, and styled boundary visualization.
-        -   Integrated PVSC data display in a detailed table format.
-        -   Reorganized layout multiple times based on user feedback to place map at the top of the left column, with property information and PVSC data stacked below it, while the right column contains minimum bid and actions.
-        -   Fixed JavaScript errors related to map initialization, SVG icon, and duplicate JS code.
-        -   Added debug logging for boundary data.
--   ****: SQL migration for PVSC data.
+-   ****: The individual property details page.
+    -   **Importance**: Displays detailed property information, interactive map, PVSC data, and action buttons.
+    -   **Changes**: Major UI redesign, PVSC data displayed in a two-column layout, owner name removed, Total Taxes Due replaced with Assessed Value, Potential Profit calculation added. A countdown timer for auction date was implemented. Integrated Google AdSense in the right column. Database queries updated to use MongoDB.
+-   ****: Central database connection and configuration file for the PHP frontend.
+    -   **Importance**: Handles database connection details and API keys. Essential for all data operations.
+    -   **Changes**: Initial MySQL PDO connection replaced with MongoDB client (). Environment variables (, , , , ) are now used. Includes Composer autoloader. Helper functions  and  were added and refined to convert BSON documents to PHP arrays, handling  to uid=0(root) gid=0(root) groups=0(root) conversion.
+-   ****: Displays a list of properties for logged-in users.
+    -   **Importance**: Main search interface and property listing.
+    -   **Changes**: Modified to insert Google AdSense code after every 6 properties. All MySQL queries were converted to MongoDB collection operations and aggregation pipelines for filtering and fetching property data.
+-   ****: The template for the landing page.
+    -   **Importance**: Displays static content and featured properties for non-logged-in users.
+    -   **Changes**: Integrated Google AdSense in the between Stats Section and Features Section. Designed to display 6 random properties, which are fetched by .
+-   ****: The entry point for the application.
+    -   **Importance**: Determines user session status and redirects to  or renders  with data.
+    -   **Changes**: Now includes logic to fetch 6 random properties for the landing page using MongoDB aggregation before including . Handles user login redirection. Updated to use MongoDB for data fetching.
+-   ****: AdSense authorization file.
+    -   **Importance**: Authorizes Google to sell ad space, preventing fraud.
+    -   **Changes**: Created with the user's Google publisher ID ().
+-   ****: API endpoint for managing user favorites.
+    -   **Importance**: Handles adding/removing properties from a user's favorites list.
+    -   **Changes**: Implemented to interact with MongoDB for user favorites, including user ID and assessment number.
+-   ****: Page displaying a paying user's favorited properties.
+    -   **Importance**: Shows a personalized list of saved properties.
+    -   **Changes**: Created to fetch and display properties from the  MongoDB collection. Includes checks for user login and paid subscription status.
+-   ****: Admin interface for property management.
+    -   **Importance**: Backend management for property data.
+    -   **Changes**: Updated to reflect MongoDB as the underlying database for data operations.
+-   ****: SQL migration for PVSC data (MySQL).
     -   **Importance**: Defines the schema for storing scraped PVSC property details.
-    -   **Changes**: Created a new table  with fields like , , , , , , , , , , , , etc.
--   ****: SQL migration for new PVSC fields.
-    -   **Importance**: Extends the  table to include more detailed property characteristics.
-    -   **Changes**: Added fields like , , , , , .
--   ****: Bash script for batch geocoding.
-    -   **Importance**: Automates the process of geocoding all properties missing coordinates.
-    -   **Changes**: Created to log in as admin, query properties without coordinates, and call the  API for each.
--   ****: Bash script for PVSC data setup.
-    -   **Importance**: Sets up the PVSC database table and initiates initial scraping.
-    -   **Changes**: Created to run the  migration and trigger comprehensive PVSC data scraping for all properties.
--   ****: Manual script for full PVSC scraping.
-    -   **Importance**: Provides a way to manually re-scrape all PVSC data anytime.
-    -   **Changes**: Created to call the  endpoint.
--   ****: Script for comprehensive PVSC population.
-    -   **Importance**: Orchestrates the full population of PVSC data using the updated scraper.
-    -   **Changes**: Created to execute the full scraping process after deployment and dependency installation.
--   ****: Script to add new PVSC fields.
-    -   **Importance**: Executes the SQL migration for additional PVSC fields.
-    -   **Changes**: Created to run .
+    -   **Changes**: Created a new table . This is now deprecated with MongoDB migration.
+-   ** / **: SQL migration for favorites (MySQL).
+    -   **Importance**: Defines the schema for storing user favorite properties.
+    -   **Changes**: Created to manage favorites in MySQL, now superseded by MongoDB collections.
+-   **[2025-09-10 01:28:34] === Starting Tax Sale Compass Deployment ===
+DEPLOY_START
+[2025-09-10 01:28:34] 💻 Command-line deployment detected
+[2025-09-10 01:28:34] Running pre-deployment safety checks...
+[2025-09-10 01:28:34] Current status - Nginx: inactive, Site response: 000000000
+[2025-09-10 01:28:34] ⚠️ Website not responding correctly - nginx fixes may be applied if needed
+[2025-09-10 01:28:34] ERROR: Application directory /var/www/tax-sale-compass not found
+DEPLOY_ERROR: Application directory /var/www/tax-sale-compass not found**: Main VPS deployment script.
+    -   **Importance**: Orchestrates the entire deployment process on the VPS.
+    -   **Changes**: Significantly updated to include MongoDB installation (using official repository for Ubuntu 22.04), Composer installation for PHP dependencies, MongoDB service management, database migration checks, and comprehensive MongoDB connection tests for both Current Mongosh Log ID:	68c0d4449d88611f0f2b925b
+Connecting to:		mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.5.7
+Using MongoDB:		7.0.23
+Using Mongosh:		2.5.7
+
+For mongosh info see: https://www.mongodb.com/docs/mongodb-shell/
+
+
+To help improve our products, anonymous usage data is collected and sent to MongoDB periodically (https://www.mongodb.com/legal/privacy-policy).
+You can opt-out by running the disableTelemetry() command.
+
+------
+   The server generated these startup warnings when booting
+   2025-09-10T01:28:30.156+00:00: Using the XFS filesystem is strongly recommended with the WiredTiger storage engine. See http://dochub.mongodb.org/core/prodnotes-filesystem
+   2025-09-10T01:28:33.667+00:00: Access control is not enabled for the database. Read and write access to data and configuration is unrestricted
+   2025-09-10T01:28:33.667+00:00: You are running this process as the root user, which is not recommended
+   2025-09-10T01:28:33.667+00:00: Soft rlimits for open file descriptors too low
+------
+
+test>  and PHP.
 </code_architecture>
 
 <pending_tasks>
--   Ensure all scrapers (Victoria, Cumberland) are fully functional and accurately extracting data.
+-   Ensure all scrapers (Victoria, Cumberland) are fully functional and accurately extracting data (this implies the backend scrapers).
 -   Fine-tune Nginx and PHP-FPM for optimal performance.
 -   Set up monitoring and logging for production use.
+-   Resolve the persistent Class not found and MongoDB connection test failed errors on the VPS.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was addressing the user's explicit feedback regarding the layout of the property details page (). The user requested to have the interactive map at the top of the left column, with both the Property Information and PVSC Data sections stacked directly below it, also within the left column. The right column should retain the Minimum Bid card and Property Actions.
+Immediately before this summary request, the AI engineer was actively debugging critical MongoDB connection issues on the user's VPS. All PHP frontend files (, , , , , , ) have been extensively modified to switch from MySQL to MongoDB. This involved using the  class, MongoDB-specific queries (e.g., aggregation for random properties), and implementing a Composer autoloader (). Helper functions like  were created to properly convert BSON documents. The main VPS deployment script ([2025-09-10 01:28:37] === Starting Tax Sale Compass Deployment ===
+DEPLOY_START
+[2025-09-10 01:28:37] 💻 Command-line deployment detected
+[2025-09-10 01:28:37] Running pre-deployment safety checks...
+[2025-09-10 01:28:37] Current status - Nginx: inactive, Site response: 000000000
+[2025-09-10 01:28:37] ⚠️ Website not responding correctly - nginx fixes may be applied if needed
+[2025-09-10 01:28:37] ERROR: Application directory /var/www/tax-sale-compass not found
+DEPLOY_ERROR: Application directory /var/www/tax-sale-compass not found) was also updated to automate MongoDB installation, Composer dependency installation (), and comprehensive health checks for MongoDB and PHP connectivity.
 
-The AI engineer successfully implemented this layout adjustment by modifying  to arrange these sections accordingly. This involved refactoring the HTML/PHP structure to create a two-column layout ( for the left and  for the right), and then placing the map, followed by the property information, and then the comprehensive PVSC data table, all within the left column. The minimum bid card and property actions were kept in the right column as requested.
-
-The PVSC data integration now includes all the requested fields like Garage and Basement (with colored badges), Construction Quality, Building Style, and handles complex numeric parsing (e.g., correct sum for Land Size like 1.94 Acres). The interactive map is also functioning, displaying boundaries correctly (after re-running the boundary generation script).
-
-The current state is that the backend API is successfully geocoding addresses for properties without PID boundaries, scraping and storing comprehensive PVSC data (after fixing the HTML parsing and database updates), and the frontend  is designed to display all this information in the specified layout.
+The current challenge is that, despite MongoDB being successfully installed and running on the VPS, and the PHP MongoDB extension being loaded, the PHP application cannot establish a connection to MongoDB. The user is still encountering a  when running PHP scripts and a  on the website. This points to a persistent issue where the Composer autoloader is either not correctly configured or not being properly invoked within the PHP-FPM environment on the VPS, preventing the application from finding the necessary MongoDB PHP library classes. The  script reports MongoDB connection test failed from its internal PHP test and the website remains inaccessible.
 </current_work>
 
 <optional_next_step>
-The next step is to test the property page on the VPS to verify the new layout and data display.
+Ensure  is run in  on the VPS to correctly set up the MongoDB PHP library and autoloader.
 </optional_next_step>
