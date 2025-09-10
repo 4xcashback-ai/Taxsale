@@ -72,7 +72,7 @@ $properties = mongoArrayToArray($cursor);
 if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
     error_log("=== THUMBNAIL DEBUG INFO ===");
     foreach (array_slice($properties, 0, 3) as $property) {
-        error_log("Property {$property['assessment_number']}: PID={$property['pid_number']}, thumbnail_path=" . ($property['thumbnail_path'] ?? 'NULL') . ", coords=" . ($property['latitude'] ?? 'NULL') . "," . ($property['longitude'] ?? 'NULL'));
+        error_log("Property {$property['assessment_number']}: PID=" . ($property['pid_number'] ?? 'NULL') . ", thumbnail_path=" . ($property['thumbnail_path'] ?? 'NULL') . ", coords=" . ($property['latitude'] ?? 'NULL') . "," . ($property['longitude'] ?? 'NULL'));
         
         // Test getThumbnail method
         $thumbnail_url = $thumbnail_generator->getThumbnail($property);
