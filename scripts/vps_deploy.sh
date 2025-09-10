@@ -134,6 +134,9 @@ systemctl restart php8.1-fpm 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed t
 log "Restarting MySQL..."
 systemctl restart mysql 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed to restart MySQL"
 
+log "Restarting MongoDB..."
+systemctl restart mongod 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed to restart MongoDB"
+
 log "Restarting Tax Sale Backend..."
 systemctl restart tax-sale-backend 2>&1 | tee -a "$LOG_FILE" || handle_error "Failed to restart Tax Sale Backend"
 
