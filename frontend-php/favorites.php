@@ -15,11 +15,18 @@ $user_id = $_SESSION['user_id'];
 
 // Check if user is a paying customer
 $db = getDB();
-$stmt = $db->prepare("SELECT subscription_status, email FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-$user = $stmt->fetch();
+$user = null;
+if (MongoDB\BSON\ObjectId::isValid($user_id)) {
+    $user = $db->users->findOne(['_id' => new MongoDB\BSON\ObjectId($user_id)]);
+} else {
+    // Try as string ID or email
+    $user = $db->users->findOne(['$or' => [
+        ['id' => $user_id],
+        ['email' => $user_id]
+    ]]);
+}
 
-if (!$user || $user['subscription_status'] !== 'paid') {
+if (!$user || ($user['subscription_status'] ?? 'free') !== 'paid') {
     // Redirect to upgrade page or show upgrade message
     header('Location: upgrade.php?feature=favorites');
     exit;
