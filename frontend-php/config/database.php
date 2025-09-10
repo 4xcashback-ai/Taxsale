@@ -47,18 +47,22 @@ function getDB() {
 function mongoToArray($document) {
     if ($document === null) return null;
     
-    // Convert BSONDocument to array
-    if ($document instanceof MongoDB\Model\BSONDocument) {
-        $array = $document->toArray();
-    } elseif ($document instanceof MongoDB\BSON\Document) {
-        $array = $document->toArray();  
-    } elseif (is_array($document)) {
+    // Convert document to array
+    if (is_array($document)) {
         $array = $document;
     } else {
-        // Convert to array using iterator
+        // Convert to array using iterator (works for all BSON document types)
         $array = [];
         foreach ($document as $key => $value) {
-            $array[$key] = $value;
+            if ($value instanceof MongoDB\BSON\UTCDateTime) {
+                // Convert MongoDB date to string
+                $array[$key] = $value->toDateTime()->format('Y-m-d H:i:s');
+            } elseif ($value instanceof MongoDB\BSON\ObjectId) {
+                // Convert ObjectId to string
+                $array[$key] = (string)$value;
+            } else {
+                $array[$key] = $value;
+            }
         }
     }
     
