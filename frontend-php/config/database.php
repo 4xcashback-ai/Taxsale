@@ -44,7 +44,20 @@ function getDB() {
 function mongoToArray($document) {
     if ($document === null) return null;
     
-    $array = $document->toArray();
+    // Convert BSONDocument to array
+    if ($document instanceof MongoDB\Model\BSONDocument) {
+        $array = $document->toArray();
+    } elseif ($document instanceof MongoDB\BSON\Document) {
+        $array = $document->toArray();  
+    } elseif (is_array($document)) {
+        $array = $document;
+    } else {
+        // Convert to array using iterator
+        $array = [];
+        foreach ($document as $key => $value) {
+            $array[$key] = $value;
+        }
+    }
     
     // Convert ObjectId to string for assessment_number compatibility
     if (isset($array['_id'])) {
