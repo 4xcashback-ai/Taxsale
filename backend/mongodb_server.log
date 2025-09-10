@@ -1,0 +1,4 @@
+  File "/var/www/tax-sale-compass/backend/server.py", line 44
+    app = FastAPI(title= Tax Sale Compass API - MongoDB, version=2.0.0)
+                         ^^^^^^^^
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
