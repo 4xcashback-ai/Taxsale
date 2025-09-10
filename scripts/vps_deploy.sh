@@ -87,6 +87,31 @@ git clean -fd -e "frontend-php/assets/thumbnails/" -e "backend/backend.log" 2>&1
 log "Recent commits:"
 git log --oneline -5 2>&1 | tee -a "$LOG_FILE"
 
+# MongoDB Setup and Migration (if needed)
+log "Checking MongoDB setup..."
+
+# Check if MongoDB is installed
+if ! command -v mongosh &> /dev/null; then
+    log "⚠️ MongoDB not found - may need manual installation"
+else
+    log "✅ MongoDB found"
+    
+    # Check if tax_sale_compass database exists
+    MONGO_DB_EXISTS=$(mongosh tax_sale_compass --eval "db.getCollectionNames().length" --quiet 2>/dev/null || echo "0")
+    if [ "$MONGO_DB_EXISTS" -gt "0" ]; then
+        log "✅ MongoDB database exists with collections"
+    else
+        log "⚠️ MongoDB database is empty - may need data migration"
+    fi
+fi
+
+# Check PHP MongoDB extension
+if php -m | grep -q mongodb; then
+    log "✅ PHP MongoDB extension installed"
+else
+    log "⚠️ PHP MongoDB extension missing - installation may be needed"
+fi
+
 # Set proper permissions
 log "Setting file permissions..."
 chown -R www-data:www-data "$APP_DIR" 2>&1 | tee -a "$LOG_FILE"
