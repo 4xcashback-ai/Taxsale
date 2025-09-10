@@ -28,52 +28,45 @@ $municipality = $_GET['municipality'] ?? '';
 $status = $_GET['status'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Build query - ensure we get the thumbnail_path column
-$query = "SELECT *, COALESCE(thumbnail_path, '') as thumbnail_path FROM properties WHERE 1=1";
-$count_query = "SELECT COUNT(*) FROM properties WHERE 1=1";
-$params = [];
+// Build MongoDB filter
+$filter = [];
 
 if ($municipality) {
-    $query .= " AND municipality = ?";
-    $count_query .= " AND municipality = ?";
-    $params[] = $municipality;
+    $filter['municipality'] = $municipality;
 }
 
 if ($status) {
-    $query .= " AND status = ?";
-    $count_query .= " AND status = ?";
-    $params[] = $status;
+    $filter['status'] = $status;
 }
 
 if ($search) {
     // Search across address, municipality, assessment number, and PID
-    $query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ? OR pid_number LIKE ?)";
-    $count_query .= " AND (civic_address LIKE ? OR municipality LIKE ? OR assessment_number LIKE ? OR pid_number LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    $filter['$or'] = [
+        ['civic_address' => new MongoDB\BSON\Regex($search, 'i')],
+        ['municipality' => new MongoDB\BSON\Regex($search, 'i')],
+        ['assessment_number' => new MongoDB\BSON\Regex($search, 'i')],
+        ['pid_number' => new MongoDB\BSON\Regex($search, 'i')]
+    ];
 }
 
 // Get pagination parameters
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $per_page = 24;
-$offset = ($page - 1) * $per_page;
+$skip = ($page - 1) * $per_page;
 
-$query .= " ORDER BY created_at DESC LIMIT $per_page OFFSET $offset";
-
-$db = getDB();
-
-// Get total count using same params
-$count_stmt = $db->prepare($count_query);
-$count_stmt->execute($params);
-$total_properties = $count_stmt->fetchColumn();
+// Get total count
+$total_properties = $db->properties->countDocuments($filter);
 $total_pages = ceil($total_properties / $per_page);
 
 // Get properties for current page
-$stmt = $db->prepare($query);
-$stmt->execute($params);
-$properties = $stmt->fetchAll();
+$options = [
+    'sort' => ['created_at' => -1],
+    'limit' => $per_page,
+    'skip' => $skip
+];
+
+$cursor = $db->properties->find($filter, $options);
+$properties = mongoArrayToArray($cursor);
 
 // DEBUG: Log thumbnail data for first few properties (admin only)
 if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
