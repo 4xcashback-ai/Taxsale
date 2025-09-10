@@ -807,7 +807,7 @@ $municipalities = $db->query("SELECT municipality, COUNT(*) as count FROM proper
                     </div>
                     <div class="card-body">
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><strong>Database:</strong> MySQL (tax_sale_compass)</li>
+                            <li class="list-group-item"><strong>Database:</strong> MongoDB (tax_sale_compass)</li>
                             <li class="list-group-item"><strong>Backend API:</strong> FastAPI on port 8001</li>
                             <li class="list-group-item"><strong>Frontend:</strong> PHP (Native)</li>
                             <li class="list-group-item"><strong>Maps:</strong> Google Maps JavaScript API</li>
