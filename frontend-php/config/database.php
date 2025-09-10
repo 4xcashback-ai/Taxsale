@@ -1,4 +1,7 @@
 <?php
+// Load Composer autoloader
+require_once __DIR__ . '/../vendor/autoload.php';
+
 // MongoDB configuration - Use environment variables with fallbacks
 define('MONGO_URL', $_ENV['MONGO_URL'] ?? getenv('MONGO_URL') ?: 'mongodb://localhost:27017');
 define('DB_NAME', $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'tax_sale_compass');
