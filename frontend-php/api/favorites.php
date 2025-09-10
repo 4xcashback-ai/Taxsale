@@ -26,8 +26,17 @@ if (!$db) {
 }
 
 try {
-    // Check user subscription status
-    $user = $db->users->findOne(['_id' => new MongoDB\BSON\ObjectId($user_id)]);
+    // Check user subscription status - user_id might be string or ObjectId
+    $user = null;
+    if (MongoDB\BSON\ObjectId::isValid($user_id)) {
+        $user = $db->users->findOne(['_id' => new MongoDB\BSON\ObjectId($user_id)]);
+    } else {
+        // Try as string ID or email
+        $user = $db->users->findOne(['$or' => [
+            ['id' => $user_id],
+            ['email' => $user_id]
+        ]]);
+    }
     
     if (!$user || ($user['subscription_status'] ?? 'free') !== 'paid') {
         http_response_code(403);
