@@ -20,9 +20,8 @@ if ($is_logged_in) {
     
     // Debug logging for VPS troubleshooting
     error_log("=== INDEX/LANDING PAGE DEBUG START ===");
-    error_log("DB_HOST: " . DB_HOST);
+    error_log("MONGO_URL: " . MONGO_URL);
     error_log("DB_NAME: " . DB_NAME);
-    error_log("DB_USER: " . DB_USER);
     
     try {
         // Get 6 random properties for landing page preview
