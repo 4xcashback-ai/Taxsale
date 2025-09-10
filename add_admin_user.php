@@ -14,7 +14,7 @@ try {
     // Admin user details
     $admin_email = 'admin@taxsalecompass.ca';
     $admin_username = 'admin';
-    $admin_password = 'admin123'; // Change this to whatever you want
+    $admin_password = 'TaxSale2025!SecureAdmin';
     
     echo "Creating admin user:\n";
     echo "- Email: $admin_email\n";
