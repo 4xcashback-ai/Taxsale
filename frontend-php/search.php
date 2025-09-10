@@ -89,7 +89,12 @@ if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
 }
 
 // Get municipalities for filter
-$municipalities = $db->query("SELECT DISTINCT municipality FROM properties ORDER BY municipality")->fetchAll(PDO::FETCH_COLUMN);
+$municipalities_cursor = $db->properties->distinct('municipality');
+$municipalities = [];
+foreach ($municipalities_cursor as $municipality) {
+    $municipalities[] = $municipality;
+}
+sort($municipalities);
 ?>
 <!DOCTYPE html>
 <html lang="en">
