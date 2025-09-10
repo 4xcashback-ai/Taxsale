@@ -5,47 +5,46 @@ require_once 'config/database.php';
 $error = '';
 
 if ($_POST) {
-    $email = $_POST['email'] ?? '';
+    $username = $_POST['username'] ?? $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     
-    if ($email && $password) {
-        // Call backend API for authentication
-        $api_url = API_BASE_URL . '/auth/login';
-        
-        $data = json_encode([
-            'email' => $email,
-            'password' => $password
-        ]);
-        
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'POST',
-                'header' => 'Content-Type: application/json',
-                'content' => $data
-            ]
-        ]);
-        
-        $response = file_get_contents($api_url, false, $context);
-        
-        if ($response) {
-            $result = json_decode($response, true);
+    if ($username && $password) {
+        // MongoDB authentication
+        $db = getDB();
+        if ($db) {
+            // Find user by username or email
+            $user_doc = $db->users->findOne([
+                '$or' => [
+                    ['username' => $username],
+                    ['email' => $username]
+                ]
+            ]);
             
-            if (isset($result['access_token'])) {
-                // Store user data in session
-                $_SESSION['user_id'] = $result['user']['email'];
-                $_SESSION['access_token'] = $result['access_token'];
-                $_SESSION['subscription_tier'] = $result['user']['subscription_tier'];
-                $_SESSION['is_admin'] = $result['user']['is_admin'];
+            if ($user_doc) {
+                $user = mongoToArray($user_doc);
                 
-                // Redirect to intended page or search page
-                $redirect = $_GET['redirect'] ?? 'search.php';
-                header('Location: ' . $redirect);
-                exit;
+                // Verify password
+                if (password_verify($password, $user['password_hash'])) {
+                    // Store user data in session
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['access_token'] = 'mongodb_session_' . uniqid();
+                    $_SESSION['subscription_tier'] = $user['subscription_tier'];
+                    $_SESSION['is_admin'] = $user['is_admin'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['email'] = $user['email'];
+                    
+                    // Redirect to intended page or search page
+                    $redirect = $_GET['redirect'] ?? 'search.php';
+                    header('Location: ' . $redirect);
+                    exit;
+                } else {
+                    $error = 'Invalid credentials';
+                }
             } else {
-                $error = 'Invalid credentials';
+                $error = 'User not found';
             }
         } else {
-            $error = 'Login service unavailable';
+            $error = 'Database connection failed';
         }
     } else {
         $error = 'Please fill in all fields';
