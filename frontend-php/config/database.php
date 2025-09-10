@@ -1,8 +1,6 @@
 <?php
-// Database configuration - Use environment variables with fallbacks
-define('DB_HOST', $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost');
-define('DB_USER', $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'taxsale');
-define('DB_PASS', $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: 'SecureTaxSale2025!');
+// MongoDB configuration - Use environment variables with fallbacks
+define('MONGO_URL', $_ENV['MONGO_URL'] ?? getenv('MONGO_URL') ?: 'mongodb://localhost:27017');
 define('DB_NAME', $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'tax_sale_compass');
 
 // Google Maps API Key
@@ -15,34 +13,56 @@ define('API_BASE_URL', $_ENV['API_BASE_URL'] ?? getenv('API_BASE_URL') ?: 'http:
 define('SITE_NAME', 'Tax Sale Compass');
 define('SITE_URL', $_ENV['SITE_URL'] ?? getenv('SITE_URL') ?: 'http://localhost:3000');
 
-// Database connection function
+// MongoDB connection function
 function getDB() {
-    static $pdo = null;
+    static $client = null;
+    static $database = null;
     
-    if ($pdo === null) {
+    if ($client === null) {
         try {
-            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-            
             // Debug info for VPS troubleshooting
-            error_log("DB Connection attempt: Host=" . DB_HOST . ", User=" . DB_USER . ", DB=" . DB_NAME);
+            error_log("MongoDB Connection attempt: URL=" . MONGO_URL . ", DB=" . DB_NAME);
             
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::ATTR_TIMEOUT => 10, // 10 second connection timeout
-            ]);
+            $client = new MongoDB\Client(MONGO_URL);
+            $database = $client->selectDatabase(DB_NAME);
             
-            error_log("DB Connection successful");
+            // Test connection
+            $database->command(['ping' => 1]);
             
-        } catch (PDOException $e) {
-            error_log("Database connection failed: " . $e->getMessage());
+            error_log("MongoDB Connection successful");
             
-            // Don't die immediately, return null to handle gracefully
+        } catch (Exception $e) {
+            error_log("MongoDB connection failed: " . $e->getMessage());
             return null;
         }
     }
     
-    return $pdo;
+    return $database;
+}
+
+// Helper function to convert MongoDB document to array
+function mongoToArray($document) {
+    if ($document === null) return null;
+    
+    $array = $document->toArray();
+    
+    // Convert ObjectId to string for assessment_number compatibility
+    if (isset($array['_id'])) {
+        if ($array['_id'] instanceof MongoDB\BSON\ObjectId) {
+            $array['id'] = (string)$array['_id'];
+        }
+        unset($array['_id']);
+    }
+    
+    return $array;
+}
+
+// Helper function to convert array of MongoDB documents
+function mongoArrayToArray($cursor) {
+    $result = [];
+    foreach ($cursor as $document) {
+        $result[] = mongoToArray($document);
+    }
+    return $result;
 }
 ?>
