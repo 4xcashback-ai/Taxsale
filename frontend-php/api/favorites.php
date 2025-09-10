@@ -27,11 +27,9 @@ if (!$db) {
 
 try {
     // Check user subscription status
-    $stmt = $db->prepare("SELECT subscription_status FROM users WHERE id = ?");
-    $stmt->execute([$user_id]);
-    $user = $stmt->fetch();
+    $user = $db->users->findOne(['_id' => new MongoDB\BSON\ObjectId($user_id)]);
     
-    if (!$user || $user['subscription_status'] !== 'paid') {
+    if (!$user || ($user['subscription_status'] ?? 'free') !== 'paid') {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Favorites feature requires a paid subscription']);
         exit;
@@ -87,25 +85,36 @@ try {
 
 function handleGetFavorites($db, $user_id) {
     try {
-        $stmt = $db->prepare("
-            SELECT p.*, uf.favorited_at,
-                   COALESCE(p.favorite_count, 0) as favorite_count
-            FROM user_favorites uf 
-            JOIN properties p ON uf.assessment_number = p.assessment_number 
-            WHERE uf.user_id = ? 
-            ORDER BY uf.favorited_at DESC
-        ");
-        $stmt->execute([$user_id]);
-        $favorites = $stmt->fetchAll();
+        // Get user's favorites with property details
+        $pipeline = [
+            ['$match' => ['user_id' => $user_id]],
+            ['$lookup' => [
+                'from' => 'properties',
+                'localField' => 'assessment_number',
+                'foreignField' => 'assessment_number', 
+                'as' => 'property'
+            ]],
+            ['$unwind' => '$property'],
+            ['$sort' => ['favorited_at' => -1]]
+        ];
+        
+        $favorites = $db->user_favorites->aggregate($pipeline)->toArray();
+        
+        // Convert to array and merge property data
+        $favoritesArray = [];
+        foreach ($favorites as $favorite) {
+            $property = mongoToArray($favorite['property']);
+            $property['favorited_at'] = $favorite['favorited_at']->toDateTime()->format('Y-m-d H:i:s');
+            $property['favorite_count'] = $property['favorite_count'] ?? 0;
+            $favoritesArray[] = $property;
+        }
         
         // Get total count
-        $stmt = $db->prepare("SELECT COUNT(*) as count FROM user_favorites WHERE user_id = ?");
-        $stmt->execute([$user_id]);
-        $count = $stmt->fetch()['count'];
+        $count = $db->user_favorites->countDocuments(['user_id' => $user_id]);
         
         echo json_encode([
             'success' => true, 
-            'favorites' => $favorites,
+            'favorites' => $favoritesArray,
             'count' => $count,
             'max_allowed' => 50
         ]);
@@ -120,18 +129,15 @@ function handleGetFavorites($db, $user_id) {
 function handleAddFavorite($db, $user_id, $assessment_number) {
     try {
         // Check if property exists
-        $stmt = $db->prepare("SELECT assessment_number FROM properties WHERE assessment_number = ?");
-        $stmt->execute([$assessment_number]);
-        if (!$stmt->fetch()) {
+        $property = $db->properties->findOne(['assessment_number' => $assessment_number]);
+        if (!$property) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Property not found']);
             return;
         }
         
         // Check current favorite count for user
-        $stmt = $db->prepare("SELECT COUNT(*) as count FROM user_favorites WHERE user_id = ?");
-        $stmt->execute([$user_id]);
-        $current_count = $stmt->fetch()['count'];
+        $current_count = $db->user_favorites->countDocuments(['user_id' => $user_id]);
         
         if ($current_count >= 50) {
             http_response_code(400);
@@ -140,26 +146,34 @@ function handleAddFavorite($db, $user_id, $assessment_number) {
         }
         
         // Check if already favorited
-        $stmt = $db->prepare("SELECT id FROM user_favorites WHERE user_id = ? AND assessment_number = ?");
-        $stmt->execute([$user_id, $assessment_number]);
-        if ($stmt->fetch()) {
+        $existing = $db->user_favorites->findOne([
+            'user_id' => $user_id,
+            'assessment_number' => $assessment_number
+        ]);
+        
+        if ($existing) {
             echo json_encode(['success' => false, 'message' => 'Property already in favorites']);
             return;
         }
         
         // Add to favorites
-        $stmt = $db->prepare("INSERT INTO user_favorites (user_id, assessment_number) VALUES (?, ?)");
-        $stmt->execute([$user_id, $assessment_number]);
+        $db->user_favorites->insertOne([
+            'user_id' => $user_id,
+            'assessment_number' => $assessment_number,
+            'favorited_at' => new MongoDB\BSON\UTCDateTime()
+        ]);
         
-        // Get updated favorite count for this property
-        $stmt = $db->prepare("SELECT favorite_count FROM properties WHERE assessment_number = ?");
-        $stmt->execute([$assessment_number]);
-        $property = $stmt->fetch();
+        // Update favorite count for property
+        $new_count = $db->user_favorites->countDocuments(['assessment_number' => $assessment_number]);
+        $db->properties->updateOne(
+            ['assessment_number' => $assessment_number],
+            ['$set' => ['favorite_count' => $new_count]]
+        );
         
         echo json_encode([
             'success' => true, 
             'message' => 'Added to favorites',
-            'favorite_count' => $property['favorite_count'] ?? 0
+            'favorite_count' => $new_count
         ]);
         
     } catch (Exception $e) {
@@ -172,23 +186,27 @@ function handleAddFavorite($db, $user_id, $assessment_number) {
 function handleRemoveFavorite($db, $user_id, $assessment_number) {
     try {
         // Remove from favorites
-        $stmt = $db->prepare("DELETE FROM user_favorites WHERE user_id = ? AND assessment_number = ?");
-        $stmt->execute([$user_id, $assessment_number]);
+        $result = $db->user_favorites->deleteOne([
+            'user_id' => $user_id,
+            'assessment_number' => $assessment_number
+        ]);
         
-        if ($stmt->rowCount() === 0) {
+        if ($result->getDeletedCount() === 0) {
             echo json_encode(['success' => false, 'message' => 'Property not in favorites']);
             return;
         }
         
-        // Get updated favorite count for this property
-        $stmt = $db->prepare("SELECT favorite_count FROM properties WHERE assessment_number = ?");
-        $stmt->execute([$assessment_number]);
-        $property = $stmt->fetch();
+        // Update favorite count for property
+        $new_count = $db->user_favorites->countDocuments(['assessment_number' => $assessment_number]);
+        $db->properties->updateOne(
+            ['assessment_number' => $assessment_number],
+            ['$set' => ['favorite_count' => $new_count]]
+        );
         
         echo json_encode([
             'success' => true, 
             'message' => 'Removed from favorites',
-            'favorite_count' => $property['favorite_count'] ?? 0
+            'favorite_count' => $new_count
         ]);
         
     } catch (Exception $e) {
