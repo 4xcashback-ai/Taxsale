@@ -145,11 +145,12 @@ log "Checking service status..."
 NGINX_STATUS=$(systemctl is-active nginx)
 PHP_STATUS=$(systemctl is-active php8.1-fpm)
 MYSQL_STATUS=$(systemctl is-active mysql)
+MONGODB_STATUS=$(systemctl is-active mongod)
 BACKEND_STATUS=$(systemctl is-active tax-sale-backend)
 
-log "Service Status: nginx=$NGINX_STATUS, php8.1-fpm=$PHP_STATUS, mysql=$MYSQL_STATUS, tax-sale-backend=$BACKEND_STATUS"
+log "Service Status: nginx=$NGINX_STATUS, php8.1-fpm=$PHP_STATUS, mysql=$MYSQL_STATUS, mongod=$MONGODB_STATUS, tax-sale-backend=$BACKEND_STATUS"
 
-if [ "$NGINX_STATUS" != "active" ] || [ "$PHP_STATUS" != "active" ] || [ "$MYSQL_STATUS" != "active" ] || [ "$BACKEND_STATUS" != "active" ]; then
+if [ "$NGINX_STATUS" != "active" ] || [ "$PHP_STATUS" != "active" ] || [ "$MYSQL_STATUS" != "active" ] || [ "$MONGODB_STATUS" != "active" ] || [ "$BACKEND_STATUS" != "active" ]; then
     handle_error "One or more services failed to start properly"
 fi
 
