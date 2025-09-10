@@ -76,3 +76,7 @@ agenthub/agents/youtube/db
 
 # Archive files and large assets
 **/*.zip
+-e 
+# Environment files
+*.env
+*.env.*
