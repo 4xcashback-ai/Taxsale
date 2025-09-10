@@ -143,7 +143,7 @@ def check_property_access(property_data: dict, current_user: Optional[dict]) -> 
 # API Routes
 @app.get("/")
 async def root():
-    return {"message": "Tax Sale Compass API - MySQL Version"}
+    return {"message": "Tax Sale Compass API - MongoDB Version"}
 
 @app.get("/api/health")
 async def health_check():
