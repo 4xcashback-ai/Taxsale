@@ -15,9 +15,13 @@ $is_paid_user = $is_logged_in && ($_SESSION['subscription_tier'] === 'paid' || $
 
 // Get property
 $db = getDB();
-$stmt = $db->prepare("SELECT * FROM properties WHERE assessment_number = ?");
-$stmt->execute([$assessment_number]);
-$property = $stmt->fetch();
+if (!$db) {
+    error_log("MongoDB connection failed in property.php");
+    die("Database connection failed");
+}
+
+$property_doc = $db->properties->findOne(['assessment_number' => $assessment_number]);
+$property = $property_doc ? mongoToArray($property_doc) : null;
 
 if (!$property) {
     header('HTTP/1.0 404 Not Found');
