@@ -23,8 +23,9 @@ if ($_POST) {
             if ($user_doc) {
                 $user = mongoToArray($user_doc);
                 
-                // Verify password
-                if (password_verify($password, $user['password_hash'])) {
+                // Verify password (check both possible field names)
+                $password_hash = $user['password_hash'] ?? $user['password'] ?? '';
+                if ($password_hash && password_verify($password, $password_hash)) {
                     // Store user data in session
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['access_token'] = 'mongodb_session_' . uniqid();
