@@ -32,21 +32,32 @@ if ($is_logged_in) {
             $db_error = "Database connection failed - getDB() returned null";
             error_log("Landing page: Database connection is null");
         } else {
-            error_log("Landing page: Database connection successful");
+            error_log("Landing page: MongoDB connection successful");
             
-            // Test if properties table exists first
-            $stmt = $db->query("SHOW TABLES LIKE 'properties'");
-            $table_exists = $stmt->fetch();
+            // Test if properties collection exists
+            $collections = $db->listCollections();
+            $has_properties = false;
+            foreach ($collections as $collection) {
+                if ($collection->getName() === 'properties') {
+                    $has_properties = true;
+                    break;
+                }
+            }
             
-            if (!$table_exists) {
-                $db_error = "Properties table does not exist";
-                error_log("Landing page: Properties table not found");
+            if (!$has_properties) {
+                $db_error = "Properties collection does not exist";
+                error_log("Landing page: Properties collection not found");
             } else {
-                error_log("Landing page: Properties table exists");
+                error_log("Landing page: Properties collection exists");
                 
-                // Get properties
-                $stmt = $db->query("SELECT * FROM properties ORDER BY RAND() LIMIT 6");
-                $landing_properties = $stmt->fetchAll();
+                // Get random properties using MongoDB aggregation
+                $pipeline = [
+                    ['$sample' => ['size' => 6]]
+                ];
+                
+                $cursor = $db->properties->aggregate($pipeline);
+                $landing_properties = mongoArrayToArray($cursor);
+                
                 error_log("Landing page: Found " . count($landing_properties) . " properties");
                 
                 // Log each property for debugging
