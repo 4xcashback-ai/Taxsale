@@ -30,8 +30,9 @@ next-env.d.ts
 dist/
 dist
 
-# Environment files (comprehensive coverage)
-
+# Environment files
+.env
+.env.*
 *token.json*
 *credentials.json*
 
@@ -48,15 +49,24 @@ dump.rdb
 
 # Python
 __pycache__/
-*pyc*
+*.pyc
+*.pyo
+*.pyd
 venv/
 .venv/
+backend/venv/
+
+# PHP dependencies
+vendor/
+frontend-php/vendor/
+composer.lock
 
 # Development tools
 chainlit.md
 .chainlit
 .ipynb_checkpoints/
 .ac
+.ruff_cache/
 
 # Deployment
 .vercel
@@ -76,11 +86,10 @@ agenthub/agents/youtube/db
 # Build caches
 .cache/
 
-# Mobile development
-android-sdk/ -e 
-# Environment files
-*.env
-*.env.*
+# Temporary files
+/tmp/
+*.tmp
+*.temp
 -e 
 # Environment files
 *.env
